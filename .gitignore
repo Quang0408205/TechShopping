@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+venv/
+*.csv
+__pycache__/
+.DS_Store
