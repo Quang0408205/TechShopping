@@ -13,6 +13,9 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET}
+  cors:
+    # Comma-separated frontend origins, e.g. https://shop.example.com
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
 springdoc:
   api-docs:
