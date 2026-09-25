@@ -1,0 +1,750 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: "Montserrat", sans-serif;
+    color: #111;
+    background: #fff;
+    line-height: 1.6;
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button,
+input,
+textarea {
+    font-family: inherit;
+}
+
+img {
+    max-width: 100%;
+}
+
+.container {
+    width: 90%;
+    max-width: 1300px;
+    margin: 0 auto;
+}
+
+.section {
+    padding: 110px 0;
+}
+
+
+/* ================= HEADER ================= */
+
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid #eee;
+}
+
+.header-inner {
+    min-height: 85px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+
+/* ================= LOGO ================= */
+
+.logo {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+}
+
+.logo-main {
+    font-size: 27px;
+    font-weight: 800;
+    letter-spacing: 3px;
+}
+
+.logo-sub {
+    font-size: 7px;
+    font-weight: 600;
+    letter-spacing: 1.8px;
+    margin-top: 5px;
+    white-space: nowrap;
+}
+
+
+/* ================= NAV ================= */
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 35px;
+}
+
+.nav a {
+    position: relative;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    transition: 0.3s;
+}
+
+.nav a::after {
+    content: "";
+
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+
+    width: 0;
+    height: 2px;
+
+    background: #111;
+
+    transition: 0.3s;
+}
+
+.nav a:hover::after,
+.nav a.active::after {
+    width: 100%;
+}
+
+
+/* ================= HEADER ACTION ================= */
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.cart-btn {
+    position: relative;
+
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #ddd;
+    border-radius: 50%;
+}
+
+.cart-count {
+    position: absolute;
+
+    top: -5px;
+    right: -5px;
+
+    width: 18px;
+    height: 18px;
+
+    background: #111;
+    color: #fff;
+
+    border-radius: 50%;
+
+    font-size: 10px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-btn {
+    padding: 12px 20px;
+
+    background: #111;
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 600;
+
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    background: #333;
+}
+
+
+/* ================= BUTTON ================= */
+
+.btn {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-height: 50px;
+    padding: 0 28px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    letter-spacing: 1px;
+
+    transition: 0.3s;
+}
+
+.btn-dark {
+    background: #111;
+    color: #fff;
+}
+
+.btn-dark:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+.btn-light {
+    background: #fff;
+    color: #111;
+}
+
+.btn-outline {
+    border: 1px solid #fff;
+    color: #fff;
+}
+
+.btn-outline:hover {
+    background: #fff;
+    color: #111;
+}
+
+.btn-outline-dark {
+    border: 1px solid #111;
+    color: #111;
+}
+
+.btn-outline-dark:hover {
+    background: #111;
+    color: #fff;
+}
+
+
+/* ================= SECTION HEADING ================= */
+
+.section-heading {
+    margin-bottom: 55px;
+}
+
+.section-label {
+    display: block;
+
+    margin-bottom: 15px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    letter-spacing: 3px;
+}
+
+.section-heading h2 {
+    font-size: 42px;
+    line-height: 1.1;
+
+    margin-bottom: 15px;
+}
+
+.section-heading p {
+    max-width: 600px;
+
+    color: #777;
+
+    font-size: 14px;
+}
+
+
+/* ================= BENEFITS ================= */
+
+.benefits {
+    background: #111;
+    color: #fff;
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.benefit {
+    padding: 35px 25px;
+
+    display: flex;
+    gap: 15px;
+
+    border-right: 1px solid #333;
+}
+
+.benefit:last-child {
+    border-right: none;
+}
+
+.benefit-icon {
+    width: 30px;
+    height: 30px;
+
+    border: 1px solid #fff;
+    border-radius: 50%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 12px;
+}
+
+.benefit h3 {
+    font-size: 13px;
+    margin-bottom: 5px;
+}
+
+.benefit p {
+    color: #999;
+    font-size: 11px;
+}
+
+
+/* ================= CATEGORY ================= */
+
+.category-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+
+    gap: 20px;
+}
+
+.category-card {
+    position: relative;
+
+    height: 450px;
+
+    overflow: hidden;
+
+    background: #eee;
+}
+
+.category-card img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition: 0.6s;
+}
+
+.category-card:hover img {
+    transform: scale(1.06);
+}
+
+.category-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    padding: 30px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    background:
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.75),
+            transparent 60%
+        );
+
+    color: #fff;
+}
+
+.category-overlay span {
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.category-overlay h3 {
+    font-size: 25px;
+}
+
+.category-overlay p {
+    font-size: 11px;
+    margin-top: 5px;
+}
+
+
+/* ================= PRODUCTS ================= */
+
+.product-grid {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr);
+
+    gap: 20px;
+}
+
+.product-card {
+    background: #f6f6f6;
+
+    transition: 0.3s;
+}
+
+.product-card:hover {
+    transform: translateY(-5px);
+}
+
+.product-image {
+    height: 300px;
+
+    overflow: hidden;
+
+    background: #eee;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    transition: 0.5s;
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 25px;
+}
+
+.product-category {
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 2px;
+
+    color: #888;
+}
+
+.product-info h3 {
+    font-size: 16px;
+
+    margin: 8px 0;
+}
+
+.product-price {
+    font-size: 15px;
+    font-weight: 700;
+
+    margin-bottom: 18px;
+}
+
+.add-cart {
+    width: 100%;
+
+    padding: 12px;
+
+    border: 1px solid #111;
+
+    background: transparent;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.add-cart:hover {
+    background: #111;
+    color: #fff;
+}
+
+.view-all {
+    margin-top: 45px;
+
+    text-align: center;
+}
+
+
+/* ================= AI ================= */
+
+.ai-section {
+    background: #111;
+    color: #fff;
+
+    padding: 120px 0;
+
+    overflow: hidden;
+}
+
+.ai-container {
+    position: relative;
+}
+
+.ai-content {
+    position: relative;
+    z-index: 2;
+
+    max-width: 700px;
+}
+
+.ai-content h2 {
+    font-size: 50px;
+    line-height: 1.05;
+
+    margin-bottom: 25px;
+}
+
+.ai-content p {
+    max-width: 550px;
+
+    color: #999;
+
+    font-size: 14px;
+
+    margin-bottom: 35px;
+}
+
+.ai-number {
+    position: absolute;
+
+    right: 0;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    font-size: 250px;
+    font-weight: 800;
+
+    color: #1d1d1d;
+}
+
+
+/* ================= SERVICES ================= */
+
+.service-grid {
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 20px;
+}
+
+.service-card {
+    padding: 45px 35px;
+
+    border: 1px solid #ddd;
+
+    transition: 0.3s;
+}
+
+.service-card:hover {
+    background: #111;
+    color: #fff;
+}
+
+.service-number {
+    display: block;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    margin-bottom: 40px;
+}
+
+.service-card h3 {
+    font-size: 20px;
+
+    margin-bottom: 15px;
+}
+
+.service-card p {
+    color: #777;
+    font-size: 13px;
+}
+
+.service-card:hover p {
+    color: #aaa;
+}
+
+
+/* ================= CTA ================= */
+
+.cta {
+    padding: 120px 0;
+
+    background: #eee;
+
+    text-align: center;
+}
+
+.cta h2 {
+    font-size: 50px;
+    line-height: 1.05;
+
+    margin-bottom: 35px;
+}
+
+
+/* ================= FOOTER ================= */
+
+.footer {
+    background: #111;
+    color: #fff;
+
+    padding-top: 80px;
+}
+
+.footer-grid {
+    display: grid;
+
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+
+    gap: 50px;
+
+    padding-bottom: 70px;
+}
+
+.footer-brand p {
+    max-width: 350px;
+
+    margin-top: 25px;
+
+    color: #888;
+
+    font-size: 13px;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-column h4 {
+    font-size: 11px;
+    letter-spacing: 2px;
+
+    margin-bottom: 10px;
+}
+
+.footer-column a,
+.footer-column p {
+    color: #888;
+    font-size: 12px;
+
+    transition: 0.3s;
+}
+
+.footer-column a:hover {
+    color: #fff;
+}
+
+.footer-bottom {
+    padding: 25px 0;
+
+    border-top: 1px solid #292929;
+}
+
+.footer-bottom p {
+    color: #666;
+    font-size: 11px;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+    .nav {
+        gap: 15px;
+    }
+
+    .benefits-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .category-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+@media (max-width: 700px) {
+
+    .header-inner {
+        flex-wrap: wrap;
+
+        padding: 15px 0;
+    }
+
+    .nav {
+        order: 3;
+
+        width: 100%;
+
+        justify-content: center;
+
+        overflow-x: auto;
+
+        padding-bottom: 5px;
+    }
+
+    .nav a {
+        white-space: nowrap;
+    }
+
+    .login-btn {
+        display: none;
+    }
+
+    .benefits-grid,
+    .category-grid,
+    .product-grid,
+    .service-grid,
+    .footer-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .section {
+        padding: 70px 0;
+    }
+
+    .section-heading h2 {
+        font-size: 32px;
+    }
+
+    .ai-content h2,
+    .cta h2 {
+        font-size: 35px;
+    }
+
+}

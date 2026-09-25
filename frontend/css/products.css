@@ -1,0 +1,79 @@
+.page-hero {
+    padding: 120px 0;
+
+    background: #f3f3f3;
+}
+
+.page-hero h1 {
+    font-size: 65px;
+
+    line-height: 1;
+
+    margin-bottom: 20px;
+}
+
+.page-hero p {
+    color: #777;
+
+    max-width: 550px;
+}
+
+
+/* FILTER */
+
+.filter-bar {
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 50px;
+
+    border-bottom: 1px solid #ddd;
+
+    padding-bottom: 20px;
+}
+
+.filter-btn {
+    padding: 12px 22px;
+
+    border: 1px solid #ddd;
+
+    background: #fff;
+
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background: #111;
+    color: #fff;
+
+    border-color: #111;
+}
+
+
+.product-card.hidden {
+    display: none;
+}
+
+
+@media (max-width: 700px) {
+
+    .page-hero h1 {
+        font-size: 45px;
+    }
+
+    .filter-bar {
+        overflow-x: auto;
+    }
+
+    .filter-btn {
+        white-space: nowrap;
+    }
+
+}
