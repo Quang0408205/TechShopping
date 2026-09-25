@@ -1,0 +1,42 @@
+<!--
+    HEADER DÙNG CHUNG
+    Được js/core/layout.js chèn vào chỗ <div data-include="header" data-active="..."></div>.
+    {{ROOT}} được thay bằng đường dẫn gốc của website.
+    data-page của menu khớp với data-active của trang để tô đậm mục đang xem.
+-->
+<header class="header">
+
+    <div class="container header-inner">
+
+        <!-- Logo -->
+        <a href="{{ROOT}}index.html" class="logo">
+            <span class="logo-main">LAHY</span>
+            <span class="logo-sub">ĐỈNH CAO CÔNG NGHỆ</span>
+        </a>
+
+        <!-- Menu -->
+        <nav class="nav">
+            <a href="{{ROOT}}index.html" data-page="home">Trang chủ</a>
+            <a href="{{ROOT}}customer/products.html" data-page="products">Sản phẩm</a>
+            <a href="{{ROOT}}customer/recommendation.html" data-page="recommendation">Khuyến nghị</a>
+            <a href="{{ROOT}}customer/services.html" data-page="services">Dịch vụ</a>
+            <a href="{{ROOT}}customer/contact.html" data-page="contact">Liên hệ</a>
+        </nav>
+
+        <!-- Header actions -->
+        <div class="header-actions">
+
+            <a href="{{ROOT}}customer/cart.html" class="cart-btn">
+                🛒
+                <span class="cart-count">0</span>
+            </a>
+
+            <a href="{{ROOT}}auth/login.html" class="login-btn">
+                Đăng nhập
+            </a>
+
+        </div>
+
+    </div>
+
+</header>

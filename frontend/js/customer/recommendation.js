@@ -149,7 +149,7 @@ document.addEventListener(
                     <div class="product-image">
 
                         <img
-                            src="assets/images/smartphone.jpg"
+                            src="../assets/images/smartphone.jpg"
                             alt="${product.name}"
                         >
 
