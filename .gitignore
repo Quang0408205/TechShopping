@@ -35,3 +35,15 @@ venv/
 *.csv
 __pycache__/
 .DS_Store
+### Secrets ###
+.env
+*.env
+*.pem
+*.key
+
+### Windows ###
+Thumbs.db
+Desktop.ini
+
+### Tooling ###
+.github/modernize/
