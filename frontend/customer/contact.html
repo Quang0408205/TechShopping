@@ -12,8 +12,8 @@
 
     <title>Liên hệ - LAHY</title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/contact.css">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/customer/contact.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
@@ -24,57 +24,7 @@
 <body>
 
 
-<header class="header">
-
-    <div class="container header-inner">
-
-        <a href="index.html" class="logo">
-
-            <span class="logo-main">LAHY</span>
-
-            <span class="logo-sub">
-                ĐỈNH CAO CÔNG NGHỆ
-            </span>
-
-        </a>
-
-
-        <nav class="nav">
-
-            <a href="index.html">Trang chủ</a>
-
-            <a href="products.html">Sản phẩm</a>
-
-            <a href="recommendation.html">Khuyến nghị</a>
-
-            <a href="services.html">Dịch vụ</a>
-
-            <a
-                href="contact.html"
-                class="active"
-            >
-                Liên hệ
-            </a>
-
-        </nav>
-
-
-        <div class="header-actions">
-
-            <a href="cart.html" class="cart-btn">
-                🛒
-                <span class="cart-count">0</span>
-            </a>
-
-            <a href="login.html" class="login-btn">
-                Đăng nhập
-            </a>
-
-        </div>
-
-    </div>
-
-</header>
+<div data-include="header" data-active="contact"></div>
 
 
 <main>
@@ -212,33 +162,13 @@
 </main>
 
 
-<footer class="footer">
-
-    <div class="container footer-grid">
-
-        <div class="footer-brand">
-
-            <a href="index.html" class="logo">
-
-                <span class="logo-main">
-                    LAHY
-                </span>
-
-                <span class="logo-sub">
-                    ĐỈNH CAO CÔNG NGHỆ
-                </span>
-
-            </a>
-
-        </div>
-
-    </div>
-
-</footer>
+<div data-include="footer"></div>
 
 
-<script src="js/main.js"></script>
-<script src="js/contact.js"></script>
+<script src="../js/core/api.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/contact.js"></script>
 
 </body>
 </html>

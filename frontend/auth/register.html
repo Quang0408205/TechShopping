@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Đăng ký - LAHY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/auth/login.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="login-page">
+
+
+<div class="login-wrapper">
+
+
+    <div class="login-box">
+
+
+        <a
+            href="../index.html"
+            class="logo login-logo"
+        >
+
+            <span class="logo-main">
+                LAHY
+            </span>
+
+            <span class="logo-sub">
+                ĐỈNH CAO CÔNG NGHỆ
+            </span>
+
+        </a>
+
+
+        <span class="section-label">
+            TÀI KHOẢN
+        </span>
+
+
+        <h1>
+            ĐĂNG KÝ
+        </h1>
+
+
+        <form id="registerForm" novalidate>
+
+
+            <p
+                id="registerError"
+                class="form-error"
+                role="alert"
+                hidden
+            ></p>
+
+
+            <label for="fullname">
+                Họ và tên
+            </label>
+
+            <input
+                type="text"
+                id="fullname"
+                placeholder="Nhập họ và tên"
+                autocomplete="name"
+                maxlength="120"
+                required
+            >
+
+            <small class="field-error" data-field="fullname"></small>
+
+
+            <label for="email">
+                Email
+            </label>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Nhập email"
+                autocomplete="email"
+                maxlength="120"
+                required
+            >
+
+            <small class="field-error" data-field="email"></small>
+
+
+            <label for="username">
+                Tên đăng nhập
+            </label>
+
+            <input
+                type="text"
+                id="username"
+                placeholder="3-50 ký tự: chữ, số, dấu . _ -"
+                autocomplete="username"
+                maxlength="50"
+                required
+            >
+
+            <small class="field-error" data-field="username"></small>
+
+
+            <label for="phone">
+                Số điện thoại (không bắt buộc)
+            </label>
+
+            <input
+                type="tel"
+                id="phone"
+                placeholder="Nhập số điện thoại"
+                autocomplete="tel"
+                maxlength="20"
+            >
+
+            <small class="field-error" data-field="phone"></small>
+
+
+            <label for="password">
+                Mật khẩu
+            </label>
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Ít nhất 8 ký tự"
+                autocomplete="new-password"
+                maxlength="72"
+                required
+            >
+
+            <small class="field-error" data-field="password"></small>
+
+
+            <label for="confirmPassword">
+                Nhập lại mật khẩu
+            </label>
+
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Nhập lại mật khẩu"
+                autocomplete="new-password"
+                maxlength="72"
+                required
+            >
+
+            <small class="field-error" data-field="confirmPassword"></small>
+
+
+            <button
+                type="submit"
+                id="registerButton"
+                class="btn btn-dark"
+            >
+                ĐĂNG KÝ
+            </button>
+
+
+        </form>
+
+
+        <div class="login-links">
+
+            <span>
+                Đã có tài khoản?
+            </span>
+
+            <a href="login.html">
+                Đăng nhập
+            </a>
+
+        </div>
+
+
+        <a
+            href="../index.html"
+            class="back-home"
+        >
+            ← Quay lại trang chủ
+        </a>
+
+
+    </div>
+
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/auth/register.js"></script>
+
+</body>
+</html>
