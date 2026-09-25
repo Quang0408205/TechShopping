@@ -1,0 +1,51 @@
+.recommendation-box {
+    max-width: 900px;
+
+    margin: 0 auto;
+
+    padding: 60px;
+
+    background: #f4f4f4;
+}
+
+.recommendation-box h2 {
+    font-size: 38px;
+
+    line-height: 1.1;
+
+    margin-bottom: 20px;
+}
+
+.recommendation-box p {
+    color: #777;
+
+    font-size: 14px;
+
+    margin-bottom: 25px;
+}
+
+.recommendation-box textarea {
+    width: 100%;
+
+    min-height: 160px;
+
+    resize: vertical;
+
+    padding: 20px;
+
+    border: 1px solid #ddd;
+
+    outline: none;
+
+    margin-bottom: 20px;
+}
+
+.recommendation-result {
+    margin-top: 80px;
+}
+
+.recommendation-result h2 {
+    font-size: 35px;
+
+    margin-bottom: 35px;
+}
