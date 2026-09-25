@@ -9,3 +9,8 @@ spring:
     redis:
       host: localhost
       port: 6379
+
+app:
+  jwt:
+    # Test-only key; never use it outside the test profile
+    secret: test-only-jwt-secret-for-techshopping-tests-0123456789

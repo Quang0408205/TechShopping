@@ -49,7 +49,27 @@ public enum ErrorCode {
     // Variant attribute value
     VARIANT_ATTRIBUTE_VALUE_NOT_FOUND(HttpStatus.NOT_FOUND, "Attribute value is not assigned to the variant"),
     DUPLICATE_VARIANT_ATTRIBUTE_VALUE(HttpStatus.CONFLICT, "Attribute value is already assigned to the variant"),
-    VARIANT_ATTRIBUTE_CONFLICT(HttpStatus.CONFLICT, "Variant already has a value for this attribute");
+    VARIANT_ATTRIBUTE_CONFLICT(HttpStatus.CONFLICT, "Variant already has a value for this attribute"),
+
+    // Authentication / authorization
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Authentication is required"),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "Token is invalid or expired"),
+    INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid login or password"),
+    ACCESS_DENIED(HttpStatus.FORBIDDEN, "You do not have permission to perform this action"),
+    ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),
+
+    // User
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "User not found"),
+    ROLE_NOT_FOUND(HttpStatus.NOT_FOUND, "Role not found"),
+    CUSTOMER_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "Customer profile not found"),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "Email is already registered"),
+    DUPLICATE_USERNAME(HttpStatus.CONFLICT, "Username is already taken"),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "Current password is incorrect"),
+
+    // Admin user management
+    CANNOT_MODIFY_OWN_ACCOUNT(HttpStatus.CONFLICT, "Administrators cannot deactivate, delete or demote their own account"),
+    LAST_ADMIN(HttpStatus.CONFLICT, "The last active administrator cannot be removed"),
+    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted");
 
     private final HttpStatus status;
     private final String defaultMessage;

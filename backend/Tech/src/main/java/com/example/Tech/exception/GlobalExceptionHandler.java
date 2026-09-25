@@ -8,6 +8,8 @@ import org.springframework.data.core.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -63,6 +65,17 @@ public class GlobalExceptionHandler {
         HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());
         ApiError error = new ApiError(status.name(), errorResponse.getBody().getDetail(), null);
         return ResponseEntity.status(errorResponse.getStatusCode()).body(ApiResult.fail(error));
+    }
+
+    /** Method security (@PreAuthorize) failures inside controllers; filter-level ones go to RestAccessDeniedHandler. */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResult<Void>> handleAccessDenied(AccessDeniedException ex) {
+        return build(ErrorCode.ACCESS_DENIED, ErrorCode.ACCESS_DENIED.getDefaultMessage(), null);
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ApiResult<Void>> handleAuthentication(AuthenticationException ex) {
+        return build(ErrorCode.UNAUTHORIZED, ErrorCode.UNAUTHORIZED.getDefaultMessage(), null);
     }
 
     @ExceptionHandler(Exception.class)

@@ -26,3 +26,17 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
     tags-sorter: alpha
+
+app:
+  # First ADMIN account, created at startup only while no ADMIN exists.
+  # Set through environment variables; never put real values in this file.
+  bootstrap-admin:
+    email: ${ADMIN_EMAIL:}
+    username: ${ADMIN_USERNAME:}
+    password: ${ADMIN_PASSWORD:}
+  jwt:
+    # HS256 signing key, at least 32 bytes. Required: set the JWT_SECRET environment variable.
+    secret: ${JWT_SECRET:}
+    issuer: techshopping
+    access-token-ttl: 30m
+    refresh-token-ttl: 7d
