@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Tài khoản - LAHY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/customer/contact.css">
+    <link rel="stylesheet" href="../css/customer/account.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <span class="section-label">
+                LAHY
+            </span>
+
+            <h1>
+                TÀI KHOẢN
+            </h1>
+
+            <p>
+                Quản lý thông tin cá nhân, hồ sơ mua hàng
+                và mật khẩu của bạn.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="container">
+
+
+            <p
+                id="accountStatus"
+                class="form-error"
+                role="alert"
+                hidden
+            ></p>
+
+
+            <!-- ================= TỔNG QUAN ================= -->
+
+            <div
+                id="accountSummary"
+                class="account-summary"
+                hidden
+            >
+
+                <div class="account-summary-item">
+                    <strong>THÀNH VIÊN</strong>
+                    <p id="summaryUsername">-</p>
+                </div>
+
+                <div class="account-summary-item">
+                    <strong>ĐIỂM TÍCH LŨY</strong>
+                    <p id="summaryPoints">0</p>
+                </div>
+
+                <div class="account-summary-item">
+                    <strong>TỔNG CHI TIÊU</strong>
+                    <p id="summarySpent">0đ</p>
+                </div>
+
+                <div class="account-summary-item">
+                    <strong>NGÀY THAM GIA</strong>
+                    <p id="summaryJoined">-</p>
+                </div>
+
+                <button
+                    type="button"
+                    id="logoutButton"
+                    class="btn btn-outline-dark"
+                >
+                    ĐĂNG XUẤT
+                </button>
+
+            </div>
+
+
+            <div
+                id="accountContent"
+                class="contact-grid account-grid"
+                hidden
+            >
+
+
+                <div class="account-column">
+
+
+                    <!-- ================= THÔNG TIN TÀI KHOẢN ================= -->
+
+                    <form
+                        id="accountForm"
+                        class="contact-form account-form"
+                        novalidate
+                    >
+
+                        <span class="section-label">
+                            THÔNG TIN TÀI KHOẢN
+                        </span>
+
+                        <p class="form-error" data-role="error" role="alert" hidden></p>
+                        <p class="form-success" data-role="success" role="status" hidden></p>
+
+
+                        <label for="email">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            readonly
+                        >
+
+
+                        <label for="username">
+                            Tên đăng nhập
+                        </label>
+
+                        <input
+                            type="text"
+                            id="username"
+                            readonly
+                        >
+
+                        <small class="account-hint">
+                            Email và tên đăng nhập không thể thay đổi.
+                        </small>
+
+
+                        <label for="fullname">
+                            Họ và tên
+                        </label>
+
+                        <input
+                            type="text"
+                            id="fullname"
+                            maxlength="120"
+                            autocomplete="name"
+                            required
+                        >
+
+                        <small class="field-error" data-field="fullname"></small>
+
+
+                        <label for="phone">
+                            Số điện thoại
+                        </label>
+
+                        <input
+                            type="tel"
+                            id="phone"
+                            maxlength="20"
+                            autocomplete="tel"
+                        >
+
+                        <small class="field-error" data-field="phone"></small>
+
+
+                        <label for="avatarUrl">
+                            Ảnh đại diện (URL)
+                        </label>
+
+                        <input
+                            type="url"
+                            id="avatarUrl"
+                            maxlength="2048"
+                            placeholder="https://..."
+                        >
+
+                        <small class="field-error" data-field="avatarUrl"></small>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-dark"
+                        >
+                            LƯU THÔNG TIN
+                        </button>
+
+                    </form>
+
+
+                    <!-- ================= ĐỔI MẬT KHẨU ================= -->
+
+                    <form
+                        id="passwordForm"
+                        class="contact-form account-form"
+                        novalidate
+                    >
+
+                        <span class="section-label">
+                            ĐỔI MẬT KHẨU
+                        </span>
+
+                        <p class="form-error" data-role="error" role="alert" hidden></p>
+                        <p class="form-success" data-role="success" role="status" hidden></p>
+
+
+                        <label for="currentPassword">
+                            Mật khẩu hiện tại
+                        </label>
+
+                        <input
+                            type="password"
+                            id="currentPassword"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <small class="field-error" data-field="currentPassword"></small>
+
+
+                        <label for="newPassword">
+                            Mật khẩu mới
+                        </label>
+
+                        <input
+                            type="password"
+                            id="newPassword"
+                            maxlength="72"
+                            placeholder="Ít nhất 8 ký tự"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <small class="field-error" data-field="newPassword"></small>
+
+
+                        <label for="confirmNewPassword">
+                            Nhập lại mật khẩu mới
+                        </label>
+
+                        <input
+                            type="password"
+                            id="confirmNewPassword"
+                            maxlength="72"
+                            autocomplete="new-password"
+                            required
+                        >
+
+                        <small class="field-error" data-field="confirmNewPassword"></small>
+
+
+                        <small class="account-hint">
+                            Sau khi đổi mật khẩu, bạn cần đăng nhập lại trên mọi thiết bị.
+                        </small>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-dark"
+                        >
+                            ĐỔI MẬT KHẨU
+                        </button>
+
+                    </form>
+
+
+                </div>
+
+
+                <!-- ================= HỒ SƠ KHÁCH HÀNG ================= -->
+
+                <form
+                    id="profileForm"
+                    class="contact-form account-form"
+                    novalidate
+                >
+
+                    <span class="section-label">
+                        HỒ SƠ KHÁCH HÀNG
+                    </span>
+
+                    <p class="form-error" data-role="error" role="alert" hidden></p>
+                    <p class="form-success" data-role="success" role="status" hidden></p>
+
+                    <small
+                        id="profileEmptyHint"
+                        class="account-hint"
+                        hidden
+                    >
+                        Bạn chưa có hồ sơ khách hàng. Điền thông tin bên dưới để tạo mới.
+                    </small>
+
+
+                    <label for="dateOfBirth">
+                        Ngày sinh
+                    </label>
+
+                    <input
+                        type="date"
+                        id="dateOfBirth"
+                    >
+
+                    <small class="field-error" data-field="dateOfBirth"></small>
+
+
+                    <label for="gender">
+                        Giới tính
+                    </label>
+
+                    <select id="gender">
+                        <option value="">-- Chọn giới tính --</option>
+                        <option value="MALE">Nam</option>
+                        <option value="FEMALE">Nữ</option>
+                        <option value="OTHER">Khác</option>
+                    </select>
+
+                    <small class="field-error" data-field="gender"></small>
+
+
+                    <label for="address">
+                        Địa chỉ
+                    </label>
+
+                    <input
+                        type="text"
+                        id="address"
+                        maxlength="255"
+                        placeholder="Số nhà, tên đường"
+                        autocomplete="street-address"
+                    >
+
+                    <small class="field-error" data-field="address"></small>
+
+
+                    <label for="ward">
+                        Phường / Xã
+                    </label>
+
+                    <input
+                        type="text"
+                        id="ward"
+                        maxlength="100"
+                    >
+
+                    <small class="field-error" data-field="ward"></small>
+
+
+                    <label for="district">
+                        Quận / Huyện
+                    </label>
+
+                    <input
+                        type="text"
+                        id="district"
+                        maxlength="100"
+                    >
+
+                    <small class="field-error" data-field="district"></small>
+
+
+                    <label for="city">
+                        Tỉnh / Thành phố
+                    </label>
+
+                    <input
+                        type="text"
+                        id="city"
+                        maxlength="100"
+                    >
+
+                    <small class="field-error" data-field="city"></small>
+
+
+                    <label for="postalCode">
+                        Mã bưu chính
+                    </label>
+
+                    <input
+                        type="text"
+                        id="postalCode"
+                        maxlength="20"
+                        autocomplete="postal-code"
+                    >
+
+                    <small class="field-error" data-field="postalCode"></small>
+
+
+                    <label for="defaultShippingAddress">
+                        Địa chỉ giao hàng mặc định
+                    </label>
+
+                    <textarea
+                        id="defaultShippingAddress"
+                        rows="4"
+                        maxlength="1000"
+                    ></textarea>
+
+                    <small class="field-error" data-field="defaultShippingAddress"></small>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-dark"
+                    >
+                        LƯU HỒ SƠ
+                    </button>
+
+                </form>
+
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/account.js"></script>
+
+</body>
+</html>

@@ -45,8 +45,7 @@ function renderAuthState() {
 
             loginButton.classList.add("user-name");
 
-            /* Trang tài khoản sẽ được thêm sau (account.html) */
-            loginButton.removeAttribute("href");
+            loginButton.href = siteUrl("customer/account.html");
 
 
             const logoutButton =

@@ -19,7 +19,10 @@ logging:
 
 app:
   cors:
-    # Frontend served by VS Code Live Server
+    # Frontend served by VS Code Live Server. Port 5500 is taken by Oracle's TNS listener on the
+    # main dev machine, so Live Server runs on 5501 there (liveServer.settings.port).
     allowed-origins:
       - http://127.0.0.1:5500
       - http://localhost:5500
+      - http://127.0.0.1:5501
+      - http://localhost:5501

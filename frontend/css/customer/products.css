@@ -1,22 +1,4 @@
-.page-hero {
-    padding: 120px 0;
-
-    background: #f3f3f3;
-}
-
-.page-hero h1 {
-    font-size: 65px;
-
-    line-height: 1;
-
-    margin-bottom: 20px;
-}
-
-.page-hero p {
-    color: #777;
-
-    max-width: 550px;
-}
+/* .page-hero: xem css/style.css (dùng chung cho mọi trang customer) */
 
 
 /* FILTER */
@@ -63,10 +45,6 @@
 
 
 @media (max-width: 700px) {
-
-    .page-hero h1 {
-        font-size: 45px;
-    }
 
     .filter-bar {
         overflow-x: auto;

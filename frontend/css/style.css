@@ -262,6 +262,66 @@ img {
 }
 
 
+/* ================= PAGE HERO (tiêu đề trang, dùng chung) ================= */
+
+.page-hero {
+    padding: 120px 0;
+
+    background: #f3f3f3;
+}
+
+.page-hero h1 {
+    font-size: 65px;
+
+    line-height: 1;
+
+    margin-bottom: 20px;
+}
+
+.page-hero p {
+    color: #777;
+
+    max-width: 550px;
+}
+
+
+/* ================= THÔNG BÁO FORM (dùng chung) ================= */
+
+.form-error,
+.form-success {
+    padding: 14px 16px;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.form-error {
+    background: #fdf1f0;
+
+    border-left: 3px solid #c0392b;
+
+    color: #c0392b;
+}
+
+.form-success {
+    background: #eef7f0;
+
+    border-left: 3px solid #2e7d4f;
+
+    color: #2e7d4f;
+}
+
+.field-error {
+    color: #c0392b;
+
+    font-size: 11px;
+}
+
+.field-error:empty {
+    display: none;
+}
+
+
 /* ================= SECTION HEADING ================= */
 
 .section-heading {
@@ -744,6 +804,10 @@ img {
 
     .nav a {
         white-space: nowrap;
+    }
+
+    .page-hero h1 {
+        font-size: 45px;
     }
 
     .login-btn {

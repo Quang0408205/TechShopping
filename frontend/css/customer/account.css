@@ -1,0 +1,116 @@
+/* Trang tài khoản: dùng lại .contact-grid, .contact-form (contact.css) */
+
+
+/* TỔNG QUAN */
+
+.account-summary {
+    display: grid;
+
+    grid-template-columns: repeat(4, 1fr) auto;
+
+    align-items: center;
+
+    gap: 30px;
+
+    margin-bottom: 70px;
+
+    padding: 30px 35px;
+
+    background: #f4f4f4;
+}
+
+.account-summary-item strong {
+    font-size: 10px;
+
+    letter-spacing: 2px;
+}
+
+.account-summary-item p {
+    margin-top: 5px;
+
+    font-size: 18px;
+    font-weight: 700;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-summary .btn {
+    cursor: pointer;
+
+    background: transparent;
+}
+
+
+/* FORM */
+
+.account-column {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 70px;
+}
+
+.account-form .btn {
+    margin-top: 20px;
+
+    border: none;
+
+    cursor: pointer;
+}
+
+.account-form .btn:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
+.account-form input[readonly] {
+    background: #f4f4f4;
+
+    color: #777;
+}
+
+.account-form select {
+    width: 100%;
+
+    padding: 15px;
+
+    border: 1px solid #ddd;
+
+    background: #fff;
+
+    outline: none;
+
+    /* Giống input (style.css chỉ kế thừa font-family, cỡ chữ mặc định) */
+    font-family: inherit;
+}
+
+.account-form select:focus {
+    border-color: #111;
+}
+
+.account-hint {
+    color: #777;
+
+    font-size: 11px;
+}
+
+
+@media (max-width: 1000px) {
+
+    .account-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+}
+
+@media (max-width: 700px) {
+
+    .account-summary {
+        grid-template-columns: 1fr;
+    }
+
+}
