@@ -9,6 +9,7 @@ Toàn bộ chạy bằng **Docker**: cài xong chỉ cần mở Docker Desktop l
 | Thành phần | Địa chỉ |
 |---|---|
 | Website | http://localhost:5510 |
+| Khu quản trị nội bộ | http://localhost:5510/admin/login.html |
 | API | http://localhost:8080/api/v1 |
 | Tài liệu API (Swagger) | http://localhost:8080/swagger-ui/index.html |
 
@@ -31,8 +32,9 @@ Không cần cài Java, Maven hay Node để chạy web; Docker lo hết.
 ```powershell
 git clone https://github.com/Quang0408205/TechShopping.git
 cd TechShopping
-git checkout quang
 ```
+
+Nhánh `main` luôn có bản chạy được mới nhất.
 
 ### Bước 2: Tạo file cấu hình `.env`
 
@@ -87,12 +89,29 @@ Rồi chạy:
 docker compose up -d backend
 ```
 
-- ADMIN chỉ được tạo **một lần**, khi database chưa có ADMIN nào. Sau đó có thể xoá 3 dòng này khỏi `.env`.
+- ADMIN chỉ được tạo **một lần**, khi database chưa có ADMIN nào (database đã có ADMIN thì 3 dòng này bị bỏ qua). Sau đó có thể xoá 3 dòng này khỏi `.env`.
 - Tài khoản khách hàng thì tự đăng ký trên web (nút **Đăng nhập** → **Đăng ký**).
+- **Khu quản trị nội bộ:** http://localhost:5510/admin/login.html, đăng nhập bằng email hoặc tên đăng nhập của ADMIN.
+  - Chỉ tài khoản có quyền **STAFF** hoặc **ADMIN** vào được.
+  - ADMIN cấp quyền cho người khác ở trang **Người dùng & phân quyền**: người đó tự đăng ký trên web trước, sau đó ADMIN tick **Nhân viên** cho tài khoản đó.
 
 ---
 
-## 3. Dùng hằng ngày
+## 3. Tính năng hiện có
+
+| Khu vực | Tính năng | Dữ liệu |
+|---|---|---|
+| Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
+| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm, trang khuyến nghị | **Thật** (877 sản phẩm) |
+| Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu theo từng tài khoản, hiệu ứng bay vào giỏ | Lưu trên trình duyệt (backend giỏ hàng: Phase 3) |
+| Khách hàng | Thanh toán, đơn hàng, chi tiết đơn | Mô phỏng, lưu trên trình duyệt (backend đơn hàng: Phase 4) |
+| Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
+| Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** | **Thật** (API) |
+| Quản trị | Tổng quan, bảo hành / đổi trả, hỗ trợ khách hàng, đơn chi nhánh, báo cáo, nhân viên, chi nhánh, lịch sử chatbot | Dữ liệu mẫu (Phase 4–9) |
+
+---
+
+## 4. Dùng hằng ngày
 
 | Việc | Lệnh / cách làm |
 |---|---|
@@ -107,7 +126,7 @@ docker compose up -d backend
 
 ---
 
-## 4. Gặp lỗi thường gặp
+## 5. Gặp lỗi thường gặp
 
 | Hiện tượng | Cách xử lý |
 |---|---|
@@ -115,12 +134,14 @@ docker compose up -d backend
 | `docker: command not found` / `failed to connect to the docker API` | Docker Desktop chưa chạy: mở Docker Desktop, chờ **Engine running** |
 | `port is already allocated` với cổng **5510** | Cổng bị chương trình khác dùng: trong `.env` đổi `FRONTEND_PORT=5520` (cổng khác bất kỳ), rồi `docker compose up -d` và mở http://localhost:5520 |
 | `port is already allocated` với cổng **8080**, **5432** hoặc **6379** | Tắt chương trình đang dùng cổng đó (ví dụ PostgreSQL / Redis cài sẵn trên máy, hoặc backend đang chạy bằng `mvnw`) |
+| Bấm "Thêm vào giỏ" thì bị chuyển sang trang đăng nhập | Đúng thiết kế: phải đăng nhập mới thêm được vào giỏ; đăng nhập xong sẽ quay lại đúng trang |
+| Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: ADMIN cấp quyền **Nhân viên** ở trang Người dùng & phân quyền, hoặc tạo ADMIN đầu tiên ở **Bước 5** |
 | Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
 | Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu |
 
 ---
 
-## 5. Dành cho người phát triển
+## 6. Dành cho người phát triển
 
 Phần này cần thêm **JDK 21** (để chạy test backend).
 
