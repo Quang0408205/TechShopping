@@ -31,7 +31,7 @@ function renderCart() {
 
                 <p>
                     Hãy khám phá các sản phẩm
-                    của LAHY.
+                    của POY.
                 </p>
 
                 <br>
@@ -73,7 +73,7 @@ function renderCart() {
             <tr>
 
                 <td class="cart-product">
-                    ${product.name}
+                    ${escapeHtml(product.name)}
                 </td>
 
                 <td>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Tổng quan - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Tổng quan" data-roles="">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="dashboard"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p id="deniedNotice" class="form-error admin-notice" role="alert" hidden>
+                Bạn không có quyền truy cập trang vừa chọn.
+            </p>
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <p class="admin-greeting" id="dashboardGreeting"></p>
+
+            <div class="admin-stat-grid" id="statGrid"></div>
+
+
+            <div class="admin-panel-grid">
+
+                <section class="admin-panel">
+
+                    <div class="admin-panel-header">
+                        <h2>Doanh thu theo tháng</h2>
+                    </div>
+
+                    <div class="admin-chart-wrapper" id="revenueChart"></div>
+
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="revenueByMonthTable">
+                            <thead>
+                                <tr><th>Tháng</th><th>Lượt bán</th><th>Doanh thu</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+
+                <section class="admin-panel">
+
+                    <div class="admin-panel-header">
+                        <h2>Sản phẩm bán chạy nhất</h2>
+                    </div>
+
+                    <div class="admin-chart-wrapper" id="topProductsChart"></div>
+
+                    <div class="admin-table-wrapper">
+                        <table class="admin-table" id="topProductsTable">
+                            <thead>
+                                <tr><th>Sản phẩm</th><th>Số lượng</th><th>Doanh thu</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                </section>
+
+            </div>
+
+
+            <!-- Chỉ ADMIN -->
+            <section class="admin-panel" id="storeBreakdownPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Doanh thu theo chi nhánh</h2>
+                </div>
+
+                <div class="admin-chart-wrapper" id="storeBreakdownChart"></div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="storeBreakdownTable">
+                        <thead>
+                            <tr><th>Chi nhánh</th><th>Lượt bán</th><th>Doanh thu</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-charts.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/dashboard.js"></script>
+
+</body>
+</html>

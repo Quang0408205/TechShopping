@@ -6,7 +6,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const ORIGIN = "http://127.0.0.1:5501";
+const ORIGIN = process.env.E2E_ORIGIN || "http://127.0.0.1:5501";
 const SITE = `${ORIGIN}/frontend`;
 const SHOTS = process.argv[2] || ".";
 const PORT = 9336;
@@ -98,7 +98,7 @@ const fill = values => evaluate(`Object.entries(${JSON.stringify(values)})
     .forEach(([id, v]) => { document.getElementById(id).value = v; })`);
 const text = selector => evaluate(`document.querySelector(${JSON.stringify(selector)})?.textContent.trim()`);
 const visible = selector => evaluate(`(() => { const e = document.querySelector(${JSON.stringify(selector)}); return Boolean(e && !e.hidden); })()`);
-const auth = () => evaluate(`JSON.parse(localStorage.getItem("lahy_auth"))`);
+const auth = () => evaluate(`JSON.parse(localStorage.getItem("poy_auth"))`);
 const accountLoaded = `!document.getElementById("accountContent").hidden && document.getElementById("email").value`;
 async function shot(name) {
     const { result } = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
@@ -224,7 +224,7 @@ try {
     check("password: old password rejected", oldLogin === "INVALID_CREDENTIALS", oldLogin);
     await fill({ identifier: USER.username, password: NEW_PASSWORD });
     await evaluate(`document.getElementById("loginForm").requestSubmit()`);
-    await waitFor(`location.pathname.endsWith("/frontend/index.html") && localStorage.getItem("lahy_auth")`);
+    await waitFor(`location.pathname.endsWith("/frontend/index.html") && localStorage.getItem("poy_auth")`);
     check("password: new password works", Boolean(await auth()));
 
     // 7. deactivated account (mocked 403) → message, content hidden, session cleared
@@ -238,7 +238,7 @@ try {
 
     // 8. expired session (bad access + bad refresh) → back to login
     await navigate(`${SITE}/index.html`);
-    await evaluate(`localStorage.setItem("lahy_auth", JSON.stringify({ accessToken: "bad.access", refreshToken: "bad-refresh",
+    await evaluate(`localStorage.setItem("poy_auth", JSON.stringify({ accessToken: "bad.access", refreshToken: "bad-refresh",
         user: { username: "x", fullname: "X" } }))`);
     await navigate(`${SITE}/customer/account.html`);
     await waitFor(`location.pathname.endsWith("/auth/login.html")`);

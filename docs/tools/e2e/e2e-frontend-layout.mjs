@@ -7,7 +7,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const EDGE = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-const SITE = "http://127.0.0.1:5501/frontend";
+const ORIGIN = process.env.E2E_ORIGIN || "http://127.0.0.1:5501";
+const SITE = `${ORIGIN}/frontend`;
 const PORT = 9335;
 // Registers a NEW user on every run: pass a fresh name, e.g. E2E_USER=fe.e2e9 (usernames already used: see PENDING_WORK.md)
 const NAME = process.env.E2E_USER || "fe.e2e7";
@@ -54,7 +55,7 @@ ws.addEventListener("message", ({ data }) => {
     // static files of the site that fail to load (API 4xx are expected in some steps and ignored)
     if (msg.method === "Network.responseReceived") {
         const { url, status } = msg.params.response;
-        if (status >= 400 && url.startsWith("http://127.0.0.1:5501/") && !url.endsWith("/favicon.ico")) missing.push(`${status} ${url}`);
+        if (status >= 400 && url.startsWith(ORIGIN + "/") && !url.endsWith("/favicon.ico")) missing.push(`${status} ${url}`);
     }
 });
 const send = (method, params = {}) => new Promise(resolve => {
@@ -83,7 +84,7 @@ async function waitFor(expression, timeout = 8000) {
 }
 const fill = values => evaluate(`Object.entries(${JSON.stringify(values)})
     .forEach(([id, v]) => { document.getElementById(id).value = v; })`);
-const auth = () => evaluate(`JSON.parse(localStorage.getItem("lahy_auth"))`);
+const auth = () => evaluate(`JSON.parse(localStorage.getItem("poy_auth"))`);
 const headerReady = `document.querySelector("header.header") && document.querySelector("footer.footer")`;
 
 await send("Page.enable");
@@ -129,9 +130,9 @@ try {
     await navigate(`${SITE}/index.html`);
     await evaluate(`document.querySelector('a.category-card[href*="category=phone"]').click()`);
     await waitFor(`location.search === "?category=phone" && document.readyState === "complete"`);
-    check("index category card → customer/products.html?category=phone, filter applied",
+    check("index category card → customer/products.html?category=phone, sidebar filter ready (2.8 markup)",
         (await evaluate(`location.pathname.endsWith("customer/products.html")`))
-        && (await waitFor(`document.querySelector('.filter-btn[data-category="phone"]').classList.contains("active")`)) === true);
+        && (await waitFor(`Boolean(document.querySelector('input[name="category"]:checked')) && !document.querySelector(".skeleton-card")`)) === true);
 
     // 3. auth pages in auth/ still work: register → redirect to root index with name in header
     await navigate(`${SITE}/auth/register.html`);
@@ -150,7 +151,7 @@ try {
     await navigate(`${SITE}/customer/cart.html`);
     await waitFor(`document.querySelector(".header .logout-btn")`);
     await evaluate(`document.querySelector(".header .logout-btn").click()`);
-    await waitFor(`document.readyState === "complete" && document.querySelector("header.header") && !document.querySelector(".header .logout-btn") && !localStorage.getItem("lahy_auth")`);
+    await waitFor(`document.readyState === "complete" && document.querySelector("header.header") && !document.querySelector(".header .logout-btn") && !localStorage.getItem("poy_auth")`);
     check("logout on customer/cart.html: storage cleared, header back to 'Đăng nhập'",
         (await auth()) === null && (await evaluate(`document.querySelector(".header .login-btn").textContent.trim()`)) === "Đăng nhập");
 

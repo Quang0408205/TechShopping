@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Đơn hàng chi nhánh - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Đơn hàng chi nhánh" data-roles="BRANCH_MANAGER,ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="orders"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <div class="admin-filter-bar">
+
+                <!-- js/admin/orders.js dựng theo vai trò -->
+                <select id="storeFilter" aria-label="Chi nhánh"></select>
+
+                <select id="statusFilter" aria-label="Trạng thái">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PENDING">Chờ xác nhận</option>
+                    <option value="CONFIRMED">Đã xác nhận</option>
+                    <option value="SHIPPING">Đang giao hàng</option>
+                    <option value="DELIVERED">Đã giao hàng</option>
+                    <option value="CANCELLED">Đã huỷ</option>
+                </select>
+
+            </div>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách đơn hàng</h2>
+                    <span class="admin-row-count" id="orderRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Mã đơn</th>
+                                <th>Ngày đặt</th>
+                                <th>Chi nhánh</th>
+                                <th>Sản phẩm</th>
+                                <th>Tổng tiền</th>
+                                <th>Thanh toán</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody"></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/orders.js"></script>
+
+</body>
+</html>

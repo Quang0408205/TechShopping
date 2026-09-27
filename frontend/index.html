@@ -296,144 +296,8 @@
         </div>
 
 
-        <div class="product-grid">
-
-            <div class="product-card">
-
-                <div class="product-image">
-                    <img
-                        src="assets/images/laptopdell.png"
-                        alt="Laptop Pro 14"
-                    >
-                </div>
-
-                <div class="product-info">
-
-                    <span class="product-category">
-                        LAPTOP
-                    </span>
-
-                    <h3>Laptop Dell</h3>
-
-                    <p class="product-price">
-                        24.990.000đ
-                    </p>
-
-                    <button
-                        class="add-cart"
-                        data-name="Laptop Pro 14"
-                        data-price="24990000"
-                    >
-                        THÊM VÀO GIỎ
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="product-card">
-
-                <div class="product-image">
-                    <img
-                        src="assets/images/iphone18promax.png"
-                        alt="Smartphone X Pro"
-                    >
-                </div>
-
-                <div class="product-info">
-
-                    <span class="product-category">
-                        ĐIỆN THOẠI
-                    </span>
-
-                    <h3>Iphone 18 Pro Max</h3>
-
-                    <p class="product-price">
-                        21.990.000đ
-                    </p>
-
-                    <button
-                        class="add-cart"
-                        data-name="Smartphone X Pro"
-                        data-price="21990000"
-                    >
-                        THÊM VÀO GIỎ
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="product-card">
-
-                <div class="product-image">
-                    <img
-                        src="assets/images/tablet_air.png"
-                        alt="Tablet Air 11"
-                    >
-                </div>
-
-                <div class="product-info">
-
-                    <span class="product-category">
-                        TABLET
-                    </span>
-
-                    <h3>Tablet Air 11</h3>
-
-                    <p class="product-price">
-                        15.490.000đ
-                    </p>
-
-                    <button
-                        class="add-cart"
-                        data-name="Tablet Air 11"
-                        data-price="15490000"
-                    >
-                        THÊM VÀO GIỎ
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div class="product-card">
-
-                <div class="product-image">
-                    <img
-                        src="assets/images/tainghe.png"
-                        alt="Wireless Headphones"
-                    >
-                </div>
-
-                <div class="product-info">
-
-                    <span class="product-category">
-                        PHỤ KIỆN TAI NGHE
-                    </span>
-
-                    <h3>Wireless Headphones</h3>
-
-                    <p class="product-price">
-                        2.490.000đ
-                    </p>
-
-                    <button
-                        class="add-cart"
-                        data-name="Wireless Headphones"
-                        data-price="2490000"
-                    >
-                        THÊM VÀO GIỎ
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
+        <!-- js/home.js render 4 sản phẩm đầu tiên từ GET /api/v1/products -->
+        <div class="product-grid" id="featuredProductGrid"></div>
 
 
         <div class="view-all">
@@ -571,7 +435,7 @@
     <div class="container">
 
         <span class="section-label">
-            LAHY
+            POY
         </span>
 
         <h2>
@@ -594,6 +458,7 @@
 
 
 <script src="js/core/api.js"></script>
+<script src="js/core/ui.js"></script>
 <script src="js/core/layout.js"></script>
 <script src="js/core/main.js"></script>
 <script src="js/home.js"></script>

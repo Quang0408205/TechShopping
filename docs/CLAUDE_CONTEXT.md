@@ -1,11 +1,29 @@
 # CLAUDE_CONTEXT — TechShopping handoff
 
-Last updated: 2026-09-25, **end of session 2**. The user stopped the session after Checkpoint 2.7 and asked for a final review of this file. **Open work is listed in [`docs/PENDING_WORK.md`](PENDING_WORK.md); read it first.**
-Session 2 summary:
-- Phase 2 backend 2.1–2.5b was built and committed as `c9e2d6c`;
-- frontend 2.6 (auth), the frontend restructure (role folders, partials, CORS +5501) and 2.7 (account page) are done but **not committed**;
-- 2.8 has not started.
-Previous updates: 2026-09-25 (Checkpoint 2.5b: admin user management; Checkpoint 2.5a: `/users/me` + per-user refresh index; Checkpoint 2.4: authorization D4 + Swagger bearer; Checkpoint 2.3: Auth API; Checkpoint 2.2: JWT + Redis refresh tokens + CORS; Checkpoint 2.1; Phase 2 decisions; frontend analysis; inspection report); 2026-09-24 (end of Phase 1 / Product module).
+Last updated: 2026-09-27, **session 4**. **Open work is listed in [`docs/PENDING_WORK.md`](PENDING_WORK.md); read it first.**
+Session 4 summary (2026-09-27):
+- Start-of-session check matched the docs, except that Docker Desktop was stopped and §2/§7 wrongly said the 5501 CORS entries were uncommitted (they were in `0b720de`).
+- **"Products do not load" fixed with option (b), approved:** dev CORS accepts any port on `localhost` / `127.0.0.1` through `app.cors.allowed-origin-patterns` (prod unchanged: exact list). `api.js` shows a local-dev hint when the API is unreachable. 229 tests (§6, §7 #22).
+- **B1 approved** by the user.
+- **Decisions for the switch to the whole reference frontend** (PENDING Việc 2): the cart stores snapshots `{productId, variantId, name, price, image, quantity}` (old name-based carts are migrated and the user is told); `admin/` = B1 is kept; the forgot / reset-password pages are dropped (the link stays `#`).
+- At the user's request, all the uncommitted work (R, 2.8, A2, `poy_*`, B1, Việc 1, docs) was **committed** under the user's git identity (not pushed), before starting Việc 2 (§9).
+- The user installed the Live Server extension (`ritwickdey.liveserver` 5.7.10); `liveServer.settings.port` is not set yet (default 5500 is Oracle's).
+
+Session 3 summary:
+- The user had already rewritten the git history and pushed everything, including `docs/` (§9).
+- A **parallel track** started: merging the reference frontend `frontend_update.zip` into `frontend/` by checkpoints (§10.5). The plan is in `C:\Users\Quang\.claude\plans\pasted-content-id-23a1-c-docs-claude-co-enchanted-dove.md`.
+- Checkpoints CP0 (extract the reference), R (brand LAHY → **POY**), **2.8 extended** (products from the API with a sticky sidebar and brand-by-category filter) and **A2** (product detail page from the real API) are done and approved. **Phase 2 is complete.** None of it is committed.
+- At the user's request, every localStorage key was renamed from `lahy_*` to **`poy_*`** (`poy_auth`, `poy_cart`); `api.js` moves old values once (§1).
+- **B1** (the `admin/` area on mock data, 3 staff roles) is implemented and **waiting for approval**. It is documented in §1 so the next session has everything.
+- **End of session: "products do not load"** was reported. The cause is the **environment**, not the code (§7 #22):
+  - the backend was not running;
+  - both CORS-allowed dev ports are taken: 5500 by Oracle, 5501 by Antigravity (`"antigravity.serverPort": 5501` in VS Code user settings);
+  - the Live Server extension is not installed.
+
+  The fix is the first item of §10.2.
+- **New user decision (2026-09-27, after the session was closed):** the next session switches to the **whole reference frontend** instead of merging piece by piece. This overrides Q2 ("keep the original look") and Q6 in §8 / §10.5. The real-API wiring, the `poy_*` keys, `escapeHtml` and the B1 admin fixes must be kept. See `PENDING_WORK.md` Việc 2 before doing anything.
+
+Previous updates: 2026-09-25, end of session 2 (Phase 2 backend 2.1–2.5b; frontend 2.6, restructure, 2.7); 2026-09-24 (end of Phase 1 / Product module).
 Everything here was checked against the code, git and the running database at the time of writing.
 If this file contradicts the code, **the code wins**. Update this file afterwards.
 
@@ -29,27 +47,93 @@ If this file contradicts the code, **the code wins**. Update this file afterward
   - `docker-compose.yml`: postgres + redis.
   - `Raw_data/`: Python crawler and TGDD CSVs (`tgdd_products_cleaned.csv`, 877 rows).
   - `AI_Service/`: empty (`.gitkeep` only, containing 4 spaces; committed that way by the user in `21d2cda`).
-  - `frontend/`: static HTML/CSS/JS customer site "LAHY", originally written by teammate **HoangPhuoc38** (commit `f58f92d`). It is part of the project and must be **developed further, not rewritten**: no framework, keep its look, and change the frontend to match the backend API, not the other way round.
+  - `frontend/`: static HTML/CSS/JS customer site, brand **"POY"** (renamed from "LAHY" in checkpoint R, 2026-09-26; the localStorage keys were renamed `lahy_*` → `poy_*` the same day at the user's request). It was originally written by teammate **HoangPhuoc38** (commit `f58f92d`). It is part of the project and must be **developed further, not rewritten**: no framework, keep its look, and change the frontend to match the backend API, not the other way round.
     - Since **2.6**, login, register and the header login state call the real Auth API.
-    - Cart, recommendation and contact are still simulated on the client; products stay hardcoded until 2.8.
+    - Since **2.8**, the products page and the home "featured" grid load real products from the API.
+    - Cart, recommendation and contact are still simulated on the client.
+  - `frontend-reference/frontend/`: the reference frontend extracted from `frontend_update.zip` (CP0). Both are **local only**: they are listed in `.git/info/exclude`, not in `.gitignore`. This is a mock-only frontend with an admin area; it is the source for the merge track (§10.5). Do not edit it and do not serve it as the real site.
     - The original analysis (A–H) is in §10.3 (it uses the old flat paths).
   - **Frontend structure** (restructured 2026-09-25 at the user's request: folders by role, JS/CSS mirrored, shared header/footer):
     ```
     frontend/
     ├── index.html                 home page (kept at the root so Live Server opens it)
     ├── auth/                      login.html, register.html (no header/footer: centred .login-box)
-    ├── customer/                  products, cart, recommendation, services, contact, account (2.7) .html
-    ├── admin/                     empty (.gitkeep), for STAFF/ADMIN pages later
-    ├── partials/                  header.html, footer.html (shared, see below)
-    ├── css/  style.css (shared), home.css, auth/login.css, customer/{products,cart,recommendation,contact,services,account}.css
-    ├── js/   core/{api.js, layout.js, main.js}, home.js, auth/{login,register}.js,
-    │         customer/{products,cart,recommendation,contact,services,account}.js
+    ├── customer/                  products, product-detail (A2), cart, recommendation, services, contact, account (2.7) .html
+    ├── admin/                     B1 (mock data): login, dashboard, service-requests, support-tickets, orders,
+    │                              reports, employees, stores, chat-history .html (+ the old .gitkeep)
+    ├── partials/                  header.html, footer.html (customer); admin-sidebar.html, admin-topbar.html (B1)
+    ├── css/  style.css (shared), home.css, auth/login.css, admin/admin.css (B1, the only file with design tokens),
+    │         customer/{products,product-detail,cart,recommendation,contact,services,account}.css
+    ├── js/   core/{api.js, ui.js (2.8), layout.js, main.js}, home.js, auth/{login,register}.js,
+    │         customer/{products,product-detail,cart,recommendation,contact,services,account}.js,
+    │         admin/{mock-staff-data, staff-auth, admin-layout, admin-charts, login, <page>}.js (B1)
     └── assets/images/
     ```
     - `css/customer/services.css` and `js/customer/services.js` are empty and not loaded (pre-existing).
     - **Shared styles in `css/style.css`** (since 2.7): `.page-hero` (moved from `products.css`; it now styles every customer page that uses it), `.form-error`, `.form-success`, `.field-error` (moved from `auth/login.css`, plus the new `.form-success`). Page CSS files keep only page-specific rules.
     - **Form pattern** (register, account): `<p class="form-error" …hidden>` / `<p class="form-success" …hidden>` for the whole form, `<small class="field-error" data-field="<json field>">` per input, `novalidate` + JS validation that mirrors the backend DTO, a `FIELD_MESSAGES` map in Vietnamese, and backend `details` mapped onto the same fields.
-  - **Script order on pages with header/footer:** `js/core/api.js` → `js/core/layout.js` → `js/core/main.js` → page script. Auth pages load only `api.js` + their own script. Customer pages use `../` for `css/`, `js/` and `assets/`.
+  - **Script order on pages with header/footer (since 2.8):** `js/core/api.js` → `js/core/ui.js` → `js/core/layout.js` → `js/core/main.js` → page script. All 7 header pages load `ui.js`, because `main.js`'s `addToCart` uses `showToast`. Auth pages load only `api.js` + their own script. Customer pages use `../` for `css/`, `js/` and `assets/`.
+  - **`js/core/ui.js` (2.8):**
+    - `escapeHtml`: **use it for every API value put into `innerHTML` or an attribute**.
+    - `showToast(message, "success"|"error")`: replaces `alert()`.
+    - `skeletonProductGrid(n)`, `emptyStateHtml`, `errorStateHtml(message, retryButtonId)`.
+    - `productCardHtml(product, categorySlug)` / `renderProductGrid(container, products, categorySlugById)`: render the old card markup from a `ProductResponse`, then call `setupAddToCart(container)` and `loadProductImages(container)`.
+    - `loadProductImages`: one `GET /products/{id}/images` per card, taking the primary image or else the first one. Only http(s) URLs are accepted. The `<img>` starts without `src` (hidden, grey box); if there is no image, the request fails or the image is broken, it shows the category fallback (`laptop.png` / `phone.png` / `tablet.png` / `banphim.png`; `phone.png` for other categories).
+    - `fetchCategoryMaps()` → `{byId: {id: slug}, bySlug: {slug: id}}` from `GET /categories?size=100`.
+    - Price shown = `discountPrice ?? basePrice`. A price of 0 shows "Liên hệ" and a disabled button.
+  - **`main.js` (2.8):**
+    - `setupAddToCart(root = document)` skips buttons already marked `data-cart-bound="1"`;
+    - `addToCart` shows a toast instead of `alert()`;
+    - `setupHeaderSearch()` (after `layoutReady`): the header `.search-form` redirects to `customer/products.html?search=<keyword>`;
+    - `formatPrice` moved to **`ui.js`** during B1 (single definition), because admin pages load `ui.js` but not `main.js`.
+  - **Products page (2.8):**
+    - sidebar (`position: sticky; top: 105px`, scrolls inside itself when long) with category radios `laptop` / `phone` / `tablet` / `accessory` → DB slugs `laptop` / `dien-thoai` / `may-tinh-bang` / `phu-kien`;
+    - the brand list is built per category from `GET /products?categoryId=&size=100` (all pages; Laptop = 5 requests), cached in memory per category. For "Tất cả" it shows a hint;
+    - price range (`minPrice` / `maxPrice` on `basePrice`, validated);
+    - sort `id,asc` (default) / `id,desc` / `basePrice,asc|desc` / `name,asc`;
+    - 12 per page, compact pagination `‹ 1 2 … 74 ›`;
+    - `?category=` and `?search=` are read and kept in sync with `history.replaceState`;
+    - stale responses are ignored through request counters;
+    - ≤ 1000px: "BỘ LỌC" toggle, 2 then 1 columns;
+    - there is no rating filter and no rating sort: every product has rating 0.
+  - **Product detail page (A2):** `customer/product-detail.html?id=<id>` + `js/customer/product-detail.js` + `css/customer/product-detail.css`.
+    - Card images and names (products page, home featured grid, related grid) link here through `getProductDetailUrl(id)` (`ui.js`).
+    - Loads `GET /products/{id}` first; `/variants`, `/images`, `/specifications` and `/categories` in parallel with `Promise.allSettled`, so a failure in those does not block the page.
+    - 404 or `isActive === false` → "Không tìm thấy" box; a non-numeric id → the same box without any request; other errors → error box + "Thử lại".
+    - Shows breadcrumb (category → `products.html?category=<key>`), main image (primary first, http(s) only, category fallback, thumbnails when ≥ 2 images), name, brand · SKU, the price of the selected variant (discount + old price when lower), variant buttons, quantity 1–10, "Thêm vào giỏ" / "Mua ngay" (adds, then goes to the cart).
+    - The specs table is built from real fields (brand, category, SKU, variant, RAM, storage, colour, extra attribute values, warranty, weight) plus `product_specifications` in `specOrder`, because the crawl has no descriptions or specs.
+    - Description tab: "đang được cập nhật" when empty. Rating only when `totalReviews > 0`; there is no invented star distribution.
+    - "Sản phẩm tương tự": 4 products, same category + brand first, then the same category.
+    - Price 0 → "Liên hệ", buttons disabled, contact note.
+    - The policy list shows only the warranty from the data and two services that `services.html` describes (no invented return policy).
+    - **Cart:** `addToCart(name, price, quantity)` (quantity is optional; default 1). The variant label is added to the cart name only when the product has more than one variant, so the list and detail pages add to the same line.
+  - **Admin area (B1, mock data, waiting for approval):** no API calls. Everything comes from `js/admin/mock-staff-data.js`, whose functions are synchronous and meant to be swapped for `apiRequest` in phase C.
+    - **Session** `poy_staff_auth` (`staff-auth.js`), separate from the customer `poy_auth`, so both can be logged in at once in one browser.
+      - Shape: `{accessToken: null, refreshToken: null, user: {id, email, username, fullname, roles: ["STAFF"|"ADMIN"]}, staff: {role, storeId, storeName}}`.
+      - B2 will store the real `AuthResponse` here.
+      - `getCurrentStaff()` re-reads the mock account on every page: a locked or missing account → session cleared → `admin/login.html?reason=locked`; a changed role or store updates the session.
+      - `requireStaffLogin()` → `admin/login.html?redirect=<page>`.
+    - **Roles** are display codes `EMPLOYEE` / `BRANCH_MANAGER` / `ADMIN`. The backend only has STAFF / ADMIN; the branch-manager split comes from `employees` / `employee_assignments` in Phase 7.
+    - **Page guard:**
+      - `<body class="admin-body" data-page-title="…" data-roles="BRANCH_MANAGER,ADMIN">`;
+      - `admin-layout.js` runs at load: no session → login; wrong role → `admin/dashboard.html?denied=1`;
+      - `.admin-shell` stays hidden until `body.admin-ready`;
+      - sidebar items with `data-roles` are hidden per role, and empty groups too;
+      - pages use `document.addEventListener("DOMContentLoaded", async function () { const staff = await adminLayoutReady; … })`.
+    - **Access per page:**
+      - dashboard, service-requests, support-tickets: all roles;
+      - orders, reports, employees: manager + admin;
+      - stores, chat-history: admin.
+
+      Non-admins only ever get their own store's data: `getScopedStoreId` ignores a tampered filter.
+    - **Shared helpers** (`admin-layout.js`): `setupStoreFilter`, `getScopedStoreId`, `statusSelectHtml` / `bindStatusSelects`, `adminEmptyRow`, `adminStatCardsHtml`, `formatDateVi`, `formatDateTimeVi`, `formatMonthLabel`, `truncateText`, `shortProductLabel`.
+    - **Charts:** `admin-charts.js`, plain SVG (`renderBarChart`, `renderLineChart`, data `{label, value, title?}`).
+    - **Mock storage:** `poy_staff_overrides` (status changes by id), `poy_extra_stores`, `poy_extra_employees`.
+    - **Mock data:** product names are snapshots, so there is no mock catalogue; orders carry a `storeId`, though the DB `orders` table has no store column.
+    - **Demo accounts:** `admin@poy.vn` / `admin123`, `lan.quanly@poy.vn` / `quanly123` (CN01), `hoa.nv@poy.vn` / `nhanvien123` (CN01). The locked `tai.nv@poy.vn` is a negative test. New employees get `nhanvien123`. All of this is removed in B2.
+    - **Script order on admin pages:** `api.js` → `ui.js` → `layout.js` → `admin/mock-staff-data.js` → `admin/staff-auth.js` → (`admin-charts.js`) → `admin-layout.js` → page script. `main.js` is **not** loaded.
+    - **Not in B1:** `admin/users`, `admin/products` (B2, real API), and a link from the customer site to `admin/login.html`.
+  - **Shared category map (A2):** `PRODUCT_CATEGORY_FILTERS` + `getCategoryFilterKey(slug)` in `ui.js` (`laptop` / `phone` / `tablet` / `accessory` ↔ DB slugs), used by the products and detail pages.
   - **Shared header/footer:**
     - A page contains `<div data-include="header" data-active="home|products|recommendation|services|contact"></div>` and `<div data-include="footer"></div>`.
     - `js/core/layout.js` fetches `partials/<name>.html`, replaces `{{ROOT}}` with the site root and **replaces** the placeholder element. It does not nest it, so the sticky header keeps working. The nav link whose `data-page` equals `data-active` gets class `active`.
@@ -57,14 +141,15 @@ If this file contradicts the code, **the code wins**. Update this file afterward
     - All pages share the **full footer** (the one from index.html); cart, contact and services used to have shorter footers.
     - **Needs HTTP** (Live Server). Opening a file directly (`file://`) cannot fetch the partials, and `layout.js` logs a `console.warn`.
   - **Site root:** `api.js` defines `SITE_ROOT = new URL("../../", document.currentScript.src)` and `siteUrl(path)`. Links built in JS and redirects must use `siteUrl("customer/…")` / `siteUrl("auth/…")`, never hard-coded relative paths. It works whether the site is served at `/` (Live Server opened on `frontend/`) or under `/frontend/` (opened on the workspace root); both were verified.
-  - **Dev hosting:**
-    - VS Code Live Server on port **5501** (set `liveServer.settings.port` to 5501), because 5500 is taken by Oracle `TNSLSNR` (§7 #14);
-    - `application-dev.yml` CORS allows 5500 and 5501 on both `127.0.0.1` and `localhost`.
+  - **Dev hosting (since session 4):**
+    - VS Code Live Server (or `docs/tools/e2e/static-server.mjs`) on **any free port**. 5500 is taken by Oracle `TNSLSNR` and 5501 by Antigravity (§7 #14, #19), so set `liveServer.settings.port` to another port (e.g. 5510) or to `0` (random);
+    - `application-dev.yml` CORS uses origin patterns `http://localhost:[*]` and `http://127.0.0.1:[*]`, so every local port is allowed.
+    - When the API cannot be reached on `localhost` / `127.0.0.1`, `api.js` (`IS_LOCAL_DEV`) shows "Không thể kết nối tới máy chủ (localhost:8080). Hãy kiểm tra backend đã chạy chưa." instead of the generic message.
   - **Frontend conventions** (keep them):
     - plain `function () {}` style with generous blank lines, 4-space indentation, double quotes;
     - Vietnamese UI text and comments;
     - each page script wraps its code in `DOMContentLoaded`;
-    - localStorage keys are prefixed `lahy_`;
+    - localStorage keys are prefixed **`poy_`** (renamed from `lahy_` on 2026-09-26);
     - new pages go into the folder of their role and get their JS/CSS in the mirrored folder.
   - **`frontend/js/core/api.js` API:**
     - `API_BASE_URL = "http://localhost:8080/api/v1"`, `SITE_ROOT`, `siteUrl(path)`.
@@ -73,20 +158,21 @@ If this file contradicts the code, **the code wins**. Update this file afterward
       - with `auth: true` it sends the bearer token, and on 401 it refreshes **once** and retries;
       - concurrent 401s share one refresh;
       - a failed refresh with 401/403 → `clearAuth()`.
-    - Auth storage: `getAuth` / `saveAuth` / `clearAuth` / `isLoggedIn` / `getCurrentUser`, in localStorage `lahy_auth` = `{accessToken, refreshToken, user}`.
+    - Auth storage: `getAuth` / `saveAuth` / `clearAuth` / `isLoggedIn` / `getCurrentUser`, in localStorage **`poy_auth`** = `{accessToken, refreshToken, user}` (constant `AUTH_STORAGE_KEY`; the cart key is `CART_STORAGE_KEY` = `poy_cart`, used by `main.js`).
+    - **Key migration (2026-09-26):** at load, `migrateStorageKey("lahy_auth", "poy_auth")` and `migrateStorageKey("lahy_cart", "poy_cart")` copy an old value to the new key when the new key is empty, then delete the old key. A user who was logged in or had a cart keeps them. `api.js` is loaded first on every page, including auth pages, so this is the only place it runs.
     - `logout()` clears the browser first, then calls `POST /auth/logout`, ignoring errors.
     - `getErrorMessage(error)` maps backend codes to Vietnamese through `API_ERROR_MESSAGES`.
     - `getRedirectTarget(default)` accepts only `?redirect=[folder/]name.html[?query]`: at most 1 folder, no `..`, no scheme or `//` (open-redirect guard). It returns an **absolute** URL (`siteUrl`).
     - `redirectToLogin()` → `auth/login.html?redirect=<current page path relative to SITE_ROOT>`.
     - Only send the token (`auth: true`) to endpoints that need it, because a bad token is rejected even on public endpoints.
-  - `docs/` (untracked, local only):
+  - `docs/` (**tracked since the user's commit `0b720de`**; it was untracked in sessions 1–2):
     - this file;
     - `PENDING_WORK.md`: the open work, in Vietnamese; read first;
     - `claude.md`: a short pointer;
     - `tools/e2e/`: the browser test scripts of session 2.
 - **Planned phases:**
   1. Product ← **DONE**
-  2. User + Auth + JWT ← **IN PROGRESS** (backend 2.1–2.5b done and committed; frontend 2.6, restructure and 2.7 done; next: 2.8 products from the API; see §10)
+  2. User + Auth + JWT ← **DONE** (backend 2.1–2.5b and frontend 2.6, restructure and 2.7 committed and pushed; 2.8 done and approved on 2026-09-26, not committed)
   3. Cart
   4. Order
   5. Payment + Installment
@@ -134,7 +220,7 @@ Paths below are relative to `backend/Tech/src/main/java/com/example/Tech/`.
 | Security | `security/RefreshTokenService.java` | Opaque refresh tokens in Redis. `issue(userId)` makes a 32-byte SecureRandom base64url token (43 chars) and stores key `auth:refresh:<sha256 hex>` → userId with TTL 7 d. `consume(token)` does an atomic GETDEL and returns the userId; unknown, used or blank → `BusinessException(INVALID_TOKEN)`. `revoke(token)` deletes the key (GETDEL; unknown tokens are ignored). **Rotation = `consume` + a user check + `issue`**, done by the auth service. **Per-user index (2.5a):** `issue` also adds the hash to the set `auth:user-refresh:<userId>`, whose TTL is reset to 7 d on each issue; `consume` / `revoke` remove it; `revokeAll(userId)` deletes every indexed token and the set. Used by password change (2.5a) and admin deactivate/delete (2.5b) |
 | Security | `security/RestAuthenticationEntryPoint.java`, `RestAccessDeniedHandler.java`, `SecurityErrorResponseWriter.java` | 401/403 raised by filters, returned as `ApiResult` JSON through the Jackson 3 `JsonMapper` bean. They first call Spring's `BearerTokenAuthenticationEntryPoint` / `BearerTokenAccessDeniedHandler`, so the RFC 6750 `WWW-Authenticate` header is kept. 401 code: `INVALID_TOKEN` if a bearer token was rejected (`OAuth2AuthenticationException`), otherwise `UNAUTHORIZED`. 403 code: `ACCESS_DENIED` |
 | Config | `config/OpenApiConfig.java` | OpenAPI info (description covers catalogue + auth and how to authorize), security scheme `bearerAuth` (HTTP bearer JWT) + a global security requirement, so Swagger UI has an "Authorize" button |
-| Config | `config/CorsConfig.java`, `config/CorsProperties.java` | `CorsConfigurationSource` for `/api/**`. Origins come from `app.cors.allowed-origins` (blank entries are dropped). Methods GET/POST/PUT/PATCH/DELETE/OPTIONS; headers Authorization and Content-Type; exposes WWW-Authenticate; credentials off; max-age 1 h |
+| Config | `config/CorsConfig.java`, `config/CorsProperties.java` | `CorsConfigurationSource` for `/api/**`. Origins come from `app.cors.allowed-origins` (exact) **and** `app.cors.allowed-origin-patterns` (Spring patterns such as `http://localhost:[*]`, session 4); an origin matching either list is allowed; blank entries are dropped and values trimmed. Methods GET/POST/PUT/PATCH/DELETE/OPTIONS; headers Authorization and Content-Type; exposes WWW-Authenticate; credentials off; max-age 1 h |
 | Config | `config/ClockConfig.java` | `Clock` bean (system clock), so tests can use a fixed clock |
 | Config | `config/AuthDataInitializer.java`, `config/BootstrapAdminProperties.java` | `ApplicationRunner` (@Transactional). It creates the missing roles CUSTOMER/STAFF/ADMIN at every startup, and creates the first ADMIN from `app.bootstrap-admin.*` ← env `ADMIN_EMAIL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`. It skips with a WARN if a value is missing, the password has < 8 chars or > 72 bytes, or the email/username is taken. It skips silently if any ADMIN already exists. Email/username are trimmed and lower-cased; the password is BCrypt-hashed. Admin fullname = "Administrator" |
 | Util | `util/SlugUtil.java` | slug generation: strips Vietnamese diacritics, `đ`→`d`, `+`→`plus`; `SLUG_REGEX` |
@@ -180,7 +266,7 @@ Paths below are relative to `backend/Tech/src/main/java/com/example/Tech/`.
 - `application.yml`: default profile `dev`; `ddl-auto: validate`; `open-in-view: false`; pageable default 20, max 100; springdoc paths; port 8080;
   - `app.bootstrap-admin.{email,username,password}` = `${ADMIN_EMAIL:}` / `${ADMIN_USERNAME:}` / `${ADMIN_PASSWORD:}` (empty by default, no secrets in the file);
   - `app.jwt.secret: ${JWT_SECRET:}` (**required**; startup fails if missing or short), `issuer: techshopping`, `access-token-ttl: 30m`, `refresh-token-ttl: 7d`.
-- `application-dev.yml`: `localhost:5432/techshopping`; `${DB_USERNAME:postgres}` / `${DB_PASSWORD:postgres}`; Redis on localhost:6379; show-sql; `app.cors.allowed-origins`: `http://127.0.0.1:5500`, `http://localhost:5500`, `http://127.0.0.1:5501`, `http://localhost:5501` (Live Server; the 5501 entries were added after 2.6 and are **not committed**).
+- `application-dev.yml`: `localhost:5432/techshopping`; `${DB_USERNAME:postgres}` / `${DB_PASSWORD:postgres}`; Redis on localhost:6379; show-sql; `app.cors.allowed-origin-patterns`: `http://localhost:[*]`, `http://127.0.0.1:[*]` (session 4; any local port, dev only). It replaced the exact 5500/5501 list (committed in `0b720de`). `--app.cors.allowed-origins=…` on the command line still adds exact origins.
 - `application-test.yml`: `localhost:5432/techshopping_test`; a fixed test-only `app.jwt.secret`; no CORS origins (the integration test sets its own).
 - `application-prod.yml`: `${DB_URL}`, `${DB_USERNAME}`, `${DB_PASSWORD}`, `${REDIS_HOST}`, `${REDIS_PORT}`, `app.jwt.secret: ${JWT_SECRET}`, `app.cors.allowed-origins: ${CORS_ALLOWED_ORIGINS:}` (comma-separated); Swagger disabled.
 - There is no `application.properties` (deleted on purpose).
@@ -197,7 +283,8 @@ Paths below are relative to `backend/Tech/src/main/java/com/example/Tech/`.
   - `JwtTokenServiceTest` (6): the real `JwtConfig` beans without Spring; checks claims, expiry, wrong secret, wrong issuer and role authorities;
   - `RefreshTokenServiceTest` (10 now; 7 in 2.2): Redis mocked;
   - `SecurityErrorHandlersTest` (3): the 401/403 JSON bodies and the `WWW-Authenticate` header;
-  - `SecurityInfrastructureIntegrationTest` (6): `@SpringBootTest` + `@AutoConfigureMockMvc` (package `org.springframework.boot.webmvc.test.autoconfigure`), with property `app.cors.allowed-origins=http://localhost:5500`; checks CORS preflight allowed/rejected, public GET, a valid token, an invalid token → 401 INVALID_TOKEN, and a denied path → 401 UNAUTHORIZED;
+  - `SecurityInfrastructureIntegrationTest` (8 since session 4): `@SpringBootTest` + `@AutoConfigureMockMvc` (package `org.springframework.boot.webmvc.test.autoconfigure`), with properties `app.cors.allowed-origins=http://localhost:5500` and `app.cors.allowed-origin-patterns=http://127.0.0.1:[*]`; checks CORS preflight allowed/rejected (exact origin; pattern origin `127.0.0.1:5503` echoed back; `localhost:5502` and `127.0.0.1.evil.example:5503` rejected), public GET, a valid token, an invalid token → 401 INVALID_TOKEN, and a denied path → 401 UNAUTHORIZED;
+  - `config/CorsPropertiesTest` (2, session 4): null lists → empty; blank entries dropped and values trimmed, for both lists;
   - `RefreshTokenServiceRedisIntegrationTest` (3 now; 2 in 2.2): runs against the **real Redis** container and leaves no keys.
 - 2.5b:
   - `service/impl/user/AdminUserServiceImplTest` (19): Mockito; checks the acting-admin re-check, the one-query role loading, and all status / role / delete rules including LAST_ADMIN;
@@ -296,7 +383,15 @@ The full User-group schema (every column) is in §10.3. The SQL has **no role se
 | variant_attribute_values | 1709 |
 | product_specifications | 1 (attached to a soft-deleted test product) |
 | roles | 3: 1 CUSTOMER, 2 STAFF, 3 ADMIN (created by `AuthDataInitializer` on 2026-09-25) |
-| users / user_roles / customer_profiles | 0. **No ADMIN yet**: the dev app was started without `ADMIN_*`. The user must start it once with their own `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` (see §11) |
+| users / user_roles / customer_profiles | 0 (re-checked 2026-09-26). **No ADMIN yet**: the dev app was started without `ADMIN_*`. The user must start it once with their own `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` (see §11) |
+
+Product data facts (checked 2026-09-26; they matter to the UI):
+- all 877 active products have `rating` = 0, `total_reviews` = 0, `stock_quantity` = 0 and no `discount_price`;
+- 11 have `base_price` = 0;
+- every product has a brand; at most 1 image per product (761 primary);
+- names are up to 138 characters;
+- categories are flat (no `parent_id` except the E2E test ones);
+- brands per category: điện thoại 179 products / 15 brands, laptop 431 / 9, máy tính bảng 52 / 8, đồng hồ thông minh 175 / 16, đồng hồ thời trang 20 / 4, phụ kiện 20 / 13.
 
 `techshopping_test`:
 - 0 products; tests roll back.
@@ -332,6 +427,11 @@ All Phase 1 features are **DONE**. For each one: an entity, a repository, reques
 | Redis | `spring-boot-starter-data-redis` + yml host/port | – | – | used since 2.2 for **refresh tokens** (`RefreshTokenService`, real-Redis integration test) | PARTIAL (refresh tokens only; no caching, no rate limiting yet) |
 | Security | `SecurityConfig` | – | – | `ProductSecurityIntegrationTest` (14), `SecurityInfrastructureIntegrationTest` (6) | DONE for Phase 2 scope (JWT, role rules D4, CORS, 401/403 JSON). No rate limiting yet (phase 10) |
 | **Phase 2 / 2.6** Frontend auth: login (email or username), register, header name + logout, token refresh | now at `frontend/js/core/api.js`, `js/auth/login.js`, `js/auth/register.js`, `auth/register.html`, `auth/login.html`, `js/core/main.js` (`renderAuthState`), `css/auth/login.css`, `css/style.css` | `/api/v1/auth/*`, `/users/me` | – | headless Edge E2E 24/24 (§6) | DONE |
+| **Checkpoint B1** `admin/` area on mock data: staff login, 3-role RBAC (menu + page guard + store scoping), dashboard with SVG charts, warranty/maintenance/return, tickets, branch orders, revenue reports, employees, stores, chatbot history | `frontend/admin/*.html`, `js/admin/*.js`, `css/admin/admin.css`, `partials/admin-*.html`; `formatPrice` moved to `ui.js` | none (mock) | – | headless Edge E2E 53/53 + customer regressions (§6) | DONE, **waiting for approval**, not committed |
+| **Checkpoint A2** Product detail page from the real API (variants, images, specs table from real fields, related products, quantity, buy now); cards link to it | `customer/product-detail.html`, `js/customer/product-detail.js`, `css/customer/product-detail.css`, `ui.js` (links, shared category map), `main.js` (`addToCart` quantity), `products.js`, `style.css` | `GET /products/{id}`, `/variants`, `/images`, `/specifications`, `/products?categoryId=&brandId=` | – | headless Edge E2E 39/39 + regressions (§6) | DONE, approved 2026-09-26, not committed |
+| **Storage key rename** `lahy_*` → `poy_*` with a one-time migration | `js/core/api.js`, `js/core/main.js`, E2E scripts | – | – | E2E migration check + all regressions | DONE (user request 2026-09-26), not committed |
+| **Phase 2 / 2.8 (extended)** Products from the API: sticky filter sidebar, brand-by-category filter, price range, sort, compact pagination, header search, loading / empty / error states, toasts instead of `alert()`, `escapeHtml`; home "featured" grid = first 4 products | `frontend/js/core/ui.js` (new), `customer/products.html`, `js/customer/products.js`, `css/customer/products.css`, `index.html`, `js/home.js`, `partials/header.html`, `js/core/main.js`, `css/style.css` (appended blocks only), `js/customer/cart.js` (name escaped), `ui.js` added to 5 more customer pages | `GET /categories`, `/products`, `/products/{id}/images` (public, no token) | – | headless Edge E2E 47/47 + regressions 32/32, 31/31 + cart XSS check (§6) | DONE, approved 2026-09-26, not committed |
+| **Checkpoint R** Brand rename LAHY → POY (titles, logo, section labels, contact email `support@poy.vn`) | 9 files under `frontend/` | – | – | regressions 32/32, 31/31 | DONE, approved, not committed |
 | **Phase 2 / 2.7** Account page: account info (fullname, phone, avatar; email/username read-only), customer profile (upsert, empty form when missing), change password (then re-login), summary (username, points, total spent, join date), logout; header name links here | `frontend/customer/account.html`, `js/customer/account.js`, `css/customer/account.css` (+ `contact.css` reused), `js/core/main.js` (`href = siteUrl("customer/account.html")`), shared messages in `css/style.css` | `/users/me`, `/users/me/profile`, `/users/me/password`, `/auth/logout` | – | headless Edge E2E 31/31 + layout regression 32/32 (§6) | DONE, not committed |
 | **Frontend restructure** (user request, after 2.6): role folders `auth/`, `customer/`, `admin/`; JS/CSS mirrored; shared `partials/header.html` + `partials/footer.html` loaded by `js/core/layout.js`; `SITE_ROOT` / `siteUrl` for folder-independent links | see §1 "Frontend structure" | – | – | headless Edge E2E 32/32 (§6) | DONE, staged, not committed |
 | **Phase 2 / 2.5b** Admin user management: search / get / activate-deactivate / replace roles / soft delete, with self-protection and last-admin rules | `AdminUserController`, `AdminUserService(Impl)`, `UserFilterSpecifications`, `UserRoleName` | `/api/v1/admin/users*` | users, user_roles (+ Redis) | `AdminUserServiceImplTest` (19), `AdminUserApiIntegrationTest` (9) | DONE (live ADMIN check only via MockMvc, see §6) |
@@ -433,6 +533,128 @@ Response format: `{success, timestamp, data, error:{code, message, details}}`. L
 Swagger UI: `http://localhost:8080/swagger-ui/index.html` (dev profile only).
 
 # 6. Tests & Verification
+
+**Session 4: fix of "products do not load", option (b) (2026-09-27, approved):**
+
+| Check | Result |
+|---|---|
+| Baseline before the change (Docker started, `mvnw clean test`) | **225 tests, 0 failures** |
+| After the change | **229 tests, 0 failures, 0 errors** (+2 `SecurityInfrastructureIntegrationTest`, +2 `CorsPropertiesTest`) |
+| Dev backend, no CORS override: preflight `OPTIONS /api/v1/products` | `127.0.0.1:5503`, `localhost:5599`, `127.0.0.1:5501` → 200 with the origin echoed; `http://evil.example` → **403** |
+| `e2e-products.mjs` from :5503 (dev profile, no override) | **48/48 PASS** |
+| Backend stopped, products page from :5503 | error box "Không thể kết nối tới máy chủ (localhost:8080). Hãy kiểm tra backend đã chạy chưa." + "THỬ LẠI" (Edge headless CDP check) |
+
+**Session 3 environment note (2026-09-26):** port **5501** is now also taken, by `agy.exe` (the Antigravity editor), which answers every path with its own page. The session 3 runs therefore served the repo root on **5503**, and the backend used `--app.cors.allowed-origins=http://127.0.0.1:5503`. The scripts in `docs/tools/e2e/` read the origin from `E2E_ORIGIN` (default `http://127.0.0.1:5501`).
+
+**Diagnosis "products do not load" (2026-09-27, end of session 3):**
+
+| Check | Result |
+|---|---|
+| Ports | 8080 free (**backend not running**); 5500 `TNSLSNR` (Oracle); 5501 `agy.exe` (Antigravity, answers every path with its own page, even `.js` files) |
+| VS Code user settings | `"antigravity.serverPort": 5501`, **no** `liveServer.settings.port`; the Live Server extension is **not installed** |
+| Products page with the backend down | error box "Không thể kết nối tới máy chủ. Vui lòng thử lại sau." |
+| Dev backend with the committed CORS (5500/5501), page served on :5504 | preflight `OPTIONS /api/v1/products` from :5504 → **403**, from :5501 → 200; the page shows the same "Không thể kết nối…" box |
+| Conclusion | environment only: no allowed origin port is free on this machine, and the backend was stopped. From an allowed origin the page works (E2E 48 + 39) |
+
+**Checkpoint B1 results (2026-09-26):**
+
+| Check | Result |
+|---|---|
+| **`e2e-admin.mjs`** (static server only, no backend) | **53/53 PASS**, listed below |
+| Customer regressions after B1 + the key rename | products **48/48**, detail **39/39**, layout **32/32** (`fe.e2e15`), account **31/31** (`fe.e2e16`), cart XSS PASS |
+| Screenshots | login, employee dashboard, admin dashboard (a bar-label overlap was fixed with `shortProductLabel`), chat history, mobile off-canvas sidebar |
+
+The 53 admin checks:
+- **Access guard:** no session → login with `?redirect`; empty / wrong password / locked account messages.
+- **Employee `hoa`:**
+  - `poy_staff_auth` shape; `poy_auth` untouched; topbar;
+  - 3 menu items, empty groups hidden, active item;
+  - dashboard with 3 cards and CN01 revenue only;
+  - `orders.html` → `?denied=1`;
+  - service requests locked to CN01, and still CN01 after DOM tampering;
+  - status change → toast + persisted; type filter; CN01 tickets;
+  - logout keeps `poy_auth`.
+- **Manager `lan`:**
+  - redirect back to `reports.html`; 6 menu items;
+  - reports: CN01 only, date filter, from > to error;
+  - orders: CN01 only, detail row + total;
+  - employees: CN01, read-only;
+  - `stores.html` denied.
+- **Admin:**
+  - login page while logged in → dashboard; 8 menu items; roles `[ADMIN]`;
+  - dashboard: 4 cards + store breakdown;
+  - orders: unassigned filter; reports: store comparison;
+  - employees: all 7, no toggle on own row; lock `hung`;
+  - add employee: invalid / duplicate email errors; XSS name shown as text;
+  - add store: duplicate name error; CN04 persisted and shown in filters;
+  - chat: newest session selected, switching works.
+- **Locked session:** a locked account with a session → `?reason=locked` + cleared; a locked account cannot log in; a new employee can log in.
+- **Mobile:** off-canvas sidebar opens, no horizontal overflow.
+- No missing files, no JS errors.
+
+**Checkpoint A2 + key rename results (2026-09-26):**
+
+| Check | Result |
+|---|---|
+| **`e2e-product-detail.mjs`** (dev profile; real products + CDP mocks for several variants / images, hostile strings and a 500) | **39/39 PASS**, listed below |
+| `e2e-products.mjs` (now 48 checks: + the `lahy_*` → `poy_*` migration check: old cart and session are moved, old keys removed, header shows the name and counter) | **48/48 PASS** |
+| Regressions `e2e-frontend-layout.mjs` (`fe.e2e13`, then `fe.e2e15` after the rename) / `e2e-account.mjs` (`fe.e2e14`, `fe.e2e16`) | **32/32** and **31/31** |
+| Cart page with a `<img onerror>` name | PASS |
+| Screenshots | detail desktop (full page), mocked variants + thumbnails, mobile |
+| Note | an apparent "grey active button" in screenshots was only the 0.3 s CSS transition captured mid-way; the E2E now also asserts the `active` class |
+| Leftovers | test DB users `fe.e2e13`–`fe.e2e16` (their tokens revoked); dev DB untouched; 0 ERROR lines |
+
+The 39 detail checks:
+- **Links:** the card name and image link to the detail page.
+- **Page content:** name, category, `document.title`; the price of the variant; meta = brand · SKU without a rating; the breadcrumb category link; the primary image; no thumbnails for 1 image; the 4 API calls sent without a token.
+- **Variants, specs, tabs:** variant buttons (first active); the specs built from real fields; the description placeholder; the tab switch (panel + active button); the warranty line.
+- **Related:** 4 related products of the same category, excluding the current one.
+- **Cart:** quantity + / − (min 1, max 10 with a toast); add to cart `{name, price, quantity 3}` with the toast "3 × …" and counter 3, no `alert()`; the same product from the list merges into the same line; "Mua ngay" → cart page.
+- **Special cases:** price 0 → "Liên hệ" with disabled buttons; unknown id → not found; non-numeric id → not found without an API call; 500 → error box → retry works.
+- **Mocked data:** hostile strings rendered as text; primary image first, `javascript:` URL dropped, 2 thumbnails, thumbnail click; variant 1 discount + old price; the specs (extra attribute, specifications ordered by `specOrder`); variant 2 price, specs and active button; the cart name includes the variant label when there are ≥ 2 variants; no image → category fallback.
+- **Home, layout, errors:** the home featured card link; mobile (1 column, stacked buttons, no horizontal scroll); no missing files; no JS errors.
+
+**Checkpoint 2.8 (extended) results (2026-09-26):**
+
+| Check | Result |
+|---|---|
+| `node --check` on all `frontend/js/**/*.js` | OK |
+| **`e2e-products.mjs`** (backend on the **dev** profile, GETs only; expected values are read straight from the API) | **47/47 PASS**, listed below |
+| Regression `e2e-frontend-layout.mjs` (test profile, user `fe.e2e11`). Its products check was updated to the 2.8 markup (a category radio is checked and the grid finished loading): the test DB has no categories, so `?category=phone` correctly falls back to "Tất cả" there | **32/32 PASS** |
+| Regression `e2e-account.mjs` (test profile, user `fe.e2e12`) | **31/31 PASS** |
+| Cart page with a stored name `<img onerror>` | rendered as text, no script ran, counter correct |
+| Screenshots | desktop, scrolled (sidebar fixed), Điện thoại + Samsung, home featured grid, header at 1100px logged in (86px, one row), mobile 390px |
+| Leftovers | test DB users `fe.e2e9`–`fe.e2e12` (their refresh tokens revoked); dev DB untouched; 0 ERROR lines |
+
+The 47 product checks:
+- **Load:** 12 cards; the count equals `totalElements` (877); first card = first product; compact pagination `‹ 1 2 … 74 ›`; exactly 12 `/images` requests; real image URLs shown; `/categories` sent without a token; brand hint for "Tất cả".
+- **Sidebar:** stays at top = 105px after scrolling 1400px.
+- **Category Điện thoại:** count 179 = API; every card labelled ĐIỆN THOẠI; URL `?category=phone`; brand list = the 15 brands present; title "Thương hiệu (Điện thoại)".
+- **Brand Samsung:** count 22 = API; cards are Samsung.
+- **Laptop:** brand list rebuilt (9) and reset to "Tất cả"; the brand scan used 5 requests; switching back to phone makes no new scan (cache).
+- **Price:** 10–20 million → count = API (134); min > max → error and no request; "Xóa bộ lọc" resets.
+- **Sort:** price desc → most expensive first; price asc → the price-0 product shows "Liên hệ" with a disabled button.
+- **Pagination:** page 2 = products 13–24; the last page has the remainder and "›" is disabled.
+- **Cart:** add → `lahy_cart` `{name, price, quantity: 1}`, header counter 1, toast shown, no `alert()`; `setupAddToCart(document)` called again → still one listener (quantity 2 after 2 clicks).
+- **Header search:** "iphone" → `products.html?search=iphone`, count = API keyword count (15), input kept; a search with no results shows the empty state.
+- **Deep link:** `?category=phone` preselects the radio.
+- **Mocked through CDP Fetch:**
+  - an empty image list → category fallback image;
+  - a product named `<img onerror>` → shown as text, no script ran;
+  - a 500 → error box, and "THỬ LẠI" reloads.
+- **Home:** 4 featured cards = first 4 products; the AI section is still there (section order unchanged).
+- **Layout:** header at 1100px logged in stays one row; mobile: toggle visible, sidebar hidden until opened, 1 column, no horizontal scroll.
+- No missing files, no JS errors or warnings.
+
+**Checkpoint R results (2026-09-26):**
+- 16 lines in 9 files; CRLF line endings restored after Git Bash `sed -i`.
+- `grep -i lahy frontend/` now only finds the `lahy_*` storage keys.
+- Regressions 32/32 and 31/31.
+
+**CP0 results (2026-09-26):**
+- Extraction: 109 entries, 92 files identical to the zip.
+- `mvnw clean test`: **225 tests, 0 failures**.
+- `git status` clean after the `.git/info/exclude` entries.
 
 **Checkpoint 2.7 results (2026-09-25):**
 
@@ -640,7 +862,8 @@ Tests need **both** Docker containers running (`docker compose up -d`): PostgreS
 10. **No ADMIN in the dev DB yet** (dev `users` = 0 at the end of session 2). It is created the first time the user starts the app with `ADMIN_*` set (§11). The admin can later change the password with `PUT /api/v1/users/me/password` or on the account page (`customer/account.html`).
 11. **Frontend issues found in the analysis** (not fixed; they belong to later phases):
     - `js/customer/recommendation.js` points at the missing image `../assets/images/smartphone.jpg`;
-    - on `customer/products.html`, `data-name` differs from the shown name (e.g. the "Laptop Dell" card adds "Laptop Pro 14" to the cart). This goes away when 2.8 renders the cards from the API;
+    - ~~on `customer/products.html`, `data-name` differs from the shown name~~: **fixed in 2.8** (cards are rendered from the API);
+    - `alert()` is still used in `js/customer/cart.js` (checkout, remove), `contact.js` and `recommendation.js`. These are pre-existing; replace them with `showToast` / `openConfirmModal` when those pages get their phases;
     - `css/customer/services.css` and `js/customer/services.js` are empty and not loaded.
 12. **Behaviour of the Spring Security 7 resource server** (expected; not bugs):
     - a request with an invalid or expired bearer token gets **401 even on public endpoints**, so the frontend must drop or refresh a bad token (2.6);
@@ -659,7 +882,8 @@ Tests need **both** Docker containers running (`docker compose up -d`): PostgreS
       - use Live Server on port **5501** (`liveServer.settings.port`, a per-user VS Code setting; `.vscode/` is git-ignored);
       - `application-dev.yml` CORS now lists 5500 **and** 5501 for both `127.0.0.1` and `localhost`;
       - verified on the dev profile: preflight from :5501 and :5500 → 200 with Allow-Origin, :5502 → 403;
-      - this yml change is **not committed yet**.
+      - this yml change was committed in `0b720de`.
+    - **Superseded in session 4:** dev CORS now allows any local port (§7 #22), so the port no longer matters.
 15. **Frontend line endings:** the files edited in 2.6 were written with LF; the originals were CRLF. Git normalizes (`core.autocrlf`), so diffs are clean, and git only warns "LF will be replaced by CRLF".
 16. **No favicon** in `frontend/` (pre-existing): browsers log a 404 for `/favicon.ico`. It is harmless.
 17. **`.page-hero` is only styled on the products page** (pre-existing, found in the restructure screenshots):
@@ -668,6 +892,23 @@ Tests need **both** Docker containers running (`docker compose up -d`): PostgreS
     - this was already so in the teammate's commit;
     - **Fixed in 2.7:** the rules (including the `@media ≤ 700px` h1 size) were moved to `style.css`. The user answered "duyệt" to the message that proposed it. Cart, contact, recommendation and services now have the same grey 120 px hero as products. This is easy to revert if the user prefers the old look.
 18. **Old E2E script paths:** the scratchpad `e2e-frontend-auth.mjs` (2.6) uses the old flat paths (`/login.html` …) and is superseded by `e2e-frontend-layout.mjs`, which uses the new structure.
+19. **Port 5501 is also taken since session 3**, by `agy.exe` (the Antigravity editor; VS Code user setting `"antigravity.serverPort": 5501`). Since session 4 this no longer matters: serve on any other free port (dev CORS allows every local port). E2E runs use 5503 (§6).
+20. **The home "featured" grid shows the first 4 products by id** (there is no sales or "featured" data: rating, stock and sold counts are all 0). Revisit when orders exist (Phase 4).
+21. **Products page limits (accepted in 2.8):**
+    - the two watch categories (195 products) have no radio; they are reachable through "Tất cả" and search;
+    - the brand filter needs a category;
+    - price filtering uses `basePrice` (no product has a `discountPrice` today).
+22. **(Resolved in session 4 with option (b), approved 2026-09-27)** dev CORS now uses `allowed-origin-patterns` `http://localhost:[*]` / `http://127.0.0.1:[*]`, prod keeps an exact list, and `api.js` shows a local-dev hint when the API is unreachable (§6). The backend still has to be running. Original diagnosis, kept for reference:
+
+    **"Products do not load" on the user's machine (found 2026-09-27; environment, not code):**
+    - The dev CORS list (`application-dev.yml`) only allows ports 5500 and 5501, and on this machine **both are occupied** (Oracle, Antigravity). The Live Server extension is not installed.
+    - A page served from any other port gets 403 on the CORS preflight. The UI then shows "Không thể kết nối tới máy chủ", which is the same message as when the backend is down (it also was not running).
+    - **Workarounds without code changes:**
+      - start the backend (`JWT_SECRET`);
+      - free 5501 (change `antigravity.serverPort` or close Antigravity), install Live Server and set `liveServer.settings.port` to 5501;
+      - or start the backend with `--app.cors.allowed-origins=http://127.0.0.1:<port>` for the port actually used.
+    - **Proposed permanent fix** (needs approval, §10.2): dev-only origin patterns `http://localhost:[*]` and `http://127.0.0.1:[*]` (`CorsConfiguration.setAllowedOriginPatterns`), keeping prod strict.
+    - Also worth doing: a clearer UI message when the API is unreachable ("Máy chủ chưa chạy hoặc bị chặn CORS"), useful only in dev.
 
 # 8. Important Decisions
 
@@ -691,28 +932,37 @@ Tests need **both** Docker containers running (`docker compose up -d`): PostgreS
 - **Accounts:** email and username are stored trimmed + lower-case. Passwords use BCrypt, min 8 chars. Users are soft-deleted. The first ADMIN comes only from env vars; passwords and secrets are never put in source/yml.
 - **Frontend:** keep developing the existing `frontend/` (plain HTML/CSS/JS). Do not rewrite it or switch to a framework. When the frontend and the API disagree, change the frontend. Report mismatches that would affect the architecture or the API before changing anything.
 - **Redis:** used for refresh tokens (keys `auth:refresh:<sha256>` and `auth:user-refresh:<userId>`). Add `@Cacheable` (products/categories/brands) and rate limiting later (phase 10), only if it helps.
+- **Reference-frontend merge track (session 3, user-approved 2026-09-26):**
+  - **Brand = POY.** Storage keys use the prefix **`poy_`** (user request 2026-09-26, with a one-time migration from `lahy_*`).
+  - **No global redesign:** only the feature blocks of the reference are taken; its design tokens are allowed only inside the admin CSS (Q2).
+  - **Compact numbered pagination** on products (Q3).
+  - **Brand filter from the products of the category**, with no backend change (Q4).
+  - **Staff session** in a separate **`poy_staff_auth`** (name confirmed by the user), with the same shape as `poy_auth` plus a mock `staff` part until Phase 7. `api.js` will choose the key by area in B2.
+  - **Mock customer pages** (cart / checkout / orders / recommendation / chatbot from the reference) are merged only with their backend phase (Q6, recommendation).
+  - **No rating filter or sort** while every rating is 0 (Q7).
+  - The mock product catalogue of the reference (`mock-data.js` products and its `lahy_extra_products` / `lahy_hidden_products` keys) must **never** be used, because the real product API exists.
+  - **Superseded 2026-09-27 (user decision, confirmed in session 4):** switch to the **whole** reference frontend. Q2 (no global redesign) and Q6 (mock customer pages only with their phase) no longer apply. Kept: real API wiring, `poy_*` keys, `escapeHtml`, the B1 `admin/`. Session 4 answers: cart = **snapshots** `{productId, variantId, name, price, image, quantity}`; `admin/` = **B1 (approved)**; forgot / reset-password pages **dropped** (link stays `#`).
+- **Dev CORS (session 4):** origin patterns for any local port in `application-dev.yml` only; prod and test keep exact origins.
 - **Future AI services** (Recommendation, Chatbot) will be Python/FastAPI and will **not** access the business DB directly. They go through Spring Boot APIs.
 
 # 9. Current Git State
 
-Checked 2026-09-25, after Checkpoint 2.7.
-- **Working branch: `quang`** (local only, no upstream). **Nothing has been pushed.**
-- History (newest first):
-  - **`c9e2d6c` "Add Phase 2 backend: user accounts, JWT authentication and authorization"**: committed by Claude at the user's request. Contents: exactly the 74 files under `backend/` of checkpoints 2.1–2.5b. Not included: `docs/` and `frontend/`.
-  - `2619767`: merges `origin/main` (frontend) into `quang`.
-  - `21d2cda` "Backend product and add database" (the user, Phase 1). On local `main`, not pushed: `main` is ahead 1 / behind 1 of `origin/main`.
-  - `f58f92d` "Frontend của khách hàng" (HoangPhuoc38): `frontend/`, on `origin/main`.
-- Remotes: `origin/main` (= `f58f92d`), `origin/Yle`.
-- **Not committed (checked after 2.7):**
-  - **staged** (`git add -A frontend/` after the restructure, for rename detection): Checkpoint 2.6 + the whole restructure;
-  - **not staged**:
-    - 2.7 changes on already-staged files (`css/style.css`, `css/auth/login.css`, `css/customer/products.css`, `js/core/main.js`);
-    - untracked `frontend/customer/account.html`, `frontend/js/customer/account.js`, `frontend/css/customer/account.css`;
-    - `backend/Tech/src/main/resources/application-dev.yml` (CORS +5501).
-  - When the user asks to commit: `git add -A frontend/ backend/Tech/src/main/resources/application-dev.yml`, check `git status` / `git diff --cached`, then commit. Suggested message: "Frontend: auth pages, role-based structure, shared layout, account page".
-- `docs/` stays **untracked** (user decision 2026-09-25).
+Updated 2026-09-27 (session 4).
+- **Working branch: `quang`**. The user **rewrote the history and pushed** between sessions 2 and 3 (`quang` = `main` = `origin/quang` = `origin/main` = `0b720de` at the start of session 4).
+- **Session 4 commit** on `quang` (user's git identity `Quang0408205`, no Claude attribution, **not pushed**): "Frontend: POY brand, products and product detail from API, admin area on mock data; dev CORS for any local port". It contains R, 2.8, A2, the `poy_*` rename, B1 (incl. removal of `frontend/admin/.gitkeep`), the dev CORS fix and `docs/` (incl. `e2e-products.mjs`, `e2e-product-detail.mjs`, `e2e-admin.mjs`). `quang` is therefore 1 commit ahead of `origin/quang`; check `git log -1` for the hash.
+- History before that (newest first; all by the user's git identity):
+  - `0b720de` "updated": 2.7 (account page, shared CSS moves), `application-dev.yml` (CORS 5501) and **`docs/`** (now tracked).
+  - `250194c` "hướng dẫn chạy": `readme.md`.
+  - `115954b` "update": 2.6 + the frontend restructure.
+  - `c582eee` "Add Phase 2 backend…": the same tree as the old `c9e2d6c` (only the hash changed).
+  - `2619767`: merges `origin/main` (frontend `f58f92d`) into `quang`.
+  - `21d2cda`: Phase 1 backend + database.
+- Local branch **`backup-before-rewrite`** = `5f2cdcc`, the old history (same tree as `0b720de`). Keep it unless the user says otherwise.
+- Remotes: `origin/main`, `origin/quang`, `origin/Yle`.
+- **Not committed:** nothing at the time of the session 4 commit.
+- **Local only, never commit:** `frontend-reference/` and `frontend_update.zip`, both listed in `.git/info/exclude`.
 - Git-ignored, written by a VS Code extension: `.github/modernize/`, `backend/Tech/.github/`.
-- **Do NOT commit or push** unless the user explicitly asks. The user has not answered the last "commit?" question: they only replied "duyệt" (approve) to the message that asked it together with 2.7.
+- **Do NOT commit or push** unless the user explicitly asks. When the user asks, commit under their identity with **no** `Co-Authored-By` / "Generated with" lines.
 
 # 10. EXACT NEXT STEP
 
@@ -720,65 +970,48 @@ Checked 2026-09-25, after Checkpoint 2.7.
 
 | Step | Status | Notes |
 |---|---|---|
-| Phase 2 inspection report, decisions D1–D6, frontend analysis (A–H) | **DONE** | §10.3, §10.4 |
-| Commit Phase 1 | **DONE by the user** | `21d2cda` |
-| **Checkpoints 2.1 – 2.5b** (the whole Phase 2 backend) | **DONE**, approved, **committed `c9e2d6c`** | 225/225 tests |
-| **Checkpoint 2.6** (frontend auth) | **DONE** | Edge E2E 24/24 |
-| Port 5500 / CORS | **DONE** (user chose 5501) | dev yml updated, uncommitted |
-| **Frontend restructure** (role folders, mirrored JS/CSS, header/footer partials) | **DONE**, accepted (the user went on to approve 2.7) | Edge E2E 32/32 |
-| **Checkpoint 2.7** (account page + `.page-hero` / form-message CSS moved to `style.css`) | **DONE and reported**; the user then stopped the session without approving it or answering the commit question | Edge E2E 31/31 + regression 32/32 (§6) |
-| Checkpoint 2.8 (products from the API) | NOT STARTED | |
-
-**How the open questions of the previous report were handled** (the user answered only "duyệt"):
-- `.page-hero` fix → applied (it was the proposal, and the account page needs it; easy to revert);
-- commit → **not done**, waiting for an explicit request;
-- E2E scripts in the repo → **not added** (they stay in the scratchpad).
-
-**2.7 implementation notes:**
-- `account.js` loads `/users/me` and `/users/me/profile` in parallel (both `auth: true`; concurrent 401s share one refresh);
-- `handleSessionError`: 401 → `clearAuth` + `redirectToLogin`; ACCOUNT_DISABLED → message + `clearAuth` + hide the content;
-- empty profile fields are sent as `null` (the backend `@Pattern` on gender rejects `""`);
-- after `PUT /users/me` the header name and `lahy_auth.user.fullname` are updated without a reload;
-- after a password change: `clearAuth()`, then after 1.5 s → `siteUrl("auth/login.html")` (no `?redirect`, so the user lands on index after logging in again);
-- the account page has no menu item (`data-active="account"` matches nothing), and it is reached through the header name.
+| Phase 1 (Product) | **DONE**, committed | `21d2cda` |
+| Checkpoints 2.1 – 2.5b (Phase 2 backend) | **DONE**, committed and pushed | `c582eee` (was `c9e2d6c`); 225/225 tests (re-run 2026-09-26) |
+| 2.6, frontend restructure, 2.7 | **DONE**, committed and pushed by the user | `115954b`, `0b720de` |
+| CP0: extract the reference frontend | **DONE**, approved 2026-09-26 | §10.5 |
+| Checkpoint R: brand LAHY → POY | **DONE**, approved 2026-09-26, not committed | §6 |
+| **Checkpoint 2.8 extended** (= merge checkpoint A): products from the API | **DONE**, approved 2026-09-26, not committed | Edge E2E 47/47 + regressions 32/32, 31/31 |
+| **Phase 2** | **COMPLETE** | |
+| Checkpoint A2: product detail page from the real API | **DONE**, approved 2026-09-26 (the user moved on to B1), not committed | §1, §6 |
+| Storage keys `lahy_*` → `poy_*` | **DONE** (user request), not committed | §1 |
+| Checkpoint B1: `admin/` on mock data (3 staff roles) | **DONE, approved** (session 4) | §1, §6 |
+| "Products do not load": dev CORS by origin pattern (option b) | **DONE, approved** (session 4) | §6, §7 #22 |
+| Commit of R, 2.8, A2, `poy_*`, B1, Việc 1, docs | **DONE** (session 4, user's identity, not pushed) | §9 |
+| Switch to the whole reference frontend (PENDING Việc 2) | **NEXT** | §10.2 |
 
 ## 10.2 EXACT NEXT STEP
 
-**At the start of the next session:**
-1. read `docs/PENDING_WORK.md` (the open work, in order, with details);
-2. check that the repo still matches §9;
-3. ask the user **(a)** to approve 2.7 and **(b)** whether to commit the uncommitted frontend + `application-dev.yml`.
+Steps 0 (fix "products do not load") and 1 (approve B1) were **done in session 4**.
 
-**Only then implement Checkpoint 2.8: product listing from the API**, without backend changes (user decision). Details below and in `PENDING_WORK.md`.
+**Next: switch to the whole reference frontend** (`PENDING_WORK.md` Việc 2, which has the full list of what must be kept). Scope decisions are already answered (§8): cart snapshots, keep B1 `admin/`, drop forgot/reset password. Work by checkpoints, stopping for approval after each; the uncommitted work was committed first, so the overwrite cannot lose the real-API wiring.
 
-1. **`frontend/customer/products.html`:**
-   - remove the 8 hardcoded `.product-card`s but keep the `.filter-bar` buttons (`data-category` = `all` / `laptop` / `phone` / `tablet` / `accessory`) and an empty `.product-grid`;
-   - add a "Xem thêm" button in a `.view-all` block (existing class), plus loading / empty / error messages;
-   - keep the look.
-2. **`frontend/js/customer/products.js`:**
-   - `GET /api/v1/categories?size=100` (public, **no** `auth`) → map the button slugs to DB slugs: `laptop` → `laptop`, `phone` → `dien-thoai`, `tablet` → `may-tinh-bang`, `accessory` → `phu-kien`; then to `categoryId`. The DB also has `dong-ho-thong-minh` and `dong-ho-thoi-trang` (shown only under "Tất cả") and 2 E2E categories with 0 products;
-   - `GET /api/v1/products?categoryId=&isActive=true&page=&size=12&sort=id` → render cards using the existing markup (`.product-card` > `.product-image` img + `.product-info` with `.product-category` = `categoryName`, h3 = name, `.product-price` = `formatPrice(discountPrice ?? basePrice)`, `.add-cart` with `data-name` / `data-price`);
-   - images: for each card, `GET /api/v1/products/{id}/images` → the primary image or the first one; if there is none (116 products) or it fails → a local fallback by category, e.g. `../assets/images/laptop.png`, `phone.png`, `tablet.png`, `banphim.png`;
-   - keep the `?category=` URL behaviour (links from the index category cards);
-   - "Xem thêm" → next page;
-   - after rendering, call `setupAddToCart(grid)`: change `setupAddToCart` in `js/core/main.js` to accept a root (default `document`) so new cards get the listener without double-binding.
-3. **`frontend/index.html` featured grid** ("SẢN PHẨM NỔI BẬT"): replace the 4 hardcoded cards with the first 4 active products from the API (same card renderer). Consider a small shared helper, e.g. `js/core/products-ui.js`, used by both pages, **or** keep the renderer in `products.js` and add a tiny `home.js` part; pick the simpler option and document it.
-4. **Things that stay unchanged:** the cart (localStorage, keyed by name, until Phase 3), recommendation, contact.
-5. **Verify:**
-   - the backend on the **dev** profile is fine here: only GETs, and the dev DB has the 877 real products;
-   - headless Edge E2E: the grid renders 12, "Xem thêm" adds 12, each filter button shows only that category (compare counts with `GET /products?categoryId=`), `?category=phone` preselects, fallback images for products without images, add-to-cart works on rendered cards, the index featured grid shows 4, no JS errors; screenshots;
-   - check the network: requests stay reasonable (12 image calls per page).
-6. Update this file. **Stop and report.** Phase 2 then ends: suggest a final commit and a Phase 2 summary.
+B1 (approved) in short:
+- `admin/login.html` + 8 pages (dashboard, service-requests, support-tickets, orders, reports, employees, stores, chat-history);
+- `partials/admin-sidebar.html` / `admin-topbar.html`; `css/admin/admin.css` (the design tokens live only there);
+- `js/admin/{mock-staff-data, staff-auth, admin-layout, admin-charts, login, <page>}.js`;
+- session `poy_staff_auth` in the `poy_auth` shape plus `staff{role, storeId, storeName}`;
+- mock keys `poy_staff_overrides`, `poy_extra_stores`, `poy_extra_employees`;
+- demo accounts `admin@poy.vn` / `admin123`, `lan.quanly@poy.vn` / `quanly123`, `hoa.nv@poy.vn` / `nhanvien123`;
+- no API calls;
+- `admin/users` and `admin/products` are left for B2.
 
-The user-approved plan is also saved outside the repo at `C:\Users\Quang\.claude\plans\pasted-content-id-5fa4-t-i-mu-n-cached-biscuit.md`.
+**2. Then Checkpoint B2** (§10.5):
+- the admin login goes through the real `/auth/login` (STAFF/ADMIN only);
+- `api.js` picks `poy_staff_auth` on `admin/` pages;
+- `admin/users` is built on `/admin/users`, `admin/products` on the catalogue CRUD.
 
-**The Phase 2 backend is complete and committed (`c9e2d6c`); frontend 2.6, the restructure and 2.7 are done (uncommitted); next is 2.8, the last Phase 2 checkpoint.**
+It needs the dev ADMIN (PENDING 5.1).
 
 **Do NOT:**
 - modify `database/techshopping.sql`, or change/delete data, without approval;
-- start Cart/Order;
-- rewrite the existing frontend pages (only targeted edits, as in 2.6);
-- rewrite the frontend or add a framework;
+- start Cart/Order (Phase 3+) unless asked;
+- rewrite existing pages beyond the approved checkpoint;
+- use the reference's mock product catalogue;
 - commit or push without an explicit request.
 
 ## 10.3 Phase 2 inspection summary (read from `database/techshopping.sql` lines 9–56 and 467–470)
@@ -876,6 +1109,47 @@ The user-approved plan is also saved outside the repo at `C:\Users\Quang\.claude
 | D6 | Register creates User + UserRole CUSTOMER + CustomerProfile in **one transaction**. STAFF/ADMIN cannot self-register; only an ADMIN can assign them. |
 | Other | The frontend runs with VS Code Live Server (originally `:5500`; on this machine **`:5501`**, because Oracle holds 5500; see §7 #14). The product pages are connected to the API **without backend changes**. Work on branch `quang`. `docs/` stays untracked. The backend auth comes first; frontend integration starts after the Auth API is tested. |
 
+## 10.5 Reference-frontend merge track (session 3, 2026-09-26)
+
+**Origin:** the user supplied `frontend_update.zip` (109 entries), a separate frontend for the same project.
+- It runs 100% on mock data (localStorage + mock functions).
+- It has rewritten customer pages and a full **admin area** for 3 staff roles.
+- It was built on top of the post-2.7 frontend: `api.js`, `layout.js`, `login.js`, `register.js` and `account.js` are byte-identical.
+- Extracted to `frontend-reference/frontend/` (local only).
+
+The full analysis (mapping table, conflicts X1–X13, questions Q1–Q8) is in `C:\Users\Quang\.claude\plans\pasted-content-id-23a1-c-docs-claude-co-enchanted-dove.md`.
+
+**Mapping:**
+- **(a) already wired:** login, register, account. From the reference, only the account sidebar is worth taking later. Its wishlist has no table.
+- **(b) products:** done in 2.8.
+- **(b⁺) real API exists but not wired:**
+  - product detail → A2;
+  - `admin/users` → `/admin/users` (2.5b);
+  - `admin/products` → catalogue CRUD.
+- **(c) no backend:**
+  - customer: cart / checkout / orders / order-detail / recommendation / chatbot / contact / forgot + reset password;
+  - admin: dashboard, reports, service-requests, support-tickets, admin orders, employees, stores, chat-history.
+
+**Main conflicts to respect when merging:**
+- **X3, staff session:** the reference stores `lahy_staff_auth` = `{id, fullname, role: EMPLOYEE|BRANCH_MANAGER|ADMIN, storeId}` with hardcoded demo passwords. The real backend has one `users` table with JWT roles CUSTOMER / STAFF / ADMIN, and `employees.user_id → users`. Plan: keep the key, but give it the `lahy_auth` shape plus a mock `staff` part; in B2 `api.js` picks the key by area.
+- **X4, `cart-store.js`:** it changes the shape of `lahy_cart` and resolves items through the **mock** `getProductById`, so it cannot work with real product ids. Do not load it. The real cart comes in Phase 3, storing snapshots.
+- **X5, mock shapes:** they differ from the real API (string ids, `price` / `compareAtPrice`, 1-based `{items, pageSize, totalItems}`). Never use the mock product catalogue.
+- **X8, XSS:** the reference uses `innerHTML` without escaping everywhere. Always use `escapeHtml` on merge.
+- **X10:** admin pages use the event `admin-layout:ready` and inline guard scripts. Convert them to `DOMContentLoaded` + a promise.
+- **X11:** `admin.css` needs design tokens. Keep them inside the admin CSS.
+
+**Checkpoints:**
+
+| # | Content | Status |
+|---|---|---|
+| CP0 | extract to `frontend-reference/`; `.git/info/exclude`; 225 tests | DONE |
+| R | brand LAHY → POY | DONE |
+| A = 2.8 | products page + home featured grid from the API, sidebar, brand-by-category filter, header search, `ui.js` | DONE |
+| A2 | product detail from the real API | DONE |
+| B1 | `admin/` shell on mock data: login, layout, sidebar RBAC, dashboard, service-requests, support-tickets, orders, reports, employees, stores, chat-history. `poy_staff_auth` in the `poy_auth` shape. Without `admin/users` and `admin/products` | **done, waiting for approval** |
+| B2 | admin login through the real `/auth/login` (STAFF/ADMIN only); `api.js` chooses the storage key by area; `admin/users` on `/admin/users`; `admin/products` on the catalogue CRUD. Needs the dev ADMIN (PENDING 5.1) | planned |
+| C… | replace each mock with the real API as Phases 3–10 are built (cart → orders → payment → warranty → store/employee → recommendation → chatbot → reports) | long term |
+
 # 11. Instructions for Next Claude Session
 
 "Before doing anything, read docs/PENDING_WORK.md (open work) and docs/CLAUDE_CONTEXT.md, and inspect the current codebase.
@@ -902,7 +1176,7 @@ Practical notes:
   - Git Bash: `export JWT_SECRET=$(head -c 48 /dev/urandom | base64)`.
   - IntelliJ / VS Code run configs need it as an environment variable too.
   - Claude's own verification runs use a throwaway random secret for each run.
-- **Frontend:** open it with VS Code Live Server on port **5501**: in the user's VS Code settings, `"liveServer.settings.port": 5501`. Port 5500 is taken by Oracle. Start the backend first (dev profile + `JWT_SECRET`). Pages need HTTP because of the header/footer partials. Entry page: `frontend/index.html`; login at `frontend/auth/login.html`.
+- **Frontend:** open it with VS Code Live Server (installed in session 4) on **any free port**: 5500 is Oracle's and 5501 Antigravity's, so set `"liveServer.settings.port"` to e.g. 5510 (or 0 for a random port). Dev CORS allows every local port (§7 #22). If products do not load, the backend is not running: the page then says "…(localhost:8080). Hãy kiểm tra backend đã chạy chưa." Start the backend first (dev profile + `JWT_SECRET`). Pages need HTTP because of the header/footer partials. Entry page: `frontend/index.html`; login at `frontend/auth/login.html`.
 - To stop an app started in the background: find the process that listens on 8080 (`Get-NetTCPConnection -LocalPort 8080 -State Listen`) and `Stop-Process` it.
 - Git Bash heredocs that contain Vietnamese characters sometimes fail to parse. Use the Write/Edit tools for files with Vietnamese text.
 - Windows PowerShell 5.1 reads `.ps1` files without a BOM as ANSI, which corrupts Vietnamese literals. Save scripts as UTF-8 **with BOM**.

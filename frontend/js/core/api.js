@@ -10,7 +10,45 @@
 
 const API_BASE_URL = "http://localhost:8080/api/v1";
 
-const AUTH_STORAGE_KEY = "lahy_auth";
+/* Khoá localStorage mang tiền tố "poy_" (đổi từ "lahy_" ngày 2026-09-26) */
+
+const AUTH_STORAGE_KEY = "poy_auth";
+
+const CART_STORAGE_KEY = "poy_cart";
+
+
+/*
+ * Chuyển dữ liệu của khoá cũ "lahy_*" sang khoá mới đúng một lần, để người
+ * đang đăng nhập / đang có giỏ hàng không bị mất khi đổi tên. api.js được
+ * nạp đầu tiên trên mọi trang nên chỉ cần làm ở đây.
+ */
+
+function migrateStorageKey(oldKey, newKey) {
+
+    try {
+
+        const oldValue = localStorage.getItem(oldKey);
+
+        if (oldValue === null) {
+            return;
+        }
+
+        if (localStorage.getItem(newKey) === null) {
+            localStorage.setItem(newKey, oldValue);
+        }
+
+        localStorage.removeItem(oldKey);
+
+    } catch (error) {
+        /* localStorage bị chặn: bỏ qua */
+    }
+
+}
+
+
+migrateStorageKey("lahy_auth", AUTH_STORAGE_KEY);
+
+migrateStorageKey("lahy_cart", CART_STORAGE_KEY);
 
 
 /*
@@ -32,12 +70,23 @@ function siteUrl(path) {
 }
 
 
+/*
+ * Đang chạy trên máy lập trình (Live Server, static-server…). Khi đó CORS dev
+ * cho mọi cổng localhost, nên không gọi được API gần như chắc chắn là backend
+ * chưa chạy: báo rõ để người phát triển biết cần làm gì.
+ */
+
+const IS_LOCAL_DEV =
+    location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+
 /* Thông báo tiếng Việt theo mã lỗi của backend */
 
 const API_ERROR_MESSAGES = {
 
-    NETWORK_ERROR:
-        "Không thể kết nối tới máy chủ. Vui lòng thử lại sau.",
+    NETWORK_ERROR: IS_LOCAL_DEV
+        ? "Không thể kết nối tới máy chủ (localhost:8080). Hãy kiểm tra backend đã chạy chưa."
+        : "Không thể kết nối tới máy chủ. Vui lòng thử lại sau.",
 
     VALIDATION_ERROR:
         "Dữ liệu chưa hợp lệ. Vui lòng kiểm tra lại.",

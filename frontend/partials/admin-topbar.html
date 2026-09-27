@@ -1,0 +1,34 @@
+<!--
+    TOPBAR KHU QUẢN TRỊ NỘI BỘ (admin/)
+    Được js/core/layout.js chèn vào <div data-include="admin-topbar"></div>.
+    js/admin/admin-layout.js điền tiêu đề trang, tên / vai trò / chi nhánh và gắn nút đăng xuất.
+-->
+<header class="admin-topbar">
+
+    <button
+        type="button"
+        class="admin-sidebar-toggle"
+        id="adminSidebarToggle"
+        aria-label="Mở / đóng menu"
+        aria-controls="adminSidebar"
+        aria-expanded="false"
+    >
+        ☰
+    </button>
+
+    <h1 class="admin-page-title" id="adminPageTitle"></h1>
+
+    <div class="admin-topbar-user">
+
+        <div class="admin-user-info">
+            <strong id="adminUserName">—</strong>
+            <span id="adminUserMeta">—</span>
+        </div>
+
+        <button type="button" class="btn btn-outline-dark admin-logout-btn" id="adminLogoutBtn">
+            ĐĂNG XUẤT
+        </button>
+
+    </div>
+
+</header>

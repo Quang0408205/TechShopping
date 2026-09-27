@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Chi tiết sản phẩm - POY</title>
+
+    <link
+        rel="stylesheet"
+        href="../css/style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../css/customer/product-detail.css"
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="products"></div>
+
+
+<main class="product-detail-page">
+
+    <div class="container">
+
+        <nav class="breadcrumb" aria-label="Đường dẫn">
+            <a href="../index.html">Trang chủ</a>
+            <span>/</span>
+            <a href="products.html">Sản phẩm</a>
+            <span id="breadcrumbCategorySep" hidden>/</span>
+            <a id="breadcrumbCategory" href="products.html" hidden></a>
+            <span>/</span>
+            <span id="breadcrumbCurrent">Đang tải...</span>
+        </nav>
+
+    </div>
+
+
+    <!-- ================= ĐANG TẢI ================= -->
+
+    <section class="container" id="detailSkeleton" aria-hidden="true">
+
+        <div class="product-detail-layout">
+
+            <div class="skeleton-block detail-skeleton-image"></div>
+
+            <div>
+                <div class="skeleton-block skeleton-line" style="width: 30%"></div>
+                <div class="skeleton-block skeleton-line" style="width: 80%; height: 30px; margin-top: 20px"></div>
+                <div class="skeleton-block skeleton-line" style="width: 40%; height: 30px; margin-top: 30px"></div>
+                <div class="skeleton-block skeleton-line" style="width: 90%; margin-top: 30px"></div>
+                <div class="skeleton-block skeleton-line" style="width: 70%; margin-top: 12px"></div>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= KHÔNG TÌM THẤY / LỖI ================= -->
+
+    <section class="container detail-state" id="detailNotFound" hidden>
+
+        <div class="state-box empty-state">
+            <h3>Không tìm thấy sản phẩm</h3>
+            <p>Sản phẩm này có thể đã ngừng kinh doanh hoặc đường dẫn không đúng.</p>
+            <a href="products.html" class="btn btn-dark">XEM TẤT CẢ SẢN PHẨM</a>
+        </div>
+
+    </section>
+
+
+    <section class="container detail-state" id="detailError" hidden></section>
+
+
+    <!-- ================= CHI TIẾT SẢN PHẨM ================= -->
+
+    <section class="container" id="detailContent" hidden>
+
+        <div class="product-detail-layout">
+
+            <div class="detail-gallery">
+
+                <div class="detail-main-image">
+                    <img id="mainImage" alt="">
+                </div>
+
+                <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên -->
+                <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
+
+            </div>
+
+
+            <div class="detail-info">
+
+                <span class="product-category" id="detailCategory"></span>
+
+                <h1 id="detailName"></h1>
+
+                <p class="detail-meta" id="detailMeta"></p>
+
+
+                <div class="detail-price-box">
+                    <span class="detail-price" id="detailPrice"></span>
+                    <span class="detail-price-old" id="detailPriceOld" hidden></span>
+                </div>
+
+
+                <div class="detail-variants" id="detailVariants" hidden>
+                    <span class="variant-label">Phiên bản</span>
+                    <div class="variant-options" id="variantOptions"></div>
+                </div>
+
+
+                <div class="detail-quantity-row">
+
+                    <span class="variant-label">Số lượng</span>
+
+                    <div class="quantity-control">
+                        <button type="button" id="qtyMinus" aria-label="Giảm số lượng">−</button>
+                        <span id="qtyValue" aria-live="polite">1</span>
+                        <button type="button" id="qtyPlus" aria-label="Tăng số lượng">+</button>
+                    </div>
+
+                </div>
+
+
+                <p class="detail-contact-note" id="contactNote" hidden>
+                    Sản phẩm chưa có giá bán trực tuyến. Vui lòng
+                    <a href="contact.html">liên hệ</a> để được báo giá.
+                </p>
+
+
+                <div class="detail-actions">
+
+                    <button type="button" id="addToCartBtn" class="btn btn-outline-dark">
+                        THÊM VÀO GIỎ
+                    </button>
+
+                    <button type="button" id="buyNowBtn" class="btn btn-dark">
+                        MUA NGAY
+                    </button>
+
+                </div>
+
+
+                <!-- Bảo hành lấy từ warrantyMonths; 2 dòng còn lại khớp trang Dịch vụ -->
+                <ul class="detail-policies">
+                    <li id="detailWarranty" hidden></li>
+                    <li>Hỗ trợ giao hàng đến địa chỉ của bạn</li>
+                    <li>Tư vấn chọn sản phẩm phù hợp nhu cầu</li>
+                    <li><a href="services.html">Xem các dịch vụ hỗ trợ →</a></li>
+                </ul>
+
+            </div>
+
+        </div>
+
+
+        <!-- ================= TABS: THÔNG SỐ / MÔ TẢ ================= -->
+
+        <div class="detail-tabs">
+
+            <div class="tab-buttons" role="tablist">
+                <button type="button" class="tab-btn active" data-tab="specs" role="tab">THÔNG SỐ KỸ THUẬT</button>
+                <button type="button" class="tab-btn" data-tab="description" role="tab">MÔ TẢ SẢN PHẨM</button>
+            </div>
+
+            <div class="tab-panel active" data-tab-panel="specs" role="tabpanel">
+                <table class="specs-table" id="specsTable"></table>
+            </div>
+
+            <div class="tab-panel" data-tab-panel="description" role="tabpanel">
+                <p id="detailDescription"></p>
+            </div>
+
+        </div>
+
+
+        <!-- ================= CÙNG DANH MỤC (API thật; gợi ý AI để Phase 8) ================= -->
+
+        <section class="related-zone" id="relatedZone" hidden>
+
+            <div class="section-heading">
+                <span class="section-label">CÓ THỂ BẠN QUAN TÂM</span>
+                <h2>SẢN PHẨM TƯƠNG TỰ</h2>
+            </div>
+
+            <div class="product-grid" id="relatedProductsGrid"></div>
+
+        </section>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/product-detail.js"></script>
+
+</body>
+</html>

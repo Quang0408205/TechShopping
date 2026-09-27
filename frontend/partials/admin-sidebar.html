@@ -1,0 +1,63 @@
+<!--
+    SIDEBAR KHU QUẢN TRỊ NỘI BỘ (admin/)
+    Được js/core/layout.js chèn vào <div data-include="admin-sidebar" data-active="..."></div>.
+    {{ROOT}} được thay bằng đường dẫn gốc của website; data-page khớp data-active để tô đậm mục đang xem.
+    data-roles: vai trò được thấy mục này; js/admin/admin-layout.js ẩn các mục không khớp.
+    "Người dùng & phân quyền" và "Sản phẩm & danh mục" sẽ thêm ở Checkpoint B2 (nối API thật).
+-->
+<aside class="admin-sidebar" id="adminSidebar">
+
+    <a href="{{ROOT}}admin/dashboard.html" class="admin-logo">
+        <span class="logo-main">POY</span>
+        <span class="logo-sub">QUẢN TRỊ NỘI BỘ</span>
+    </a>
+
+    <nav class="admin-nav" aria-label="Menu quản trị">
+
+        <span class="admin-nav-label">Chung</span>
+
+        <a href="{{ROOT}}admin/dashboard.html" data-page="dashboard" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+            Tổng quan
+        </a>
+
+        <span class="admin-nav-label">Nghiệp vụ</span>
+
+        <a href="{{ROOT}}admin/service-requests.html" data-page="service-requests" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+            Bảo hành / Bảo trì / Đổi trả
+        </a>
+
+        <a href="{{ROOT}}admin/support-tickets.html" data-page="support-tickets" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+            Hỗ trợ khách hàng
+        </a>
+
+        <a href="{{ROOT}}admin/orders.html" data-page="orders" data-roles="BRANCH_MANAGER,ADMIN">
+            Đơn hàng chi nhánh
+        </a>
+
+        <span class="admin-nav-label">Quản lý chi nhánh</span>
+
+        <a href="{{ROOT}}admin/reports.html" data-page="reports" data-roles="BRANCH_MANAGER,ADMIN">
+            Báo cáo doanh thu
+        </a>
+
+        <a href="{{ROOT}}admin/employees.html" data-page="employees" data-roles="BRANCH_MANAGER,ADMIN">
+            Nhân viên
+        </a>
+
+        <span class="admin-nav-label">Quản trị hệ thống</span>
+
+        <a href="{{ROOT}}admin/stores.html" data-page="stores" data-roles="ADMIN">
+            Chi nhánh
+        </a>
+
+        <a href="{{ROOT}}admin/chat-history.html" data-page="chat-history" data-roles="ADMIN">
+            Lịch sử Chatbot
+        </a>
+
+    </nav>
+
+    <a href="{{ROOT}}index.html" class="admin-back-to-store">
+        ← Về trang khách hàng
+    </a>
+
+</aside>

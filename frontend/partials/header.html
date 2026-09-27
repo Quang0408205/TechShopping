@@ -23,6 +23,20 @@
             <a href="{{ROOT}}customer/contact.html" data-page="contact">Liên hệ</a>
         </nav>
 
+        <!-- Tìm kiếm sản phẩm: submit → customer/products.html?search=... (main.js) -->
+        <form class="search-form" role="search">
+
+            <input
+                type="search"
+                placeholder="Tìm sản phẩm..."
+                aria-label="Tìm sản phẩm"
+                maxlength="100"
+            >
+
+            <button type="submit" aria-label="Tìm kiếm">🔍</button>
+
+        </form>
+
         <!-- Header actions -->
         <div class="header-actions">
 

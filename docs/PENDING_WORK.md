@@ -1,6 +1,6 @@
 # Việc còn dở: TechShopping
 
-Cập nhật: **2026-09-25, cuối session 2**. Người dùng dừng phiên sau Checkpoint 2.7.
+Cập nhật: **2026-09-27, session 4**. Đã sửa lỗi "không load được sản phẩm" (Việc 1, cách b), B1 đã được duyệt, và toàn bộ phần chưa commit đã được commit theo yêu cầu người dùng (chưa push). Việc tiếp theo: **Việc 2**.
 Chi tiết kỹ thuật đầy đủ (kiến trúc, API, test, quyết định) nằm trong [`CLAUDE_CONTEXT.md`](CLAUDE_CONTEXT.md). File này chỉ liệt kê **những gì chưa xong**, theo thứ tự nên làm.
 
 > **Prompt gợi ý khi mở chat mới:**
@@ -12,141 +12,136 @@ Chi tiết kỹ thuật đầy đủ (kiến trúc, API, test, quyết định) 
 
 | Hạng mục | Trạng thái |
 |---|---|
-| Phase 1 – Product (backend) | ✅ Xong, commit `21d2cda` (người dùng tự commit) |
-| Phase 2 – Backend 2.1 → 2.5b (User, Auth, JWT, phân quyền, `/users/me`, admin quản lý user) | ✅ Xong, commit **`c9e2d6c`** trên nhánh `quang` |
-| 2.6 – Frontend đăng nhập / đăng ký / header | ✅ Xong, **chưa commit** |
-| Tái cấu trúc frontend (thư mục theo role, header/footer dùng chung) | ✅ Xong, **chưa commit** |
-| 2.7 – Trang tài khoản `customer/account.html` | ✅ Xong và đã báo cáo, **chưa được duyệt, chưa commit** |
-| 2.8 – Trang sản phẩm lấy dữ liệu từ API | ❌ **Chưa làm** (checkpoint cuối của Phase 2) |
-| Push lên GitHub | ❌ Chưa push lần nào, và chưa được yêu cầu |
+| Phase 1 – Product (backend) | ✅ Xong, commit `21d2cda` |
+| Phase 2 – Backend 2.1 → 2.5b | ✅ Xong, commit `c582eee` |
+| 2.6, tái cấu trúc frontend, 2.7 | ✅ Xong, người dùng đã commit và push (`115954b`, `0b720de`) |
+| CP0 – giải nén frontend tham chiếu | ✅ Xong, đã duyệt |
+| R – đổi tên LAHY → **POY** | ✅ Xong, đã duyệt, đã commit (session 4) |
+| 2.8 mở rộng – trang sản phẩm từ API | ✅ Xong, đã duyệt, đã commit (session 4) |
+| A2 – trang chi tiết sản phẩm (API thật) | ✅ Xong, đã duyệt, đã commit (session 4) |
+| Đổi khoá localStorage `lahy_*` → `poy_*` | ✅ Xong, đã commit (session 4) |
+| **Phase 2** | ✅ Hoàn tất |
+| B1 – khu `admin/` chạy dữ liệu mẫu | ✅ Xong, **đã duyệt** (session 4), đã commit |
+| Lỗi "không load được sản phẩm" | ✅ Đã sửa (cách b: CORS dev mọi cổng local), đã duyệt, đã commit |
+| Commit tất cả phần trên | ✅ Session 4, dưới tài khoản git của người dùng, **chưa push** |
+| **Chuyển sang dùng toàn bộ frontend mới** (quyết định của người dùng 2026-09-27) | ⏳ **Việc tiếp theo**, xem Việc 2 |
+| B2 – nối `admin/users`, `admin/products` với API thật | ❌ Chưa làm |
 
 ---
 
 ## Việc 0: Kiểm tra đầu phiên (bắt buộc)
 
 1. Docker Desktop đang chạy → `docker compose up -d`. Cần cả `techshopping-postgres` và `techshopping-redis`.
-2. `git branch --show-current` phải là **`quang`**. `git status` phải khớp với danh sách "chưa commit" ở Việc 2.
-3. Chạy `cd backend/Tech && ./mvnw clean test` → phải **225 tests, 0 failures**.
-4. Nếu có gì khác với ghi chép thì **báo người dùng trước**, không tự đoán.
+2. `git branch --show-current` phải là **`quang`**, HEAD là commit session 4 (xem `CLAUDE_CONTEXT.md` §9, `git log -1`), hơn `origin/quang` 1 commit nếu người dùng chưa push. `git status` phải sạch, trừ những gì đang làm dở của Việc 2.
+3. `cd backend/Tech && ./mvnw clean test` → phải **229 tests, 0 failures**.
+4. Kiểm tra cổng: `Get-NetTCPConnection -LocalPort 8080,5500,5501 -State Listen`.
+   - Cổng 5500 do Oracle (`TNSLSNR`) chiếm, cổng 5501 do Antigravity (`agy.exe`) chiếm. Từ session 4 điều này không còn ảnh hưởng: CORS dev chấp nhận mọi cổng local.
+5. Nếu có gì khác với ghi chép thì **báo người dùng trước**, không tự đoán.
 
-## Việc 1: Xin duyệt Checkpoint 2.7
+## Việc 1: Sửa lỗi "không load được sản phẩm" ✅ XONG (session 4)
 
-2.7 đã làm xong và đã báo cáo, nhưng người dùng dừng phiên trước khi duyệt. Gồm:
-- `frontend/customer/account.html`, `js/customer/account.js`, `css/customer/account.css`;
-- tên người dùng trên header giờ link tới trang tài khoản (`js/core/main.js`);
-- chuyển `.page-hero` từ `products.css` sang `style.css`. Nhờ vậy các trang giỏ hàng / liên hệ / khuyến nghị / dịch vụ có nền xám và khoảng đệm giống trang Sản phẩm. Đây là một **thay đổi giao diện nhỏ**, người dùng có thể muốn hoàn tác;
-- chuyển `.form-error` / `.field-error` từ `login.css` sang `style.css`, và thêm `.form-success`.
+- Nguyên nhân là môi trường: backend không chạy, và CORS dev chỉ cho cổng 5500/5501, hai cổng này bị Oracle và Antigravity chiếm (`CLAUDE_CONTEXT.md` §7 #22).
+- Người dùng chọn **cách (b)**, đã duyệt:
+  - `application-dev.yml` dùng `allowed-origin-patterns` `http://localhost:[*]` và `http://127.0.0.1:[*]`, nên web mở từ cổng local nào cũng gọi được API;
+  - prod vẫn chỉ nhận danh sách chính xác.
+- `api.js`: khi chạy local mà không gọi được API, trang báo "Không thể kết nối tới máy chủ (localhost:8080). Hãy kiểm tra backend đã chạy chưa."
+- Kết quả: 229 tests; E2E sản phẩm 48/48 từ cổng 5503; preflight từ `evil.example` vẫn bị 403.
+- Người dùng đã cài Live Server. **Nên đặt `"liveServer.settings.port"` sang một cổng trống** (ví dụ 5510, hoặc `0` để lấy cổng ngẫu nhiên), vì mặc định là 5500, cổng của Oracle.
 
-Kết quả kiểm tra: E2E trên Edge 31/31, hồi quy 32/32. → Hỏi người dùng duyệt hay muốn sửa gì.
+## Việc 2: Chuyển sang dùng TOÀN BỘ frontend mới (quyết định của người dùng, 2026-09-27)
 
-## Việc 2: Commit phần frontend (chờ người dùng đồng ý)
+**Người dùng yêu cầu:** phiên sau dùng **hết** frontend mới (`frontend-reference/frontend/`, giải nén từ `frontend_update.zip`), thay cho cách merge từng phần như session 3.
 
-**Chưa commit:**
-- **đã stage:** toàn bộ 2.6 + tái cấu trúc frontend (đổi tên / chuyển thư mục);
-- **chưa stage:**
-  - sửa đổi 2.7 trong `frontend/css/style.css`, `css/auth/login.css`, `css/customer/products.css`, `js/core/main.js`;
-  - file mới `frontend/customer/account.html`, `js/customer/account.js`, `css/customer/account.css`;
-  - `backend/Tech/src/main/resources/application-dev.yml` (thêm CORS cho cổng 5501).
-- `docs/` **không commit**; người dùng quyết định để untracked.
+**Các quyết định cũ bị thay đổi** (sau khi làm xong phải cập nhật `CLAUDE_CONTEXT.md` §8 và §10.5):
+- **Q2 "giữ giao diện gốc"** không còn áp dụng. Dùng giao diện mới:
+  - design tokens trong `style.css`, màu nhấn đồng, bo góc;
+  - header kính mờ, scroll reveal;
+  - trang chủ mới (thứ tự section mới, lưới "Gợi ý cho bạn");
+  - chatbot nổi.
+- **Q6** không còn áp dụng: đưa luôn các trang giỏ hàng, thanh toán, đơn hàng, chi tiết đơn, khuyến nghị, chatbot, thanh bên trang tài khoản. Các trang này **chạy dữ liệu mẫu** cho tới khi có backend Phase 3–9.
 
-Khi được đồng ý:
-```bash
-git add -A frontend/ backend/Tech/src/main/resources/application-dev.yml
-git status && git diff --cached --stat     # kiểm tra: không có docs/, không có file lạ
-git commit -m "Frontend: auth pages, role-based structure, shared layout, account page"   # + dòng Co-Authored-By theo quy định của phiên
-```
-**Không push** nếu người dùng chưa yêu cầu.
+**Bắt buộc giữ lại, không được mất khi thay** (bản mới chạy 100% dữ liệu giả, còn bản hiện tại đã nối API thật):
+1. **Nối API thật đã có:**
+   - đăng nhập / đăng ký (2.6), trang tài khoản (2.7): 5 file `api.js`, `layout.js`, `login.js`, `register.js`, `account.js` vốn đã giống hệt nhau giữa hai bản, nên chỉ cần giữ;
+   - **trang sản phẩm (2.8)** và **chi tiết sản phẩm (A2)**: bản mới đọc catalogue giả (`mock-data.js`), nên phải nối lại API thật. Dùng lại logic của `js/customer/products.js`, `product-detail.js` và `js/core/ui.js` hiện tại: `fetchCategoryMaps`, lọc thương hiệu theo danh mục, ảnh qua `/images`, bảng thông số ghép từ dữ liệu thật;
+   - lưới "Sản phẩm nổi bật" ở trang chủ lấy từ API.
+2. **Khoá `poy_*`** và đoạn chuyển khoá cũ trong `api.js`. Bản mới vẫn dùng `lahy_*` ở `cart-store.js`, `mock-data.js`, `staff-auth.js`, `mock-staff-data.js`, nên phải đổi hết sang `poy_*`.
+3. **`escapeHtml` cho mọi dữ liệu đưa vào `innerHTML`**: bản mới hầu như không escape, dễ bị XSS với dữ liệu thật.
+4. **Giỏ hàng:**
+   - `cart-store.js` của bản mới tra catalogue giả theo `productId`, nên sẽ **không thêm được sản phẩm thật** vào giỏ;
+   - **Người dùng đã chọn (session 4): lưu snapshot** `{productId, variantId, name, price, image, quantity}` (lấy từ API);
+   - giỏ cũ dạng `{name, price, quantity}` phải được chuyển đổi, và phải báo người dùng.
+5. **Khu `admin/`:** bản B1 hiện tại chính là bản mới đã sửa (phiên `poy_staff_auth` cùng dạng `poy_auth`, kiểm tra lại tài khoản mỗi trang, escape, không phụ thuộc catalogue giả, không inline style). **Người dùng đã chọn (session 4): giữ B1, B1 đã duyệt.** Chỉ thêm `admin/users` và `admin/products` (sẽ nối API thật ở B2).
+6. **Thiếu / giả cần xử lý:**
+   - trang quên / đặt lại mật khẩu của bản mới báo "đã gửi email" trong khi backend chưa có chức năng này. **Người dùng đã chọn (session 4): bỏ hai trang này**, link "Quên mật khẩu?" giữ là `#`;
+   - thông số sản phẩm và đánh giá giả (`estimateRatingDistribution`) không dùng với dữ liệu thật (rating đều bằng 0).
 
-## Việc 3: Checkpoint 2.8, danh sách sản phẩm lấy từ API (chưa làm)
+**Cách làm đề xuất (theo checkpoint, mỗi bước dừng chờ duyệt):**
+1. ~~Hỏi người dùng xác nhận phạm vi các mục 4, 5, 6~~: ✅ đã trả lời ở session 4 (xem trên).
+2. ~~Commit trước khi chép đè~~: ✅ đã commit ở session 4 (Việc 3).
+3. Chép frontend mới vào `frontend/` (giữ `admin/` của B1), rồi nối lại lần lượt: chuyển khoá `poy_*` → escape → trang sản phẩm + chi tiết + trang chủ (API thật) → giỏ hàng.
+4. Kiểm tra: chạy lại các E2E trong `docs/tools/e2e/`. Các script cần sửa selector cho markup mới; ví dụ bộ lọc giờ là radio, không còn nút.
+5. Cập nhật `CLAUDE_CONTEXT.md`: §1 (cấu trúc, thứ tự script: bản mới nạp thêm `mock-data.js`, `cart-store.js`, `chatbot.js`), §8 (quyết định mới), §10.5.
 
-Mục tiêu: trang Sản phẩm và mục "Sản phẩm nổi bật" ở trang chủ hiển thị **877 sản phẩm thật** từ backend thay cho 8 sản phẩm giả. **Không sửa backend** (quyết định của người dùng).
+## Việc 2b: Checkpoint B1 (khu `admin/` chạy dữ liệu mẫu) ✅ ĐÃ DUYỆT (session 4)
 
-### 3.1 `frontend/customer/products.html`
-- Bỏ 8 thẻ `.product-card` hardcode.
-- **Giữ** `.filter-bar` với các nút `data-category` = `all` / `laptop` / `phone` / `tablet` / `accessory`, và một `.product-grid` rỗng.
-- Thêm nút "Xem thêm" trong khối `.view-all` (class có sẵn), và các thông báo đang tải / không có sản phẩm / lỗi.
-- Giữ nguyên giao diện.
+Người dùng giữ `admin/` của B1 khi chuyển sang frontend mới và đã duyệt B1.
 
-### 3.2 `frontend/js/customer/products.js`
-- `GET /api/v1/categories?size=100` (công khai, **không** gửi token). Map slug của nút lọc sang slug trong DB rồi lấy `categoryId`:
+Chi tiết: `CLAUDE_CONTEXT.md` §1 ("Admin area") và §6.
+- Gồm: đăng nhập nội bộ và 8 trang (tổng quan, bảo hành / bảo trì / đổi trả, ticket hỗ trợ, đơn chi nhánh, báo cáo doanh thu, nhân viên, chi nhánh, lịch sử chatbot); phân quyền theo 3 vai trò; phiên `poy_staff_auth`.
+- Mở: `frontend/admin/login.html`. Tài khoản thử:
+  - `admin@poy.vn` / `admin123`;
+  - `lan.quanly@poy.vn` / `quanly123`;
+  - `hoa.nv@poy.vn` / `nhanvien123`.
+- Kết quả: E2E admin 53/53 (`docs/tools/e2e/e2e-admin.mjs`, không cần backend); hồi quy phía khách hàng 48 + 39 + 32 + 31 đều đạt.
+- Câu hỏi phụ cho người dùng: có muốn thêm link "Khu nội bộ" ở footer trỏ tới `admin/login.html` không?
 
-  | Nút (`data-category`) | Slug trong DB |
-  |---|---|
-  | `laptop` | `laptop` |
-  | `phone` | `dien-thoai` |
-  | `tablet` | `may-tinh-bang` |
-  | `accessory` | `phu-kien` |
+## Việc 3: Commit ✅ XONG (session 4)
 
-  DB còn `dong-ho-thong-minh` và `dong-ho-thoi-trang`: không có nút, chỉ hiện ở "Tất cả". Hai danh mục `E2E Devices` / `E2E Phones` là rác test, có 0 sản phẩm.
-- `GET /api/v1/products?categoryId=<id>&isActive=true&page=<n>&size=12&sort=id`, kết quả nằm trong `data.content`, `data.totalPages`.
-- Render thẻ theo **đúng markup cũ**: `.product-card` > `.product-image` (img) + `.product-info` gồm:
-  - `.product-category` = `categoryName`;
-  - `h3` = `name`;
-  - `.product-price` = `formatPrice(discountPrice ?? basePrice)`;
-  - nút `.add-cart` có `data-name` / `data-price`.
-- **Ảnh:** `ProductResponse` không có URL ảnh → với mỗi thẻ gọi `GET /api/v1/products/{id}/images` và lấy ảnh `isPrimary`, không có thì lấy ảnh đầu tiên. Có 116 sản phẩm không có ảnh, và request có thể lỗi → dùng ảnh local theo danh mục: `../assets/images/laptop.png`, `phone.png`, `tablet.png`, `banphim.png`.
-- Giữ hành vi `?category=phone` trên URL (các thẻ danh mục ở trang chủ link tới đây).
-- "Xem thêm" → tải trang kế tiếp, nối thêm thẻ.
-- Sau khi render gọi `setupAddToCart(grid)`. Cần sửa `setupAddToCart` trong `js/core/main.js` để nhận tham số gốc (mặc định `document`), tránh gắn sự kiện 2 lần.
+- Theo yêu cầu, đã commit dưới tài khoản git của người dùng (`Quang0408205`), **không** thêm dòng ghi công Claude.
+- Nội dung: R, 2.8, A2, đổi khoá `poy_*`, B1 (kể cả xoá `frontend/admin/.gitkeep`), phần sửa CORS dev của Việc 1 và `docs/` (kể cả 3 script E2E mới).
+- **Chưa push.** Chỉ push khi người dùng yêu cầu.
+- **Tuyệt đối không commit:** `frontend-reference/` và `frontend_update.zip` (đã nằm trong `.git/info/exclude`).
 
-### 3.3 `frontend/index.html`, mục "SẢN PHẨM NỔI BẬT"
-- Thay 4 thẻ hardcode bằng 4 sản phẩm đầu tiên từ API, dùng chung hàm render thẻ.
-- Chọn cách đơn giản nhất: một helper dùng chung (vd. `js/core/products-ui.js`) nạp ở cả hai trang, **hoặc** hàm render nhỏ trong `js/home.js`. Ghi lựa chọn vào `CLAUDE_CONTEXT.md`.
+## Việc 4: Checkpoint B2, nối khu admin với API thật (sau khi B1 được duyệt)
 
-### 3.4 Không đổi
-- Giỏ hàng: vẫn localStorage, lưu theo tên, cho tới Phase 3. Trang khuyến nghị, trang liên hệ.
+Chi tiết: `CLAUDE_CONTEXT.md` §10.2 và §10.5.
+- `admin/login.html` gọi `POST /api/v1/auth/login` thật, chỉ nhận tài khoản có role STAFF hoặc ADMIN. Bỏ các tài khoản mẫu.
+- `api.js` chọn khoá lưu trữ theo khu vực: trang `admin/` dùng `poy_staff_auth`, trang khác dùng `poy_auth`.
+- `admin/users.html` nối `/api/v1/admin/users` (tìm kiếm, khoá / mở, gán role, xoá mềm, lỗi 409). `admin/products.html` nối CRUD catalogue.
+- Vai trò EMPLOYEE / BRANCH_MANAGER và chi nhánh vẫn lấy từ dữ liệu mẫu tới Phase 7.
+- **Điều kiện trước:** người dùng tạo tài khoản ADMIN trong DB dev (Việc 6.1).
 
-### 3.5 Kiểm tra
-- Backend chạy profile **dev** là được, vì chỉ có GET và DB dev có 877 sản phẩm thật.
-- E2E trên Edge (xem `docs/tools/e2e/README.md`):
-  - grid hiện 12 thẻ, "Xem thêm" thêm 12;
-  - mỗi nút lọc chỉ hiện đúng danh mục; so số lượng với `GET /products?categoryId=`;
-  - `?category=phone` chọn sẵn nút;
-  - sản phẩm không có ảnh dùng ảnh thay thế;
-  - thêm vào giỏ hoạt động với thẻ mới render;
-  - trang chủ hiện 4 sản phẩm nổi bật;
-  - không có lỗi JS; có ảnh chụp màn hình.
-- Kiểm tra số request hợp lý: khoảng 12 request ảnh mỗi trang.
+## Việc 5: Phase 3 – Giỏ hàng (Cart)
 
-### 3.6 Kết thúc
-- Cập nhật `CLAUDE_CONTEXT.md`, báo cáo, **dừng chờ duyệt**.
-- Sau 2.8 là **hết Phase 2**: đề xuất commit cuối, viết tổng kết Phase 2, và hỏi người dùng về việc push / merge (xem Việc 4).
-
-## Việc 4: Git sau khi xong Phase 2 (hỏi người dùng)
-
-- Nhánh `quang` chỉ có ở local, chưa có upstream.
-- `main` local có `21d2cda` (Phase 1), đang ahead 1 / behind 1 so với `origin/main`; `origin/main` có frontend của HoangPhuoc38 (`f58f92d`).
-- Cần hỏi: push `quang` lên GitHub? Tạo PR vào `main`? Ai merge? **Không tự làm.**
-
-## Việc 5: Người dùng cần tự làm (không phải Claude)
-
-1. **Tạo tài khoản ADMIN trong DB dev.** Hiện DB dev có 0 user, nên không ai thêm / sửa / xoá sản phẩm được. Chạy backend một lần với biến môi trường (xem "Hướng dẫn chạy" bên dưới).
-2. **Đặt Live Server cổng 5501** (`"liveServer.settings.port": 5501` trong settings của VS Code), vì cổng 5500 bị Oracle `TNSLSNR` chiếm.
-3. **Giữ một `JWT_SECRET` cố định** khi chạy dev. Đổi secret thì mọi token cũ mất hiệu lực.
-
-## Việc 6: Tồn đọng và quyết định còn mở (chưa ai yêu cầu làm)
-
-| # | Việc | Ghi chú |
-|---|---|---|
-| 6.1 | Có đưa script E2E (`docs/tools/e2e/`) vào repo không, ví dụ `frontend/tests/`? | Người dùng chưa trả lời |
-| 6.2 | Dọn rác test trong **DB dev**: categories 10–11 `E2E …`, brand 56 `E2E Brand`, products 878–879 đã xoá mềm (+1 ảnh, 1 spec) | Cần người dùng **cho phép** xoá dữ liệu |
-| 6.3 | User thử trong **DB test**: `e2e-admin`, `e2e.customer`, `fe.e2e` … `fe.e2e6` | Vô hại; nếu muốn xoá phải được cho phép |
-| 6.4 | **Mobile ≤ 700px:** CSS gốc ẩn `.login-btn`, nên trên điện thoại không thấy tên người dùng / nút Đăng xuất / Đăng nhập | Có từ trước; đề xuất sửa nếu người dùng muốn |
-| 6.5 | Link "Quên mật khẩu?" ở trang đăng nhập đang là `#` | Backend chưa có luồng reset mật khẩu (chưa có trong kế hoạch) |
-| 6.6 | Footer luôn có link "Đăng nhập", kể cả khi đã đăng nhập | Nhỏ; có thể ẩn hoặc đổi thành "Tài khoản" |
-| 6.7 | Chưa có **giao diện admin** (`frontend/admin/` đang trống). Admin hiện chỉ thao tác qua Swagger / API | Phase sau |
-| 6.8 | `js/customer/recommendation.js` dùng ảnh không tồn tại `../assets/images/smartphone.jpg`; `services.css` / `services.js` rỗng; không có favicon | Có từ trước; thuộc phase sau |
-| 6.9 | Chất lượng dữ liệu crawl: brand bị tách ("iPhone (Apple)" / "Apple"), màu khác nhau chỉ ở chữ hoa/thường, cột `rom` trong CSV sai, 116 sản phẩm không có ảnh, 11 sản phẩm giá 0 | Vấn đề dữ liệu, không phải bug code |
-| 6.10 | Giới hạn thiết kế auth: access token không thu hồi được trong ≤ 30 phút; không có "đăng xuất mọi thiết bị"; chưa có rate limit cho `/auth/login` | Đã được chấp nhận; rate limit để Phase 10 |
-
-## Việc 7: Sau Phase 2
-
-Phase 3 – **Giỏ hàng (Cart)**: các bảng `carts`, `cart_items`, liên kết `product_variants`.
-Theo quy trình của người dùng:
+Các bảng `carts`, `cart_items`, liên kết `product_variants`. Theo quy trình của người dùng:
 1. **chỉ kiểm tra + báo cáo** (bảng, quan hệ, rủi ro, file dự kiến, câu hỏi cần chốt);
 2. chờ duyệt, rồi làm theo checkpoint.
 
-Frontend giỏ hàng hiện lưu localStorage theo **tên** sản phẩm, sẽ phải chuyển sang `variantId`.
+Giỏ hàng frontend đang lưu `poy_cart` theo **tên** sản phẩm, sẽ chuyển sang `variantId`. Không dùng `cart-store.js` của bản tham chiếu, vì nó tra catalogue mock.
+
+## Việc 6: Người dùng cần tự làm (không phải Claude)
+
+1. **Tạo tài khoản ADMIN trong DB dev.** DB dev vẫn có 0 user. Chạy backend một lần với `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` (xem bên dưới). Cần cho B2.
+2. **Đặt cổng cho Live Server** (đã cài): `"liveServer.settings.port": 5510` (hoặc `0`) trong settings của VS Code, vì mặc định 5500 là cổng của Oracle. Cổng nào cũng được, vì CORS dev đã chấp nhận mọi cổng local.
+3. **Giữ một `JWT_SECRET` cố định** khi chạy dev. Đổi secret thì mọi token cũ mất hiệu lực.
+
+## Việc 7: Tồn đọng và quyết định còn mở (chưa ai yêu cầu làm)
+
+| # | Việc | Ghi chú |
+|---|---|---|
+| 7.1 | Dọn rác test trong **DB dev**: categories 10–11 `E2E …`, brand 56 `E2E Brand`, products 878–879 đã xoá mềm | Cần người dùng **cho phép** xoá dữ liệu |
+| 7.2 | User thử trong **DB test**: `e2e-admin`, `e2e.customer`, `fe.e2e` … `fe.e2e16` (user tiếp theo: `fe.e2e17`) | Vô hại. Redis còn khoá của `fe.e2e8` (81) và `quang4805` (82, tài khoản của người dùng): để nguyên |
+| 7.3 | **Mobile ≤ 700px:** `.login-btn` bị ẩn; menu mobile bị cắt chữ đầu ("ang chủ") | Có từ trước; đề xuất sửa nếu người dùng muốn |
+| 7.4 | Link "Quên mật khẩu?" đang là `#` | Backend chưa có luồng reset; **không** merge trang mock của bản tham chiếu |
+| 7.5 | Footer luôn có link "Đăng nhập", kể cả khi đã đăng nhập | Nhỏ |
+| 7.6 | `alert()` còn trong `cart.js`, `contact.js`, `recommendation.js` | Thay bằng `showToast` / modal khi làm các phase đó |
+| 7.7 | `recommendation.js` dùng ảnh không tồn tại `smartphone.jpg`; `services.css` / `services.js` rỗng; không có favicon | Có từ trước |
+| 7.8 | Chất lượng dữ liệu crawl | brand bị tách ("iPhone (Apple)" / "Apple"); rating, tồn kho, mô tả, thông số đều trống; 116 sản phẩm không có ảnh; 11 sản phẩm giá 0 |
+| 7.9 | Giới hạn thiết kế auth (token ≤ 30 phút, chưa có rate limit) | Đã chấp nhận; rate limit để Phase 10 |
+| 7.10 | Trang Sản phẩm: 2 danh mục đồng hồ (195 sản phẩm) chưa có nút lọc riêng | Dễ thêm nếu người dùng muốn |
+| 7.11 | ~~Q6~~ | Không còn áp dụng: người dùng chọn dùng toàn bộ frontend mới (Việc 2) |
+| 7.12 | ~~`frontend/admin/.gitkeep`~~ | Đã xoá trong commit session 4 |
 
 ---
 
@@ -157,8 +152,11 @@ Frontend giỏ hàng hiện lưu localStorage theo **tên** sản phẩm, sẽ p
 docker compose up -d                          # chạy ở thư mục gốc repo
 $env:JWT_SECRET = "<chuỗi ngẫu nhiên ≥ 32 ký tự, giữ cố định>"
 # Chỉ lần đầu, để tạo ADMIN (mật khẩu ≥ 8 ký tự):
-$env:ADMIN_EMAIL = "admin@lahy.vn"; $env:ADMIN_USERNAME = "admin"; $env:ADMIN_PASSWORD = "<mật khẩu của bạn>"
+$env:ADMIN_EMAIL = "admin@poy.vn"; $env:ADMIN_USERNAME = "admin"; $env:ADMIN_PASSWORD = "<mật khẩu của bạn>"
 .\mvnw.cmd spring-boot:run                    # http://localhost:8080, Swagger: /swagger-ui/index.html
+# Profile dev chấp nhận web ở mọi cổng localhost / 127.0.0.1, không cần override CORS.
 ```
 
-**Frontend:** mở `frontend/index.html` bằng Live Server (cổng **5501**). Trang đăng nhập: `frontend/auth/login.html`.
+**Frontend:**
+- Mở `frontend/index.html` qua HTTP (Live Server, cổng nào cũng được, ví dụ 5510). Mở file trực tiếp (`file://`) sẽ không chạy được.
+- Trang đăng nhập khách: `frontend/auth/login.html`. Khu nội bộ: `frontend/admin/login.html`.

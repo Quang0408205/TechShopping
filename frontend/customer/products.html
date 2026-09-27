@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Sản phẩm - LAHY</title>
+    <title>Sản phẩm - POY</title>
 
     <link
         rel="stylesheet"
@@ -42,7 +42,7 @@
         <div class="container">
 
             <span class="section-label">
-                LAHY
+                POY
             </span>
 
             <h1>
@@ -59,380 +59,133 @@
     </section>
 
 
-    <section class="section">
+    <section class="section products-page">
 
-        <div class="container">
+        <div class="container products-layout">
+
+            <button
+                type="button"
+                id="toggleFiltersBtn"
+                class="btn btn-outline-dark filters-toggle"
+                aria-controls="productsSidebar"
+                aria-expanded="false"
+            >
+                BỘ LỌC
+            </button>
 
 
-            <div class="filter-bar">
+            <!-- Sidebar bộ lọc: cố định khi cuộn (position: sticky, xem products.css) -->
+            <aside class="products-sidebar" id="productsSidebar">
+
+                <div class="filter-group">
+
+                    <h4>Danh mục</h4>
+
+                    <!-- value = data-category cũ; products.js map sang slug trong DB -->
+                    <label>
+                        <input type="radio" name="category" value="" checked>
+                        Tất cả
+                    </label>
+
+                    <label>
+                        <input type="radio" name="category" value="laptop">
+                        Laptop
+                    </label>
+
+                    <label>
+                        <input type="radio" name="category" value="phone">
+                        Điện thoại
+                    </label>
+
+                    <label>
+                        <input type="radio" name="category" value="tablet">
+                        Tablet
+                    </label>
+
+                    <label>
+                        <input type="radio" name="category" value="accessory">
+                        Phụ kiện
+                    </label>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <h4 id="brandFilterTitle">Thương hiệu</h4>
+
+                    <!-- products.js dựng theo danh mục đang chọn -->
+                    <div id="brandOptionsList" class="brand-options"></div>
+
+                </div>
+
+
+                <div class="filter-group">
+
+                    <h4>Khoảng giá (đ)</h4>
+
+                    <div class="price-range-inputs">
+
+                        <input
+                            type="number"
+                            id="minPriceInput"
+                            placeholder="Từ"
+                            min="0"
+                            step="500000"
+                            aria-label="Giá từ"
+                        >
+
+                        <span>-</span>
+
+                        <input
+                            type="number"
+                            id="maxPriceInput"
+                            placeholder="Đến"
+                            min="0"
+                            step="500000"
+                            aria-label="Giá đến"
+                        >
+
+                    </div>
+
+                    <small class="field-error" id="priceError"></small>
+
+                </div>
+
 
                 <button
-                    class="filter-btn active"
-                    data-category="all"
+                    type="button"
+                    id="clearFiltersBtn"
+                    class="btn btn-outline-dark filters-clear"
                 >
-                    Tất cả
+                    XÓA BỘ LỌC
                 </button>
 
-                <button
-                    class="filter-btn"
-                    data-category="laptop"
-                >
-                    Laptop
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-category="phone"
-                >
-                    Điện thoại
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-category="tablet"
-                >
-                    Tablet
-                </button>
-
-                <button
-                    class="filter-btn"
-                    data-category="accessory"
-                >
-                    Phụ kiện
-                </button>
-
-            </div>
+            </aside>
 
 
-            <div class="product-grid">
+            <div class="products-main">
 
+                <div class="products-toolbar">
 
-                <div
-                    class="product-card"
-                    data-category="laptop"
-                >
+                    <p id="resultCount" class="result-count" aria-live="polite"></p>
 
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/laptopdell.png"
-                            alt="Laptop Pro 14"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            LAPTOP
-                        </span>
-
-                        <h3>
-                            Laptop Dell
-                        </h3>
-
-                        <p class="product-price">
-                            24.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Laptop Pro 14"
-                            data-price="24990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
+                    <select id="sortSelect" aria-label="Sắp xếp">
+                        <option value="id,asc">Mặc định</option>
+                        <option value="id,desc">Mới nhất</option>
+                        <option value="basePrice,asc">Giá: Thấp đến cao</option>
+                        <option value="basePrice,desc">Giá: Cao đến thấp</option>
+                        <option value="name,asc">Tên: A - Z</option>
+                    </select>
 
                 </div>
 
 
-                <div
-                    class="product-card"
-                    data-category="laptop"
-                >
+                <!-- products.js render từ GET /api/v1/products -->
+                <div class="product-grid" id="productGrid"></div>
 
-                    <div class="product-image">
 
-                        <img
-                            src="../assets/images/laptop.png"
-                            alt="Laptop Gaming"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            LAPTOP
-                        </span>
-
-                        <h3>
-                            Laptop Asus Gaming 
-                        </h3>
-
-                        <p class="product-price">
-                            32.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Laptop Gaming Pro"
-                            data-price="32990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="phone"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/iphone18promax.png"
-                            alt="Smartphone X Pro"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            ĐIỆN THOẠI
-                        </span>
-
-                        <h3>
-                            Iphone 18 Pro Max
-                        </h3>
-
-                        <p class="product-price">
-                            21.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Smartphone X Pro"
-                            data-price="21990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="phone"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/samsungs25.png"
-                            alt="Samsung Galaxy S25 Ultra"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            ĐIỆN THOẠI
-                        </span>
-
-                        <h3>
-                            Samsung Galaxy S25 Ultra
-                        </h3>
-
-                        <p class="product-price">
-                            28.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Samsung Galaxy S25 Ultra"
-                            data-price="28990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="tablet"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/tablet_air.png"
-                            alt="Tablet Air 11"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            TABLET
-                        </span>
-
-                        <h3>
-                            Tablet Air 11
-                        </h3>
-
-                        <p class="product-price">
-                            15.490.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Tablet Air 11"
-                            data-price="15490000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="tablet"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/tablet.png"
-                            alt="Tablet Pro"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            TABLET
-                        </span>
-
-                        <h3>
-                            Tablet Pro 13
-                        </h3>
-
-                        <p class="product-price">
-                            19.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Tablet Pro 13"
-                            data-price="19990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="accessory"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/tainghe.png"
-                            alt="Wireless Headphones"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            PHỤ KIỆN
-                        </span>
-
-                        <h3>
-                            Wireless Headphones
-                        </h3>
-
-                        <p class="product-price">
-                            2.490.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Wireless Headphones"
-                            data-price="2490000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
-
-
-                <div
-                    class="product-card"
-                    data-category="accessory"
-                >
-
-                    <div class="product-image">
-
-                        <img
-                            src="../assets/images/banphim.png"
-                            alt="Mechanical Keyboard"
-                        >
-
-                    </div>
-
-                    <div class="product-info">
-
-                        <span class="product-category">
-                            PHỤ KIỆN
-                        </span>
-
-                        <h3>
-                            Mechanical Keyboard
-                        </h3>
-
-                        <p class="product-price">
-                            2.990.000đ
-                        </p>
-
-                        <button
-                            class="add-cart"
-                            data-name="Mechanical Keyboard"
-                            data-price="2990000"
-                        >
-                            THÊM VÀO GIỎ
-                        </button>
-
-                    </div>
-
-                </div>
+                <nav class="pagination" id="pagination" aria-label="Phân trang"></nav>
 
             </div>
 
@@ -447,6 +200,7 @@
 
 
 <script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/products.js"></script>

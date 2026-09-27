@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Báo cáo doanh thu - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Báo cáo doanh thu" data-roles="BRANCH_MANAGER,ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="reports"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <div class="admin-filter-bar">
+
+                <!-- js/admin/reports.js dựng theo vai trò -->
+                <select id="storeFilter" aria-label="Chi nhánh"></select>
+
+                <input type="date" id="fromDateFilter" aria-label="Từ ngày">
+
+                <input type="date" id="toDateFilter" aria-label="Đến ngày">
+
+                <button type="button" class="btn btn-outline-dark" id="clearReportFiltersBtn">
+                    XÓA LỌC
+                </button>
+
+            </div>
+
+            <p id="reportDateError" class="form-error admin-notice" role="alert" hidden></p>
+
+
+            <div class="admin-stat-grid" id="reportStatGrid"></div>
+
+
+            <div class="admin-panel-grid">
+
+                <section class="admin-panel">
+
+                    <div class="admin-panel-header">
+                        <h2>Xu hướng doanh thu theo tháng</h2>
+                    </div>
+
+                    <div class="admin-chart-wrapper" id="reportRevenueChart"></div>
+
+                </section>
+
+
+                <section class="admin-panel">
+
+                    <div class="admin-panel-header">
+                        <h2>Top sản phẩm theo doanh thu</h2>
+                    </div>
+
+                    <div class="admin-chart-wrapper" id="reportTopProductsChart"></div>
+
+                </section>
+
+            </div>
+
+
+            <!-- Chỉ ADMIN, khi đang xem tất cả chi nhánh -->
+            <section class="admin-panel" id="reportStoreChartPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>So sánh doanh thu theo chi nhánh</h2>
+                </div>
+
+                <div class="admin-chart-wrapper" id="reportStoreChart"></div>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Chi tiết bán hàng</h2>
+                    <span class="admin-row-count" id="reportRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide" id="salesDetailTable">
+                        <thead>
+                            <tr>
+                                <th>Ngày bán</th>
+                                <th>Chi nhánh</th>
+                                <th>Nhân viên</th>
+                                <th>Sản phẩm</th>
+                                <th>Số lượng</th>
+                                <th>Doanh thu</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-charts.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/reports.js"></script>
+
+</body>
+</html>

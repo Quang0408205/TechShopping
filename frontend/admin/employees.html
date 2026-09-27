@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Nhân viên - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Nhân viên" data-roles="BRANCH_MANAGER,ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="employees"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <!-- js/admin/employees.js dựng theo vai trò -->
+                <select id="storeFilter" aria-label="Chi nhánh"></select>
+
+                <!-- Chỉ ADMIN -->
+                <button type="button" class="btn btn-dark" id="toggleCreateFormBtn" hidden>
+                    + THÊM NHÂN VIÊN
+                </button>
+
+            </div>
+
+
+            <section class="admin-panel" id="createEmployeePanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Thêm nhân viên mới</h2>
+                </div>
+
+                <form id="createEmployeeForm" novalidate>
+
+                    <p id="createEmployeeError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="newFullname">Họ tên</label>
+                            <input type="text" id="newFullname" maxlength="120" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newEmail">Email nội bộ</label>
+                            <input type="email" id="newEmail" maxlength="120" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newPhone">Số điện thoại</label>
+                            <input type="text" id="newPhone" maxlength="20">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newPosition">Chức danh</label>
+                            <input type="text" id="newPosition" maxlength="100" placeholder="vd. Nhân viên bán hàng">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newRole">Vai trò</label>
+                            <select id="newRole">
+                                <option value="EMPLOYEE">Nhân viên</option>
+                                <option value="BRANCH_MANAGER">Quản lý chi nhánh</option>
+                                <option value="ADMIN">Quản trị viên</option>
+                            </select>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newStoreId">Chi nhánh</label>
+                            <select id="newStoreId"></select>
+                        </div>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="cancelCreateBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách nhân viên</h2>
+                    <span class="admin-row-count" id="employeeRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide">
+                        <thead>
+                            <tr>
+                                <th>Họ tên</th>
+                                <th>Email</th>
+                                <th>SĐT</th>
+                                <th>Vai trò</th>
+                                <th>Chi nhánh</th>
+                                <th>Chức danh</th>
+                                <th>Ngày vào làm</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employeeTableBody"></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/employees.js"></script>
+
+</body>
+</html>

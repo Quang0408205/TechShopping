@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Chi nhánh - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Chi nhánh" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="stores"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <span></span>
+
+                <button type="button" class="btn btn-dark" id="toggleCreateFormBtn">
+                    + THÊM CHI NHÁNH
+                </button>
+
+            </div>
+
+
+            <section class="admin-panel" id="createStorePanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Thêm chi nhánh mới</h2>
+                </div>
+
+                <form id="createStoreForm" novalidate>
+
+                    <p id="createStoreError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="newStoreName">Tên chi nhánh</label>
+                            <input type="text" id="newStoreName" maxlength="120" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newStoreAddress">Địa chỉ</label>
+                            <input type="text" id="newStoreAddress" maxlength="255" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newStorePhone">Số điện thoại</label>
+                            <input type="text" id="newStorePhone" maxlength="20">
+                        </div>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="cancelCreateStoreBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách chi nhánh</h2>
+                    <span class="admin-row-count" id="storeRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Chi nhánh</th>
+                                <th>Địa chỉ</th>
+                                <th>Điện thoại</th>
+                                <th>Nhân viên</th>
+                            </tr>
+                        </thead>
+                        <tbody id="storeTableBody"></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/stores.js"></script>
+
+</body>
+</html>

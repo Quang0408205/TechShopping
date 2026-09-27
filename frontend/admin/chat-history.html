@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Lịch sử Chatbot - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Lịch sử Chatbot" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="chat-history"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note">
+                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
+                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            </p>
+
+            <p class="admin-intro">
+                Xem lại hội thoại giữa khách hàng và chatbot hỗ trợ, chỉ để theo dõi chất lượng;
+                không dùng để chỉnh sửa hay điều khiển chatbot.
+            </p>
+
+
+            <div class="admin-chat-layout">
+
+                <section class="admin-panel admin-chat-list">
+
+                    <div class="admin-panel-header">
+                        <h2>Các phiên chat</h2>
+                    </div>
+
+                    <div id="chatSessionList"></div>
+
+                </section>
+
+
+                <section class="admin-panel" id="chatDetailPanel">
+                    <p class="admin-intro">Chọn một phiên chat ở danh sách để xem chi tiết.</p>
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/chat-history.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,751 @@
+/* ================= KHU QUẢN TRỊ NỘI BỘ (admin/) ================= */
+
+/*
+ * Lấy từ bản frontend tham chiếu (Checkpoint B1). Khu admin cố tình khác khu
+ * khách hàng (sidebar tối, bố cục bảng điều khiển) để nhân viên luôn biết
+ * mình đang ở khu nội bộ.
+ *
+ * Design token của bản tham chiếu CHỈ khai báo ở đây: file này chỉ được nạp
+ * trên các trang admin/, nên giao diện khách hàng (css/style.css) không đổi.
+ */
+
+:root {
+    --color-ink: #111318;
+    --color-paper: #ffffff;
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #ebebec;
+    --gray-300: #dcdce0;
+    --gray-500: #8f8f99;
+    --gray-600: #6b6b75;
+    --gray-700: #4a4a52;
+    --color-accent: #8a5a22;
+    --color-success: #1f6b3e;
+    --color-success-bg: #eaf6ee;
+    --color-danger: #c0392b;
+    --color-danger-bg: #fdf1f0;
+    --color-warning: #a4720b;
+    --color-warning-bg: #fdf3e3;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-full: 999px;
+    --shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.06), 0 1px 1px rgba(17, 19, 24, 0.04);
+    --shadow-lg: 0 24px 56px rgba(17, 19, 24, 0.16);
+    --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+}
+
+
+/* Quy tắc display của tác giả (vd. .admin-nav a) không được thắng [hidden] */
+
+.admin-body [hidden] {
+    display: none !important;
+}
+
+
+.admin-body {
+    background: var(--gray-50);
+}
+
+
+/* Ẩn khung cho tới khi admin-layout.js xác nhận đăng nhập + quyền */
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+    visibility: hidden;
+}
+
+.admin-ready .admin-shell {
+    visibility: visible;
+}
+
+
+/* ================= SIDEBAR ================= */
+
+.admin-sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 28px 18px;
+    background: var(--color-ink);
+    color: var(--gray-300);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.admin-logo {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px 24px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-logo .logo-main {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: var(--color-paper);
+}
+
+.admin-logo .logo-sub {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: var(--gray-500);
+    margin-top: 4px;
+}
+
+.admin-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+}
+
+.admin-nav-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--gray-600);
+    padding: 16px 10px 6px;
+}
+
+.admin-nav a {
+    padding: 11px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-300);
+    border-left: 2px solid transparent;
+    transition: background-color var(--duration-fast) var(--ease-standard),
+        color var(--duration-fast) var(--ease-standard);
+}
+
+.admin-nav a:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-paper);
+}
+
+.admin-nav a.active {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--color-paper);
+    border-left-color: var(--color-accent);
+    font-weight: 700;
+}
+
+.admin-back-to-store {
+    display: block;
+    margin-top: 16px;
+    padding: 12px 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 12px;
+    color: var(--gray-500);
+}
+
+.admin-back-to-store:hover {
+    color: var(--color-paper);
+}
+
+
+/* ================= TOPBAR + NỘI DUNG ================= */
+
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 32px;
+    height: 72px;
+    background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.admin-sidebar-toggle {
+    display: none;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.admin-page-title {
+    flex: 1;
+    min-width: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.admin-topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.admin-user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.admin-user-info strong {
+    font-size: 13px;
+}
+
+.admin-user-info span {
+    color: var(--gray-600);
+}
+
+.admin-logout-btn {
+    padding: 10px 16px;
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.admin-content {
+    flex: 1;
+    padding: 32px;
+    max-width: 1400px;
+    width: 100%;
+}
+
+.admin-greeting {
+    margin-bottom: 24px;
+    color: var(--gray-700);
+}
+
+.admin-intro {
+    margin-bottom: 20px;
+    max-width: 640px;
+    color: var(--gray-600);
+    font-size: 13px;
+}
+
+.admin-notice {
+    margin-bottom: 20px;
+}
+
+.admin-mock-note {
+    margin-bottom: 20px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--color-accent);
+    background: var(--color-paper);
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+
+/* ================= THẺ THỐNG KÊ ================= */
+
+.admin-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
+}
+
+.admin-stat-card {
+    padding: 24px;
+    background: var(--color-paper);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.admin-stat-label {
+    font-size: 12px;
+    color: var(--gray-600);
+    margin-bottom: 10px;
+}
+
+.admin-stat-value {
+    font-size: 26px;
+    font-weight: 800;
+}
+
+.admin-stat-sub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+
+/* ================= KHỐI NỘI DUNG ================= */
+
+.admin-panel {
+    background: var(--color-paper);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.admin-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.admin-panel-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.admin-row-count {
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.admin-panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+
+/* ================= BẢNG ================= */
+
+.admin-table-wrapper {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.admin-table--wide {
+    min-width: 720px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+}
+
+.admin-table th {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    background: var(--gray-50);
+}
+
+.admin-table tbody tr:hover {
+    background: var(--gray-50);
+}
+
+.admin-empty-cell {
+    text-align: center !important;
+    color: var(--gray-500);
+}
+
+.admin-subtext {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    color: var(--gray-500);
+}
+
+
+/* ================= HUY HIỆU / Ô TRẠNG THÁI ================= */
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border: none;
+    border-radius: var(--radius-full);
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+button.admin-badge {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.admin-badge-neutral {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+.admin-badge-warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.admin-badge-success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.admin-badge-danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.admin-status-select {
+    padding: 6px 10px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--gray-100);
+    color: var(--gray-700);
+    cursor: pointer;
+}
+
+.admin-status-select[data-status="COMPLETED"],
+.admin-status-select[data-status="RESOLVED"],
+.admin-status-select[data-status="DELIVERED"] {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-color: transparent;
+}
+
+.admin-status-select[data-status="PROCESSING"],
+.admin-status-select[data-status="IN_PROGRESS"],
+.admin-status-select[data-status="SHIPPING"],
+.admin-status-select[data-status="CONFIRMED"] {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border-color: transparent;
+}
+
+.admin-status-select[data-status="REJECTED"],
+.admin-status-select[data-status="CANCELLED"] {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    border-color: transparent;
+}
+
+
+/* ================= BỘ LỌC ================= */
+
+.admin-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.admin-filter-bar--split {
+    justify-content: space-between;
+}
+
+.admin-filter-bar select,
+.admin-filter-bar input {
+    padding: 10px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--color-paper);
+    outline: none;
+}
+
+.admin-filter-bar select:focus,
+.admin-filter-bar input:focus {
+    border-color: var(--color-ink);
+}
+
+.admin-filter-bar select:disabled {
+    color: var(--gray-700);
+    background: var(--gray-100);
+}
+
+
+/* ================= FORM THÊM MỚI ================= */
+
+.admin-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px 20px;
+}
+
+.admin-field label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-field input,
+.admin-field select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--color-paper);
+    outline: none;
+}
+
+.admin-field input:focus,
+.admin-field select:focus {
+    border-color: var(--color-ink);
+}
+
+.admin-form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.admin-form-actions .btn {
+    cursor: pointer;
+}
+
+
+/* ================= ĐƠN HÀNG: DÒNG CHI TIẾT ================= */
+
+.admin-row-toggle {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.admin-order-detail {
+    padding: 6px 0 10px;
+    font-size: 12px;
+    color: var(--gray-700);
+}
+
+.admin-order-detail .admin-table {
+    margin-top: 10px;
+}
+
+
+/* ================= BIỂU ĐỒ ================= */
+
+.admin-chart-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+.admin-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.chart-axis-line {
+    stroke: var(--gray-300);
+    stroke-width: 1;
+}
+
+.chart-axis-label {
+    font-size: 10px;
+    fill: var(--gray-600);
+    font-family: "Montserrat", sans-serif;
+}
+
+.chart-bar:hover {
+    opacity: 0.8;
+}
+
+.chart-area {
+    opacity: 0.12;
+}
+
+.admin-chart-empty {
+    padding: 40px 0;
+    text-align: center;
+    color: var(--gray-500);
+    font-size: 13px;
+}
+
+
+/* ================= LỊCH SỬ CHATBOT ================= */
+
+.admin-chat-layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 20px;
+}
+
+.admin-chat-list {
+    padding: 0;
+    overflow: hidden;
+}
+
+.admin-chat-list .admin-panel-header {
+    padding: 20px 20px 0;
+}
+
+.chat-session-item {
+    display: block;
+    width: 100%;
+    padding: 14px 20px;
+    text-align: left;
+    border: none;
+    border-top: 1px solid var(--gray-200);
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.chat-session-item:hover,
+.chat-session-item.active {
+    background: var(--gray-50);
+}
+
+.chat-session-item.active {
+    box-shadow: inset 3px 0 0 var(--color-accent);
+}
+
+.chat-session-name {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.chat-session-meta {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--gray-600);
+}
+
+.chat-status-done {
+    color: var(--color-success);
+}
+
+.chat-status-open {
+    color: var(--color-warning);
+}
+
+.admin-chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 300px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+}
+
+.admin-chat-message {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.admin-chat-message.from-user {
+    align-self: flex-end;
+    background: var(--color-ink);
+    color: var(--color-paper);
+}
+
+.admin-chat-message.from-bot {
+    align-self: flex-start;
+    background: var(--color-paper);
+    box-shadow: var(--shadow-sm);
+}
+
+
+/* ================= ĐĂNG NHẬP NỘI BỘ ================= */
+
+.admin-login-page .login-box {
+    max-width: 460px;
+}
+
+.login-intro {
+    margin: -10px 0 25px;
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.admin-demo-accounts {
+    margin-top: 24px;
+    padding: 16px 18px;
+    background: var(--gray-50);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--gray-700);
+    line-height: 1.8;
+}
+
+.admin-demo-accounts strong {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform var(--duration-base) var(--ease-standard);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .admin-sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .admin-content {
+        padding: 20px;
+    }
+
+    .admin-topbar {
+        padding: 0 16px;
+    }
+
+    .admin-user-info {
+        display: none;
+    }
+
+    .admin-chat-layout {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+.admin-chat-empty {
+    padding: 0 20px;
+}

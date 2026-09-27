@@ -1,0 +1,402 @@
+/* ================= TRANG CHI TIẾT SẢN PHẨM (A2) ================= */
+
+/* Dựa trên product-detail.css của bản tham chiếu, bỏ design token / phần đánh giá */
+
+
+.product-detail-page {
+    padding-bottom: 40px;
+}
+
+
+/* ================= BREADCRUMB ================= */
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 25px 0;
+    font-size: 12px;
+    color: #777;
+}
+
+.breadcrumb a:hover {
+    color: #111;
+}
+
+#breadcrumbCurrent {
+    color: #111;
+    max-width: 480px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+/* ================= BỐ CỤC ================= */
+
+.product-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    margin-bottom: 70px;
+}
+
+.detail-skeleton-image {
+    height: 480px;
+}
+
+.detail-state {
+    margin-bottom: 80px;
+}
+
+
+/* ================= ẢNH ================= */
+
+.detail-main-image {
+    height: 480px;
+    background: #fff;
+    border: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.detail-main-image img {
+    max-height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.detail-thumbnails {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.detail-thumb {
+    width: 72px;
+    height: 72px;
+    padding: 4px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+}
+
+.detail-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.detail-thumb.active {
+    border-color: #111;
+}
+
+
+/* ================= THÔNG TIN ================= */
+
+.detail-info h1 {
+    font-size: 28px;
+    line-height: 1.3;
+    margin: 10px 0 12px;
+}
+
+.detail-meta {
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 20px;
+}
+
+.detail-price-box {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    padding: 20px 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 25px;
+}
+
+.detail-price {
+    font-size: 30px;
+    font-weight: 700;
+}
+
+.detail-price-old {
+    color: #999;
+    font-size: 15px;
+    text-decoration: line-through;
+}
+
+
+/* ================= PHIÊN BẢN ================= */
+
+.variant-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.detail-variants {
+    margin-bottom: 20px;
+}
+
+.variant-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.variant-btn {
+    padding: 12px 18px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.variant-btn:hover {
+    border-color: #111;
+}
+
+.variant-btn.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+
+/* ================= SỐ LƯỢNG (cùng kiểu với giỏ hàng) ================= */
+
+.detail-quantity-row {
+    margin-bottom: 25px;
+}
+
+.quantity-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-control button {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #ddd;
+    background: #fff;
+    cursor: pointer;
+}
+
+.quantity-control button:disabled {
+    color: #bbb;
+    cursor: not-allowed;
+}
+
+.quantity-control span {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 600;
+}
+
+
+/* ================= HÀNH ĐỘNG ================= */
+
+.detail-contact-note {
+    font-size: 13px;
+    color: #555;
+    background: #f6f6f6;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+}
+
+.detail-contact-note a {
+    text-decoration: underline;
+}
+
+.detail-actions {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.detail-actions .btn {
+    flex: 1;
+    cursor: pointer;
+}
+
+.detail-actions .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.detail-policies {
+    list-style: none;
+    font-size: 13px;
+    color: #555;
+}
+
+.detail-policies li {
+    padding: 8px 0 8px 22px;
+    position: relative;
+}
+
+.detail-policies li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    color: #111;
+}
+
+.detail-policies li:last-child::before {
+    content: "";
+}
+
+.detail-policies a {
+    text-decoration: underline;
+}
+
+
+/* ================= TABS ================= */
+
+.detail-tabs {
+    margin-bottom: 80px;
+}
+
+.tab-buttons {
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid #ddd;
+    margin-bottom: 35px;
+}
+
+.tab-btn {
+    padding: 16px 22px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #999;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.tab-btn.active {
+    color: #111;
+    border-bottom-color: #111;
+}
+
+.tab-panel {
+    display: none;
+    max-width: 800px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+.specs-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.specs-table th,
+.specs-table td {
+    padding: 16px 20px;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    font-size: 13px;
+}
+
+.specs-table th {
+    width: 220px;
+    color: #777;
+    font-weight: 600;
+    background: #fafafa;
+}
+
+
+/* ================= SẢN PHẨM TƯƠNG TỰ ================= */
+
+.related-zone {
+    margin-bottom: 40px;
+}
+
+.related-zone .product-info h3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8em;
+    line-height: 1.4;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+    .product-detail-layout {
+        grid-template-columns: 1fr;
+        gap: 35px;
+    }
+
+    .detail-main-image,
+    .detail-skeleton-image {
+        height: 340px;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .detail-info h1 {
+        font-size: 22px;
+    }
+
+    .detail-price {
+        font-size: 24px;
+    }
+
+    .detail-actions {
+        flex-direction: column;
+    }
+
+    .tab-buttons {
+        overflow-x: auto;
+    }
+
+    .tab-btn {
+        white-space: nowrap;
+    }
+
+    .specs-table th {
+        width: 40%;
+    }
+
+    #breadcrumbCurrent {
+        max-width: 100%;
+    }
+
+}
+
+
+/* Ảnh thật (ảnh vuông nền trắng): hiển thị trọn như trang Sản phẩm */
+
+.related-zone .product-image img {
+    object-fit: contain;
+    background: #fff;
+}

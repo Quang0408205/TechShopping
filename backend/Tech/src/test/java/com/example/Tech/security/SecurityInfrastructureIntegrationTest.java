@@ -22,12 +22,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Full filter chain against the test database: CORS, bearer token handling and the JSON error format.
  * The /api/v1/** role rules are not active yet (Checkpoint 2.4).
  */
-@SpringBootTest(properties = "app.cors.allowed-origins=http://localhost:5500")
+@SpringBootTest(properties = {
+        "app.cors.allowed-origins=http://localhost:5500",
+        "app.cors.allowed-origin-patterns=http://127.0.0.1:[*]"
+})
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 class SecurityInfrastructureIntegrationTest {
 
     private static final String FRONTEND_ORIGIN = "http://localhost:5500";
+
+    private static final String PATTERN_ORIGIN = "http://127.0.0.1:5503";
 
     @Autowired
     private MockMvc mockMvc;
@@ -49,6 +54,29 @@ class SecurityInfrastructureIntegrationTest {
     void corsPreflight_fromUnknownOrigin_isRejected() throws Exception {
         mockMvc.perform(options("/api/v1/products")
                         .header(HttpHeaders.ORIGIN, "http://evil.example")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void corsPreflight_fromOriginMatchingPattern_isAccepted() throws Exception {
+        mockMvc.perform(options("/api/v1/products")
+                        .header(HttpHeaders.ORIGIN, PATTERN_ORIGIN)
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "authorization,content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, PATTERN_ORIGIN));
+    }
+
+    @Test
+    void corsPreflight_fromOtherHostOrPort_isRejected() throws Exception {
+        // localhost only has the exact origin :5500; the port pattern is for 127.0.0.1
+        mockMvc.perform(options("/api/v1/products")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5502")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(options("/api/v1/products")
+                        .header(HttpHeaders.ORIGIN, "http://127.0.0.1.evil.example:5503")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
                 .andExpect(status().isForbidden());
     }

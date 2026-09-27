@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     updateCartCount();
 
+    setupHeaderSearch();
+
 });
 
 
@@ -82,11 +84,44 @@ function renderAuthState() {
 }
 
 
+/* ================= TÌM KIẾM (HEADER) ================= */
+
+/*
+ * Ô tìm kiếm trên header (partials/header.html): submit sẽ chuyển tới trang
+ * Sản phẩm kèm ?search=..., products.js gửi giá trị này lên API dưới dạng
+ * keyword. Gọi sau khi layout.js đã chèn header.
+ */
+
+function setupHeaderSearch() {
+
+    document.querySelectorAll(".header .search-form")
+        .forEach(function (form) {
+
+            form.addEventListener("submit", function (event) {
+
+                event.preventDefault();
+
+                const input = form.querySelector("input");
+
+                const keyword = input ? input.value.trim() : "";
+
+
+                window.location.href =
+                    siteUrl("customer/products.html") +
+                    (keyword ? "?search=" + encodeURIComponent(keyword) : "");
+
+            });
+
+        });
+
+}
+
+
 /* ================= CART ================= */
 
 function getCart() {
 
-    const cart = localStorage.getItem("lahy_cart");
+    const cart = localStorage.getItem(CART_STORAGE_KEY);
 
     if (!cart) {
         return [];
@@ -99,18 +134,33 @@ function getCart() {
 function saveCart(cart) {
 
     localStorage.setItem(
-        "lahy_cart",
+        CART_STORAGE_KEY,
         JSON.stringify(cart)
     );
 
 }
 
 
-function setupAddToCart() {
+/*
+ * Gắn "Thêm vào giỏ" cho các nút .add-cart trong root (mặc định: cả trang).
+ * Thẻ sản phẩm render sau (products.js, home.js) gọi lại với lưới mới;
+ * cờ data-cart-bound tránh gắn sự kiện 2 lần cho cùng một nút.
+ */
 
-    const buttons = document.querySelectorAll(".add-cart");
+function setupAddToCart(root) {
+
+    const scope = root || document;
+
+    const buttons = scope.querySelectorAll(".add-cart");
 
     buttons.forEach(function (button) {
+
+        if (button.dataset.cartBound === "1") {
+            return;
+        }
+
+        button.dataset.cartBound = "1";
+
 
         button.addEventListener("click", function () {
 
@@ -129,7 +179,12 @@ function setupAddToCart() {
 }
 
 
-function addToCart(name, price) {
+/* quantity: tuỳ chọn (trang chi tiết sản phẩm), mặc định 1 */
+
+function addToCart(name, price, quantity) {
+
+    const amount =
+        Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 
     const cart = getCart();
 
@@ -141,7 +196,7 @@ function addToCart(name, price) {
 
     if (existingProduct) {
 
-        existingProduct.quantity++;
+        existingProduct.quantity += amount;
 
     } else {
 
@@ -151,7 +206,7 @@ function addToCart(name, price) {
 
             price: price,
 
-            quantity: 1
+            quantity: amount
 
         });
 
@@ -163,11 +218,16 @@ function addToCart(name, price) {
     updateCartCount();
 
 
-    alert(
-        "Đã thêm " +
-        name +
-        " vào giỏ hàng!"
-    );
+    /* Toast thay cho alert() (js/core/ui.js) */
+
+    if (typeof showToast === "function") {
+
+        showToast(
+            (amount > 1 ? "Đã thêm " + amount + " × " : "Đã thêm ") + name + " vào giỏ hàng!",
+            "success"
+        );
+
+    }
 
 }
 
@@ -194,14 +254,5 @@ function updateCartCount() {
         element.textContent = count;
 
     });
-
-}
-
-
-function formatPrice(price) {
-
-    return new Intl.NumberFormat(
-        "vi-VN"
-    ).format(price) + "đ";
 
 }

@@ -1,57 +1,242 @@
 /* .page-hero: xem css/style.css (dùng chung cho mọi trang customer) */
 
 
-/* FILTER */
+/* ================= BỐ CỤC (SIDEBAR + LƯỚI SẢN PHẨM) ================= */
 
-.filter-bar {
+.products-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 45px;
+    align-items: flex-start;
+}
+
+
+/* Sidebar cố định khi cuộn: 85px header sticky + 20px khoảng cách */
+
+.products-sidebar {
+    position: sticky;
+    top: 105px;
+    max-height: calc(100vh - 125px);
+    overflow-y: auto;
+    scrollbar-width: thin;
     display: flex;
-
-    gap: 10px;
-
-    margin-bottom: 50px;
-
-    border-bottom: 1px solid #ddd;
-
-    padding-bottom: 20px;
+    flex-direction: column;
+    gap: 35px;
+    padding-right: 5px;
 }
 
-.filter-btn {
-    padding: 12px 22px;
 
-    border: 1px solid #ddd;
+.filter-group h4 {
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+}
 
-    background: #fff;
 
-    font-size: 11px;
-    font-weight: 600;
-
+.filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #444;
+    margin-bottom: 10px;
     cursor: pointer;
-
-    transition: 0.3s;
 }
 
-.filter-btn:hover,
-.filter-btn.active {
-    background: #111;
-    color: #fff;
 
+.filter-group input[type="radio"] {
+    accent-color: #111;
+}
+
+
+.filter-hint {
+    font-size: 12px;
+    color: #888;
+}
+
+
+.price-range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+
+.price-range-inputs input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 12px;
+}
+
+
+.price-range-inputs input:focus {
     border-color: #111;
 }
 
 
-.product-card.hidden {
+.filters-clear {
+    width: 100%;
+    cursor: pointer;
+}
+
+
+.filters-toggle {
     display: none;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+
+/* ================= THANH CÔNG CỤ (SỐ LƯỢNG + SẮP XẾP) ================= */
+
+.products-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+
+.result-count {
+    color: #777;
+    font-size: 13px;
+}
+
+
+#sortSelect {
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+}
+
+
+/* Lưới nằm cạnh sidebar: 3 cột thay vì 4 (tên sản phẩm thật khá dài) */
+
+.products-main .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+
+/* Tên dài tới 138 ký tự: tối đa 2 dòng, tên đầy đủ ở thuộc tính title */
+
+.products-main .product-info h3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 2.8em;
+    line-height: 1.4;
+}
+
+
+/* Ảnh thật từ TGDD là ảnh vuông nền trắng: hiển thị trọn, không cắt */
+
+.products-main .product-image img {
+    object-fit: contain;
+    background: #fff;
+}
+
+
+/* ================= PHÂN TRANG ================= */
+
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 50px;
+}
+
+
+.page-btn {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #ddd;
+    background: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+
+.page-btn:hover:not(:disabled),
+.page-btn.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+
+.page-btn:disabled {
+    color: #bbb;
+    cursor: default;
+}
+
+
+.page-ellipsis {
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    color: #888;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+    .products-layout {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .filters-toggle {
+        display: inline-flex;
+    }
+
+    .products-sidebar {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        display: none;
+        padding: 25px;
+        background: #f6f6f6;
+        margin-bottom: 30px;
+    }
+
+    .products-sidebar.open {
+        display: flex;
+    }
+
+    .products-main .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
 }
 
 
 @media (max-width: 700px) {
 
-    .filter-bar {
-        overflow-x: auto;
+    .products-toolbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
     }
 
-    .filter-btn {
-        white-space: nowrap;
+    .products-main .product-grid {
+        grid-template-columns: 1fr;
     }
 
 }
