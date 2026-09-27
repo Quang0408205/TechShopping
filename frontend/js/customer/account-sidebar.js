@@ -11,11 +11,12 @@ document.addEventListener(
     "DOMContentLoaded",
     async function () {
 
-        /* Toàn bộ trang tài khoản chỉ dành cho người đã đăng nhập */
-
-        if (typeof layoutReady !== "undefined") {
-            await layoutReady;
-        }
+        /*
+         * Toàn bộ trang tài khoản chỉ dành cho người đã đăng nhập. Kiểm tra
+         * NGAY lúc tải trang: nếu đợi layout xong mới kiểm tra, account.js có
+         * thể đã xoá phiên (tài khoản bị khoá → 403) và trang sẽ bị chuyển đi
+         * thay vì hiện thông báo "Tài khoản đã bị khóa".
+         */
 
         if (!isLoggedIn()) {
 
@@ -23,6 +24,16 @@ document.addEventListener(
 
             return;
 
+        }
+
+
+        if (typeof layoutReady !== "undefined") {
+            await layoutReady;
+        }
+
+        /* Phiên bị xoá trong lúc chờ: trang tự hiển thị lý do, không vẽ thanh bên */
+        if (!isLoggedIn()) {
+            return;
         }
 
         renderAccountSidebar();

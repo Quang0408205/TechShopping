@@ -30,7 +30,7 @@ const adminLayoutReady = initAdminLayout();
 
 async function initAdminLayout() {
 
-    const staff = requireStaffLogin();
+    const staff = await requireStaffLogin();
 
     if (!staff) {
         return null;
@@ -125,7 +125,8 @@ function fillTopbarUser(staff) {
     }
 
     if (metaEl) {
-        metaEl.textContent = staff.storeId
+        /* Không phải ADMIN thì luôn ghi chi nhánh (kể cả "Chưa gán chi nhánh") */
+        metaEl.textContent = staff.role !== "ADMIN"
             ? staff.roleLabel + " · " + staff.storeName
             : staff.roleLabel;
     }
@@ -217,13 +218,22 @@ function setupStoreFilter(select, staff, extraOptions) {
  * mình, kể cả khi ai đó sửa DOM (phòng thủ hai lớp).
  */
 
+/*
+ * Nhân viên chưa được gán chi nhánh (tài khoản STAFF thật chưa có hồ sơ mẫu,
+ * B2) nhận mã không khớp chi nhánh nào, để không bao giờ thấy dữ liệu của
+ * mọi chi nhánh (các bộ lọc coi storeId rỗng là "tất cả").
+ */
+
+const NO_STORE_SCOPE = "NO_STORE";
+
+
 function getScopedStoreId(staff, select) {
 
     if (staff.role === "ADMIN") {
         return (select && select.value) || undefined;
     }
 
-    return staff.storeId;
+    return staff.storeId || NO_STORE_SCOPE;
 
 }
 

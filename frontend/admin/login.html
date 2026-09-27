@@ -62,13 +62,13 @@
 
 
             <label for="staffEmail">
-                Email nội bộ
+                Email hoặc tên đăng nhập
             </label>
 
             <input
                 type="text"
                 id="staffEmail"
-                placeholder="vd. admin@poy.vn"
+                placeholder="Nhập email hoặc tên đăng nhập"
                 autocomplete="username"
                 required
             >
@@ -98,12 +98,11 @@
         </form>
 
 
-        <!-- B1 chạy dữ liệu mẫu; khối này bỏ ở B2 khi đăng nhập qua /api/v1/auth/login thật -->
+        <!-- B2: đăng nhập bằng tài khoản thật (POST /api/v1/auth/login) -->
         <div class="admin-demo-accounts">
-            <strong>TÀI KHOẢN DÙNG THỬ (DỮ LIỆU MẪU)</strong>
-            admin@poy.vn / admin123 — Quản trị viên<br>
-            lan.quanly@poy.vn / quanly123 — Quản lý chi nhánh<br>
-            hoa.nv@poy.vn / nhanvien123 — Nhân viên
+            <strong>TÀI KHOẢN NỘI BỘ</strong>
+            Dùng tài khoản có quyền Nhân viên (STAFF) hoặc Quản trị viên (ADMIN).
+            Tài khoản ADMIN đầu tiên được tạo từ file .env (xem readme.md).
         </div>
 
 

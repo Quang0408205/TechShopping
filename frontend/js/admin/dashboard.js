@@ -18,7 +18,7 @@ document.addEventListener(
 
         const isAdmin = staff.role === "ADMIN";
 
-        const scope = isAdmin ? {} : { storeId: staff.storeId };
+        const scope = isAdmin ? {} : { storeId: getScopedStoreId(staff) };
 
 
         if (new URLSearchParams(window.location.search).get("denied") === "1") {

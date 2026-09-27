@@ -1,14 +1,23 @@
-/* ================= ĐĂNG NHẬP NỘI BỘ (admin/login.html) ================= */
+/* ================= ĐĂNG NHẬP NỘI BỘ (admin/login.html) — B2 ================= */
 
 /*
- * B1: xác thực bằng dữ liệu mẫu (authenticateStaff, js/admin/mock-staff-data.js).
- * B2 sẽ thay bằng POST /api/v1/auth/login thật và chỉ nhận tài khoản có
- * role STAFF hoặc ADMIN.
+ * POST /api/v1/auth/login thật (email hoặc tên đăng nhập). Chỉ tài khoản có
+ * role STAFF hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
+ * khẩu vẫn bị từ chối, và refresh token vừa cấp được thu hồi ngay.
+ * ?reason=… (staff-auth.js requireStaffLogin) giải thích vì sao bị đưa về đây.
  */
+
+const STAFF_LOGIN_REASONS = {
+    expired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+    locked: "Tài khoản của bạn đã bị khoá hoặc không còn tồn tại. Vui lòng liên hệ quản trị viên.",
+    denied: "Tài khoản này không có quyền truy cập khu nội bộ.",
+    network: API_ERROR_MESSAGES.NETWORK_ERROR
+};
+
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    async function () {
 
         const form = document.getElementById("staffLoginForm");
 
@@ -19,35 +28,40 @@ document.addEventListener(
         const params = new URLSearchParams(window.location.search);
 
 
-        /* Đã đăng nhập nội bộ (và tài khoản còn hoạt động) thì vào thẳng */
+        /* Đã có phiên nội bộ hợp lệ thì vào thẳng */
 
-        if (getCurrentStaff()) {
+        if (isLoggedIn()) {
 
-            window.location.replace(getRedirectTarget("admin/dashboard.html"));
+            const result = await checkStaffSession();
 
-            return;
+            if (result.staff) {
+
+                window.location.replace(getRedirectTarget("admin/dashboard.html"));
+
+                return;
+
+            }
 
         }
 
 
-        if (params.get("reason") === "locked") {
-            showError("Tài khoản của bạn đã bị khoá hoặc không còn tồn tại. Vui lòng liên hệ quản trị viên.");
+        if (STAFF_LOGIN_REASONS[params.get("reason")]) {
+            showError(STAFF_LOGIN_REASONS[params.get("reason")]);
         }
 
 
-        form.addEventListener("submit", function (event) {
+        form.addEventListener("submit", async function (event) {
 
             event.preventDefault();
 
-
-            const email = document.getElementById("staffEmail").value.trim();
+            const identifier = document.getElementById("staffEmail").value.trim();
 
             const password = document.getElementById("staffPassword").value;
 
 
-            if (!email || !password) {
+            if (!identifier || !password) {
 
-                showError("Vui lòng nhập email và mật khẩu.");
+                showError("Vui lòng nhập email (hoặc tên đăng nhập) và mật khẩu.");
 
                 return;
 
@@ -59,27 +73,23 @@ document.addEventListener(
             setLoading(true);
 
 
-            /* Độ trễ nhỏ mô phỏng gọi máy chủ */
+            try {
 
-            setTimeout(function () {
-
-                const result = authenticateStaff(email, password);
-
-
-                if (result.error === "LOCKED") {
-
-                    showError("Tài khoản đã bị khoá. Vui lòng liên hệ quản trị viên.");
-
-                    setLoading(false);
-
-                    return;
-
-                }
+                const authResponse = await apiRequest("/auth/login", {
+                    method: "POST",
+                    body: { identifier: identifier, password: password }
+                });
 
 
-                if (result.error) {
+                if (!hasStaffAccess(authResponse.user)) {
 
-                    showError("Email hoặc mật khẩu không đúng.");
+                    /* Thu hồi phiên vừa cấp, không lưu gì */
+                    apiRequest("/auth/logout", {
+                        method: "POST",
+                        body: { refreshToken: authResponse.refreshToken }
+                    }).catch(function () { });
+
+                    showError(STAFF_LOGIN_REASONS.denied);
 
                     setLoading(false);
 
@@ -88,11 +98,17 @@ document.addEventListener(
                 }
 
 
-                saveStaffSession(result.staff);
+                saveStaffSession(authResponse);
 
                 window.location.href = getRedirectTarget("admin/dashboard.html");
 
-            }, 300);
+            } catch (error) {
+
+                showError(getErrorMessage(error));
+
+                setLoading(false);
+
+            }
 
         });
 

@@ -147,18 +147,19 @@ function createStore(input) {
 /* ================= NHÂN VIÊN & VAI TRÒ ================= */
 
 /*
- * password CHỈ để đăng nhập thử ở giao diện (B1). Checkpoint B2 sẽ bỏ hẳn
- * và đăng nhập qua POST /api/v1/auth/login thật (BCrypt phía server).
+ * Hồ sơ nhân viên mẫu (vai trò hiển thị + chi nhánh) tới Phase 7. Từ B2 KHÔNG còn
+ * mật khẩu: đăng nhập qua POST /api/v1/auth/login thật, tài khoản STAFF được
+ * ghép với hồ sơ ở đây theo email (getEmployeeByEmail, staff-auth.js).
  */
 
 const MOCK_EMPLOYEES = [
-    { id: "nv-admin-01", fullname: "Trần Văn Quản", email: "admin@poy.vn", password: "admin123", phone: "0901 111 222", role: "ADMIN", storeId: null, position: "Quản trị hệ thống", status: "ACTIVE", joinedAt: "2023-01-10" },
-    { id: "nv-bm-01", fullname: "Nguyễn Thị Lan", email: "lan.quanly@poy.vn", password: "quanly123", phone: "0902 222 333", role: "BRANCH_MANAGER", storeId: "CN01", position: "Trưởng chi nhánh", status: "ACTIVE", joinedAt: "2023-03-15" },
-    { id: "nv-bm-02", fullname: "Phạm Minh Đức", email: "duc.quanly@poy.vn", password: "quanly123", phone: "0903 333 444", role: "BRANCH_MANAGER", storeId: "CN02", position: "Trưởng chi nhánh", status: "ACTIVE", joinedAt: "2023-05-02" },
-    { id: "nv-staff-01", fullname: "Lê Thị Hoa", email: "hoa.nv@poy.vn", password: "nhanvien123", phone: "0904 444 555", role: "EMPLOYEE", storeId: "CN01", position: "Nhân viên bán hàng", status: "ACTIVE", joinedAt: "2024-02-20" },
-    { id: "nv-staff-02", fullname: "Đỗ Văn Hùng", email: "hung.nv@poy.vn", password: "nhanvien123", phone: "0905 555 666", role: "EMPLOYEE", storeId: "CN01", position: "Nhân viên kỹ thuật", status: "ACTIVE", joinedAt: "2024-04-11" },
-    { id: "nv-staff-03", fullname: "Vũ Thị Mai", email: "mai.nv@poy.vn", password: "nhanvien123", phone: "0906 666 777", role: "EMPLOYEE", storeId: "CN02", position: "Nhân viên bán hàng", status: "ACTIVE", joinedAt: "2024-06-01" },
-    { id: "nv-staff-04", fullname: "Ngô Văn Tài", email: "tai.nv@poy.vn", password: "nhanvien123", phone: "0907 777 888", role: "EMPLOYEE", storeId: "CN03", position: "Nhân viên bán hàng", status: "INACTIVE", joinedAt: "2024-01-05" }
+    { id: "nv-admin-01", fullname: "Trần Văn Quản", email: "admin@poy.vn", phone: "0901 111 222", role: "ADMIN", storeId: null, position: "Quản trị hệ thống", status: "ACTIVE", joinedAt: "2023-01-10" },
+    { id: "nv-bm-01", fullname: "Nguyễn Thị Lan", email: "lan.quanly@poy.vn", phone: "0902 222 333", role: "BRANCH_MANAGER", storeId: "CN01", position: "Trưởng chi nhánh", status: "ACTIVE", joinedAt: "2023-03-15" },
+    { id: "nv-bm-02", fullname: "Phạm Minh Đức", email: "duc.quanly@poy.vn", phone: "0903 333 444", role: "BRANCH_MANAGER", storeId: "CN02", position: "Trưởng chi nhánh", status: "ACTIVE", joinedAt: "2023-05-02" },
+    { id: "nv-staff-01", fullname: "Lê Thị Hoa", email: "hoa.nv@poy.vn", phone: "0904 444 555", role: "EMPLOYEE", storeId: "CN01", position: "Nhân viên bán hàng", status: "ACTIVE", joinedAt: "2024-02-20" },
+    { id: "nv-staff-02", fullname: "Đỗ Văn Hùng", email: "hung.nv@poy.vn", phone: "0905 555 666", role: "EMPLOYEE", storeId: "CN01", position: "Nhân viên kỹ thuật", status: "ACTIVE", joinedAt: "2024-04-11" },
+    { id: "nv-staff-03", fullname: "Vũ Thị Mai", email: "mai.nv@poy.vn", phone: "0906 666 777", role: "EMPLOYEE", storeId: "CN02", position: "Nhân viên bán hàng", status: "ACTIVE", joinedAt: "2024-06-01" },
+    { id: "nv-staff-04", fullname: "Ngô Văn Tài", email: "tai.nv@poy.vn", phone: "0907 777 888", role: "EMPLOYEE", storeId: "CN03", position: "Nhân viên bán hàng", status: "INACTIVE", joinedAt: "2024-01-05" }
 ];
 
 
@@ -187,7 +188,7 @@ function getEmployeeRecords() {
 }
 
 
-/* Không bao giờ trả password ra ngoài, kể cả trong mock */
+/* Bản tóm tắt dùng cho giao diện */
 
 function toStaffSummary(employee) {
 
@@ -237,7 +238,7 @@ function getEmployeesByStore(storeId) {
 }
 
 
-/* Mô phỏng POST /employees (chỉ ADMIN). Mật khẩu thử mặc định: nhanvien123 */
+/* Mô phỏng POST /employees (chỉ ADMIN), tới Phase 7 */
 
 function createEmployee(input) {
 
@@ -249,7 +250,6 @@ function createEmployee(input) {
         id: id,
         fullname: input.fullname,
         email: input.email,
-        password: "nhanvien123",
         phone: input.phone || "",
         role: input.role || "EMPLOYEE",
         storeId: input.role === "ADMIN" ? null : (input.storeId || null),
@@ -288,31 +288,19 @@ function updateEmployee(id, patch) {
 
 
 /*
- * Mô phỏng đăng nhập nội bộ. Trả về:
- *   { staff }            đăng nhập được
- *   { error: "INVALID" } sai email / mật khẩu (không nói rõ cái nào sai)
- *   { error: "LOCKED" }  tài khoản bị khoá (chỉ báo sau khi mật khẩu đúng,
- *                        giống thứ tự kiểm tra của /auth/login)
+ * Hồ sơ mẫu của một tài khoản STAFF thật, theo email (không phân biệt hoa
+ * thường). Hồ sơ đang "khoá" trong dữ liệu mẫu thì coi như không có.
  */
 
-function authenticateStaff(email, password) {
+function getEmployeeByEmail(email) {
 
-    const normalized = String(email).trim().toLowerCase();
+    const normalized = String(email || "").trim().toLowerCase();
 
     const employee = getEmployeeRecords().find(function (e) {
-        return e.email.toLowerCase() === normalized;
+        return e.email.toLowerCase() === normalized && e.status === "ACTIVE";
     });
 
-
-    if (!employee || employee.password !== password) {
-        return { error: "INVALID" };
-    }
-
-    if (employee.status !== "ACTIVE") {
-        return { error: "LOCKED" };
-    }
-
-    return { staff: toStaffSummary(employee) };
+    return employee ? toStaffSummary(employee) : null;
 
 }
 

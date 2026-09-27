@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Người dùng - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Người dùng & phân quyền" data-roles="ADMIN">
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="users"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/users): khoá / mở khoá, phân quyền và xoá có hiệu lực ngay trên hệ thống.
+                Vai trò hiển thị Nhân viên / Quản lý chi nhánh và chi nhánh phụ trách vẫn lấy từ trang Nhân viên (dữ liệu mẫu) tới Phase 7.
+            </p>
+
+
+            <form class="admin-filter-bar" id="userFilterForm" role="search">
+
+                <input type="search" id="userKeyword" placeholder="Tìm email, tên đăng nhập, họ tên…" maxlength="255" aria-label="Từ khoá">
+
+                <select id="userRoleFilter" aria-label="Vai trò">
+                    <option value="">Mọi vai trò</option>
+                    <option value="CUSTOMER">Khách hàng</option>
+                    <option value="STAFF">Nhân viên (STAFF)</option>
+                    <option value="ADMIN">Quản trị viên (ADMIN)</option>
+                </select>
+
+                <select id="userStatusFilter" aria-label="Trạng thái">
+                    <option value="">Mọi trạng thái</option>
+                    <option value="true">Đang hoạt động</option>
+                    <option value="false">Đã khoá</option>
+                </select>
+
+                <button type="submit" class="btn btn-dark">TÌM</button>
+
+            </form>
+
+
+            <!-- Phân quyền một tài khoản (mở từ nút "Phân quyền" trong bảng) -->
+            <section class="admin-panel" id="rolePanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="rolePanelTitle">Phân quyền</h2>
+                </div>
+
+                <form id="roleForm" novalidate>
+
+                    <p id="roleFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-role-options">
+
+                        <label>
+                            <input type="checkbox" name="role" value="CUSTOMER">
+                            <span><strong>Khách hàng</strong> mua hàng trên website</span>
+                        </label>
+
+                        <label>
+                            <input type="checkbox" name="role" value="STAFF">
+                            <span><strong>Nhân viên</strong> vào được khu nội bộ</span>
+                        </label>
+
+                        <label>
+                            <input type="checkbox" name="role" value="ADMIN">
+                            <span><strong>Quản trị viên</strong> toàn quyền, kể cả trang này</span>
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="roleSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="roleCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Tài khoản</h2>
+                    <span class="admin-row-count" id="userRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Tài khoản</th>
+                                <th>Email</th>
+                                <th>SĐT</th>
+                                <th>Vai trò</th>
+                                <th>Trạng thái</th>
+                                <th>Đăng nhập gần nhất</th>
+                                <th>Ngày tạo</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="userTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="userPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/users.js"></script>
+
+</body>
+</html>

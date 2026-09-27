@@ -10,10 +10,45 @@
 
 const API_BASE_URL = "http://localhost:8080/api/v1";
 
+/*
+ * Đường dẫn gốc của website (thư mục chứa index.html), tính từ vị trí file này
+ * (js/core/api.js). Đúng cho mọi trang dù nằm ở gốc, auth/ hay customer/,
+ * và cả khi Live Server phục vụ website dưới một thư mục con (vd. /frontend/).
+ */
+
+const SITE_ROOT =
+    new URL("../../", document.currentScript.src).href;
+
+
+/* siteUrl("auth/login.html") → địa chỉ đầy đủ của trang tính từ gốc website */
+
+function siteUrl(path) {
+
+    return new URL(path, SITE_ROOT).href;
+
+}
+
+
+/*
+ * Khu nội bộ (admin/) dùng phiên riêng, nên cùng một trình duyệt vẫn đăng
+ * nhập song song được một tài khoản khách và một tài khoản nhân viên (B2).
+ */
+
+const IS_STAFF_AREA =
+    window.location.href.startsWith(SITE_ROOT + "admin/");
+
+
 /* Khoá localStorage mang tiền tố "poy_" (đổi từ "lahy_" ngày 2026-09-26) */
 
-const AUTH_STORAGE_KEY = "poy_auth";
+const CUSTOMER_AUTH_STORAGE_KEY = "poy_auth";
 
+const STAFF_AUTH_STORAGE_KEY = "poy_staff_auth";
+
+/* Phiên dùng cho apiRequest(..., { auth: true }) của trang hiện tại */
+const AUTH_STORAGE_KEY =
+    IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
+
+/* Tiền tố giỏ hàng: poy_cart_<userId> (js/core/cart-store.js); "poy_cart" là giỏ kiểu cũ */
 const CART_STORAGE_KEY = "poy_cart";
 
 
@@ -46,28 +81,9 @@ function migrateStorageKey(oldKey, newKey) {
 }
 
 
-migrateStorageKey("lahy_auth", AUTH_STORAGE_KEY);
+migrateStorageKey("lahy_auth", CUSTOMER_AUTH_STORAGE_KEY);
 
 migrateStorageKey("lahy_cart", CART_STORAGE_KEY);
-
-
-/*
- * Đường dẫn gốc của website (thư mục chứa index.html), tính từ vị trí file này
- * (js/core/api.js). Đúng cho mọi trang dù nằm ở gốc, auth/ hay customer/,
- * và cả khi Live Server phục vụ website dưới một thư mục con (vd. /frontend/).
- */
-
-const SITE_ROOT =
-    new URL("../../", document.currentScript.src).href;
-
-
-/* siteUrl("auth/login.html") → địa chỉ đầy đủ của trang tính từ gốc website */
-
-function siteUrl(path) {
-
-    return new URL(path, SITE_ROOT).href;
-
-}
 
 
 /*
@@ -116,7 +132,44 @@ const API_ERROR_MESSAGES = {
         "Mật khẩu hiện tại không đúng.",
 
     INTERNAL_ERROR:
-        "Hệ thống đang gặp sự cố. Vui lòng thử lại sau."
+        "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
+
+    /* Khu nội bộ (B2): quản lý người dùng */
+
+    USER_NOT_FOUND:
+        "Không tìm thấy người dùng.",
+
+    ROLE_NOT_FOUND:
+        "Vai trò không tồn tại.",
+
+    CANNOT_MODIFY_OWN_ACCOUNT:
+        "Không thể tự khoá, tự xoá hoặc tự bỏ quyền quản trị của chính mình.",
+
+    LAST_ADMIN:
+        "Không thể thực hiện: hệ thống phải còn ít nhất một quản trị viên đang hoạt động.",
+
+    USER_DELETED:
+        "Tài khoản này đã bị xoá, không thể thay đổi.",
+
+    /* Khu nội bộ (B2): quản lý sản phẩm */
+
+    PRODUCT_NOT_FOUND:
+        "Không tìm thấy sản phẩm (có thể đã bị xoá).",
+
+    DUPLICATE_PRODUCT:
+        "Slug hoặc mã SKU đã được dùng cho sản phẩm khác.",
+
+    INVALID_PRODUCT_DATA:
+        "Dữ liệu sản phẩm chưa hợp lệ (ví dụ giá khuyến mãi lớn hơn giá gốc).",
+
+    CATEGORY_NOT_FOUND:
+        "Danh mục không tồn tại.",
+
+    BRAND_NOT_FOUND:
+        "Thương hiệu không tồn tại.",
+
+    RESOURCE_IN_USE:
+        "Dữ liệu đang được sử dụng, không thể xoá."
 
 };
 
@@ -173,16 +226,28 @@ function getAuth() {
 }
 
 
-/* authResponse = data của /auth/login, /auth/register, /auth/refresh */
+/*
+ * authResponse = data của /auth/login, /auth/register, /auth/refresh.
+ * Phần "staff" của phiên nội bộ (js/admin/staff-auth.js) được giữ lại khi
+ * làm mới token của CÙNG một tài khoản.
+ */
 
 function saveAuth(authResponse) {
+
+    const previous = getAuth();
+
+    const sameUser =
+        previous && previous.user && authResponse.user &&
+        previous.user.id === authResponse.user.id;
+
 
     localStorage.setItem(
         AUTH_STORAGE_KEY,
         JSON.stringify({
             accessToken: authResponse.accessToken,
             refreshToken: authResponse.refreshToken,
-            user: authResponse.user
+            user: authResponse.user,
+            staff: sameUser && previous.staff ? previous.staff : undefined
         })
     );
 
@@ -467,9 +532,12 @@ function redirectToLogin(reason) {
             ? currentUrl.slice(SITE_ROOT.length) || "index.html"
             : "index.html";
 
+    /* Khu nội bộ có trang đăng nhập riêng */
+    const loginPage = IS_STAFF_AREA ? "admin/login.html" : "auth/login.html";
+
     window.location.href =
         siteUrl(
-            "auth/login.html?redirect=" + encodeURIComponent(currentPage) +
+            loginPage + "?redirect=" + encodeURIComponent(currentPage) +
             (reason ? "&reason=" + encodeURIComponent(reason) : "")
         );
 

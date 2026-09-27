@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Sản phẩm - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Sản phẩm" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="products"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (catalogue /api/v1/products): thêm, sửa, ẩn / hiện và xoá có hiệu lực ngay trên website.
+                Phiên bản, ảnh và thông số kỹ thuật của sản phẩm được quản lý qua API riêng (chưa có màn hình).
+            </p>
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="productFilterForm" role="search">
+
+                    <input type="search" id="productKeyword" placeholder="Tìm tên sản phẩm…" maxlength="255" aria-label="Từ khoá">
+
+                    <select id="productCategoryFilter" aria-label="Danh mục">
+                        <option value="">Mọi danh mục</option>
+                    </select>
+
+                    <select id="productStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="true">Đang bán</option>
+                        <option value="false">Đã ẩn</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newProductBtn">
+                    + THÊM SẢN PHẨM
+                </button>
+
+            </div>
+
+
+            <!-- Thêm / sửa sản phẩm -->
+            <section class="admin-panel" id="productFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="productFormTitle">Thêm sản phẩm</h2>
+                </div>
+
+                <form id="productForm" novalidate>
+
+                    <p id="productFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="pfName">Tên sản phẩm *</label>
+                            <input type="text" id="pfName" maxlength="255" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfCategory">Danh mục *</label>
+                            <select id="pfCategory" required></select>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfBrand">Thương hiệu</label>
+                            <select id="pfBrand"></select>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfBasePrice">Giá gốc (đ) *</label>
+                            <input type="number" id="pfBasePrice" min="0" step="1000" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfDiscountPrice">Giá khuyến mãi (đ)</label>
+                            <input type="number" id="pfDiscountPrice" min="0" step="1000" placeholder="Để trống nếu không giảm giá">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfSku">Mã SKU</label>
+                            <input type="text" id="pfSku" maxlength="50">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfSlug">Slug (đường dẫn)</label>
+                            <input type="text" id="pfSlug" maxlength="255" placeholder="Tự tạo từ tên nếu để trống">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfStock">Tồn kho</label>
+                            <input type="number" id="pfStock" min="0" step="1">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfWarranty">Bảo hành (tháng)</label>
+                            <input type="number" id="pfWarranty" min="0" step="1">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pfWeight">Khối lượng (kg)</label>
+                            <input type="number" id="pfWeight" min="0" step="0.01">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="pfDescription">Mô tả</label>
+                            <textarea id="pfDescription" rows="4"></textarea>
+                        </div>
+
+                        <label class="admin-field-check admin-field-wide">
+                            <input type="checkbox" id="pfActive" checked>
+                            Đang bán (hiển thị trên website)
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="productSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="productCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách sản phẩm</h2>
+                    <span class="admin-row-count" id="productRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th>Thương hiệu</th>
+                                <th>Giá bán</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="productTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="productPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/products.js"></script>
+
+</body>
+</html>

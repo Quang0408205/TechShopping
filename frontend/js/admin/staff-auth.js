@@ -1,121 +1,169 @@
-/* ================= PHIÊN ĐĂNG NHẬP NỘI BỘ (admin/) ================= */
+/* ================= PHIÊN ĐĂNG NHẬP NỘI BỘ (admin/) — B2 ================= */
 
 /*
- * Khoá riêng "poy_staff_auth", tách khỏi phiên khách hàng "poy_auth"
- * (js/core/api.js), nên cùng một trình duyệt vẫn đăng nhập song song được
- * một tài khoản khách và một tài khoản nhân viên.
+ * Đăng nhập nội bộ dùng tài khoản THẬT: POST /api/v1/auth/login, chỉ nhận
+ * tài khoản có role STAFF hoặc ADMIN. Phiên lưu ở "poy_staff_auth"
+ * (api.js tự chọn khoá này trên các trang admin/), tách khỏi phiên khách
+ * "poy_auth", nên một trình duyệt vẫn đăng nhập song song được cả hai.
  *
- * Hình dạng giống hệt poy_auth để Checkpoint B2 chỉ việc lưu AuthResponse
- * thật của POST /api/v1/auth/login vào đây:
  *   {
- *     accessToken, refreshToken,           (B1: null, chưa có backend)
- *     user:  { id, email, username, fullname, roles: ["STAFF"] | ["ADMIN"] },
- *     staff: { role, storeId, storeName }  (mock tới Phase 7; role là mã
- *                                           hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN)
+ *     accessToken, refreshToken, user,   (AuthResponse thật)
+ *     staff: { id, fullname, email, role, roleLabel, storeId, storeName }
  *   }
+ *
+ * staff.role là mã hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN:
+ *   - role ADMIN của backend → ADMIN (toàn hệ thống);
+ *   - role STAFF → vai trò + chi nhánh lấy từ dữ liệu mẫu theo email
+ *     (getEmployeeByEmail, mock-staff-data.js) cho tới Phase 7 (employees /
+ *     employee_assignments); không có trong dữ liệu mẫu → Nhân viên, chưa gán
+ *     chi nhánh (các trang theo chi nhánh sẽ không có dữ liệu).
  *
  * Nạp sau js/core/api.js và js/admin/mock-staff-data.js.
  */
 
-const STAFF_AUTH_KEY = "poy_staff_auth";
+const STAFF_BACKEND_ROLES = ["STAFF", "ADMIN"];
 
 
-function getStaffAuth() {
+/* Tài khoản (user của AuthResponse / UserResponse) có quyền vào khu nội bộ */
 
-    try {
+function hasStaffAccess(user) {
 
-        const raw = localStorage.getItem(STAFF_AUTH_KEY);
+    const roles = user && Array.isArray(user.roles) ? user.roles : [];
 
-        const auth = raw ? JSON.parse(raw) : null;
-
-        return auth && auth.user ? auth : null;
-
-    } catch (error) {
-
-        return null;
-
-    }
+    return roles.some(function (role) {
+        return STAFF_BACKEND_ROLES.indexOf(role) !== -1;
+    });
 
 }
 
 
-/* staff: kết quả toStaffSummary() của mock-staff-data.js */
+/* Hồ sơ hiển thị của nhân viên (vai trò / chi nhánh) từ tài khoản thật */
 
-function saveStaffSession(staff) {
+function buildStaffProfile(user) {
 
-    const auth = {
-        accessToken: null,
-        refreshToken: null,
-        user: {
-            id: staff.id,
-            email: staff.email,
-            username: staff.email,
-            fullname: staff.fullname,
-            roles: [staff.role === "ADMIN" ? "ADMIN" : "STAFF"]
-        },
-        staff: {
-            role: staff.role,
-            storeId: staff.storeId,
-            storeName: staff.storeName
-        }
+    const isAdmin = (user.roles || []).indexOf("ADMIN") !== -1;
+
+    const employee = isAdmin ? null : getEmployeeByEmail(user.email);
+
+    const role = isAdmin
+        ? "ADMIN"
+        : (employee && employee.role !== "ADMIN" ? employee.role : "EMPLOYEE");
+
+    const storeId = role === "ADMIN" ? null : (employee ? employee.storeId : null);
+
+    const store = storeId ? getStoreById(storeId) : null;
+
+
+    return {
+        id: user.id,
+        fullname: user.fullname || user.username || user.email,
+        email: user.email,
+        role: role,
+        roleLabel: getStaffRoleLabel(role),
+        storeId: storeId,
+        storeName: role === "ADMIN"
+            ? "Toàn hệ thống"
+            : (store ? store.name : "Chưa gán chi nhánh")
     };
 
-    try {
-        localStorage.setItem(STAFF_AUTH_KEY, JSON.stringify(auth));
-    } catch (error) {
-        /* localStorage bị chặn: không giữ được phiên */
-    }
-
 }
 
 
-function clearStaffAuth() {
+/* Lưu AuthResponse của /auth/login kèm hồ sơ nhân viên */
 
-    try {
-        localStorage.removeItem(STAFF_AUTH_KEY);
-    } catch (error) {
-        /* bỏ qua */
-    }
+function saveStaffSession(authResponse) {
 
-}
+    saveAuth(authResponse);
 
+    const auth = getAuth();
 
-function isStaffLoggedIn() {
+    auth.staff = buildStaffProfile(authResponse.user);
 
-    return getStaffAuth() !== null;
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
 
 }
 
 
 /*
- * Nhân viên đang đăng nhập, đọc lại từ dữ liệu mới nhất mỗi lần (giống
- * backend kiểm tra lại tài khoản ở mỗi request): bị khoá / không còn tồn
- * tại → null. Vai trò / chi nhánh đổi thì phiên được cập nhật theo.
+ * Nhân viên đang đăng nhập, KIỂM TRA LẠI với máy chủ mỗi lần mở trang
+ * (GET /users/me): tài khoản bị khoá / xoá / hết phiên / mất quyền STAFF
+ * và ADMIN → xoá phiên. Trả về:
+ *   { staff }                      hợp lệ (phiên được cập nhật tên / vai trò mới)
+ *   { reason: "none" }             chưa đăng nhập
+ *   { reason: "expired" | "locked" | "denied" }  phiên đã bị xoá
+ *   { reason: "network" }          không gọi được máy chủ (giữ nguyên phiên)
  */
 
-function getCurrentStaff() {
+async function checkStaffSession() {
 
-    const auth = getStaffAuth();
+    if (!isLoggedIn()) {
+        return { reason: "none" };
+    }
+
+
+    let me;
+
+    try {
+
+        me = await apiRequest("/users/me", { auth: true });
+
+    } catch (error) {
+
+        if (error.code === "NETWORK_ERROR") {
+            return { reason: "network" };
+        }
+
+        clearAuth();
+
+        return { reason: error.code === "ACCOUNT_DISABLED" ? "locked" : "expired" };
+
+    }
+
+
+    if (!hasStaffAccess(me)) {
+
+        await logout();
+
+        return { reason: "denied" };
+
+    }
+
+
+    /*
+     * Vai trò trong DB khác vai trò trong phiên (vừa được cấp / bỏ quyền):
+     * làm mới token để access token mang đúng vai trò mới, nếu không API
+     * admin sẽ trả 403 cho tới khi token cũ hết hạn (≤ 30 phút).
+     */
+
+    const current = getAuth();
+
+    const sessionRoles = current && current.user ? (current.user.roles || []).slice().sort().join() : "";
+
+    if (sessionRoles !== (me.roles || []).slice().sort().join()) {
+        await refreshTokens();
+    }
+
+
+    const auth = getAuth();
 
     if (!auth) {
-        return null;
+        return { reason: "expired" };
     }
 
+    auth.user = {
+        id: me.id,
+        email: me.email,
+        username: me.username,
+        fullname: me.fullname,
+        roles: me.roles
+    };
 
-    const staff = getEmployeeById(auth.user.id);
+    auth.staff = buildStaffProfile(auth.user);
 
-    if (!staff || staff.status !== "ACTIVE") {
-        return null;
-    }
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
 
 
-    const saved = auth.staff || {};
-
-    if (staff.role !== saved.role || staff.storeId !== saved.storeId) {
-        saveStaffSession(staff);
-    }
-
-    return staff;
+    return { staff: auth.staff };
 
 }
 
@@ -129,9 +177,9 @@ function hasStaffRole(staff, roles) {
 }
 
 
-function staffLogout() {
+async function staffLogout() {
 
-    clearStaffAuth();
+    await logout();
 
     window.location.href = siteUrl("admin/login.html");
 
@@ -139,24 +187,18 @@ function staffLogout() {
 
 
 /*
- * Gọi ở đầu mỗi trang admin (trừ login.html). Chưa đăng nhập → về
- * admin/login.html?redirect=<trang hiện tại>. Có phiên nhưng tài khoản đã bị
- * khoá → xoá phiên, về trang đăng nhập với ?reason=locked.
+ * Gọi ở đầu mỗi trang admin (trừ login.html). Không có phiên hợp lệ → về
+ * admin/login.html?redirect=<trang hiện tại>[&reason=...].
  * Trả về nhân viên hiện tại, hoặc null nếu đã chuyển hướng.
  */
 
-function requireStaffLogin() {
+async function requireStaffLogin() {
 
-    const hadSession = isStaffLoggedIn();
+    const result = await checkStaffSession();
 
-    const staff = getCurrentStaff();
-
-    if (staff) {
-        return staff;
+    if (result.staff) {
+        return result.staff;
     }
-
-
-    clearStaffAuth();
 
 
     const currentUrl = window.location.href.split("#")[0];
@@ -170,10 +212,9 @@ function requireStaffLogin() {
 
     params.set("redirect", currentPage || "admin/dashboard.html");
 
-    if (hadSession) {
-        params.set("reason", "locked");
+    if (result.reason !== "none") {
+        params.set("reason", result.reason);
     }
-
 
     window.location.replace(siteUrl("admin/login.html?" + params.toString()));
 
