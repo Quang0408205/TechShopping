@@ -1,18 +1,122 @@
+/* ================= DESIGN TOKENS ================= */
+
+/*
+ * Hệ thống token dùng chung cho toàn bộ site (Customer + sau này là admin/).
+ * Mục tiêu: giữ tinh thần tối giản đen-trắng hiện có, chỉ bổ sung MỘT accent
+ * trung tính (đồng/bronze) dùng có chọn lọc cho điểm nhấn tương tác (link,
+ * trạng thái active, focus ring, badge) — không sơn lại toàn bộ giao diện.
+ * Bo góc + shadow + easing cũng được chuẩn hoá tại đây để mọi component
+ * (card, button, input) dùng chung một "ngôn ngữ" hình khối và chuyển động.
+ */
+
+:root {
+
+    /* Nền tảng đen-trắng-xám (thang xám đầy đủ thay vì vài giá trị rời rạc) */
+    --color-ink: #111318;
+    --color-paper: #ffffff;
+
+    --gray-50: #fafafa;
+    --gray-100: #f4f4f5;
+    --gray-200: #ebebec;
+    --gray-300: #dcdce0;
+    --gray-400: #b9b9c2;
+    --gray-500: #8f8f99;
+    --gray-600: #6b6b75;
+    --gray-700: #4a4a52;
+    --gray-800: #26262b;
+    --gray-900: #111318;
+
+    /* Accent trung tính (đồng/bronze) — dùng cho link, active state, focus ring, badge */
+    --color-accent: #8a5a22;
+    --color-accent-strong: #6e4419;
+    --color-accent-soft: #f6ead9;
+
+    /* Semantic (trạng thái) */
+    --color-success: #1f6b3e;
+    --color-success-bg: #eaf6ee;
+    --color-danger: #c0392b;
+    --color-danger-bg: #fdf1f0;
+    --color-warning: #a4720b;
+    --color-warning-bg: #fdf3e3;
+
+    /* Thang bo góc */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-full: 999px;
+
+    /* Thang đổ bóng (elevation) */
+    --shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.06), 0 1px 1px rgba(17, 19, 24, 0.04);
+    --shadow-md: 0 12px 28px rgba(17, 19, 24, 0.10);
+    --shadow-lg: 0 24px 56px rgba(17, 19, 24, 0.16);
+
+    /* Easing + thời lượng chuẩn — cubic-bezier "ease-out" mượt hơn transition mặc định */
+    --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 150ms;
+    --duration-base: 250ms;
+    --duration-slow: 450ms;
+
+}
+
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+/*
+ * An toàn cho thuộc tính [hidden]: một quy tắc CSS do tác giả viết (author
+ * stylesheet) với display: X không điều kiện — vd. .btn { display: inline-flex }
+ * — sẽ THẮNG display:none ngầm định của user-agent cho [hidden], bất kể độ
+ * đặc hiệu, vì CSS user-agent luôn xếp sau CSS tác giả trong cascade. Bug
+ * này đã gặp lặp lại nhiều lần trong dự án (.chatbot-panel, .account-summary,
+ * .contact-grid, .btn) nên xử lý DỨT ĐIỂM một lần bằng !important thay vì
+ * vá từng class — component nào cần "hiện dạng flex khi không còn hidden"
+ * vẫn hoạt động bình thường vì quy tắc [hidden] chỉ áp dụng khi thuộc tính
+ * còn tồn tại trên phần tử.
+ */
+[hidden] {
+    display: none !important;
+}
+
 html {
-    scroll-behavior: smooth;
+    /*
+     * Cố ý KHÔNG bật scroll-behavior: smooth toàn cục — Chrome/Firefox áp dụng
+     * hiệu ứng "trễ/đàn hồi" này cho cả thao tác cuộn chuột/trackpad thông
+     * thường, khiến các phần tử position:sticky (vd: sidebar bộ lọc trang sản
+     * phẩm) trông như bị "trôi/không cố định" trong lúc người dùng đang kéo.
+     * Những chỗ cần cuộn mượt (vd: chuyển trang phân trang) đã tự truyền
+     * { behavior: "smooth" } trực tiếp trong JS (xem js/customer/products.js),
+     * nên không cần bật ở đây.
+     */
 }
 
 body {
     font-family: "Montserrat", sans-serif;
-    color: #111;
-    background: #fff;
+    color: var(--color-ink);
+    background: var(--color-paper);
     line-height: 1.6;
+}
+
+/* Focus rõ ràng cho điều hướng bàn phím, dùng accent thay vì viền mặc định của trình duyệt */
+:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Tôn trọng lựa chọn giảm chuyển động của người dùng (accessibility) */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+
 }
 
 a {
@@ -24,6 +128,20 @@ button,
 input,
 textarea {
     font-family: inherit;
+}
+
+/* Bo góc mặc định cho mọi ô nhập trên site (các class riêng vẫn có thể ghi đè màu viền/focus) */
+input,
+select,
+textarea {
+    border-radius: var(--radius-sm);
+}
+
+input,
+select,
+textarea,
+button {
+    transition: border-color var(--duration-base) var(--ease-standard);
 }
 
 img {
@@ -49,7 +167,23 @@ img {
     z-index: 1000;
 
     background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid transparent;
+
+    transition:
+        background-color var(--duration-base) var(--ease-standard),
+        border-color var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
+}
+
+/* main.js thêm class này khi cuộn xuống — hiệu ứng "kính mờ" tinh tế thay vì nền phẳng cố định */
+.header.is-scrolled {
+    background: rgba(255, 255, 255, 0.85);
+    border-bottom-color: var(--gray-200);
+
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+
+    box-shadow: var(--shadow-sm);
 }
 
 .header-inner {
@@ -99,7 +233,11 @@ img {
     font-size: 13px;
     font-weight: 600;
 
-    transition: 0.3s;
+    transition: color var(--duration-base) var(--ease-standard);
+}
+
+.nav a:hover {
+    color: var(--color-accent);
 }
 
 .nav a::after {
@@ -112,14 +250,18 @@ img {
     width: 0;
     height: 2px;
 
-    background: #111;
+    background: var(--color-accent);
 
-    transition: 0.3s;
+    transition: width var(--duration-base) var(--ease-standard);
 }
 
 .nav a:hover::after,
 .nav a.active::after {
     width: 100%;
+}
+
+.nav a.active {
+    color: var(--color-accent);
 }
 
 
@@ -141,8 +283,15 @@ img {
     align-items: center;
     justify-content: center;
 
-    border: 1px solid #ddd;
+    border: 1px solid var(--gray-300);
     border-radius: 50%;
+
+    transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+}
+
+.cart-btn:hover {
+    border-color: var(--color-ink);
+    transform: translateY(-1px);
 }
 
 .cart-count {
@@ -154,7 +303,7 @@ img {
     width: 18px;
     height: 18px;
 
-    background: #111;
+    background: var(--color-accent);
     color: #fff;
 
     border-radius: 50%;
@@ -164,22 +313,73 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
+
+    transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+/* main.js thêm/xoá class này khi số lượng giỏ hàng thay đổi (bounce nhẹ, không "nảy" quá đà) */
+.cart-count.bump {
+    transform: scale(1.35);
+}
+
+/* ---- Hiệu ứng "bay vào giỏ hàng" (flyToCart trong main.js) ---- */
+
+.cart-flyer {
+    position: fixed;
+    z-index: 5000;
+
+    pointer-events: none;
+
+    object-fit: contain;
+
+    background: #fff;
+    border-radius: var(--radius-md);
+
+    box-shadow: var(--shadow-lg);
+
+    will-change: transform, opacity;
+}
+
+/* Chưa có ảnh: một chấm màu nhấn bay thay */
+.cart-flyer-dot {
+    border-radius: 50%;
+
+    background: var(--color-accent);
+}
+
+/* Icon giỏ hàng "nhận" sản phẩm: lắc nhẹ + viền màu nhấn */
+.cart-btn.cart-receive {
+    border-color: var(--color-accent);
+
+    animation: cart-receive 450ms var(--ease-standard);
+}
+
+@keyframes cart-receive {
+
+    0% { transform: scale(1); }
+    30% { transform: scale(1.18) rotate(-8deg); }
+    60% { transform: scale(0.95) rotate(5deg); }
+    100% { transform: scale(1) rotate(0); }
+
 }
 
 .login-btn {
     padding: 12px 20px;
 
-    background: #111;
+    background: var(--color-ink);
     color: #fff;
+
+    border-radius: var(--radius-md);
 
     font-size: 12px;
     font-weight: 600;
 
-    transition: 0.3s;
+    transition: background-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .login-btn:hover {
-    background: #333;
+    background: var(--gray-800);
+    transform: translateY(-1px);
 }
 
 /* Khi đã đăng nhập: tên người dùng + nút đăng xuất (main.js) */
@@ -194,16 +394,17 @@ img {
 
 .login-btn.logout-btn {
     background: #fff;
-    color: #111;
+    color: var(--color-ink);
 
-    border: 1px solid #111;
+    border: 1px solid var(--color-ink);
 
     cursor: pointer;
 }
 
 .login-btn.logout-btn:hover {
-    background: #111;
+    background: var(--color-ink);
     color: #fff;
+    transform: none;
 }
 
 
@@ -223,22 +424,41 @@ img {
 
     letter-spacing: 1px;
 
-    transition: 0.3s;
+    border-radius: var(--radius-md);
+
+    cursor: pointer;
+
+    transition:
+        background-color var(--duration-base) var(--ease-standard),
+        color var(--duration-base) var(--ease-standard),
+        border-color var(--duration-base) var(--ease-standard),
+        transform var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.btn:active {
+    transform: translateY(0) scale(0.98);
 }
 
 .btn-dark {
-    background: #111;
+    background: var(--color-ink);
     color: #fff;
 }
 
 .btn-dark:hover {
-    background: #333;
+    background: var(--gray-800);
     transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
 }
 
 .btn-light {
     background: #fff;
-    color: #111;
+    color: var(--color-ink);
+}
+
+.btn-light:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
 }
 
 .btn-outline {
@@ -248,17 +468,19 @@ img {
 
 .btn-outline:hover {
     background: #fff;
-    color: #111;
+    color: var(--color-ink);
+    transform: translateY(-2px);
 }
 
 .btn-outline-dark {
-    border: 1px solid #111;
-    color: #111;
+    border: 1px solid var(--color-ink);
+    color: var(--color-ink);
 }
 
 .btn-outline-dark:hover {
-    background: #111;
+    background: var(--color-ink);
     color: #fff;
+    transform: translateY(-2px);
 }
 
 
@@ -267,7 +489,7 @@ img {
 .page-hero {
     padding: 120px 0;
 
-    background: #f3f3f3;
+    background: var(--gray-100);
 }
 
 .page-hero h1 {
@@ -279,7 +501,7 @@ img {
 }
 
 .page-hero p {
-    color: #777;
+    color: var(--gray-600);
 
     max-width: 550px;
 }
@@ -288,31 +510,43 @@ img {
 /* ================= THÔNG BÁO FORM (dùng chung) ================= */
 
 .form-error,
-.form-success {
+.form-success,
+.form-info {
     padding: 14px 16px;
+
+    border-radius: var(--radius-sm);
 
     font-size: 12px;
     font-weight: 500;
 }
 
+/* Thông tin trung tính (vd. "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.") */
+.form-info {
+    background: var(--color-accent-soft);
+
+    border-left: 3px solid var(--color-accent);
+
+    color: var(--color-accent-strong);
+}
+
 .form-error {
-    background: #fdf1f0;
+    background: var(--color-danger-bg);
 
-    border-left: 3px solid #c0392b;
+    border-left: 3px solid var(--color-danger);
 
-    color: #c0392b;
+    color: var(--color-danger);
 }
 
 .form-success {
-    background: #eef7f0;
+    background: var(--color-success-bg);
 
-    border-left: 3px solid #2e7d4f;
+    border-left: 3px solid var(--color-success);
 
-    color: #2e7d4f;
+    color: var(--color-success);
 }
 
 .field-error {
-    color: #c0392b;
+    color: var(--color-danger);
 
     font-size: 11px;
 }
@@ -332,6 +566,8 @@ img {
     display: block;
 
     margin-bottom: 15px;
+
+    color: var(--color-accent);
 
     font-size: 11px;
     font-weight: 700;
@@ -422,6 +658,8 @@ img {
 
     overflow: hidden;
 
+    border-radius: var(--radius-lg);
+
     background: #eee;
 }
 
@@ -485,21 +723,85 @@ img {
 }
 
 .product-card {
-    background: #f6f6f6;
+    background: var(--gray-100);
 
-    transition: 0.3s;
+    border-radius: var(--radius-lg);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-sm);
+
+    transition:
+        transform var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .product-card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-6px);
+
+    box-shadow: var(--shadow-md);
 }
 
 .product-image {
+    position: relative;
+
+    display: block;
+
     height: 300px;
 
     overflow: hidden;
 
-    background: #eee;
+    background: var(--gray-200);
+}
+
+.product-badge {
+    position: absolute;
+
+    top: 12px;
+    left: 12px;
+    z-index: 2;
+
+    padding: 5px 10px;
+
+    border-radius: var(--radius-sm);
+
+    background: var(--color-danger);
+    color: #fff;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.product-rating {
+    font-size: 11px;
+    color: var(--color-warning);
+
+    margin-bottom: 6px;
+}
+
+.product-rating span {
+    color: var(--gray-500);
+}
+
+.product-price-old {
+    margin-left: 8px;
+
+    color: var(--gray-500);
+    font-weight: 500;
+    font-size: 12px;
+
+    text-decoration: line-through;
+}
+
+.add-cart:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+.add-cart:disabled:hover {
+    background: transparent;
+    color: var(--color-ink);
 }
 
 .product-image img {
@@ -508,7 +810,7 @@ img {
 
     object-fit: cover;
 
-    transition: 0.5s;
+    transition: transform var(--duration-slow) var(--ease-standard);
 }
 
 .product-card:hover .product-image img {
@@ -525,7 +827,7 @@ img {
 
     letter-spacing: 2px;
 
-    color: #888;
+    color: var(--gray-500);
 }
 
 .product-info h3 {
@@ -546,7 +848,8 @@ img {
 
     padding: 12px;
 
-    border: 1px solid #111;
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-sm);
 
     background: transparent;
 
@@ -555,11 +858,13 @@ img {
 
     cursor: pointer;
 
-    transition: 0.3s;
+    transition:
+        background-color var(--duration-base) var(--ease-standard),
+        color var(--duration-base) var(--ease-standard);
 }
 
 .add-cart:hover {
-    background: #111;
+    background: var(--color-ink);
     color: #fff;
 }
 
@@ -637,14 +942,23 @@ img {
 .service-card {
     padding: 45px 35px;
 
-    border: 1px solid #ddd;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-lg);
 
-    transition: 0.3s;
+    transition:
+        background-color var(--duration-base) var(--ease-standard),
+        border-color var(--duration-base) var(--ease-standard),
+        transform var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
 }
 
 .service-card:hover {
-    background: #111;
+    background: var(--color-ink);
+    border-color: var(--color-ink);
     color: #fff;
+
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
 }
 
 .service-number {
@@ -702,7 +1016,7 @@ img {
 .footer-grid {
     display: grid;
 
-    grid-template-columns: 2fr 1fr 1fr 1fr;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
 
     gap: 50px;
 
@@ -837,6 +1151,7 @@ img {
 
 }
 
+
 /* ================= TÌM KIẾM (HEADER) ================= */
 
 /* Ô tìm kiếm trong partials/header.html, xử lý submit ở js/core/main.js */
@@ -897,29 +1212,75 @@ img {
 }
 
 
-/* ================= TOAST (THÔNG BÁO NHANH, thay cho alert()) ================= */
+/* ================= SCROLL REVEAL (dùng chung, xem js/core/main.js) ================= */
+
+/*
+ * .reveal-on-scroll: áp cho tiêu đề section + các lưới tĩnh (danh mục, dịch
+ * vụ, lợi ích...) — hiện một lần khi cuộn tới, không lặp lại. Lưới sản phẩm
+ * render bằng JS dùng cơ chế stagger riêng (.card-enter, xem bên dưới) vì
+ * nội dung của nó xuất hiện sau khi tải dữ liệu, không phải khi cuộn trang.
+ */
+
+.reveal-on-scroll {
+    opacity: 0;
+    transform: translateY(28px);
+
+    transition:
+        opacity var(--duration-slow) var(--ease-standard),
+        transform var(--duration-slow) var(--ease-standard);
+}
+
+.reveal-on-scroll.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Thẻ sản phẩm xuất hiện lần lượt (stagger) sau khi renderProductGrid() render xong — xem js/core/ui.js */
+
+.product-card.card-enter {
+    opacity: 0;
+    transform: translateY(18px);
+}
+
+.product-card.card-enter.card-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+
+/* ================= TOAST (THÔNG BÁO NHANH) ================= */
 
 .toast-container {
     position: fixed;
+
     left: 20px;
     bottom: 20px;
     z-index: 3000;
+
     display: flex;
     flex-direction: column;
     gap: 10px;
+
     max-width: 320px;
 }
 
 .toast {
     padding: 14px 18px;
-    background: #111;
+
+    background: var(--color-ink);
     color: #fff;
+
+    border-radius: var(--radius-md);
+
     font-size: 12px;
     font-weight: 500;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+    box-shadow: var(--shadow-lg);
+
     opacity: 0;
     transform: translateY(10px);
-    transition: 0.3s;
+
+    transition: opacity var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
 .toast.show {
@@ -928,7 +1289,7 @@ img {
 }
 
 .toast-success {
-    background: #2e7d4f;
+    background: #1f6b3e;
 }
 
 .toast-error {
@@ -938,22 +1299,286 @@ img {
 @media (max-width: 700px) {
 
     .toast-container {
+        left: 20px;
         right: 20px;
+
         max-width: none;
     }
 
 }
 
 
-/* ================= SKELETON (KHUNG XƯƠNG KHI ĐANG TẢI) ================= */
+/* ================= WIDGET CHATBOT NỔI ================= */
 
-.skeleton-card:hover {
-    transform: none;
+/*
+ * Widget nổi, tách biệt hoàn toàn với hệ thống Khuyến nghị (recommendation.html).
+ * HTML được js/customer/chatbot.js tự chèn vào <body> trên mọi trang.
+ */
+
+.chatbot-widget {
+    position: fixed;
+
+    right: 24px;
+    bottom: 24px;
+    z-index: 2500;
 }
+
+.chatbot-launcher {
+    width: 60px;
+    height: 60px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: var(--color-ink);
+    color: #fff;
+
+    font-size: 24px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: var(--shadow-lg);
+
+    cursor: pointer;
+
+    transition: background-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+}
+
+.chatbot-launcher:hover {
+    background: var(--gray-800);
+    transform: translateY(-2px);
+}
+
+.chatbot-launcher.active {
+    background: var(--color-accent-strong);
+}
+
+.chatbot-panel {
+    position: absolute;
+
+    right: 0;
+    bottom: 76px;
+
+    width: 380px;
+    height: 520px;
+
+    max-height: 70vh;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-lg);
+
+    overflow: hidden;
+}
+
+/*
+ * Thuộc tính [hidden] có độ đặc thù ngang bằng .chatbot-panel, nhưng vì cả hai
+ * đều là CSS do ta viết, thứ tự khai báo quyết định — quy tắc dưới đây đứng
+ * sau nên được ưu tiên, đảm bảo bảng chat thực sự ẩn khi đóng (nếu không có
+ * dòng này, "display: flex" ở trên sẽ đè lên [hidden] và nút đóng/mở sẽ
+ * không có tác dụng trên giao diện).
+ */
+
+.chatbot-panel[hidden] {
+    display: none;
+}
+
+.chatbot-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    padding: 20px 22px;
+
+    background: #111;
+    color: #fff;
+}
+
+.chatbot-header strong {
+    display: block;
+
+    font-size: 14px;
+}
+
+.chatbot-header span {
+    display: block;
+
+    margin-top: 4px;
+
+    font-size: 11px;
+    color: #bbb;
+}
+
+.chatbot-close {
+    border: none;
+    background: transparent;
+
+    color: #fff;
+
+    font-size: 14px;
+
+    cursor: pointer;
+}
+
+.chatbot-messages {
+    flex: 1;
+
+    overflow-y: auto;
+
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    background: #fafafa;
+}
+
+.chatbot-message {
+    max-width: 85%;
+
+    padding: 12px 15px;
+
+    border-radius: var(--radius-md);
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.chatbot-message-bot {
+    align-self: flex-start;
+
+    background: var(--gray-200);
+
+    color: var(--color-ink);
+
+    border-bottom-left-radius: 2px;
+}
+
+.chatbot-message-user {
+    align-self: flex-end;
+
+    background: var(--color-ink);
+
+    color: #fff;
+
+    border-bottom-right-radius: 2px;
+}
+
+.chatbot-typing {
+    opacity: 0.6;
+
+    font-style: italic;
+}
+
+.chatbot-quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    padding: 0 20px 15px;
+
+    background: #fafafa;
+}
+
+.chatbot-chip {
+    padding: 8px 14px;
+
+    border: 1px solid #ddd;
+    border-radius: 16px;
+
+    background: #fff;
+
+    font-size: 11px;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+.chatbot-chip:hover {
+    border-color: #111;
+}
+
+.chatbot-input-row {
+    display: flex;
+
+    border-top: 1px solid #eee;
+}
+
+.chatbot-input-row input {
+    flex: 1;
+
+    padding: 16px 18px;
+
+    border: none;
+
+    outline: none;
+
+    font-size: 13px;
+}
+
+.chatbot-input-row button {
+    width: 55px;
+
+    border: none;
+
+    background: #111;
+    color: #fff;
+
+    font-size: 16px;
+
+    cursor: pointer;
+}
+
+.chatbot-input-row button:hover {
+    background: #333;
+}
+
+@media (max-width: 700px) {
+
+    .chatbot-widget {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .chatbot-launcher {
+        width: 54px;
+        height: 54px;
+
+        font-size: 20px;
+    }
+
+    .chatbot-panel {
+        position: fixed;
+
+        inset: 12px 12px 12px 12px;
+
+        width: auto;
+        height: auto;
+
+        max-height: none;
+
+        bottom: 12px;
+    }
+
+}
+
+
+/* ================= SKELETON (KHUNG XƯƠNG) ================= */
 
 .skeleton-block {
     background: linear-gradient(90deg, #eee 25%, #f5f5f5 37%, #eee 63%);
     background-size: 400% 100%;
+
     animation: skeleton-loading 1.4s ease infinite;
 }
 
@@ -963,6 +1588,8 @@ img {
 
 .skeleton-line {
     height: 12px;
+
+    border-radius: 2px;
 }
 
 @keyframes skeleton-loading {
@@ -981,48 +1608,113 @@ img {
 /* ================= TRẠNG THÁI RỖNG / LỖI ================= */
 
 .state-box {
-    padding: 70px 20px;
+    padding: 80px 20px;
+
     text-align: center;
-    background: #f6f6f6;
+
+    background: var(--gray-100);
+    border-radius: var(--radius-lg);
 }
 
 .state-box h3 {
     margin-bottom: 12px;
-    font-size: 20px;
+
+    font-size: 22px;
 }
 
 .state-box p {
-    color: #777;
+    color: var(--gray-600);
+
     font-size: 13px;
+
     margin-bottom: 20px;
+}
+
+.error-state {
+    background: var(--color-danger-bg);
+}
+
+
+/* ================= MODAL (HỘP THOẠI) ================= */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 4000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(17, 19, 24, 0.5);
+
+    opacity: 0;
+
+    transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+.modal-overlay.show {
+    opacity: 1;
+}
+
+.modal-box {
+    width: 100%;
+    max-width: 420px;
+
+    padding: 35px;
+
+    background: #fff;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+
+    transform: translateY(15px) scale(0.98);
+
+    transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.modal-overlay.show .modal-box {
+    transform: translateY(0) scale(1);
+}
+
+.modal-box h3 {
+    font-size: 20px;
+
+    margin-bottom: 12px;
+}
+
+.modal-box p {
+    color: #555;
+
+    font-size: 13px;
+
+    margin-bottom: 25px;
+}
+
+.modal-actions {
+    display: flex;
+
+    gap: 10px;
+
+    justify-content: flex-end;
+}
+
+/* ================= BỔ SUNG CHO DỮ LIỆU THẬT (giữ từ bản trước, F1) ================= */
+
+/* Trạng thái rỗng / lỗi nằm trong lưới sản phẩm: chiếm cả hàng */
+
+.product-grid .state-box {
+    grid-column: 1 / -1;
 }
 
 .state-box p:last-child {
     margin-bottom: 0;
 }
 
-.error-state {
-    background: #fdf1f0;
+.skeleton-card:hover {
+    transform: none;
 }
-
-.product-grid .state-box {
-    grid-column: 1 / -1;
-}
-
-
-/* Nút "Thêm vào giỏ" bị tắt (sản phẩm giá 0 → "Liên hệ") */
-
-.add-cart:disabled {
-    color: #999;
-    border-color: #ccc;
-    cursor: not-allowed;
-}
-
-.add-cart:disabled:hover {
-    background: transparent;
-    color: #999;
-}
-
 
 /* Ảnh thẻ sản phẩm chưa có src (đang chờ GET /products/{id}/images): chỉ hiện nền xám */
 
@@ -1030,13 +1722,8 @@ img {
     visibility: hidden;
 }
 
-
-/* Thẻ sản phẩm link sang trang chi tiết (A2): ảnh là thẻ <a>, tên có link */
-
-a.product-image {
-    display: block;
-}
+/* Tên sản phẩm link sang trang chi tiết */
 
 .product-info h3 a:hover {
-    text-decoration: underline;
+    color: var(--color-accent);
 }

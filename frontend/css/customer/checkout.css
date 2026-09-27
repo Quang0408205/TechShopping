@@ -1,0 +1,227 @@
+/* ================= BỐ CỤC ================= */
+
+.checkout-layout {
+    display: grid;
+
+    grid-template-columns: 1.4fr 1fr;
+
+    gap: 60px;
+
+    align-items: flex-start;
+}
+
+
+/* ================= FORM (dùng lại kiểu .contact-form) ================= */
+
+.checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkout-form label {
+    margin-top: 15px;
+
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.checkout-form input,
+.checkout-form textarea {
+    width: 100%;
+
+    padding: 15px;
+
+    border: 1px solid #ddd;
+
+    outline: none;
+
+    resize: vertical;
+
+    font-family: inherit;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus {
+    border-color: #111;
+}
+
+.checkout-section-spacer {
+    margin-top: 40px;
+}
+
+
+/* ================= PHƯƠNG THỨC THANH TOÁN ================= */
+
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.payment-method {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+
+    padding: 18px 20px;
+
+    border: 1px solid #ddd;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.payment-method:has(input:checked) {
+    border-color: #111;
+    background: #f6f6f6;
+}
+
+.payment-method input {
+    margin-top: 4px;
+
+    accent-color: #111;
+}
+
+.payment-method strong {
+    display: block;
+
+    font-size: 13px;
+
+    margin-bottom: 4px;
+}
+
+.payment-method small {
+    color: #777;
+    font-size: 12px;
+}
+
+.installment-note {
+    margin-top: 15px;
+
+    padding: 14px 16px;
+
+    background: #fdf7e8;
+
+    border-left: 3px solid #d99a00;
+
+    color: #7a5b00;
+    font-size: 12px;
+}
+
+.checkout-submit {
+    margin-top: 30px;
+
+    width: 100%;
+
+    border: none;
+
+    cursor: pointer;
+}
+
+.checkout-submit:disabled {
+    opacity: 0.6;
+
+    cursor: wait;
+}
+
+
+/* ================= TÓM TẮT ĐƠN HÀNG ================= */
+
+.checkout-summary {
+    position: sticky;
+    top: 105px;
+
+    padding: 35px;
+
+    background: #f4f4f4;
+}
+
+.checkout-items {
+    display: flex;
+    flex-direction: column;
+
+    gap: 18px;
+
+    margin: 25px 0;
+
+    padding-bottom: 25px;
+
+    border-bottom: 1px solid #ddd;
+}
+
+.checkout-item {
+    display: flex;
+    align-items: center;
+
+    gap: 15px;
+}
+
+.checkout-item img {
+    width: 60px;
+    height: 60px;
+
+    object-fit: cover;
+
+    background: #eee;
+}
+
+.checkout-item-info {
+    flex: 1;
+}
+
+.checkout-item-name {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.checkout-item-variant {
+    margin-top: 3px;
+
+    color: #888;
+    font-size: 11px;
+}
+
+.checkout-item-price {
+    font-size: 13px;
+    font-weight: 600;
+
+    white-space: nowrap;
+}
+
+.checkout-total-row {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 15px;
+
+    font-size: 13px;
+}
+
+.checkout-total-final {
+    font-size: 18px;
+    font-weight: 700;
+
+    margin-top: 20px;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #ddd;
+}
+
+
+@media (max-width: 1000px) {
+
+    .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .checkout-summary {
+        position: static;
+
+        order: -1;
+    }
+
+}

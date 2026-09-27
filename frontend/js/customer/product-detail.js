@@ -12,7 +12,7 @@
  * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng bỏ phần đánh
  * giá (mọi sản phẩm đều có rating 0, không bịa phân bố sao), bỏ các vùng
  * gợi ý mua kèm / nâng cấp (Phase 8) và không dùng catalogue mock.
- * Giỏ hàng vẫn lưu theo tên (addToCart(name, price, quantity)) tới Phase 3.
+ * Giỏ hàng: snapshot {productId, variantId, ...} theo tài khoản (js/core/cart-store.js, F2).
  */
 
 document.addEventListener(
@@ -374,16 +374,7 @@ document.addEventListener(
 
         function getVariantLabel(variant) {
 
-            if (variant.variantName && variant.variantName.trim()) {
-                return variant.variantName.trim();
-            }
-
-            const parts = [variant.storage, variant.ram, variant.color]
-                .filter(function (part) {
-                    return part && String(part).trim();
-                });
-
-            return parts.length > 0 ? parts.join(" - ") : "Mặc định";
+            return variantLabelOf(variant);
 
         }
 
@@ -442,22 +433,7 @@ document.addEventListener(
 
         function getPrices() {
 
-            const source = currentVariant || product;
-
-            const original = Number(
-                currentVariant ? currentVariant.price : product.basePrice
-            ) || 0;
-
-            const discount =
-                source.discountPrice !== null && source.discountPrice !== undefined
-                    ? Number(source.discountPrice)
-                    : null;
-
-
-            return {
-                price: discount !== null && discount < original ? discount : original,
-                oldPrice: discount !== null && discount < original ? original : null
-            };
+            return resolvePrices(product, currentVariant);
 
         }
 
@@ -563,21 +539,10 @@ document.addEventListener(
         /* ================= THÊM VÀO GIỎ / MUA NGAY ================= */
 
         /*
-         * Giỏ hàng còn lưu theo tên: chỉ thêm tên phiên bản khi sản phẩm có
-         * nhiều phiên bản, để cùng một sản phẩm thêm từ trang danh sách hay
-         * trang chi tiết vẫn gộp chung một dòng.
+         * F2: giỏ hàng lưu snapshot theo productId + variantId (cart-store.js),
+         * nên cùng một phiên bản thêm từ trang danh sách hay trang chi tiết
+         * luôn gộp chung một dòng.
          */
-
-        function getCartItemName() {
-
-            if (currentVariant && variants.length > 1) {
-                return product.name + " (" + getVariantLabel(currentVariant) + ")";
-            }
-
-            return product.name;
-
-        }
-
 
         function addCurrentToCart() {
 
@@ -587,9 +552,22 @@ document.addEventListener(
                 return false;
             }
 
-            addToCart(getCartItemName(), prices.price, quantity);
 
-            return true;
+            const mainImage = document.getElementById("mainImage");
+
+            /* false khi chưa đăng nhập (addToCart đã chuyển tới trang đăng nhập) */
+            return addToCart(
+                {
+                    productId: product.id,
+                    variantId: currentVariant ? currentVariant.id : null,
+                    name: product.name,
+                    variantLabel: currentVariant ? getVariantLabel(currentVariant) : "",
+                    price: prices.price,
+                    image: mainImage ? mainImage.currentSrc || mainImage.src : null
+                },
+                quantity,
+                mainImage
+            );
 
         }
 

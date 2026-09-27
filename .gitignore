@@ -47,3 +47,6 @@ Desktop.ini
 
 ### Tooling ###
 .github/modernize/
+
+# Tài liệu nội bộ / handoff, chỉ giữ trên máy (không push)
+docs/

@@ -1,6 +1,126 @@
 /* Trang tài khoản: dùng lại .contact-grid, .contact-form (contact.css) */
 
 
+/* ================= BỐ CỤC CHUNG (SIDEBAR + NỘI DUNG) ================= */
+
+.account-layout {
+    display: grid;
+
+    grid-template-columns: 260px 1fr;
+
+    gap: 45px;
+
+    align-items: flex-start;
+}
+
+.account-sidebar {
+    position: sticky;
+    top: 105px;
+
+    padding: 30px 25px;
+
+    background: #f4f4f4;
+}
+
+.account-sidebar-user {
+    padding-bottom: 20px;
+
+    margin-bottom: 20px;
+
+    border-bottom: 1px solid #ddd;
+}
+
+.account-sidebar-user strong {
+    display: block;
+
+    font-size: 15px;
+
+    /* Tên dài không có khoảng trắng không được tràn ra ngoài thanh bên */
+    overflow-wrap: anywhere;
+}
+
+.account-sidebar-user span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #777;
+    font-size: 12px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-nav {
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.account-nav a {
+    padding: 12px 14px;
+
+    font-size: 13px;
+    font-weight: 600;
+
+    color: #444;
+
+    transition: 0.2s;
+}
+
+.account-nav a:hover {
+    background: #ececec;
+}
+
+.account-nav a.active {
+    background: #111;
+    color: #fff;
+}
+
+.account-nav-logout {
+    margin-top: 10px;
+
+    border-top: 1px solid #ddd;
+
+    padding-top: 16px !important;
+
+    color: #c0392b !important;
+}
+
+.account-main {
+    min-width: 0;
+}
+
+.account-placeholder-section {
+    margin-top: 70px;
+}
+
+.account-placeholder-section .section-label {
+    display: block;
+
+    margin-bottom: 25px;
+}
+
+@media (max-width: 1000px) {
+
+    .account-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .account-sidebar {
+        position: static;
+    }
+
+    .account-nav {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+}
+
+
 /* TỔNG QUAN */
 
 .account-summary {
@@ -17,6 +137,11 @@
     padding: 30px 35px;
 
     background: #f4f4f4;
+}
+
+/* Đảm bảo thuộc tính [hidden] thắng "display: grid" ở trên (xem giải thích tương tự ở .chatbot-panel trong style.css) */
+.account-summary[hidden] {
+    display: none;
 }
 
 .account-summary-item strong {

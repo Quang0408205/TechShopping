@@ -60,6 +60,15 @@
         <form id="loginForm" novalidate>
 
 
+            <!-- Lý do bị chuyển tới đây (?reason=cart...), xem js/auth/login.js -->
+            <p
+                id="loginNotice"
+                class="form-info"
+                role="status"
+                hidden
+            ></p>
+
+
             <p
                 id="loginError"
                 class="form-error"
@@ -116,7 +125,7 @@
                 Chưa có tài khoản?
             </span>
 
-            <a href="register.html">
+            <a href="register.html" id="registerLink">
                 Đăng ký
             </a>
 

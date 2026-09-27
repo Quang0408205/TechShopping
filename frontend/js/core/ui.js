@@ -223,6 +223,55 @@ function getFallbackImage(categorySlug) {
 }
 
 
+/*
+ * Nhãn phiên bản: variantName, nếu trống thì ghép dung lượng - RAM - màu.
+ * Dùng chung cho trang chi tiết, giỏ hàng và đơn hàng.
+ */
+
+function variantLabelOf(variant) {
+
+    if (!variant) {
+        return "";
+    }
+
+    if (variant.variantName && variant.variantName.trim()) {
+        return variant.variantName.trim();
+    }
+
+    const parts = [variant.storage, variant.ram, variant.color]
+        .filter(function (part) {
+            return part && String(part).trim();
+        });
+
+    return parts.length > 0 ? parts.join(" - ") : "Mặc định";
+
+}
+
+
+/*
+ * Giá bán của một phiên bản (hoặc của sản phẩm khi không có phiên bản):
+ * { price, oldPrice } — oldPrice chỉ có khi giá khuyến mãi thấp hơn giá gốc.
+ */
+
+function resolvePrices(product, variant) {
+
+    const source = variant || product;
+
+    const original = Number(variant ? variant.price : product.basePrice) || 0;
+
+    const discount =
+        source.discountPrice !== null && source.discountPrice !== undefined
+            ? Number(source.discountPrice)
+            : null;
+
+    return {
+        price: discount !== null && discount < original ? discount : original,
+        oldPrice: discount !== null && discount < original ? original : null
+    };
+
+}
+
+
 /* Giá hiển thị: giá khuyến mãi nếu có, không thì giá gốc */
 
 function getDisplayPrice(product) {
@@ -257,11 +306,17 @@ function productCardHtml(product, categorySlug) {
 
     const detailUrl = escapeHtml(getProductDetailUrl(product.id));
 
+    const basePrice = Number(product.basePrice) || 0;
+
+    /* Có giảm giá thật (discountPrice < basePrice): nhãn -x% + giá gốc gạch ngang */
+    const hasDiscount = hasPrice && basePrice > price;
+
 
     return `
         <div class="product-card" data-product-id="${escapeHtml(product.id)}">
 
             <a href="${detailUrl}" class="product-image">
+                ${hasDiscount ? `<span class="product-badge">-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
                 <img
                     data-fallback="${escapeHtml(getFallbackImage(categorySlug))}"
                     alt="${name}"
@@ -281,6 +336,7 @@ function productCardHtml(product, categorySlug) {
 
                 <p class="product-price">
                     ${hasPrice ? formatPrice(price) : "Liên hệ"}
+                    ${hasDiscount ? `<span class="product-price-old">${formatPrice(basePrice)}</span>` : ""}
                 </p>
 
                 <button
@@ -336,6 +392,156 @@ function renderProductGrid(container, products, categorySlugById) {
     setupAddToCart(container);
 
     loadProductImages(container);
+
+    staggerRevealCards(container);
+
+}
+
+
+/* ================= HIỆU ỨNG XUẤT HIỆN ================= */
+
+function prefersReducedMotion() {
+
+    return Boolean(
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    );
+
+}
+
+
+/*
+ * Các thẻ .product-card mới render xuất hiện lần lượt (stagger fade-in).
+ * Tự dọn class / transition-delay khi xong để không ảnh hưởng hiệu ứng
+ * hover bình thường của thẻ.
+ */
+
+function staggerRevealCards(container) {
+
+    if (prefersReducedMotion()) {
+        return;
+    }
+
+
+    const cards = Array.from(container.querySelectorAll(".product-card"));
+
+    cards.forEach(function (card, index) {
+
+        card.classList.add("card-enter");
+
+        card.style.transitionDelay = Math.min(index * 45, 360) + "ms";
+
+    });
+
+
+    requestAnimationFrame(function () {
+
+        requestAnimationFrame(function () {
+
+            cards.forEach(function (card) {
+
+                card.classList.add("card-enter-active");
+
+                card.addEventListener("transitionend", function onEnd(event) {
+
+                    if (event.propertyName !== "opacity") {
+                        return;
+                    }
+
+                    card.classList.remove("card-enter", "card-enter-active");
+
+                    card.style.transitionDelay = "";
+
+                    card.removeEventListener("transitionend", onEnd);
+
+                });
+
+            });
+
+        });
+
+    });
+
+}
+
+
+/* ================= MODAL (HỘP THOẠI XÁC NHẬN) ================= */
+
+let modalOverlayElement = null;
+
+
+/*
+ * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm }):
+ * thay cho confirm() / alert() khi cần người dùng xác nhận (vd. xoá khỏi giỏ).
+ * Mọi chuỗi đều được escape.
+ */
+
+function openConfirmModal(options) {
+
+    closeModal();
+
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "modal-overlay";
+
+    overlay.innerHTML = `
+        <div class="modal-box" role="dialog" aria-modal="true">
+            <h3>${escapeHtml(options.title || "Xác nhận")}</h3>
+            <p>${escapeHtml(options.message || "")}</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-dark" data-action="cancel">
+                    ${escapeHtml(options.cancelLabel || "Hủy")}
+                </button>
+                <button type="button" class="btn btn-dark" data-action="confirm">
+                    ${escapeHtml(options.confirmLabel || "Xác nhận")}
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    modalOverlayElement = overlay;
+
+
+    overlay.addEventListener("click", function (event) {
+
+        if (event.target === overlay) {
+            closeModal();
+        }
+
+    });
+
+    overlay.querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
+
+    overlay.querySelector('[data-action="confirm"]').addEventListener("click", function () {
+
+        closeModal();
+
+        if (typeof options.onConfirm === "function") {
+            options.onConfirm();
+        }
+
+    });
+
+
+    requestAnimationFrame(function () {
+        overlay.classList.add("show");
+    });
+
+}
+
+
+function closeModal() {
+
+    if (modalOverlayElement) {
+
+        modalOverlayElement.remove();
+
+        modalOverlayElement = null;
+
+    }
 
 }
 

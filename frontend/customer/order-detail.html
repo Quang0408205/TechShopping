@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title id="pageTitle">Chi tiết đơn hàng - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/customer/account.css">
+    <link rel="stylesheet" href="../css/customer/orders.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body data-account-page="orders">
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <span class="section-label">POY</span>
+
+            <h1>CHI TIẾT ĐƠN HÀNG</h1>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="container account-layout">
+
+            <div id="accountSidebarRoot"></div>
+
+
+            <div class="account-main">
+
+                <p id="justPlacedBanner" class="form-success" hidden>
+                    Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.
+                </p>
+
+                <div id="orderNotFound" class="state-box empty-state" hidden>
+                    <h3>Không tìm thấy đơn hàng</h3>
+                    <p>Đơn hàng này không tồn tại hoặc đã bị xóa.</p>
+                    <a href="orders.html" class="btn btn-dark">VỀ DANH SÁCH ĐƠN HÀNG</a>
+                </div>
+
+                <div id="orderDetailBox" hidden>
+
+                    <div class="order-detail-header">
+                        <div>
+                            <h2 id="orderId"></h2>
+                            <span id="orderDate" class="order-card-date"></span>
+                        </div>
+                        <span id="orderStatusBadge" class="order-status-badge"></span>
+                    </div>
+
+
+                    <div class="order-status-timeline" id="orderTimeline"></div>
+
+
+                    <div class="order-detail-grid">
+
+                        <div class="order-detail-items" id="orderItemsList"></div>
+
+                        <div class="order-detail-side">
+
+                            <div class="order-detail-block">
+                                <h4>Địa chỉ giao hàng</h4>
+                                <p id="orderShippingInfo"></p>
+                            </div>
+
+                            <div class="order-detail-block">
+                                <h4>Phương thức thanh toán</h4>
+                                <p id="orderPaymentMethod"></p>
+                            </div>
+
+                            <div class="order-detail-block order-detail-totals">
+                                <div class="checkout-total-row">
+                                    <span>Tạm tính</span>
+                                    <strong id="orderSubtotal"></strong>
+                                </div>
+                                <div class="checkout-total-row">
+                                    <span>Phí vận chuyển</span>
+                                    <strong id="orderShippingFee"></strong>
+                                </div>
+                                <div class="checkout-total-row checkout-total-final">
+                                    <span>Tổng cộng</span>
+                                    <span id="orderTotal"></span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/account-sidebar.js"></script>
+<script src="../js/customer/order-detail.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+
+</body>
+</html>

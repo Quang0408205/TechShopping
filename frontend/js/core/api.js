@@ -451,9 +451,13 @@ function getRedirectTarget(defaultPage) {
 }
 
 
-/* Chuyển tới trang đăng nhập, sau khi đăng nhập sẽ quay lại trang hiện tại */
+/*
+ * Chuyển tới trang đăng nhập, sau khi đăng nhập sẽ quay lại trang hiện tại.
+ * reason (tuỳ chọn, vd. "cart"): trang đăng nhập hiện câu giải thích tương ứng
+ * (LOGIN_REASON_MESSAGES trong js/auth/login.js).
+ */
 
-function redirectToLogin() {
+function redirectToLogin(reason) {
 
     const currentUrl =
         window.location.href.split("#")[0];
@@ -465,7 +469,8 @@ function redirectToLogin() {
 
     window.location.href =
         siteUrl(
-            "auth/login.html?redirect=" + encodeURIComponent(currentPage)
+            "auth/login.html?redirect=" + encodeURIComponent(currentPage) +
+            (reason ? "&reason=" + encodeURIComponent(reason) : "")
         );
 
 }

@@ -25,8 +25,38 @@
     letter-spacing: 1px;
 }
 
+.cart-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.cart-thumb {
+    width: 70px;
+    height: 70px;
+
+    object-fit: cover;
+
+    background: #f4f4f4;
+}
+
 .cart-product {
+    display: block;
+
     font-weight: 600;
+}
+
+.cart-product:hover {
+    text-decoration: underline;
+}
+
+.cart-variant {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #888;
+    font-size: 12px;
 }
 
 .quantity-control {

@@ -14,6 +14,13 @@ services:
       # Init scripts run only when the data volume is empty
       - ./database/techshopping.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./database/docker-init/02_create_test_db.sh:/docker-entrypoint-initdb.d/02_create_test_db.sh:ro
+      # Catalogue mẫu (877 sản phẩm), chỉ nạp vào DB techshopping, không có user
+      - ./database/docker-init/03_seed_catalog.sql:/docker-entrypoint-initdb.d/03_seed_catalog.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   redis:
     image: redis:7-alpine
@@ -21,6 +28,46 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # Spring Boot API on the dev profile: http://localhost:8080 (Swagger: /swagger-ui/index.html).
+  # After changing backend code: docker compose up -d --build backend
+  backend:
+    build: ./backend/Tech
+    container_name: techshopping-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/techshopping
+      SPRING_DATA_REDIS_HOST: redis
+      # Values come from .env (git-ignored); copy .env.example to .env first
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is missing - copy .env.example to .env and set it}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    ports:
+      - "8080:8080"
+
+  # Static frontend: http://localhost:5510 (5500 = Oracle, 5501 = Live Server, 5502 = Antigravity).
+  # ./frontend is mounted, so edits show on reload without rebuilding.
+  frontend:
+    image: nginx:alpine
+    container_name: techshopping-frontend
+    restart: unless-stopped
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - "${FRONTEND_PORT:-5510}:80"
 
 volumes:
   postgres_data:

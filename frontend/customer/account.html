@@ -22,7 +22,7 @@
 
 </head>
 
-<body>
+<body data-account-page="profile">
 
 
 <div data-include="header" data-active="account"></div>
@@ -55,7 +55,12 @@
 
     <section class="section">
 
-        <div class="container">
+        <div class="container account-layout">
+
+            <div id="accountSidebarRoot"></div>
+
+
+            <div class="account-main">
 
 
             <p
@@ -289,7 +294,9 @@
                 </div>
 
 
-                <!-- ================= HỒ SƠ KHÁCH HÀNG ================= -->
+                <!-- ================= HỒ SƠ KHÁCH HÀNG (bao gồm địa chỉ) ================= -->
+
+                <a id="address"></a>
 
                 <form
                     id="profileForm"
@@ -432,6 +439,46 @@
 
             </div>
 
+
+            <!-- ================= YÊU THÍCH ================= -->
+
+            <a id="wishlist"></a>
+
+            <div class="account-placeholder-section">
+
+                <span class="section-label">YÊU THÍCH</span>
+
+                <div class="state-box empty-state">
+                    <h3>Chưa có sản phẩm yêu thích</h3>
+                    <p>
+                        Danh sách yêu thích sẽ được đồng bộ với tài khoản của bạn
+                        khi tính năng này được kết nối với máy chủ.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- ================= ĐÃ XEM ================= -->
+
+            <a id="viewed"></a>
+
+            <div class="account-placeholder-section">
+
+                <span class="section-label">ĐÃ XEM GẦN ĐÂY</span>
+
+                <div class="state-box empty-state">
+                    <h3>Chưa có lịch sử xem sản phẩm</h3>
+                    <p>
+                        Lịch sử sản phẩm bạn đã xem sẽ hiển thị tại đây
+                        khi tính năng này được kết nối với máy chủ.
+                    </p>
+                </div>
+
+            </div>
+
+            </div>
+
         </div>
 
     </section>
@@ -445,9 +492,12 @@
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
+<script src="../js/customer/account-sidebar.js"></script>
 <script src="../js/customer/account.js"></script>
+<script src="../js/customer/chatbot.js"></script>
 
 </body>
 </html>

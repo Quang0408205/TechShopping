@@ -11,9 +11,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     renderAuthState();
 
+    migrateLegacyCart();
+
     updateCartCount();
 
     setupHeaderSearch();
+
+    setupHeaderScrollEffect();
+
+    setupScrollReveal();
 
 });
 
@@ -117,34 +123,107 @@ function setupHeaderSearch() {
 }
 
 
-/* ================= CART ================= */
+/* ================= HIỆU ỨNG "KÍNH MỜ" KHI CUỘN (HEADER) ================= */
 
-function getCart() {
+/*
+ * Thêm class .is-scrolled cho .header khi cuộn xuống quá 24px; style.css lo
+ * phần nền mờ / đổ bóng. { passive: true } vì chỉ đọc scrollY, không chặn cuộn.
+ */
 
-    const cart = localStorage.getItem(CART_STORAGE_KEY);
+function setupHeaderScrollEffect() {
 
-    if (!cart) {
-        return [];
+    const header = document.querySelector(".header");
+
+    if (!header) {
+        return;
     }
 
-    return JSON.parse(cart);
+
+    function updateHeaderState() {
+
+        header.classList.toggle("is-scrolled", window.scrollY > 24);
+
+    }
+
+
+    updateHeaderState();
+
+    window.addEventListener("scroll", updateHeaderState, { passive: true });
+
 }
 
 
-function saveCart(cart) {
+/* ================= SCROLL REVEAL (TIÊU ĐỀ SECTION + LƯỚI TĨNH) ================= */
 
-    localStorage.setItem(
-        CART_STORAGE_KEY,
-        JSON.stringify(cart)
+/*
+ * Gắn .reveal-on-scroll (style.css) cho các khối lặp lại ở nhiều trang, rồi
+ * dùng IntersectionObserver để hiện một lần khi cuộn tới. Lưới sản phẩm
+ * render bằng JS đã có hiệu ứng riêng (staggerRevealCards trong ui.js).
+ */
+
+const SCROLL_REVEAL_SELECTOR =
+    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid";
+
+
+function setupScrollReveal() {
+
+    if (typeof prefersReducedMotion === "function" && prefersReducedMotion()) {
+        return;
+    }
+
+
+    const targets = document.querySelectorAll(SCROLL_REVEAL_SELECTOR);
+
+    if (targets.length === 0 || typeof IntersectionObserver === "undefined") {
+        return;
+    }
+
+
+    const observer = new IntersectionObserver(
+        function (entries) {
+
+            entries.forEach(function (entry) {
+
+                if (entry.isIntersecting) {
+
+                    entry.target.classList.add("is-visible");
+
+                    observer.unobserve(entry.target);
+
+                }
+
+            });
+
+        },
+        { threshold: 0.15, rootMargin: "0px 0px -60px 0px" }
     );
 
+
+    targets.forEach(function (target) {
+
+        target.classList.add("reveal-on-scroll");
+
+        observer.observe(target);
+
+    });
+
 }
 
+
+/* ================= CART (F2) ================= */
+
+/*
+ * Lưu trữ giỏ hàng: js/core/cart-store.js (snapshot theo tài khoản).
+ * File này lo phần giao diện: nút "Thêm vào giỏ", bắt buộc đăng nhập,
+ * hiệu ứng bay vào giỏ, toast.
+ */
 
 /*
  * Gắn "Thêm vào giỏ" cho các nút .add-cart trong root (mặc định: cả trang).
  * Thẻ sản phẩm render sau (products.js, home.js) gọi lại với lưới mới;
  * cờ data-cart-bound tránh gắn sự kiện 2 lần cho cùng một nút.
+ * Thẻ không biết phiên bản, nên lúc bấm mới lấy GET /products/{id}/variants
+ * và chọn phiên bản đầu tiên (giống phiên bản mặc định ở trang chi tiết).
  */
 
 function setupAddToCart(root) {
@@ -162,15 +241,77 @@ function setupAddToCart(root) {
         button.dataset.cartBound = "1";
 
 
-        button.addEventListener("click", function () {
+        button.addEventListener("click", async function () {
 
-            const name =
-                button.dataset.name;
+            const card = button.closest(".product-card");
 
-            const price =
-                Number(button.dataset.price);
+            const productId = card ? card.dataset.productId : null;
 
-            addToCart(name, price);
+            if (!productId) {
+                return;
+            }
+
+
+            /* Chưa đăng nhập: chuyển trang ngay, không cần gọi API */
+
+            if (!isLoggedIn()) {
+
+                redirectToLogin("cart");
+
+                return;
+
+            }
+
+
+            const image = card.querySelector(".product-image img");
+
+            button.disabled = true;
+
+
+            try {
+
+                const variants = await apiRequest(
+                    "/products/" + encodeURIComponent(productId) + "/variants"
+                );
+
+                const variant = Array.isArray(variants) && variants.length > 0 ? variants[0] : null;
+
+                const prices = variant
+                    ? resolvePrices({ basePrice: button.dataset.price }, variant)
+                    : { price: Number(button.dataset.price) };
+
+
+                if (!(prices.price > 0)) {
+
+                    showToast("Sản phẩm chưa có giá bán, vui lòng liên hệ để đặt hàng.", "error");
+
+                    return;
+
+                }
+
+
+                addToCart(
+                    {
+                        productId: Number(productId),
+                        variantId: variant ? variant.id : null,
+                        name: button.dataset.name,
+                        variantLabel: variant ? variantLabelOf(variant) : "",
+                        price: prices.price,
+                        image: image && image.getAttribute("src") ? image.currentSrc || image.src : null
+                    },
+                    1,
+                    image
+                );
+
+            } catch (error) {
+
+                showToast(getErrorMessage(error), "error");
+
+            } finally {
+
+                button.disabled = false;
+
+            }
 
         });
 
@@ -179,79 +320,203 @@ function setupAddToCart(root) {
 }
 
 
-/* quantity: tuỳ chọn (trang chi tiết sản phẩm), mặc định 1 */
+/*
+ * addToCart(snapshot, quantity?, sourceElement?) → true nếu đã thêm.
+ * - snapshot: { productId, variantId, name, variantLabel, price, image } (cart-store.js).
+ * - Chưa đăng nhập: không thêm, chuyển tới trang đăng nhập (?reason=cart),
+ *   đăng nhập xong quay lại đúng trang đang xem → trả về false.
+ * - quantity: tuỳ chọn (trang chi tiết sản phẩm), mặc định 1.
+ * - sourceElement: ảnh sản phẩm để chạy hiệu ứng bay vào giỏ (tuỳ chọn).
+ */
 
-function addToCart(name, price, quantity) {
+function addToCart(snapshot, quantity, sourceElement) {
+
+    if (!isLoggedIn()) {
+
+        redirectToLogin("cart");
+
+        return false;
+
+    }
+
 
     const amount =
         Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 
-    const cart = getCart();
+    const lineQuantity = addCartItem(snapshot, amount);
 
-    const existingProduct =
-        cart.find(
-            product => product.name === name
-        );
+    if (lineQuantity === 0) {
 
+        showToast("Không thể thêm sản phẩm này vào giỏ hàng.", "error");
 
-    if (existingProduct) {
-
-        existingProduct.quantity += amount;
-
-    } else {
-
-        cart.push({
-
-            name: name,
-
-            price: price,
-
-            quantity: amount
-
-        });
+        return false;
 
     }
 
 
-    saveCart(cart);
+    /* Số trên icon giỏ hàng tăng khi sản phẩm "bay" tới nơi */
 
-    updateCartCount();
+    flyToCart(sourceElement, function () {
 
+        updateCartCount();
 
-    /* Toast thay cho alert() (js/core/ui.js) */
-
-    if (typeof showToast === "function") {
-
-        showToast(
-            (amount > 1 ? "Đã thêm " + amount + " × " : "Đã thêm ") + name + " vào giỏ hàng!",
-            "success"
-        );
-
-    }
-
-}
-
-
-function updateCartCount() {
-
-    const cart = getCart();
-
-    let count = 0;
-
-    cart.forEach(function (product) {
-
-        count += product.quantity;
+        bumpCartIcon();
 
     });
 
 
-    const elements =
-        document.querySelectorAll(".cart-count");
+    /* Toast thay cho alert() (js/core/ui.js) */
+
+    const label = snapshot.name + (snapshot.variantLabel ? " (" + snapshot.variantLabel + ")" : "");
+
+    showToast(
+        (amount > 1 ? "Đã thêm " + amount + " × " : "Đã thêm ") + label + " vào giỏ hàng!" +
+        (lineQuantity === MAX_CART_LINE_QUANTITY ? " (tối đa " + MAX_CART_LINE_QUANTITY + " / sản phẩm)" : ""),
+        "success"
+    );
+
+    return true;
+
+}
 
 
-    elements.forEach(function (element) {
+/* ================= HIỆU ỨNG BAY VÀO GIỎ HÀNG ================= */
 
-        element.textContent = count;
+/*
+ * Một bản sao ảnh sản phẩm bay theo đường cong từ thẻ / ảnh chính tới icon giỏ
+ * hàng trên header, thu nhỏ dần rồi biến mất; tới nơi thì gọi onArrive (cập nhật
+ * số lượng + icon "nảy"). Không có ảnh (chưa tải xong) → một chấm màu nhấn bay
+ * thay. Người dùng bật "giảm chuyển động" hoặc không tìm thấy icon giỏ → bỏ qua
+ * hiệu ứng, gọi onArrive ngay.
+ */
+
+const CART_FLY_DURATION = 800;
+
+
+function flyToCart(sourceElement, onArrive) {
+
+    const cartButton = document.querySelector(".header .cart-btn");
+
+    const reducedMotion =
+        typeof prefersReducedMotion === "function" && prefersReducedMotion();
+
+    const from = sourceElement ? sourceElement.getBoundingClientRect() : null;
+
+
+    if (!cartButton || reducedMotion || !from || from.width === 0 || typeof Element.prototype.animate !== "function") {
+
+        onArrive();
+
+        return;
+
+    }
+
+
+    const to = cartButton.getBoundingClientRect();
+
+    const hasImage =
+        sourceElement.tagName === "IMG" && sourceElement.getAttribute("src") && sourceElement.complete;
+
+
+    /* Khối bay: tối đa 140px, căn giữa ảnh gốc */
+
+    const size = Math.min(140, from.width, from.height);
+
+    const startX = from.left + from.width / 2 - size / 2;
+
+    const startY = from.top + from.height / 2 - size / 2;
+
+    const dx = to.left + to.width / 2 - (startX + size / 2);
+
+    const dy = to.top + to.height / 2 - (startY + size / 2);
+
+
+    const flyer = hasImage ? document.createElement("img") : document.createElement("div");
+
+    if (hasImage) {
+
+        flyer.src = sourceElement.currentSrc || sourceElement.src;
+
+        flyer.alt = "";
+
+    }
+
+    flyer.className = "cart-flyer" + (hasImage ? "" : " cart-flyer-dot");
+
+    flyer.setAttribute("aria-hidden", "true");
+
+    flyer.style.left = startX + "px";
+
+    flyer.style.top = startY + "px";
+
+    flyer.style.width = size + "px";
+
+    flyer.style.height = size + "px";
+
+    document.body.appendChild(flyer);
+
+
+    /* Đường cong: bay lên một chút rồi lao vào icon giỏ hàng */
+
+    const animation = flyer.animate(
+        [
+            { transform: "translate(0, 0) scale(1)", opacity: 1 },
+            { transform: `translate(${dx * 0.45}px, ${dy * 0.45 - 90}px) scale(0.55)`, opacity: 1, offset: 0.5 },
+            { transform: `translate(${dx}px, ${dy}px) scale(0.1)`, opacity: 0.6 }
+        ],
+        { duration: CART_FLY_DURATION, easing: "cubic-bezier(0.45, 0, 0.55, 1)" }
+    );
+
+
+    let arrived = false;
+
+    function finish() {
+
+        if (arrived) {
+            return;
+        }
+
+        arrived = true;
+
+        flyer.remove();
+
+        onArrive();
+
+    }
+
+    animation.addEventListener("finish", finish);
+
+    animation.addEventListener("cancel", finish);
+
+}
+
+
+/* Icon giỏ hàng "nảy" nhẹ + số lượng phóng to trong chốc lát (style.css) */
+
+function bumpCartIcon() {
+
+    document.querySelectorAll(".header .cart-btn").forEach(function (button) {
+
+        button.classList.remove("cart-receive");
+
+        void button.offsetWidth;
+
+        button.classList.add("cart-receive");
+
+        setTimeout(function () {
+            button.classList.remove("cart-receive");
+        }, 500);
+
+    });
+
+
+    document.querySelectorAll(".cart-count").forEach(function (count) {
+
+        count.classList.add("bump");
+
+        setTimeout(function () {
+            count.classList.remove("bump");
+        }, 220);
 
     });
 

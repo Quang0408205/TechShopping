@@ -6,6 +6,11 @@
     gap: 100px;
 }
 
+/* Đảm bảo thuộc tính [hidden] thắng "display: grid" ở trên (dùng ở customer/account.html) */
+.contact-grid[hidden] {
+    display: none;
+}
+
 .contact-info h2 {
     font-size: 40px;
 

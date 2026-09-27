@@ -1,129 +1,156 @@
-# Hướng dẫn khởi động TechShopping
+# TechShopping: hướng dẫn chạy dự án
 
-## 1. Khởi động Docker
+Hệ thống quản lý và khuyến nghị mua sắm thiết bị công nghệ (thương hiệu **POY**):
+- **backend:** Spring Boot 4 + PostgreSQL 16 + Redis 7;
+- **frontend:** HTML/CSS/JS thuần.
 
-Mở PowerShell tại thư mục gốc project:
+Toàn bộ chạy bằng **Docker**: cài xong chỉ cần mở Docker Desktop là web chạy.
 
-```powershell
-cd C:\Users\username\Desktop\TechShopping
-docker compose up -d
-```
-
-Kiểm tra:
-
-```powershell
-docker ps
-```
-
-Đảm bảo PostgreSQL và Redis đang ở trạng thái `Up`.
+| Thành phần | Địa chỉ |
+|---|---|
+| Website | http://localhost:5510 |
+| API | http://localhost:8080/api/v1 |
+| Tài liệu API (Swagger) | http://localhost:8080/swagger-ui/index.html |
 
 ---
 
-## 2. Khởi động Backend
+## 1. Cần cài trước
 
-Mở PowerShell mới:
+1. **Git**: https://git-scm.com/downloads
+2. **Docker Desktop**: https://www.docker.com/products/docker-desktop/
+   - Cài xong, mở Docker Desktop và chờ tới khi nó báo **Engine running**.
 
-```powershell
-cd C:\Users\username\Desktop\TechShopping\backend\Tech
-```
-
-Thiết lập JWT Secret:
-
-```powershell
-$env:JWT_SECRET="TechShopping_JWT_Secret_2026_Local_123456789"
-```
-
-Khởi động Backend:
-
-```powershell
-.\mvnw.cmd -q spring-boot:run "-Dspring-boot.run.profiles=test" "-Dspring-boot.run.arguments=--app.cors.allowed-origins=http://127.0.0.1:5501"
-```
-
-Chờ đến khi Spring Boot khởi động thành công.
+Không cần cài Java, Maven hay Node để chạy web; Docker lo hết.
 
 ---
 
-## 3. Khởi động Frontend
+## 2. Chạy lần đầu (copy từng khối lệnh vào PowerShell)
 
-Mở PowerShell mới:
-
-```powershell
-cd C:\Users\username\Desktop\TechShopping
-```
-
-Chạy static server:
+### Bước 1: Tải code về
 
 ```powershell
-node docs/tools/e2e/static-server.mjs "$(Get-Location)" 5501
+git clone https://github.com/Quang0408205/TechShopping.git
+cd TechShopping
+git checkout quang
 ```
+
+### Bước 2: Tạo file cấu hình `.env`
+
+Lệnh dưới đây chép `.env.example` thành `.env` và tự sinh một `JWT_SECRET` ngẫu nhiên:
+
+```powershell
+Copy-Item .env.example .env
+$secret = [Convert]::ToBase64String((1..48 | ForEach-Object { Get-Random -Max 256 }))
+(Get-Content .env) -replace '^JWT_SECRET=.*', "JWT_SECRET=$secret" | Set-Content .env -Encoding ascii
+```
+
+- File `.env` chỉ nằm trên máy bạn: nó **không** được đưa lên git.
+- **Không đổi `JWT_SECRET` sau này**, nếu không mọi phiên đăng nhập cũ sẽ mất hiệu lực.
+
+### Bước 3: Khởi động
+
+```powershell
+docker compose up -d --build
+```
+
+- Lần đầu mất vài phút, vì phải tải image và build backend. Các lần sau nhanh hơn nhiều.
+- Kiểm tra: cả 4 container `techshopping-postgres`, `techshopping-redis`, `techshopping-backend`, `techshopping-frontend` phải ở trạng thái `Up`.
+  ```powershell
+  docker compose ps
+  ```
+- Backend cần thêm khoảng 10–20 giây sau khi container chạy. Xem log cho tới khi thấy dòng `Started TechApplication`, rồi nhấn `Ctrl + C` để thoát log (backend vẫn chạy):
+  ```powershell
+  docker compose logs -f backend
+  ```
+
+### Bước 4: Mở web
+
+Mở trình duyệt vào **http://localhost:5510**.
+
+> **Dữ liệu có sẵn.** Lần chạy đầu tiên, Docker tự tạo database và nạp **877 sản phẩm mẫu** (crawl từ Thế Giới Di Động: danh mục, thương hiệu, phiên bản, ảnh) từ `database/docker-init/03_seed_catalog.sql`. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
+>
+> Dữ liệu được lưu trong volume Docker `postgres_data`, nên tắt / mở máy hay `docker compose down` đều **không mất**. File seed chỉ được nạp khi database còn trống, nên không ghi đè dữ liệu bạn đã tạo.
+
+### Bước 5 (tuỳ chọn): Tạo tài khoản ADMIN đầu tiên
+
+Mở file `.env`, điền 3 dòng sau (mật khẩu ít nhất 8 ký tự):
+
+```
+ADMIN_EMAIL=admin@poy.vn
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=MatKhauCuaBan123
+```
+
+Rồi chạy:
+
+```powershell
+docker compose up -d backend
+```
+
+- ADMIN chỉ được tạo **một lần**, khi database chưa có ADMIN nào. Sau đó có thể xoá 3 dòng này khỏi `.env`.
+- Tài khoản khách hàng thì tự đăng ký trên web (nút **Đăng nhập** → **Đăng ký**).
 
 ---
 
-## 4. Mở Frontend
+## 3. Dùng hằng ngày
 
-Mở trình duyệt:
+| Việc | Lệnh / cách làm |
+|---|---|
+| Bật hệ thống | Mở Docker Desktop: các container tự chạy lại. Nếu lần trước đã tắt bằng `docker compose stop` / `down` thì chạy `docker compose up -d` |
+| Sửa **frontend** (`frontend/`) | Chỉ cần tải lại trang (F5), không cần build lại |
+| Sửa **backend** (`backend/Tech/`) | `docker compose up -d --build backend` |
+| Xem log backend | `docker compose logs -f backend` |
+| Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
+| Cập nhật code mới | `git pull` rồi `docker compose up -d --build` |
 
-```text
-http://127.0.0.1:5501/frontend/index.html
-```
-
-Backend:
-
-```text
-http://localhost:8080
-```
-
----
-
-## 5. Chạy kiểm thử Frontend
-
-Mở PowerShell mới tại thư mục gốc:
-
-```powershell
-cd C:\Users\Quang\Desktop\TechShopping
-```
-
-### Kiểm thử Layout
-
-```powershell
-$env:E2E_USER="fe.e2e7"
-node docs/tools/e2e/e2e-frontend-layout.mjs
-```
-
-Kết quả hiện tại:
-
-```text
-32/32 checks passed
-```
-
-### Kiểm thử Account
-
-Tạo thư mục screenshot nếu chưa có:
-
-```powershell
-New-Item -ItemType Directory -Force ".\e2e-screenshots"
-```
-
-Sau đó dùng username mới:
-
-```powershell
-$env:E2E_USER="fe.e2e9"
-node docs/tools/e2e/e2e-account.mjs ".\e2e-screenshots"
-```
+> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 877 sản phẩm mẫu.
 
 ---
 
-## 6. Dừng hệ thống
+## 4. Gặp lỗi thường gặp
 
-Tại các cửa sổ đang chạy Backend và Frontend, nhấn:
+| Hiện tượng | Cách xử lý |
+|---|---|
+| `JWT_SECRET is missing - copy .env.example to .env and set it` | Chưa có file `.env`: làm lại **Bước 2** |
+| `docker: command not found` / `failed to connect to the docker API` | Docker Desktop chưa chạy: mở Docker Desktop, chờ **Engine running** |
+| `port is already allocated` với cổng **5510** | Cổng bị chương trình khác dùng: trong `.env` đổi `FRONTEND_PORT=5520` (cổng khác bất kỳ), rồi `docker compose up -d` và mở http://localhost:5520 |
+| `port is already allocated` với cổng **8080**, **5432** hoặc **6379** | Tắt chương trình đang dùng cổng đó (ví dụ PostgreSQL / Redis cài sẵn trên máy, hoặc backend đang chạy bằng `mvnw`) |
+| Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
+| Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu |
 
-```text
-Ctrl + C
-```
+---
 
-Sau đó dừng Docker:
+## 5. Dành cho người phát triển
+
+Phần này cần thêm **JDK 21** (để chạy test backend).
+
+**Test backend** (chạy trên máy, dùng database `techshopping_test` trong container postgres):
 
 ```powershell
-cd C:\Users\username\Desktop\TechShopping
-docker compose down
+cd backend\Tech
+.\mvnw.cmd clean test
 ```
+
+**Chạy backend ngoài Docker** (ví dụ để debug trong IDE):
+1. Dừng backend trong Docker trước, vì cổng 8080 chỉ một backend dùng được:
+   ```powershell
+   docker compose stop backend
+   ```
+2. Trong `backend\Tech`, đặt `JWT_SECRET` (dùng đúng giá trị trong `.env`) rồi chạy:
+   ```powershell
+   $env:JWT_SECRET = "<giá trị JWT_SECRET trong .env>"
+   .\mvnw.cmd spring-boot:run
+   ```
+3. Chạy trong IDE thì thêm VM option `-Duser.timezone=Asia/Ho_Chi_Minh`.
+
+**Frontend bằng VS Code Live Server:** vẫn dùng song song được, ở cổng nào cũng được (backend profile dev chấp nhận mọi cổng `localhost` / `127.0.0.1`). Mở Live Server trên thư mục `frontend/`, hoặc trên cả repo rồi vào `/frontend/index.html`.
+
+**Cấu trúc thư mục chính:**
+
+| Thư mục | Nội dung |
+|---|---|
+| `backend/Tech/` | Spring Boot API (Java 21) |
+| `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
+| `database/` | `techshopping.sql` (cấu trúc 35 bảng), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `docker/` | Cấu hình nginx cho frontend |
+| `Raw_data/` | Dữ liệu crawl gốc (CSV) |

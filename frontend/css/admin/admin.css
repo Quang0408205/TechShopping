@@ -5,36 +5,10 @@
  * khách hàng (sidebar tối, bố cục bảng điều khiển) để nhân viên luôn biết
  * mình đang ở khu nội bộ.
  *
- * Design token của bản tham chiếu CHỈ khai báo ở đây: file này chỉ được nạp
- * trên các trang admin/, nên giao diện khách hàng (css/style.css) không đổi.
+ * Design token (--color-*, --gray-*, --radius-*…) khai báo chung ở css/style.css
+ * (từ F1), trang admin/ nạp style.css trước file này.
  */
 
-:root {
-    --color-ink: #111318;
-    --color-paper: #ffffff;
-    --gray-50: #fafafa;
-    --gray-100: #f4f4f5;
-    --gray-200: #ebebec;
-    --gray-300: #dcdce0;
-    --gray-500: #8f8f99;
-    --gray-600: #6b6b75;
-    --gray-700: #4a4a52;
-    --color-accent: #8a5a22;
-    --color-success: #1f6b3e;
-    --color-success-bg: #eaf6ee;
-    --color-danger: #c0392b;
-    --color-danger-bg: #fdf1f0;
-    --color-warning: #a4720b;
-    --color-warning-bg: #fdf3e3;
-    --radius-sm: 6px;
-    --radius-md: 10px;
-    --radius-full: 999px;
-    --shadow-sm: 0 1px 2px rgba(17, 19, 24, 0.06), 0 1px 1px rgba(17, 19, 24, 0.04);
-    --shadow-lg: 0 24px 56px rgba(17, 19, 24, 0.16);
-    --ease-standard: cubic-bezier(0.16, 1, 0.3, 1);
-    --duration-fast: 150ms;
-    --duration-base: 250ms;
-}
 
 
 /* Quy tắc display của tác giả (vd. .admin-nav a) không được thắng [hidden] */

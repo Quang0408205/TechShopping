@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Thanh toán - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/customer/checkout.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="cart"></div>
+
+
+<main>
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <span class="section-label">
+                POY
+            </span>
+
+            <h1>
+                THANH TOÁN
+            </h1>
+
+            <p>
+                Đây là bản mô phỏng giao diện — đơn hàng sẽ được lưu tạm trên
+                trình duyệt của bạn cho tới khi hệ thống kết nối với máy chủ thật.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- ================= GIỎ HÀNG TRỐNG ================= -->
+
+    <section class="container" id="checkoutEmpty" hidden>
+
+        <div class="state-box empty-state">
+            <h3>Giỏ hàng đang trống</h3>
+            <p>Vui lòng thêm sản phẩm vào giỏ trước khi thanh toán.</p>
+            <a href="products.html" class="btn btn-dark">KHÁM PHÁ SẢN PHẨM</a>
+        </div>
+
+    </section>
+
+
+    <section class="section" id="checkoutContent" hidden>
+
+        <div class="container checkout-layout">
+
+            <form id="checkoutForm" class="checkout-form" novalidate>
+
+                <span class="section-label">THÔNG TIN GIAO HÀNG</span>
+
+                <p class="form-error" data-role="error" role="alert" hidden></p>
+
+
+                <label for="recipientName">Họ và tên người nhận</label>
+                <input type="text" id="recipientName" maxlength="120" required>
+                <small class="field-error" data-field="recipientName"></small>
+
+                <label for="recipientPhone">Số điện thoại</label>
+                <input type="tel" id="recipientPhone" maxlength="20" required>
+                <small class="field-error" data-field="recipientPhone"></small>
+
+                <label for="shippingAddress">Địa chỉ nhận hàng</label>
+                <textarea id="shippingAddress" rows="3" maxlength="500" required></textarea>
+                <small class="field-error" data-field="shippingAddress"></small>
+
+                <label for="orderNote">Ghi chú (không bắt buộc)</label>
+                <textarea id="orderNote" rows="2" maxlength="300"></textarea>
+
+
+                <span class="section-label checkout-section-spacer">PHƯƠNG THỨC THANH TOÁN</span>
+
+                <div class="payment-methods">
+
+                    <label class="payment-method">
+                        <input type="radio" name="paymentMethod" value="COD" checked>
+                        <span>
+                            <strong>Thanh toán khi nhận hàng (COD)</strong>
+                            <small>Thanh toán bằng tiền mặt khi nhận sản phẩm.</small>
+                        </span>
+                    </label>
+
+                    <label class="payment-method">
+                        <input type="radio" name="paymentMethod" value="BANK_TRANSFER">
+                        <span>
+                            <strong>Chuyển khoản ngân hàng</strong>
+                            <small>Chuyển khoản trước, đơn hàng xử lý sau khi xác nhận.</small>
+                        </span>
+                    </label>
+
+                    <label class="payment-method">
+                        <input type="radio" name="paymentMethod" value="INSTALLMENT">
+                        <span>
+                            <strong>Trả góp qua thẻ tín dụng</strong>
+                            <small>Nhân viên sẽ liên hệ để tư vấn kỳ hạn trả góp phù hợp.</small>
+                        </span>
+                    </label>
+
+                </div>
+
+                <p class="installment-note" id="installmentNote" hidden>
+                    Sau khi đặt hàng, bộ phận chăm sóc khách hàng sẽ liên hệ với bạn
+                    để hoàn tất thủ tục trả góp.
+                </p>
+
+
+                <button type="submit" class="btn btn-dark checkout-submit" id="checkoutSubmitBtn">
+                    ĐẶT HÀNG
+                </button>
+
+            </form>
+
+
+            <aside class="checkout-summary">
+
+                <span class="section-label">ĐƠN HÀNG CỦA BẠN</span>
+
+                <div id="checkoutItems" class="checkout-items"></div>
+
+                <div class="checkout-total-row">
+                    <span>Tạm tính</span>
+                    <strong id="checkoutSubtotal"></strong>
+                </div>
+
+                <div class="checkout-total-row">
+                    <span>Phí vận chuyển</span>
+                    <strong id="checkoutShipping"></strong>
+                </div>
+
+                <div class="checkout-total-row checkout-total-final">
+                    <span>Tổng cộng</span>
+                    <span id="checkoutTotal"></span>
+                </div>
+
+            </aside>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/checkout.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+
+</body>
+</html>

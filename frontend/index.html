@@ -22,7 +22,7 @@
 <div data-include="header" data-active="home"></div>
 
 
-<!-- ================= HERO ================= -->
+<!-- ================= 1. HERO ================= -->
 
 <section class="hero">
 
@@ -30,7 +30,6 @@
 
     <div class="container hero-content">
 
-        <!-- Nội dung bên trái -->
         <div class="hero-text">
 
             <span class="hero-label">
@@ -61,7 +60,6 @@
 
         </div>
 
-        <!-- Hình ảnh bên phải -->
         <div class="hero-image">
 
             <img
@@ -75,98 +73,8 @@
 
 </section>
 
-<!-- ================= BENEFITS ================= -->
 
-<section class="benefits">
-
-    <div class="container benefits-grid">
-
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
-
-            <div>
-                <h3>Hàng chính hãng</h3>
-                <p>Sản phẩm có nguồn gốc rõ ràng</p>
-            </div>
-        </div>
-
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
-
-            <div>
-                <h3>Bảo hành chính hãng</h3>
-                <p>Đảm bảo quyền lợi khách hàng</p>
-            </div>
-        </div>
-
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
-
-            <div>
-                <h3>Thanh toán linh hoạt</h3>
-                <p>Nhiều phương thức thanh toán</p>
-            </div>
-        </div>
-
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
-
-            <div>
-                <h3>Giao hàng nhanh</h3>
-                <p>Giao hàng đến tận nơi</p>
-            </div>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= PHONE SCROLL ================= -->
-
-<section class="phone-section">
-
-    <div class="container phone-container">
-
-        <div class="phone-content">
-
-            <span class="section-label">
-                CÔNG NGHỆ MỚI
-            </span>
-
-            <h2>
-                KHÁM PHÁ<br>
-                THẾ GIỚI CÔNG NGHỆ
-            </h2>
-
-            <p>
-                Những thiết bị công nghệ hiện đại không chỉ
-                giúp cuộc sống tiện lợi hơn mà còn mở ra
-                những trải nghiệm hoàn toàn mới.
-            </p>
-
-            <a href="customer/products.html" class="btn btn-dark">
-                KHÁM PHÁ SẢN PHẨM
-            </a>
-
-        </div>
-
-
-        <div class="phone-image">
-
-            <img
-                src="assets/images/phone.png"
-                alt="Điện thoại công nghệ"
-            >
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= CATEGORIES ================= -->
+<!-- ================= 2. DANH MỤC ================= -->
 
 <section class="categories section">
 
@@ -277,7 +185,7 @@
 </section>
 
 
-<!-- ================= FEATURED PRODUCTS ================= -->
+<!-- ================= 3. SẢN PHẨM NỔI BẬT ================= -->
 
 <section class="products-preview section">
 
@@ -296,8 +204,11 @@
         </div>
 
 
-        <!-- js/home.js render 4 sản phẩm đầu tiên từ GET /api/v1/products -->
-        <div class="product-grid" id="featuredProductGrid"></div>
+        <div class="product-grid" id="featuredProductGrid">
+
+            <!-- js/home.js: 4 sản phẩm đầu tiên từ GET /api/v1/products -->
+
+        </div>
 
 
         <div class="view-all">
@@ -313,36 +224,46 @@
 </section>
 
 
-<!-- ================= AI ================= -->
+<!-- ================= 4. LỢI ÍCH ================= -->
 
-<section class="ai-section">
+<section class="benefits">
 
-    <div class="container ai-container">
+    <div class="container benefits-grid">
 
-        <div class="ai-content">
+        <div class="benefit">
+            <div class="benefit-icon">✓</div>
 
-            <span class="section-label">
-                CÔNG NGHỆ AI
-            </span>
-
-            <h2>
-                TÌM ĐÚNG SẢN PHẨM<br>
-                DÀNH CHO BẠN
-            </h2>
-
-            <p>
-                Hệ thống khuyến nghị phân tích nhu cầu
-                và đưa ra những sản phẩm phù hợp.
-            </p>
-
-            <a href="customer/recommendation.html" class="btn btn-light">
-                KHÁM PHÁ KHUYẾN NGHỊ
-            </a>
-
+            <div>
+                <h3>Hàng chính hãng</h3>
+                <p>Sản phẩm có nguồn gốc rõ ràng</p>
+            </div>
         </div>
 
-        <div class="ai-number">
-            AI
+        <div class="benefit">
+            <div class="benefit-icon">✓</div>
+
+            <div>
+                <h3>Bảo hành chính hãng</h3>
+                <p>Đảm bảo quyền lợi khách hàng</p>
+            </div>
+        </div>
+
+        <div class="benefit">
+            <div class="benefit-icon">✓</div>
+
+            <div>
+                <h3>Thanh toán linh hoạt</h3>
+                <p>Nhiều phương thức thanh toán</p>
+            </div>
+        </div>
+
+        <div class="benefit">
+            <div class="benefit-icon">✓</div>
+
+            <div>
+                <h3>Giao hàng nhanh</h3>
+                <p>Giao hàng đến tận nơi</p>
+            </div>
         </div>
 
     </div>
@@ -350,7 +271,94 @@
 </section>
 
 
-<!-- ================= SERVICES ================= -->
+<!-- ================= 5. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
+
+<section class="section recommendation-preview">
+
+    <div class="container">
+
+        <div class="section-heading">
+
+            <span class="section-label">
+                DÀNH RIÊNG CHO BẠN
+            </span>
+
+            <h2>
+                GỢI Ý DÀNH CHO BẠN
+            </h2>
+
+            <p>
+                Những sản phẩm mới nhất tại POY, được chọn cho bạn.
+            </p>
+
+        </div>
+
+
+        <div class="product-grid" id="personalRecommendationGrid">
+
+            <!-- js/home.js: 4 sản phẩm mới nhất từ GET /api/v1/products (gợi ý cá nhân hoá thật ở Phase 8) -->
+
+        </div>
+
+
+        <div class="view-all">
+
+            <a href="customer/recommendation.html" class="btn btn-outline-dark">
+                XEM TẤT CẢ KHUYẾN NGHỊ
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 6. CÂU CHUYỆN THƯƠNG HIỆU ================= -->
+
+<section class="phone-section">
+
+    <div class="container phone-container">
+
+        <div class="phone-content">
+
+            <span class="section-label">
+                CÔNG NGHỆ MỚI
+            </span>
+
+            <h2>
+                KHÁM PHÁ<br>
+                THẾ GIỚI CÔNG NGHỆ
+            </h2>
+
+            <p>
+                Những thiết bị công nghệ hiện đại không chỉ
+                giúp cuộc sống tiện lợi hơn mà còn mở ra
+                những trải nghiệm hoàn toàn mới.
+            </p>
+
+            <a href="customer/products.html" class="btn btn-dark">
+                KHÁM PHÁ SẢN PHẨM
+            </a>
+
+        </div>
+
+
+        <div class="phone-image">
+
+            <img
+                src="assets/images/phone.png"
+                alt="Điện thoại công nghệ"
+            >
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 7. DỊCH VỤ ================= -->
 
 <section class="services-preview section">
 
@@ -428,7 +436,7 @@
 </section>
 
 
-<!-- ================= CTA ================= -->
+<!-- ================= 8. CTA ================= -->
 
 <section class="cta">
 
@@ -452,16 +460,18 @@
 </section>
 
 
-<!-- ================= FOOTER ================= -->
+<!-- ================= 9. FOOTER ================= -->
 
 <div data-include="footer"></div>
 
 
 <script src="js/core/api.js"></script>
 <script src="js/core/ui.js"></script>
+<script src="js/core/cart-store.js"></script>
 <script src="js/core/layout.js"></script>
 <script src="js/core/main.js"></script>
 <script src="js/home.js"></script>
+<script src="js/customer/chatbot.js"></script>
 
 </body>
 </html>

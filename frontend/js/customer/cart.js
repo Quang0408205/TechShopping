@@ -1,11 +1,31 @@
+/* ================= TRANG GIỎ HÀNG (F2) ================= */
+
+/*
+ * Giao diện lấy từ bản frontend mới; dữ liệu là snapshot trong
+ * js/core/cart-store.js (giỏ hàng theo tài khoản). Chưa đăng nhập → mời
+ * đăng nhập. Mọi dữ liệu đưa vào innerHTML đều escape.
+ */
+
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    async function () {
+
+        if (typeof layoutReady !== "undefined") {
+            await layoutReady;
+        }
 
         renderCart();
 
     }
 );
+
+
+function cartLineAttributes(item) {
+
+    /* String(): variantId null → "null", khớp với cách so sánh ở findItem / cart-store */
+    return `data-product-id="${escapeHtml(String(item.productId))}" data-variant-id="${escapeHtml(String(item.variantId))}"`;
+
+}
 
 
 function renderCart() {
@@ -16,35 +36,55 @@ function renderCart() {
         );
 
 
-    const cart = getCart();
-
-
-    if (cart.length === 0) {
+    if (!isLoggedIn()) {
 
         container.innerHTML = `
-
             <div class="empty-cart">
+                <h2>
+                    VUI LÒNG ĐĂNG NHẬP
+                </h2>
+                <p>
+                    Giỏ hàng được lưu theo tài khoản của bạn.
+                </p>
+                <br>
+                <button type="button" class="btn btn-dark" id="cartLoginBtn">
+                    ĐĂNG NHẬP
+                </button>
+            </div>
+        `;
 
+        document.getElementById("cartLoginBtn")
+            .addEventListener("click", function () {
+                redirectToLogin();
+            });
+
+        return;
+
+    }
+
+
+    const summary = getCartSummary();
+
+
+    if (summary.items.length === 0) {
+
+        container.innerHTML = `
+            <div class="empty-cart">
                 <h2>
                     GIỎ HÀNG ĐANG TRỐNG
                 </h2>
-
                 <p>
                     Hãy khám phá các sản phẩm
                     của POY.
                 </p>
-
                 <br>
-
                 <a
-                    href="products.html"
+                    href="${escapeHtml(siteUrl("customer/products.html"))}"
                     class="btn btn-dark"
                 >
                     KHÁM PHÁ SẢN PHẨM
                 </a>
-
             </div>
-
         `;
 
         return;
@@ -52,222 +92,205 @@ function renderCart() {
     }
 
 
-    let total = 0;
+    const rows = summary.items.map(function (item) {
 
+        const detailUrl = escapeHtml(getProductDetailUrl(item.productId));
 
-    let rows = "";
-
-
-    cart.forEach(function (product, index) {
-
-        const productTotal =
-            product.price *
-            product.quantity;
-
-
-        total += productTotal;
-
-
-        rows += `
-
+        return `
             <tr>
-
-                <td class="cart-product">
-                    ${escapeHtml(product.name)}
+                <td class="cart-product-cell">
+                    <img
+                        src="${escapeHtml(cartItemImageUrl(item))}"
+                        alt="${escapeHtml(item.name)}"
+                        class="cart-thumb"
+                    >
+                    <div>
+                        <a href="${detailUrl}" class="cart-product">
+                            ${escapeHtml(item.name)}
+                        </a>
+                        <span class="cart-variant">${escapeHtml(item.variantLabel)}</span>
+                    </div>
                 </td>
 
                 <td>
-
                     <div class="quantity-control">
-
-                        <button
-                            onclick="changeQuantity(${index}, -1)"
-                        >
+                        <button type="button" data-action="decrease" ${cartLineAttributes(item)} aria-label="Giảm số lượng">
                             −
                         </button>
-
                         <span>
-                            ${product.quantity}
+                            ${item.quantity}
                         </span>
-
-                        <button
-                            onclick="changeQuantity(${index}, 1)"
-                        >
+                        <button type="button" data-action="increase" ${cartLineAttributes(item)} aria-label="Tăng số lượng"
+                            ${item.quantity >= MAX_CART_LINE_QUANTITY ? "disabled" : ""}>
                             +
                         </button>
-
                     </div>
-
                 </td>
 
                 <td>
-                    ${formatPrice(product.price)}
+                    ${formatPrice(item.price)}
                 </td>
 
                 <td>
-                    ${formatPrice(productTotal)}
+                    ${formatPrice(item.lineTotal)}
                 </td>
 
                 <td>
-
-                    <button
-                        class="remove-btn"
-                        onclick="removeProduct(${index})"
-                    >
+                    <button type="button" class="remove-btn" data-action="remove" ${cartLineAttributes(item)}
+                        data-name="${escapeHtml(item.name)}">
                         Xóa
                     </button>
-
                 </td>
-
             </tr>
-
         `;
+
+    }).join("");
+
+
+    container.innerHTML = `
+        <table class="cart-table">
+            <thead>
+                <tr>
+                    <th>
+                        SẢN PHẨM
+                    </th>
+                    <th>
+                        SỐ LƯỢNG
+                    </th>
+                    <th>
+                        ĐƠN GIÁ
+                    </th>
+                    <th>
+                        THÀNH TIỀN
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                ${rows}
+            </tbody>
+        </table>
+
+        <div class="cart-summary">
+            <div class="cart-total">
+                <div class="cart-total-row">
+                    <span>
+                        Tạm tính
+                    </span>
+                    <strong>
+                        ${formatPrice(summary.subtotal)}
+                    </strong>
+                </div>
+                <div class="cart-total-row">
+                    <span>
+                        Phí vận chuyển
+                    </span>
+                    <strong>
+                        ${summary.shippingFee === 0 ? "Miễn phí" : formatPrice(summary.shippingFee)}
+                    </strong>
+                </div>
+                <div class="cart-total-row">
+                    <span>
+                        Tổng cộng
+                    </span>
+                    <span class="cart-total-price">
+                        ${formatPrice(summary.total)}
+                    </span>
+                </div>
+                <a
+                    href="${escapeHtml(siteUrl("customer/checkout.html"))}"
+                    class="btn btn-dark"
+                    id="checkoutButton"
+                >
+                    TIẾN HÀNH THANH TOÁN
+                </a>
+            </div>
+        </div>
+    `;
+
+
+    bindCartEvents(summary.items);
+
+}
+
+
+function bindCartEvents(items) {
+
+    function findItem(button) {
+
+        return items.find(function (item) {
+            return String(item.productId) === button.dataset.productId &&
+                String(item.variantId) === button.dataset.variantId;
+        });
+
+    }
+
+
+    document.querySelectorAll('[data-action="decrease"]').forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const item = findItem(button);
+
+            if (item) {
+
+                updateCartItemQuantity(item.productId, item.variantId, item.quantity - 1);
+
+                renderCart();
+
+            }
+
+        });
 
     });
 
 
-    container.innerHTML = `
+    document.querySelectorAll('[data-action="increase"]').forEach(function (button) {
 
-        <table class="cart-table">
+        button.addEventListener("click", function () {
 
-            <thead>
+            const item = findItem(button);
 
-                <tr>
+            if (item) {
 
-                    <th>
-                        SẢN PHẨM
-                    </th>
+                updateCartItemQuantity(item.productId, item.variantId, item.quantity + 1);
 
-                    <th>
-                        SỐ LƯỢNG
-                    </th>
+                renderCart();
 
-                    <th>
-                        ĐƠN GIÁ
-                    </th>
+            }
 
-                    <th>
-                        THÀNH TIỀN
-                    </th>
+        });
 
-                    <th></th>
+    });
 
-                </tr>
 
-            </thead>
+    document.querySelectorAll('[data-action="remove"]').forEach(function (button) {
 
-            <tbody>
+        button.addEventListener("click", function () {
 
-                ${rows}
+            const item = findItem(button);
 
-            </tbody>
+            if (!item) {
+                return;
+            }
 
-        </table>
+            openConfirmModal({
+                title: "Xóa sản phẩm khỏi giỏ hàng?",
+                message: "\"" + item.name + "\" sẽ được xóa khỏi giỏ hàng của bạn.",
+                confirmLabel: "XÓA",
+                onConfirm: function () {
 
+                    removeCartItem(item.productId, item.variantId);
 
-        <div class="cart-summary">
+                    showToast("Đã xóa sản phẩm khỏi giỏ hàng.");
 
-            <div class="cart-total">
+                    renderCart();
 
-                <div class="cart-total-row">
+                }
+            });
 
-                    <span>
-                        Tạm tính
-                    </span>
+        });
 
-                    <strong>
-                        ${formatPrice(total)}
-                    </strong>
-
-                </div>
-
-
-                <div class="cart-total-row">
-
-                    <span>
-                        Tổng cộng
-                    </span>
-
-                    <span class="cart-total-price">
-                        ${formatPrice(total)}
-                    </span>
-
-                </div>
-
-
-                <button
-                    class="btn btn-dark"
-                    onclick="checkout()"
-                >
-                    TIẾN HÀNH THANH TOÁN
-                </button>
-
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
-function changeQuantity(index, amount) {
-
-    const cart = getCart();
-
-
-    cart[index].quantity += amount;
-
-
-    if (cart[index].quantity <= 0) {
-
-        cart.splice(index, 1);
-
-    }
-
-
-    saveCart(cart);
-
-    updateCartCount();
-
-    renderCart();
-
-}
-
-
-function removeProduct(index) {
-
-    const cart = getCart();
-
-    cart.splice(index, 1);
-
-    saveCart(cart);
-
-    updateCartCount();
-
-    renderCart();
-
-}
-
-
-function checkout() {
-
-    const cart = getCart();
-
-
-    if (cart.length === 0) {
-
-        alert(
-            "Giỏ hàng đang trống."
-        );
-
-        return;
-
-    }
-
-
-    alert(
-        "Chức năng thanh toán sẽ được kết nối với Spring Boot."
-    );
+    });
 
 }

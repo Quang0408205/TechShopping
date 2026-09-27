@@ -10,10 +10,10 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Khuyến nghị AI - POY</title>
+    <title>Khuyến nghị - POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer/recommendation.css">   
+    <link rel="stylesheet" href="../css/customer/recommendation.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
@@ -34,7 +34,7 @@
         <div class="container">
 
             <span class="section-label">
-                POY AI
+                POY
             </span>
 
             <h1>
@@ -42,8 +42,8 @@
             </h1>
 
             <p>
-                Hệ thống phân tích nhu cầu và đề xuất
-                những sản phẩm phù hợp với bạn.
+                Những sản phẩm được chọn dành riêng cho bạn, dựa trên
+                lịch sử xem, xu hướng mua sắm và các sản phẩm liên quan.
             </p>
 
         </div>
@@ -55,55 +55,44 @@
 
         <div class="container">
 
-            <div class="recommendation-box">
-
-                <span class="section-label">
-                    AI SHOPPING ASSISTANT
-                </span>
-
-                <h2>
-                    BẠN ĐANG TÌM KIẾM SẢN PHẨM GÌ?
-                </h2>
-
-                <p>
-                    Hãy mô tả nhu cầu của bạn.
-                    Ví dụ: "Tôi cần laptop để chơi game
-                    và lập trình".
-                </p>
-
-
-                <textarea
-                    id="recommendationInput"
-                    placeholder="Nhập nhu cầu của bạn..."
-                ></textarea>
-
-
-                <button
-                    id="recommendationButton"
-                    class="btn btn-dark"
-                >
-                    PHÂN TÍCH NHU CẦU
-                </button>
-
+            <div class="recommendation-section">
+                <div class="section-heading">
+                    <span class="section-label">DÀNH RIÊNG CHO BẠN</span>
+                    <h2>GỢI Ý DÀNH CHO BẠN</h2>
+                </div>
+                <div class="product-grid" id="personalGrid"></div>
             </div>
 
-
-            <div
-                id="recommendationResult"
-                class="recommendation-result"
-            >
-
-                <h2>
-                    GỢI Ý DÀNH CHO BẠN
-                </h2>
-
-                <div
-                    id="recommendationProducts"
-                    class="product-grid"
-                >
-
+            <div class="recommendation-section">
+                <div class="section-heading">
+                    <span class="section-label">LIÊN QUAN</span>
+                    <h2>SẢN PHẨM TƯƠNG TỰ</h2>
                 </div>
+                <div class="product-grid" id="similarGrid"></div>
+            </div>
 
+            <div class="recommendation-section">
+                <div class="section-heading">
+                    <span class="section-label">XU HƯỚNG</span>
+                    <h2>PHỔ BIẾN NHẤT</h2>
+                </div>
+                <div class="product-grid" id="popularGrid"></div>
+            </div>
+
+            <div class="recommendation-section">
+                <div class="section-heading">
+                    <span class="section-label">KẾT HỢP HOÀN HẢO</span>
+                    <h2>THƯỜNG ĐƯỢC MUA KÈM</h2>
+                </div>
+                <div class="product-grid" id="bundleGrid"></div>
+            </div>
+
+            <div class="recommendation-section" id="upgradeSection" hidden>
+                <div class="section-heading">
+                    <span class="section-label">NÂNG TẦM TRẢI NGHIỆM</span>
+                    <h2>CÓ THỂ NÂNG CẤP LÊN</h2>
+                </div>
+                <div class="product-grid" id="upgradeGrid"></div>
             </div>
 
         </div>
@@ -118,9 +107,11 @@
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/recommendation.js"></script>
+<script src="../js/customer/chatbot.js"></script>
 
 </body>
 </html>

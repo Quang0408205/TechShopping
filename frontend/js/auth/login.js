@@ -14,6 +14,9 @@ document.addEventListener(
         }
 
 
+        showLoginReason();
+
+
         const form =
             document.getElementById(
                 "loginForm"
@@ -131,3 +134,47 @@ document.addEventListener(
 
     }
 );
+
+
+/* ================= LÝ DO CHUYỂN TỚI TRANG ĐĂNG NHẬP ================= */
+
+/*
+ * ?reason=cart (redirectToLogin("cart") trong main.js): giải thích vì sao
+ * người dùng bị chuyển tới đây. Link "Đăng ký" giữ nguyên ?redirect để đăng
+ * ký xong cũng quay lại đúng trang (register.js dùng getRedirectTarget).
+ */
+
+const LOGIN_REASON_MESSAGES = {
+    cart: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng."
+};
+
+
+function showLoginReason() {
+
+    const params = new URLSearchParams(window.location.search);
+
+    const notice = document.getElementById("loginNotice");
+
+    const message = LOGIN_REASON_MESSAGES[params.get("reason")];
+
+
+    if (notice && message) {
+
+        notice.textContent = message;
+
+        notice.hidden = false;
+
+    }
+
+
+    const registerLink = document.getElementById("registerLink");
+
+    const redirect = params.get("redirect");
+
+    if (registerLink && redirect) {
+
+        registerLink.href = "register.html?redirect=" + encodeURIComponent(redirect);
+
+    }
+
+}

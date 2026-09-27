@@ -10,10 +10,11 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Giỏ hàng - POY</title>
+    <title>Đơn hàng của tôi - POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/customer/cart.css">
+    <link rel="stylesheet" href="../css/customer/account.css">
+    <link rel="stylesheet" href="../css/customer/orders.css">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
@@ -22,10 +23,10 @@
 
 </head>
 
-<body>
+<body data-account-page="orders">
 
 
-<div data-include="header" data-active="cart"></div>
+<div data-include="header" data-active="account"></div>
 
 
 <main>
@@ -34,13 +35,11 @@
 
         <div class="container">
 
-            <span class="section-label">
-                POY
-            </span>
+            <span class="section-label">POY</span>
 
-            <h1>
-                GIỎ HÀNG
-            </h1>
+            <h1>ĐƠN HÀNG CỦA TÔI</h1>
+
+            <p>Theo dõi trạng thái các đơn hàng bạn đã đặt.</p>
 
         </div>
 
@@ -49,12 +48,16 @@
 
     <section class="section">
 
-        <div class="container">
+        <div class="container account-layout">
 
-            <div
-                id="cartContainer"
-                class="cart-container"
-            >
+            <div id="accountSidebarRoot"></div>
+
+
+            <div class="account-main">
+
+                <div id="ordersList" class="orders-list">
+                    <!-- js/customer/orders.js render động -->
+                </div>
 
             </div>
 
@@ -71,9 +74,11 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
-<script src="../js/customer/cart.js"></script>
+<script src="../js/customer/account-sidebar.js"></script>
+<script src="../js/customer/orders.js"></script>
 <script src="../js/customer/chatbot.js"></script>
 
 </body>

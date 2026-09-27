@@ -1,0 +1,347 @@
+/* ================= DANH SÁCH ĐƠN HÀNG ================= */
+
+.orders-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+}
+
+.order-card {
+    display: block;
+
+    padding: 25px 30px;
+
+    border: 1px solid #ddd;
+
+    transition: 0.3s;
+}
+
+.order-card:hover {
+    border-color: #111;
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 18px;
+}
+
+.order-card-header strong {
+    font-size: 15px;
+}
+
+.order-card-date {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #888;
+    font-size: 11px;
+}
+
+.order-card-items {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+}
+
+.order-card-items img {
+    width: 48px;
+    height: 48px;
+
+    object-fit: cover;
+
+    background: #f4f4f4;
+}
+
+.order-card-count {
+    color: #777;
+    font-size: 12px;
+}
+
+.order-card-footer {
+    display: flex;
+    justify-content: space-between;
+
+    padding-top: 15px;
+
+    border-top: 1px solid #eee;
+
+    font-size: 13px;
+}
+
+.order-card-footer strong {
+    font-size: 16px;
+}
+
+
+/* ================= HUY HIỆU TRẠNG THÁI ================= */
+
+.order-status-badge {
+    padding: 6px 14px;
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+
+    white-space: nowrap;
+}
+
+.status-pending {
+    background: #fdf3e3;
+    color: #a4720b;
+}
+
+.status-confirmed {
+    background: #e6f0fb;
+    color: #1a5aab;
+}
+
+.status-shipping {
+    background: #eef2fd;
+    color: #4531b8;
+}
+
+.status-delivered {
+    background: #eaf6ee;
+    color: #1f6b3e;
+}
+
+
+/* ================= CHI TIẾT ĐƠN HÀNG ================= */
+
+.order-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    margin-bottom: 40px;
+}
+
+.order-detail-header h2 {
+    font-size: 24px;
+}
+
+
+/* ================= TIMELINE TRẠNG THÁI ================= */
+
+.order-status-timeline {
+    display: flex;
+
+    margin-bottom: 50px;
+}
+
+.timeline-step {
+    flex: 1;
+
+    position: relative;
+
+    text-align: center;
+}
+
+.timeline-step::before {
+    content: "";
+
+    position: absolute;
+
+    top: 7px;
+    left: -50%;
+
+    width: 100%;
+    height: 2px;
+
+    background: #ddd;
+
+    z-index: 0;
+}
+
+.timeline-step:first-child::before {
+    display: none;
+}
+
+.timeline-dot {
+    position: relative;
+    z-index: 1;
+
+    display: inline-block;
+
+    width: 16px;
+    height: 16px;
+
+    border-radius: 50%;
+
+    background: #ddd;
+
+    margin-bottom: 10px;
+}
+
+.timeline-label {
+    display: block;
+
+    font-size: 11px;
+    color: #999;
+}
+
+.timeline-done .timeline-dot,
+.timeline-current .timeline-dot {
+    background: #111;
+}
+
+.timeline-done::before {
+    background: #111;
+}
+
+.timeline-done .timeline-label,
+.timeline-current .timeline-label {
+    color: #111;
+    font-weight: 600;
+}
+
+
+/* ================= NỘI DUNG CHI TIẾT ================= */
+
+.order-detail-grid {
+    display: grid;
+
+    grid-template-columns: 1.5fr 1fr;
+
+    gap: 50px;
+}
+
+.order-detail-items {
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+}
+
+.order-item-row {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid #eee;
+}
+
+.order-item-row img {
+    width: 60px;
+    height: 60px;
+
+    object-fit: cover;
+
+    background: #f4f4f4;
+}
+
+.order-item-info {
+    flex: 1;
+}
+
+.order-item-info a {
+    display: block;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.order-item-info a:hover {
+    text-decoration: underline;
+}
+
+.order-item-info span {
+    display: block;
+
+    margin-top: 4px;
+
+    color: #888;
+    font-size: 12px;
+}
+
+.order-detail-side {
+    display: flex;
+    flex-direction: column;
+
+    gap: 25px;
+}
+
+.order-detail-block {
+    padding: 25px;
+
+    background: #f4f4f4;
+}
+
+.order-detail-block h4 {
+    font-size: 11px;
+    letter-spacing: 1px;
+
+    margin-bottom: 10px;
+}
+
+.order-detail-block p {
+    color: #555;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+@media (max-width: 1000px) {
+
+    .order-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .timeline-label {
+        font-size: 9px;
+    }
+
+}
+
+@media (max-width: 700px) {
+
+    .order-detail-header {
+        flex-direction: column;
+
+        gap: 15px;
+    }
+
+    .order-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 10px;
+    }
+
+}
+
+
+/* Khối tổng tiền ở chi tiết đơn dùng lại class của trang thanh toán, nhưng trang
+   này không nạp checkout.css (lỗi của bản frontend mới), nên khai báo ở đây. */
+
+.order-detail-totals .checkout-total-row {
+    display: flex;
+    justify-content: space-between;
+
+    margin-bottom: 15px;
+
+    font-size: 13px;
+}
+
+.order-detail-totals .checkout-total-final {
+    font-size: 18px;
+    font-weight: 700;
+
+    margin-top: 20px;
+    margin-bottom: 0;
+
+    padding-top: 20px;
+
+    border-top: 1px solid #ddd;
+}

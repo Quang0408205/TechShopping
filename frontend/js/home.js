@@ -2,7 +2,7 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        renderFeaturedProducts();
+        renderHomeProductGrids();
 
 
         const phoneImage =
@@ -50,18 +50,54 @@ document.addEventListener(
     }
 );
 
-/* ================= SẢN PHẨM NỔI BẬT (Checkpoint 2.8) ================= */
+/* ================= LƯỚI SẢN PHẨM TRANG CHỦ (API thật) ================= */
 
 /*
- * 4 sản phẩm đầu tiên từ GET /products (công khai, không gửi token), vẽ
- * bằng renderProductGrid() dùng chung với trang Sản phẩm (js/core/ui.js).
+ * Hai lưới 4 sản phẩm từ GET /products (công khai, không gửi token), vẽ bằng
+ * renderProductGrid() dùng chung với trang Sản phẩm (js/core/ui.js):
+ *   - "Sản phẩm nổi bật": 4 sản phẩm đầu tiên (chưa có dữ liệu bán chạy);
+ *   - "Gợi ý dành cho bạn": 4 sản phẩm mới nhất (gợi ý cá nhân hoá thật ở Phase 8).
  * Danh mục chỉ dùng để chọn ảnh thay thế, nên lỗi tải danh mục không chặn
- * việc hiển thị sản phẩm.
+ * việc hiển thị sản phẩm. Hai lưới dùng chung một lần tải danh mục.
  */
 
-async function renderFeaturedProducts() {
+const HOME_PRODUCT_GRIDS = [
+    { gridId: "featuredProductGrid", sort: "id,asc", retryId: "featuredRetryBtn" },
+    { gridId: "personalRecommendationGrid", sort: "id,desc", retryId: "newestRetryBtn" }
+];
 
-    const grid = document.getElementById("featuredProductGrid");
+let homeCategoriesPromise = null;
+
+
+function getHomeCategories() {
+
+    if (!homeCategoriesPromise) {
+
+        homeCategoriesPromise = fetchCategoryMaps().catch(function () {
+
+            homeCategoriesPromise = null;
+
+            return { byId: {}, bySlug: {} };
+
+        });
+
+    }
+
+    return homeCategoriesPromise;
+
+}
+
+
+function renderHomeProductGrids() {
+
+    HOME_PRODUCT_GRIDS.forEach(renderHomeProductGrid);
+
+}
+
+
+async function renderHomeProductGrid(config) {
+
+    const grid = document.getElementById(config.gridId);
 
     if (!grid) {
         return;
@@ -71,25 +107,24 @@ async function renderFeaturedProducts() {
     grid.innerHTML = skeletonProductGrid(4);
 
 
-    const categoriesPromise = fetchCategoryMaps().catch(function () {
-        return { byId: {}, bySlug: {} };
-    });
-
-
     try {
 
-        const page = await apiRequest("/products?isActive=true&page=0&size=4&sort=id");
+        const page = await apiRequest(
+            "/products?isActive=true&page=0&size=4&sort=" + encodeURIComponent(config.sort)
+        );
 
-        const categories = await categoriesPromise;
+        const categories = await getHomeCategories();
 
         renderProductGrid(grid, page.content, categories.byId);
 
     } catch (error) {
 
-        grid.innerHTML = errorStateHtml(getErrorMessage(error), "featuredRetryBtn");
+        grid.innerHTML = errorStateHtml(getErrorMessage(error), config.retryId);
 
-        document.getElementById("featuredRetryBtn")
-            .addEventListener("click", renderFeaturedProducts);
+        document.getElementById(config.retryId)
+            .addEventListener("click", function () {
+                renderHomeProductGrid(config);
+            });
 
     }
 

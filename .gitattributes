@@ -1,0 +1,5 @@
+# Các file chạy trong container Linux phải giữ LF khi clone trên Windows (core.autocrlf=true):
+# script bash có \r không chạy, còn dữ liệu COPY trong seed sẽ bị dính \r ở cột cuối.
+*.sh text eol=lf
+database/docker-init/*.sql text eol=lf
+docker/** text eol=lf
