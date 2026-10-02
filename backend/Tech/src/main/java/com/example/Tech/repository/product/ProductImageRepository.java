@@ -20,9 +20,13 @@ public interface ProductImageRepository extends JpaRepository<ProductImage, Long
 
     List<ProductImage> findAllByProductIdAndPrimaryTrue(Long productId);
 
+    boolean existsByProductIdAndPrimaryTrue(Long productId);
+
+    long countByProductId(Long productId);
+
     /**
      * Images of several products in one query, best first per product: primary, then display order
-     * (NULL last), then id. Used to show one image per cart line.
+     * (NULL last), then id. Used to show one image per cart line and per product in lists.
      */
     @Query("select i from ProductImage i where i.product.id in :productIds "
             + "order by i.product.id, case when i.primary = true then 0 else 1 end, i.displayOrder asc nulls last, i.id")

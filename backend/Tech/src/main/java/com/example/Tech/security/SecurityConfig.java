@@ -17,7 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Stateless JWT security (OAuth2 resource server, see JwtConfig).
  * <ul>
- *     <li>Auth endpoints and Swagger are public.</li>
+ *     <li>Auth endpoints, Swagger and uploaded images (GET /uploads/**) are public.</li>
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
  *     <li>/api/v1/admin/** requires ADMIN; any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)

@@ -16,7 +16,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.ErrorResponse;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
@@ -59,7 +63,26 @@ public class GlobalExceptionHandler {
         return build(ErrorCode.DATA_INTEGRITY_VIOLATION, ErrorCode.DATA_INTEGRITY_VIOLATION.getDefaultMessage(), null);
     }
 
-    @ExceptionHandler({NoResourceFoundException.class, HttpRequestMethodNotSupportedException.class})
+    /** Upload above spring.servlet.multipart.max-file-size / max-request-size (thrown before the controller). */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResult<Void>> handleUploadTooLarge(MaxUploadSizeExceededException ex) {
+        return build(ErrorCode.IMAGE_TOO_LARGE, ErrorCode.IMAGE_TOO_LARGE.getDefaultMessage(), null);
+    }
+
+    @ExceptionHandler(MissingServletRequestPartException.class)
+    public ResponseEntity<ApiResult<Void>> handleMissingPart(MissingServletRequestPartException ex) {
+        return build(ErrorCode.VALIDATION_ERROR, ErrorCode.VALIDATION_ERROR.getDefaultMessage(),
+                Map.of(ex.getRequestPartName(), "File is required"));
+    }
+
+    /** Broken or non-multipart body sent to a multipart endpoint. */
+    @ExceptionHandler(MultipartException.class)
+    public ResponseEntity<ApiResult<Void>> handleBrokenMultipart(MultipartException ex) {
+        return build(ErrorCode.MALFORMED_REQUEST, ErrorCode.MALFORMED_REQUEST.getDefaultMessage(), null);
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, HttpRequestMethodNotSupportedException.class,
+            HttpMediaTypeNotSupportedException.class})
     public ResponseEntity<ApiResult<Void>> handleFrameworkError(Exception ex) {
         ErrorResponse errorResponse = (ErrorResponse) ex;
         HttpStatus status = HttpStatus.valueOf(errorResponse.getStatusCode().value());

@@ -14,3 +14,6 @@ app:
   jwt:
     # Test-only key; never use it outside the test profile
     secret: test-only-jwt-secret-for-techshopping-tests-0123456789
+  upload:
+    # Keep test uploads out of the project folder
+    dir: ${java.io.tmpdir}/techshopping-test-uploads

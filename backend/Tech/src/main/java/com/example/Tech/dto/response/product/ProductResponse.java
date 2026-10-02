@@ -1,5 +1,7 @@
 package com.example.Tech.dto.response.product;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -23,6 +25,9 @@ public record ProductResponse(
         Integer viewCount,
         Boolean isActive,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        @Schema(description = "Primary image, else the first image by display order; null when the product has none")
+        String primaryImageUrl
 ) {
 }

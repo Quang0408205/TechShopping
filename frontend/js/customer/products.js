@@ -5,7 +5,7 @@
  *   GET /categories?size=100                 → map slug ↔ id
  *   GET /products?isActive=true&categoryId=&brandId=&keyword=&minPrice=
  *       &maxPrice=&page=&size=12&sort=       → lưới sản phẩm + phân trang
- *   GET /products/{id}/images                → ảnh từng thẻ (js/core/ui.js)
+ *   ảnh thẻ: primaryImageUrl có sẵn trong danh sách (IMG-3, js/core/ui.js)
  *
  * Bộ lọc thương hiệu theo danh mục: backend không có endpoint "hãng theo
  * danh mục" (và 2.8 không sửa backend), nên gom brandId/brandName từ các

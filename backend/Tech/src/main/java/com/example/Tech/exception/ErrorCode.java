@@ -36,6 +36,13 @@ public enum ErrorCode {
 
     // Product image
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Product image not found"),
+    PRODUCT_IMAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The product already has the maximum number of images"),
+    LAST_PRODUCT_IMAGE(HttpStatus.CONFLICT, "The last image of a product cannot be deleted"),
+    PRIMARY_IMAGE_REQUIRED(HttpStatus.CONFLICT, "Set another image as primary instead of unsetting the primary image"),
+
+    // Image upload
+    INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "Only JPEG, PNG or WebP images are accepted"),
+    IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Image must be at most 5 MB"),
 
     // Product specification
     PRODUCT_SPECIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Product specification not found"),

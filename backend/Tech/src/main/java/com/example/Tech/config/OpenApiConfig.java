@@ -20,7 +20,9 @@ public class OpenApiConfig {
                         .title("TechShopping API")
                         .description("Backend REST API - product catalogue, authentication, accounts and cart. "
                                 + "Log in with POST /api/v1/auth/login, then use 'Authorize' with the access token. "
-                                + "Catalogue reads are public; catalogue writes require the ADMIN role.")
+                                + "Catalogue reads are public; catalogue writes require the ADMIN role. "
+                                + "A new product needs one primary and at least one secondary image: upload files "
+                                + "with POST /api/v1/admin/uploads/product-images or send http(s) URLs.")
                         .version("v1"))
                 .components(new Components().addSecuritySchemes(BEARER_AUTH, new SecurityScheme()
                         .type(SecurityScheme.Type.HTTP)

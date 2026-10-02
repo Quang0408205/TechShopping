@@ -355,6 +355,17 @@ document.addEventListener(
 
             thumbnails.querySelectorAll(".detail-thumb").forEach(function (button) {
 
+                /* Ảnh phụ hỏng: bỏ khỏi dải; còn dưới 2 ảnh thì ẩn cả dải */
+                button.querySelector("img").addEventListener("error", function () {
+
+                    button.remove();
+
+                    if (thumbnails.querySelectorAll(".detail-thumb").length < 2) {
+                        thumbnails.hidden = true;
+                    }
+
+                });
+
                 button.addEventListener("click", function () {
 
                     mainImage.src = button.dataset.url;

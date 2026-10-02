@@ -839,3 +839,196 @@ button.admin-badge {
 .admin-filter-bar .admin-filter-bar {
     margin-bottom: 0;
 }
+
+
+/* ================= IMG-2: ẢNH SẢN PHẨM ================= */
+
+/* Ảnh nhỏ cạnh tên ở bảng sản phẩm */
+.admin-product-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.admin-product-thumb {
+    flex-shrink: 0;
+
+    width: 44px;
+    height: 44px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+
+    background: var(--color-paper);
+    object-fit: contain;
+}
+
+.admin-product-thumb--empty {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--gray-100);
+    color: var(--gray-500);
+    font-size: 12px;
+}
+
+/* Khối ảnh trong form thêm / sửa */
+.admin-image-field {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+
+    border: none;
+}
+
+.admin-image-field legend {
+    margin-bottom: 6px;
+    padding: 0;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.admin-field-hint {
+    margin: 0 0 12px;
+
+    color: var(--gray-600);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.admin-image-field .form-error {
+    margin-bottom: 12px;
+}
+
+.admin-image-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+
+    margin-bottom: 12px;
+}
+
+.admin-image-list > p {
+    grid-column: 1 / -1;
+    margin: 0;
+}
+
+.admin-image-tile {
+    display: flex;
+    flex-direction: column;
+
+    margin: 0;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+
+    background: var(--color-paper);
+    overflow: hidden;
+}
+
+.admin-image-tile.is-primary {
+    border-color: var(--color-success);
+    box-shadow: 0 0 0 1px var(--color-success);
+}
+
+.admin-image-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    aspect-ratio: 1 / 1;
+    padding: 8px;
+
+    background: var(--gray-50);
+    color: var(--gray-500);
+    font-size: 12px;
+}
+
+.admin-image-thumb img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: contain;
+}
+
+.admin-image-thumb.is-broken::after {
+    content: "Không tải được ảnh";
+}
+
+.admin-image-tile.is-uploading .admin-image-thumb {
+    background: var(--gray-100);
+}
+
+.admin-image-tile figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+
+    padding: 8px;
+
+    border-top: 1px solid var(--gray-200);
+}
+
+.admin-image-tile .admin-link-btn {
+    padding: 2px 0;
+}
+
+.admin-image-tile .admin-link-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Thêm ảnh: nút chọn file + ô dán link */
+.admin-image-add {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-image-add.is-disabled {
+    opacity: 0.5;
+}
+
+.admin-image-add .btn {
+    min-height: 44px;
+    padding: 0 18px;
+
+    cursor: pointer;
+}
+
+/* label.btn: bỏ kiểu nhãn chung của .admin-field label */
+.admin-field .admin-image-file-btn {
+    position: relative;
+
+    display: inline-flex;
+    margin: 0;
+
+    font-size: 12px;
+}
+
+.admin-image-file-btn:focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+/* Ẩn ô file gốc nhưng vẫn dùng được bằng bàn phím / trình đọc màn hình */
+.admin-field .admin-image-file-btn input[type="file"] {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    padding: 0;
+
+    opacity: 0;
+    cursor: pointer;
+}
+
+.admin-image-add input[type="url"] {
+    flex: 1 1 240px;
+    width: auto;
+}

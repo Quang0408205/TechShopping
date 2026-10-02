@@ -1716,12 +1716,6 @@ img {
     transform: none;
 }
 
-/* Ảnh thẻ sản phẩm chưa có src (đang chờ GET /products/{id}/images): chỉ hiện nền xám */
-
-.product-image img:not([src]) {
-    visibility: hidden;
-}
-
 /* Tên sản phẩm link sang trang chi tiết */
 
 .product-info h3 a:hover {

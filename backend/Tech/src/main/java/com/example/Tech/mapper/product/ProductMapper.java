@@ -51,7 +51,8 @@ public class ProductMapper {
         }
     }
 
-    public ProductResponse toResponse(Product product) {
+    /** The primary image URL is looked up by the service (one query per page, see ProductImageRepository). */
+    public ProductResponse toResponse(Product product, String primaryImageUrl) {
         Category category = product.getCategory();
         Brand brand = product.getBrand();
         return new ProductResponse(
@@ -74,7 +75,8 @@ public class ProductMapper {
                 product.getViewCount(),
                 product.getActive(),
                 product.getCreatedAt(),
-                product.getUpdatedAt()
+                product.getUpdatedAt(),
+                primaryImageUrl
         );
     }
 }

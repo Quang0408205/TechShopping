@@ -200,8 +200,8 @@ function getProductDetailUrl(productId) {
 
 /*
  * Ảnh thay thế theo slug danh mục, dùng khi sản phẩm không có ảnh (116 sản
- * phẩm) hoặc tải ảnh lỗi. ProductResponse không có URL ảnh nên mỗi thẻ tải
- * ảnh riêng qua GET /products/{id}/images (xem loadProductImages).
+ * phẩm dữ liệu crawl) hoặc tải ảnh lỗi. Ảnh của thẻ lấy thẳng từ
+ * ProductResponse.primaryImageUrl (IMG-3), không gọi API riêng cho từng thẻ.
  */
 
 const CATEGORY_FALLBACK_IMAGES = {
@@ -294,11 +294,20 @@ function getDisplayPrice(product) {
  * data-price vì giỏ hàng còn lưu theo tên cho tới Phase 3.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
  * không cho thêm vào giỏ.
+ * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
+ * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
+ * thay thế (bindProductImageFallbacks).
  */
 
 function productCardHtml(product, categorySlug) {
 
     const price = getDisplayPrice(product);
+
+    const fallbackImage = getFallbackImage(categorySlug);
+
+    const imageUrl = isSafeImageUrl(product.primaryImageUrl)
+        ? product.primaryImageUrl.trim()
+        : fallbackImage;
 
     const hasPrice = price > 0;
 
@@ -318,7 +327,8 @@ function productCardHtml(product, categorySlug) {
             <a href="${detailUrl}" class="product-image">
                 ${hasDiscount ? `<span class="product-badge">-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
                 <img
-                    data-fallback="${escapeHtml(getFallbackImage(categorySlug))}"
+                    src="${escapeHtml(imageUrl)}"
+                    data-fallback="${escapeHtml(fallbackImage)}"
                     alt="${name}"
                     loading="lazy"
                 >
@@ -359,7 +369,8 @@ function productCardHtml(product, categorySlug) {
 
 /*
  * renderProductGrid(container, products, categorySlugById):
- * vẽ lưới thẻ, gắn "Thêm vào giỏ" cho các thẻ mới, rồi tải ảnh thật.
+ * vẽ lưới thẻ (ảnh từ primaryImageUrl), gắn "Thêm vào giỏ" cho các thẻ mới
+ * và ảnh thay thế cho ảnh hỏng.
  * categorySlugById: { [categoryId]: slug }, dùng để chọn ảnh thay thế.
  */
 
@@ -391,7 +402,7 @@ function renderProductGrid(container, products, categorySlugById) {
 
     setupAddToCart(container);
 
-    loadProductImages(container);
+    bindProductImageFallbacks(container);
 
     staggerRevealCards(container);
 
@@ -557,70 +568,23 @@ function isSafeImageUrl(url) {
 }
 
 
-function pickProductImage(images) {
-
-    if (!Array.isArray(images) || images.length === 0) {
-        return null;
-    }
-
-    const primary = images.find(function (image) {
-        return image.isPrimary && isSafeImageUrl(image.imageUrl);
-    });
-
-    if (primary) {
-        return primary.imageUrl;
-    }
-
-    const first = images.find(function (image) {
-        return isSafeImageUrl(image.imageUrl);
-    });
-
-    return first ? first.imageUrl : null;
-
-}
-
-
 /*
- * Với mỗi thẻ trong container: GET /products/{id}/images (công khai, không
- * gửi token), lấy ảnh chính hoặc ảnh đầu tiên. Không có ảnh / request lỗi /
- * ảnh hỏng → ảnh thay thế theo danh mục. Thẻ mới render chưa có src (ô ảnh
- * nền xám) để không hiện nhầm ảnh thay thế trong lúc chờ API.
+ * Ảnh thẻ hỏng (link sai, CDN lỗi, ảnh đã xoá) → ảnh thay thế theo danh mục
+ * (data-fallback). Đổi một lần, không lặp nếu chính ảnh thay thế cũng lỗi.
  */
 
-function loadProductImages(container) {
+function bindProductImageFallbacks(container) {
 
-    container.querySelectorAll(".product-card[data-product-id]")
-        .forEach(function (card) {
-
-            const img = card.querySelector(".product-image img");
-
-            if (!img) {
-                return;
-            }
-
+    container.querySelectorAll(".product-card .product-image img[data-fallback]")
+        .forEach(function (img) {
 
             img.addEventListener("error", function () {
 
-                if (img.src !== img.dataset.fallback) {
+                if (img.getAttribute("src") !== img.dataset.fallback) {
                     img.src = img.dataset.fallback;
                 }
 
             });
-
-
-            apiRequest(
-                "/products/" + encodeURIComponent(card.dataset.productId) + "/images"
-            )
-                .then(function (images) {
-
-                    img.src = pickProductImage(images) || img.dataset.fallback;
-
-                })
-                .catch(function () {
-
-                    img.src = img.dataset.fallback;
-
-                });
 
         });
 

@@ -175,6 +175,26 @@ const API_ERROR_MESSAGES = {
     RESOURCE_IN_USE:
         "Dữ liệu đang được sử dụng, không thể xoá.",
 
+    /* Ảnh sản phẩm (IMG) */
+
+    PRODUCT_IMAGE_NOT_FOUND:
+        "Không tìm thấy ảnh (có thể đã bị xoá).",
+
+    PRODUCT_IMAGE_LIMIT_EXCEEDED:
+        "Mỗi sản phẩm có tối đa 10 ảnh.",
+
+    LAST_PRODUCT_IMAGE:
+        "Không thể xoá ảnh cuối cùng của sản phẩm. Hãy thêm ảnh khác trước.",
+
+    PRIMARY_IMAGE_REQUIRED:
+        "Sản phẩm phải có ảnh chính. Hãy đặt một ảnh khác làm ảnh chính.",
+
+    INVALID_IMAGE_FILE:
+        "Chỉ nhận ảnh JPG, PNG hoặc WebP.",
+
+    IMAGE_TOO_LARGE:
+        "Ảnh quá lớn (tối đa 5 MB).",
+
     /* Giỏ hàng (Phase 3) */
 
     PRODUCT_VARIANT_NOT_FOUND:
@@ -303,6 +323,8 @@ function getCurrentUser() {
  * apiRequest("/products?size=12")
  * apiRequest("/auth/login", { method: "POST", body: {...} })
  * apiRequest("/users/me", { auth: true })
+ * apiRequest("/admin/uploads/product-images", { method: "POST", body: formData, auth: true })
+ *   (body là FormData thì gửi nguyên dạng multipart, không chuyển JSON)
  *
  * Trả về phần "data" khi thành công, ném ApiError khi thất bại.
  * Chỉ gửi token khi auth = true: backend từ chối token hỏng
@@ -347,7 +369,10 @@ async function sendRequest(path, method, body, useAuth) {
 
     const headers = {};
 
-    if (body !== undefined) {
+    /* FormData (upload file): trình duyệt tự đặt Content-Type multipart kèm boundary */
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+    if (body !== undefined && !isFormData) {
         headers["Content-Type"] = "application/json";
     }
 
@@ -369,7 +394,7 @@ async function sendRequest(path, method, body, useAuth) {
             {
                 method: method,
                 headers: headers,
-                body: body !== undefined ? JSON.stringify(body) : undefined
+                body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body))
             }
         );
 
