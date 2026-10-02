@@ -12,6 +12,7 @@ import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.ProductVariantMapper;
+import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
@@ -42,6 +43,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final ProductRepository productRepository;
     private final AttributeValueRepository attributeValueRepository;
     private final VariantAttributeValueRepository variantAttributeValueRepository;
+    private final CartItemRepository cartItemRepository;
     private final ProductVariantMapper variantMapper;
 
     @Override
@@ -99,12 +101,17 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     }
 
     /**
-     * Links to attribute values are removed by the database (ON DELETE CASCADE).
+     * Links to attribute values are removed by the database (ON DELETE CASCADE). cart_items has no cascade,
+     * so the variant is first removed from every cart (carts are temporary data).
      */
     @Override
     @Transactional
     public void delete(Long id) {
         ProductVariant variant = findVariant(id);
+        int cartLines = cartItemRepository.deleteAllByVariantId(id);
+        if (cartLines > 0) {
+            log.info("Removed product variant id={} from {} cart line(s)", id, cartLines);
+        }
         variantRepository.delete(variant);
         variantRepository.flush();
         log.info("Deleted product variant id={}", id);

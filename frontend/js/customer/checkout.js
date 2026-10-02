@@ -4,8 +4,10 @@
  * Giao diện lấy từ bản frontend mới. Chỉ dành cho người đã đăng nhập.
  * - Điền sẵn họ tên / số điện thoại / địa chỉ từ API tài khoản thật
  *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
+ * - Giỏ hàng lấy từ server (/api/v1/cart, Phase 3). Có dòng ngừng bán thì
+ *   không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
  * - Đặt hàng: chưa có backend Order (Phase 4) → lưu đơn theo tài khoản bằng
- *   createLocalOrder() (js/core/order-store.js), rồi xoá giỏ hàng.
+ *   createLocalOrder() (js/core/order-store.js), rồi xoá giỏ hàng trên server.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -44,8 +46,36 @@ document.addEventListener(
                 "Vui lòng nhập địa chỉ nhận hàng đầy đủ."
         };
 
+        const UNAVAILABLE_MESSAGE =
+            "Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng quay lại giỏ hàng để xóa trước khi đặt hàng.";
 
-        const summary = getCartSummary();
+
+        let summary;
+
+        try {
+
+            summary = await getCartSummary();
+
+        } catch (error) {
+
+            if (!isLoggedIn()) {
+
+                redirectToLogin();
+
+                return;
+
+            }
+
+            emptyBox.hidden = false;
+
+            showToast(getErrorMessage(error), "error");
+
+            return;
+
+        }
+
+
+        setCartCount(summary.totalQuantity);
 
         if (summary.items.length === 0) {
 
@@ -61,6 +91,15 @@ document.addEventListener(
         renderSummary(summary);
 
         prefillFromAccount();
+
+
+        if (summary.hasUnavailableItems) {
+
+            showFormError(UNAVAILABLE_MESSAGE);
+
+            document.getElementById("checkoutSubmitBtn").disabled = true;
+
+        }
 
 
         document.querySelectorAll('input[name="paymentMethod"]').forEach(function (radio) {
@@ -156,7 +195,7 @@ document.addEventListener(
         }
 
 
-        function handleSubmit(event) {
+        async function handleSubmit(event) {
 
             event.preventDefault();
 
@@ -200,9 +239,46 @@ document.addEventListener(
             }
 
 
-            const cartSummary = getCartSummary();
+            const button = document.getElementById("checkoutSubmitBtn");
+
+            button.disabled = true;
+
+            button.textContent = "ĐANG XỬ LÝ...";
+
+
+            function restoreButton() {
+
+                button.disabled = false;
+
+                button.textContent = "ĐẶT HÀNG";
+
+            }
+
+
+            /* Đọc lại giỏ trên server ngay lúc đặt: giá / tình trạng có thể đã đổi */
+
+            let cartSummary;
+
+            try {
+
+                cartSummary = await getCartSummary();
+
+            } catch (error) {
+
+                restoreButton();
+
+                showFormError(isLoggedIn()
+                    ? getErrorMessage(error)
+                    : "Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
+
+                return;
+
+            }
+
 
             if (cartSummary.items.length === 0) {
+
+                restoreButton();
 
                 showFormError("Giỏ hàng của bạn đang trống.");
 
@@ -211,59 +287,62 @@ document.addEventListener(
             }
 
 
-            const button = document.getElementById("checkoutSubmitBtn");
+            if (cartSummary.hasUnavailableItems) {
 
-            button.disabled = true;
+                button.textContent = "ĐẶT HÀNG";
 
-            button.textContent = "ĐANG XỬ LÝ...";
+                renderSummary(cartSummary);
 
+                showFormError(UNAVAILABLE_MESSAGE);
 
-            /* Độ trễ giả lập thời gian xử lý đơn ở backend */
+                return;
 
-            setTimeout(function () {
-
-                const order = createLocalOrder({
-                    recipientName: data.recipientName,
-                    recipientPhone: data.recipientPhone,
-                    shippingAddress: data.shippingAddress,
-                    note: data.note,
-                    paymentMethod: data.paymentMethod,
-                    items: cartSummary.items.map(function (item) {
-                        return {
-                            productId: item.productId,
-                            variantId: item.variantId,
-                            name: item.name,
-                            variantLabel: item.variantLabel,
-                            image: item.image,
-                            price: item.price,
-                            quantity: item.quantity
-                        };
-                    }),
-                    subtotal: cartSummary.subtotal,
-                    shippingFee: cartSummary.shippingFee,
-                    total: cartSummary.total
-                });
+            }
 
 
-                if (!order) {
+            const order = createLocalOrder({
+                recipientName: data.recipientName,
+                recipientPhone: data.recipientPhone,
+                shippingAddress: data.shippingAddress,
+                note: data.note,
+                paymentMethod: data.paymentMethod,
+                items: cartSummary.items.map(function (item) {
+                    return {
+                        productId: item.productId,
+                        variantId: item.variantId,
+                        name: item.name,
+                        variantLabel: item.variantLabel,
+                        image: item.image,
+                        price: item.price,
+                        quantity: item.quantity
+                    };
+                }),
+                subtotal: cartSummary.subtotal,
+                shippingFee: cartSummary.shippingFee,
+                total: cartSummary.total
+            });
 
-                    button.disabled = false;
 
-                    button.textContent = "ĐẶT HÀNG";
+            if (!order) {
 
-                    showFormError("Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
+                restoreButton();
 
-                    return;
+                showFormError("Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
 
-                }
+                return;
+
+            }
 
 
-                clearCart();
+            /* Đơn (mô phỏng) đã lưu; xoá giỏ trên server lỗi thì vẫn sang trang đơn hàng */
+            try {
+                await clearCart();
+            } catch (error) {
+                /* bỏ qua: người dùng tự xoá trong trang giỏ hàng */
+            }
 
-                window.location.href =
-                    siteUrl("customer/order-detail.html?id=" + encodeURIComponent(order.id) + "&justPlaced=1");
-
-            }, 700);
+            window.location.href =
+                siteUrl("customer/order-detail.html?id=" + encodeURIComponent(order.id) + "&justPlaced=1");
 
         }
 

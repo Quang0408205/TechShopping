@@ -18,7 +18,7 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("TechShopping API")
-                        .description("Backend REST API - product catalogue and authentication. "
+                        .description("Backend REST API - product catalogue, authentication, accounts and cart. "
                                 + "Log in with POST /api/v1/auth/login, then use 'Authorize' with the access token. "
                                 + "Catalogue reads are public; catalogue writes require the ADMIN role.")
                         .version("v1"))

@@ -15,6 +15,7 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.AttributeValueMapper;
 import com.example.Tech.mapper.product.ProductVariantMapper;
+import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -34,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,12 +56,15 @@ class ProductVariantServiceImplTest {
     @Mock
     private VariantAttributeValueRepository variantAttributeValueRepository;
 
+    @Mock
+    private CartItemRepository cartItemRepository;
+
     private ProductVariantServiceImpl variantService;
 
     @BeforeEach
     void setUp() {
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
-                attributeValueRepository, variantAttributeValueRepository,
+                attributeValueRepository, variantAttributeValueRepository, cartItemRepository,
                 new ProductVariantMapper(new AttributeValueMapper()));
     }
 
@@ -277,13 +283,26 @@ class ProductVariantServiceImplTest {
     }
 
     @Test
-    void delete_success() {
+    void delete_removesTheVariantFromCartsFirst() {
         ProductVariant existing = variant();
         when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.of(existing));
+        when(cartItemRepository.deleteAllByVariantId(5L)).thenReturn(2);
 
         variantService.delete(5L);
 
-        verify(variantRepository).delete(existing);
+        InOrder inOrder = inOrder(cartItemRepository, variantRepository);
+        inOrder.verify(cartItemRepository).deleteAllByVariantId(5L);
+        inOrder.verify(variantRepository).delete(existing);
+    }
+
+    @Test
+    void delete_unknownVariant_touchesNoCart() {
+        when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> variantService.delete(5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.PRODUCT_VARIANT_NOT_FOUND);
+        verify(cartItemRepository, never()).deleteAllByVariantId(any());
     }
 
     private static Product product() {

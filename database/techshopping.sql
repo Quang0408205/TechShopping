@@ -1,7 +1,3 @@
--- sql schema: hệ thống quản lý và khuyến nghị mua sắm thiết bị công nghệ
--- database: postgresql 15+
--- encoding: utf-8
-
 -- =====================================================
 -- nhóm 1: người dùng và phân quyền
 -- =====================================================

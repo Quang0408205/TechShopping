@@ -69,7 +69,12 @@ public enum ErrorCode {
     // Admin user management
     CANNOT_MODIFY_OWN_ACCOUNT(HttpStatus.CONFLICT, "Administrators cannot deactivate, delete or demote their own account"),
     LAST_ADMIN(HttpStatus.CONFLICT, "The last active administrator cannot be removed"),
-    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted");
+    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted"),
+
+    // Cart
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Product variant is not in the cart"),
+    PRODUCT_NOT_AVAILABLE(HttpStatus.CONFLICT, "Product is not available for purchase"),
+    CART_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The cart already holds the maximum number of different items");
 
     private final HttpStatus status;
     private final String defaultMessage;

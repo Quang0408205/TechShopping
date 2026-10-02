@@ -13,6 +13,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     migrateLegacyCart();
 
+    /* Gọi GET /cart (sau khi chuyển giỏ cũ trên trình duyệt lên server) */
     updateCartCount();
 
     setupHeaderSearch();
@@ -210,10 +211,10 @@ function setupScrollReveal() {
 }
 
 
-/* ================= CART (F2) ================= */
+/* ================= CART (Phase 3) ================= */
 
 /*
- * Lưu trữ giỏ hàng: js/core/cart-store.js (snapshot theo tài khoản).
+ * Lưu trữ giỏ hàng: js/core/cart-store.js (giỏ trên server, /api/v1/cart).
  * File này lo phần giao diện: nút "Thêm vào giỏ", bắt buộc đăng nhập,
  * hiệu ứng bay vào giỏ, toast.
  */
@@ -290,7 +291,7 @@ function setupAddToCart(root) {
                 }
 
 
-                addToCart(
+                await addToCart(
                     {
                         productId: Number(productId),
                         variantId: variant ? variant.id : null,
@@ -321,15 +322,16 @@ function setupAddToCart(root) {
 
 
 /*
- * addToCart(snapshot, quantity?, sourceElement?) → true nếu đã thêm.
- * - snapshot: { productId, variantId, name, variantLabel, price, image } (cart-store.js).
- * - Chưa đăng nhập: không thêm, chuyển tới trang đăng nhập (?reason=cart),
- *   đăng nhập xong quay lại đúng trang đang xem → trả về false.
+ * addToCart(snapshot, quantity?, sourceElement?) → Promise<true> nếu đã thêm.
+ * - snapshot: { productId, variantId, name, variantLabel } — server chỉ cần
+ *   variantId; tên / phiên bản dùng cho toast. Giá do server tính.
+ * - Chưa đăng nhập (hoặc phiên hết hạn): không thêm, chuyển tới trang đăng nhập
+ *   (?reason=cart), đăng nhập xong quay lại đúng trang đang xem → false.
  * - quantity: tuỳ chọn (trang chi tiết sản phẩm), mặc định 1.
  * - sourceElement: ảnh sản phẩm để chạy hiệu ứng bay vào giỏ (tuỳ chọn).
  */
 
-function addToCart(snapshot, quantity, sourceElement) {
+async function addToCart(snapshot, quantity, sourceElement) {
 
     if (!isLoggedIn()) {
 
@@ -340,25 +342,54 @@ function addToCart(snapshot, quantity, sourceElement) {
     }
 
 
-    const amount =
-        Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
+    if (snapshot.variantId === undefined || snapshot.variantId === null) {
 
-    const lineQuantity = addCartItem(snapshot, amount);
-
-    if (lineQuantity === 0) {
-
-        showToast("Không thể thêm sản phẩm này vào giỏ hàng.", "error");
+        showToast("Sản phẩm này hiện chưa thể đặt mua trực tuyến.", "error");
 
         return false;
 
     }
 
 
+    const amount =
+        Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
+
+    let summary;
+
+    try {
+
+        summary = await addCartItem(snapshot, amount);
+
+    } catch (error) {
+
+        /* refresh thất bại → api.js đã xoá phiên: mời đăng nhập lại */
+        if (!isLoggedIn()) {
+
+            redirectToLogin("cart");
+
+            return false;
+
+        }
+
+        showToast(getErrorMessage(error), "error");
+
+        return false;
+
+    }
+
+
+    const line = summary.items.find(function (item) {
+        return String(item.variantId) === String(snapshot.variantId);
+    });
+
+    const lineQuantity = line ? line.quantity : amount;
+
+
     /* Số trên icon giỏ hàng tăng khi sản phẩm "bay" tới nơi */
 
     flyToCart(sourceElement, function () {
 
-        updateCartCount();
+        setCartCount(summary.totalQuantity);
 
         bumpCartIcon();
 

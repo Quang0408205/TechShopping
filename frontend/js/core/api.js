@@ -48,7 +48,11 @@ const STAFF_AUTH_STORAGE_KEY = "poy_staff_auth";
 const AUTH_STORAGE_KEY =
     IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
 
-/* Tiền tố giỏ hàng: poy_cart_<userId> (js/core/cart-store.js); "poy_cart" là giỏ kiểu cũ */
+/*
+ * Giỏ hàng nằm trên server từ Phase 3. Hai khoá cũ chỉ còn để dọn một lần
+ * (js/core/cart-store.js): "poy_cart_<userId>" (F2, chuyển lên server) và
+ * "poy_cart" (kiểu cũ theo tên sản phẩm, bỏ đi).
+ */
 const CART_STORAGE_KEY = "poy_cart";
 
 
@@ -169,7 +173,21 @@ const API_ERROR_MESSAGES = {
         "Thương hiệu không tồn tại.",
 
     RESOURCE_IN_USE:
-        "Dữ liệu đang được sử dụng, không thể xoá."
+        "Dữ liệu đang được sử dụng, không thể xoá.",
+
+    /* Giỏ hàng (Phase 3) */
+
+    PRODUCT_VARIANT_NOT_FOUND:
+        "Phiên bản sản phẩm không tồn tại hoặc đã ngừng kinh doanh.",
+
+    PRODUCT_NOT_AVAILABLE:
+        "Sản phẩm này hiện không còn bán.",
+
+    CART_ITEM_NOT_FOUND:
+        "Sản phẩm không còn trong giỏ hàng (có thể đã được xóa ở tab khác).",
+
+    CART_LIMIT_EXCEEDED:
+        "Giỏ hàng đã đủ 50 sản phẩm khác nhau. Vui lòng xóa bớt trước khi thêm mới."
 
 };
 

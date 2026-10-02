@@ -1,250 +1,203 @@
-/* ================= GIỎ HÀNG (F2): SNAPSHOT THEO TÀI KHOẢN ================= */
+/* ================= GIỎ HÀNG (Phase 3): GIỎ TRÊN SERVER ================= */
 
 /*
- * Mỗi dòng giỏ hàng là một "snapshot" lấy từ API lúc thêm:
- *   { productId, variantId, name, variantLabel, price, image, quantity }
- * Khoá dòng = productId + variantId (variantId = null khi sản phẩm không có
- * phiên bản). Không tra catalogue giả (mock-data.js) như bản frontend mới.
+ * Giỏ hàng lưu ở backend theo tài khoản: /api/v1/cart (cần đăng nhập).
+ * Mỗi dòng xác định bằng variantId; giá, tên, ảnh luôn lấy từ server lúc đọc
+ * (không tin giá do trình duyệt gửi lên). Mọi hàm đều async và trả về giỏ đã
+ * đổi sang dạng dùng cho trang giỏ / thanh toán:
+ *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
+ *               image, quantity, lineTotal, available }],
+ *     totalQuantity, subtotal, shippingFee, total, hasUnavailableItems }
+ * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá),
+ * không tính vào tạm tính, chỉ còn nút xoá.
  *
- * Giỏ hàng gắn với TÀI KHOẢN: lưu ở localStorage "poy_cart_<userId>", nên
- * mỗi người đăng nhập trên cùng trình duyệt có giỏ riêng; chưa đăng nhập thì
- * giỏ rỗng và không thêm được (main.js chuyển tới trang đăng nhập).
+ * Giỏ cũ lưu trên trình duyệt ("poy_cart_<userId>", F2) được chuyển lên
+ * server một lần (migrateLocalCart); lỗi API thì hàm ném ApiError (api.js).
  *
  * Thứ tự nạp: api.js → ui.js → cart-store.js → layout.js → main.js.
- * CHỜ BACKEND (Phase 3 – Cart): các hàm dưới đây sẽ gọi apiRequest("/cart…")
- * với cùng hình dạng dữ liệu, nên trang giỏ hàng / thanh toán không phải viết lại.
  */
 
-/* Phí vận chuyển mô phỏng (backend sẽ quyết định thật) */
+/* Phí vận chuyển mô phỏng: backend chưa tính phí ship (Phase 4 – Order) */
 const FREE_SHIPPING_THRESHOLD = 10000000;
 
 const DEFAULT_SHIPPING_FEE = 30000;
 
-/* Tối đa mỗi dòng (trang chi tiết cũng cho chọn 1–10) */
+/* Tối đa mỗi dòng, giống CartService.MAX_LINE_QUANTITY ở backend */
 const MAX_CART_LINE_QUANTITY = 10;
 
 
-/* Khoá localStorage của giỏ hàng người đang đăng nhập, null nếu chưa đăng nhập */
+function emptyCartSummary() {
 
-function getCartStorageKey() {
-
-    const user = isLoggedIn() ? getCurrentUser() : null;
-
-    return user && user.id !== undefined && user.id !== null
-        ? CART_STORAGE_KEY + "_" + user.id
-        : null;
+    return toCartSummary(null);
 
 }
 
 
-function getCartItems() {
+/* CartResponse của API → dạng dùng ở giao diện (+ phí ship mô phỏng) */
 
-    const key = getCartStorageKey();
+function toCartSummary(cart) {
 
-    if (!key) {
-        return [];
+    const items = (cart && Array.isArray(cart.items) ? cart.items : []).map(function (item) {
+
+        return {
+            productId: item.productId,
+            variantId: item.variantId,
+            name: item.productName,
+            variantLabel: item.variantName || "",
+            price: Number(item.unitPrice) || 0,
+            oldPrice: item.originalPrice !== null && item.originalPrice !== undefined
+                ? Number(item.originalPrice)
+                : null,
+            image: isSafeImageUrl(item.imageUrl) ? item.imageUrl : null,
+            quantity: item.quantity,
+            lineTotal: Number(item.lineTotal) || 0,
+            available: item.available === true
+        };
+
+    });
+
+
+    const subtotal = cart ? Number(cart.subtotal) || 0 : 0;
+
+    const hasPayableItems = items.some(function (item) {
+        return item.available;
+    });
+
+    const shippingFee =
+        !hasPayableItems ? 0 :
+            (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE);
+
+
+    return {
+        items: items,
+        totalQuantity: cart ? cart.totalQuantity || 0 : 0,
+        subtotal: subtotal,
+        shippingFee: shippingFee,
+        total: subtotal + shippingFee,
+        hasUnavailableItems: Boolean(cart && cart.hasUnavailableItems)
+    };
+
+}
+
+
+/* Giỏ hàng hiện tại; chưa đăng nhập → giỏ rỗng (không gọi API) */
+
+async function getCartSummary() {
+
+    if (!isLoggedIn()) {
+        return emptyCartSummary();
     }
 
+    await migrateLocalCart();
 
-    try {
-
-        const items = JSON.parse(localStorage.getItem(key) || "[]");
-
-        return Array.isArray(items) ? items.filter(isValidCartItem) : [];
-
-    } catch (error) {
-
-        return [];
-
-    }
-
-}
-
-
-function isValidCartItem(item) {
-
-    return Boolean(item) &&
-        item.productId !== undefined && item.productId !== null &&
-        typeof item.name === "string" &&
-        Number(item.price) > 0 &&
-        Number.isInteger(item.quantity) && item.quantity > 0;
-
-}
-
-
-function saveCartItems(items) {
-
-    const key = getCartStorageKey();
-
-    if (!key) {
-        return;
-    }
-
-    localStorage.setItem(key, JSON.stringify(items));
-
-}
-
-
-function isSameCartLine(item, productId, variantId) {
-
-    return String(item.productId) === String(productId) &&
-        String(item.variantId) === String(variantId === undefined ? null : variantId);
+    return toCartSummary(await apiRequest("/cart", { auth: true }));
 
 }
 
 
 /*
- * Thêm snapshot vào giỏ (gộp dòng trùng productId + variantId).
- * Trả về số lượng mới của dòng, hoặc 0 nếu không thêm được (chưa đăng nhập,
- * dữ liệu không hợp lệ).
+ * Thêm một phiên bản vào giỏ (cộng dồn vào dòng cũ, tối đa 10 / dòng).
+ * snapshot chỉ cần variantId; các trường khác (tên, giá…) do server trả về.
  */
 
-function addCartItem(snapshot, quantity) {
-
-    if (!getCartStorageKey()) {
-        return 0;
-    }
-
+async function addCartItem(snapshot, quantity) {
 
     const amount = Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
 
-    const items = getCartItems();
+    await migrateLocalCart();
 
-    const existing = items.find(function (item) {
-        return isSameCartLine(item, snapshot.productId, snapshot.variantId);
+    const cart = await apiRequest("/cart/items", {
+        method: "POST",
+        auth: true,
+        body: { variantId: snapshot.variantId, quantity: Math.min(amount, MAX_CART_LINE_QUANTITY) }
     });
 
-
-    if (existing) {
-
-        existing.quantity = Math.min(existing.quantity + amount, MAX_CART_LINE_QUANTITY);
-
-        /* Cập nhật giá / ảnh theo lần thêm mới nhất */
-        existing.price = snapshot.price;
-
-        existing.image = snapshot.image || existing.image || null;
-
-        saveCartItems(items);
-
-        return existing.quantity;
-
-    }
-
-
-    const item = {
-        productId: snapshot.productId,
-        variantId: snapshot.variantId === undefined ? null : snapshot.variantId,
-        name: snapshot.name,
-        variantLabel: snapshot.variantLabel || "",
-        price: Number(snapshot.price),
-        image: isSafeImageUrl(snapshot.image) ? snapshot.image : null,
-        quantity: Math.min(amount, MAX_CART_LINE_QUANTITY)
-    };
-
-    if (!isValidCartItem(item)) {
-        return 0;
-    }
-
-    items.push(item);
-
-    saveCartItems(items);
-
-    return item.quantity;
+    return toCartSummary(cart);
 
 }
 
 
-/* quantity <= 0 xoá dòng; tối đa MAX_CART_LINE_QUANTITY */
+/* quantity <= 0 xoá dòng; tối đa MAX_CART_LINE_QUANTITY. productId giữ lại cho tương thích F2. */
 
-function updateCartItemQuantity(productId, variantId, quantity) {
-
-    let items = getCartItems();
-
+async function updateCartItemQuantity(productId, variantId, quantity) {
 
     if (quantity <= 0) {
-
-        items = items.filter(function (item) {
-            return !isSameCartLine(item, productId, variantId);
-        });
-
-    } else {
-
-        items.forEach(function (item) {
-
-            if (isSameCartLine(item, productId, variantId)) {
-                item.quantity = Math.min(quantity, MAX_CART_LINE_QUANTITY);
-            }
-
-        });
-
+        return removeCartItem(productId, variantId);
     }
 
-
-    saveCartItems(items);
-
-    updateCartCount();
-
-}
-
-
-function removeCartItem(productId, variantId) {
-
-    updateCartItemQuantity(productId, variantId, 0);
-
-}
-
-
-function clearCart() {
-
-    saveCartItems([]);
-
-    updateCartCount();
-
-}
-
-
-function getCartCount() {
-
-    return getCartItems().reduce(function (sum, item) {
-        return sum + item.quantity;
-    }, 0);
-
-}
-
-
-/* Dòng giỏ hàng kèm thành tiền + tổng đơn, dùng cho trang giỏ hàng / thanh toán */
-
-function getCartSummary() {
-
-    const items = getCartItems().map(function (item) {
-        return Object.assign({}, item, { lineTotal: item.price * item.quantity });
+    const cart = await apiRequest("/cart/items/" + encodeURIComponent(variantId), {
+        method: "PUT",
+        auth: true,
+        body: { quantity: Math.min(quantity, MAX_CART_LINE_QUANTITY) }
     });
 
-    const subtotal = items.reduce(function (sum, item) {
-        return sum + item.lineTotal;
-    }, 0);
+    const summary = toCartSummary(cart);
 
-    const shippingFee =
-        items.length === 0 ? 0 :
-            (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE);
+    setCartCount(summary.totalQuantity);
 
-    return {
-        items: items,
-        subtotal: subtotal,
-        shippingFee: shippingFee,
-        total: subtotal + shippingFee
-    };
+    return summary;
 
 }
 
 
-function updateCartCount() {
+async function removeCartItem(productId, variantId) {
 
-    const count = getCartCount();
+    const cart = await apiRequest("/cart/items/" + encodeURIComponent(variantId), {
+        method: "DELETE",
+        auth: true
+    });
+
+    const summary = toCartSummary(cart);
+
+    setCartCount(summary.totalQuantity);
+
+    return summary;
+
+}
+
+
+async function clearCart() {
+
+    const summary = toCartSummary(await apiRequest("/cart", { method: "DELETE", auth: true }));
+
+    setCartCount(summary.totalQuantity);
+
+    return summary;
+
+}
+
+
+async function getCartCount() {
+
+    return (await getCartSummary()).totalQuantity;
+
+}
+
+
+/* Số trên icon giỏ hàng (header) */
+
+function setCartCount(count) {
 
     document.querySelectorAll(".cart-count").forEach(function (element) {
         element.textContent = count;
     });
+
+}
+
+
+/* Đọc lại giỏ từ server rồi cập nhật icon; lỗi (mất mạng, hết phiên) → hiện 0 */
+
+async function updateCartCount() {
+
+    try {
+
+        setCartCount(await getCartCount());
+
+    } catch (error) {
+
+        setCartCount(0);
+
+    }
 
 }
 
@@ -260,9 +213,139 @@ function cartItemImageUrl(item) {
 }
 
 
+/* ================= CHUYỂN GIỎ CŨ TRÊN TRÌNH DUYỆT LÊN SERVER ================= */
+
+/*
+ * F2 lưu giỏ ở localStorage "poy_cart_<userId>". Lần đầu đọc / ghi giỏ sau khi
+ * đăng nhập: gửi từng dòng lên POST /cart/items (server cộng dồn, tối đa 10),
+ * xoá dòng đã chuyển khỏi localStorage, rồi báo bằng toast. Dòng không có
+ * phiên bản hoặc sản phẩm đã ngừng bán thì bỏ qua. Mất mạng / hết phiên → dừng,
+ * giữ các dòng còn lại để lần sau chuyển tiếp. Chỉ chạy một lần mỗi trang.
+ */
+
+let localCartMigration = null;
+
+
+function migrateLocalCart() {
+
+    if (!localCartMigration) {
+        localCartMigration = runLocalCartMigration();
+    }
+
+    return localCartMigration;
+
+}
+
+
+async function runLocalCartMigration() {
+
+    const user = isLoggedIn() ? getCurrentUser() : null;
+
+    if (!user || user.id === undefined || user.id === null) {
+        return;
+    }
+
+
+    const key = CART_STORAGE_KEY + "_" + user.id;
+
+    let items;
+
+    try {
+
+        items = JSON.parse(localStorage.getItem(key) || "null");
+
+    } catch (error) {
+
+        items = [];
+
+    }
+
+    if (items === null) {
+        return;
+    }
+
+
+    let remaining = Array.isArray(items) ? items.slice() : [];
+
+    let moved = 0;
+
+    let skipped = 0;
+
+
+    while (remaining.length > 0) {
+
+        const item = remaining[0];
+
+        const quantity = item && Number.isInteger(item.quantity) && item.quantity > 0 ? item.quantity : 0;
+
+
+        if (item && item.variantId !== undefined && item.variantId !== null && quantity > 0) {
+
+            try {
+
+                await apiRequest("/cart/items", {
+                    method: "POST",
+                    auth: true,
+                    body: { variantId: item.variantId, quantity: Math.min(quantity, MAX_CART_LINE_QUANTITY) }
+                });
+
+                moved += 1;
+
+            } catch (error) {
+
+                /* Mất mạng / hết phiên / tài khoản bị khoá: giữ phần còn lại cho lần sau */
+                if (error.status === 0 || error.status === 401 || error.status === 403) {
+                    break;
+                }
+
+                skipped += 1;
+
+            }
+
+        } else {
+
+            skipped += 1;
+
+        }
+
+
+        remaining = remaining.slice(1);
+
+        try {
+            localStorage.setItem(key, JSON.stringify(remaining));
+        } catch (error) {
+            /* localStorage bị chặn: bỏ qua */
+        }
+
+    }
+
+
+    if (remaining.length === 0) {
+
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            /* localStorage bị chặn: bỏ qua */
+        }
+
+    }
+
+
+    if ((moved > 0 || skipped > 0) && typeof showToast === "function") {
+
+        showToast((
+            (moved > 0 ? "Đã chuyển " + moved + " sản phẩm từ giỏ hàng cũ lên tài khoản của bạn. " : "") +
+            (skipped > 0 ? skipped + " sản phẩm không còn bán nên đã được bỏ qua." : "")
+        ).trim());
+
+    }
+
+}
+
+
 /*
  * Giỏ hàng kiểu cũ (trước F2) lưu ở "poy_cart" theo TÊN sản phẩm, không có
- * productId nên không chuyển sang snapshot được: xoá đi và báo một lần.
+ * phiên bản nên không chuyển lên server được: xoá đi và báo một lần.
  */
 
 function migrateLegacyCart() {

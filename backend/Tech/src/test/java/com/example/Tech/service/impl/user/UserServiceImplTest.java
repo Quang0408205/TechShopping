@@ -15,6 +15,7 @@ import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,7 +67,8 @@ class UserServiceImplTest {
     @BeforeEach
     void setUp() {
         userService = new UserServiceImpl(userRepository, userRoleRepository, customerProfileRepository,
-                passwordEncoder, refreshTokenService, new UserMapper(), new CustomerProfileMapper());
+                passwordEncoder, refreshTokenService, new UserMapper(), new CustomerProfileMapper(),
+                new CurrentUserLoader(userRepository));
         user = new User();
         user.setId(USER_ID);
         user.setEmail("an@example.com");
