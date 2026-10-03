@@ -1,11 +1,15 @@
-/* ================= ĐƠN HÀNG (admin/orders.html) — Phase 4.5 ================= */
+/* ================= ĐƠN HÀNG (admin/orders.html) — Phase 4.5 + 5 ================= */
 
 /*
  * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
  *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&page=&size=  mới nhất trước
  *   PATCH /admin/orders/{id}/status  { status, trackingNumber? }
+ *   POST  /admin/orders/{id}/payment/confirm { transactionId? }   chuyển khoản đã nhận tiền
+ *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
+ *   POST  /admin/orders/{id}/installment/approve | reject { reason }
  * Chỉ cho chọn bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
- * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại.
+ * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại;
+ * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED (xác nhận khi chưa nhận tiền / chưa duyệt) → câu của server.
  * Chưa lọc theo chi nhánh: orders chỉ gắn chi nhánh qua sales_records ở Phase 7.
  */
 
@@ -92,10 +96,20 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (button.dataset.action === "toggle") {
+        const action = button.dataset.action;
+
+        if (action === "toggle") {
             toggleDetail(order.id);
-        } else if (button.dataset.action === "tracking") {
+        } else if (action === "tracking") {
             editTrackingNumber(order);
+        } else if (action === "confirm-payment") {
+            confirmPayment(order);
+        } else if (action === "refund") {
+            confirmRefund(order);
+        } else if (action === "approve") {
+            approveInstallment(order);
+        } else if (action === "reject") {
+            rejectInstallment(order);
         }
 
     });
@@ -297,7 +311,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
                 <td>${escapeHtml(String(order.totalQuantity))}</td>
                 <td>${escapeHtml(formatPrice(Number(order.total)))}</td>
-                <td>${escapeHtml(STAFF_PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod)}</td>
+                <td>
+                    ${escapeHtml(STAFF_PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod)}
+                    <span class="admin-subtext admin-payment-cell">${orderPaymentBadgeHtml(order)}</span>
+                </td>
                 <td>${statusCellHtml(order)}</td>
             </tr>
             <tr class="js-order-detail" data-order-id="${id}" ${expanded ? "" : "hidden"}>
@@ -334,7 +351,31 @@ document.addEventListener("DOMContentLoaded", async function () {
             labels[status] = "→ " + STAFF_ORDER_STATUS_LABELS[status];
         });
 
-        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code);
+        const waiting = waitingFor(order);
+
+        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code)
+            + (waiting ? `<span class="admin-subtext admin-waiting">${escapeHtml(waiting)}</span>` : "");
+
+    }
+
+
+    /* Đơn chờ xác nhận nhưng chưa xác nhận được (backend sẽ trả 409) */
+
+    function waitingFor(order) {
+
+        if (order.status !== "PENDING") {
+            return "";
+        }
+
+        if (order.paymentMethod === "BANK_TRANSFER" && order.payment && order.payment.status !== "PAID") {
+            return "Chờ nhận tiền chuyển khoản";
+        }
+
+        if (order.installment && order.installment.status !== "APPROVED") {
+            return "Chờ duyệt trả góp";
+        }
+
+        return "";
 
     }
 
@@ -403,6 +444,97 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </thead>
                     <tbody>${itemRows}</tbody>
                 </table>
+                ${paymentSectionHtml(order)}
+            </div>
+        `;
+
+    }
+
+
+    /* Khối thanh toán trong dòng chi tiết: thông tin + nút thao tác hợp lệ ở trạng thái hiện tại */
+
+    function paymentSectionHtml(order) {
+
+        const id = escapeHtml(String(order.id));
+
+        const facts = [];
+
+        const actions = [];
+
+
+        if (order.installment) {
+
+            const plan = order.installment;
+
+            facts.push(["Trả góp", installmentBadgeHtml(plan)]);
+            facts.push(["Kỳ hạn", escapeHtml(installmentTermText(plan))]);
+            facts.push(["Số CCCD", escapeHtml(plan.citizenId)]);
+            facts.push(["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)]);
+
+            if (plan.reviewedAt) {
+                facts.push([plan.status === "REJECTED" ? "Từ chối lúc" : "Duyệt lúc", escapeHtml(formatDateTimeVi(plan.reviewedAt))]);
+            }
+
+            if (plan.rejectionReason) {
+                facts.push(["Lý do từ chối", escapeHtml(plan.rejectionReason)]);
+            }
+
+            if (plan.status === "ACTIVE" || plan.status === "COMPLETED") {
+
+                facts.push(["Đã thu", escapeHtml(plan.paidPeriods + "/" + plan.numMonths + " kỳ · " + formatPrice(Number(plan.paidAmount)))]);
+
+                actions.push(`<a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/installments.html?keyword=" + encodeURIComponent(order.code)))}">XEM LỊCH TRẢ GÓP</a>`);
+
+            }
+
+            if (plan.status === "PENDING_APPROVAL") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="approve" data-id="${id}">DUYỆT TRẢ GÓP</button>`);
+                actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn admin-action-danger" data-action="reject" data-id="${id}">TỪ CHỐI</button>`);
+            }
+
+        } else if (order.payment) {
+
+            const payment = order.payment;
+
+            facts.push(["Thanh toán", orderPaymentBadgeHtml(order)]);
+            facts.push(["Số tiền", escapeHtml(formatPrice(Number(payment.amount)))]);
+
+            if (payment.paidAt) {
+                facts.push(["Đã thu lúc", escapeHtml(formatDateTimeVi(payment.paidAt))]);
+            }
+
+            if (payment.transactionId) {
+                facts.push(["Mã giao dịch", escapeHtml(payment.transactionId)]);
+            }
+
+            if (payment.refundedAt) {
+                facts.push(["Hoàn tiền lúc", escapeHtml(formatDateTimeVi(payment.refundedAt))]);
+            }
+
+            if (order.paymentMethod === "BANK_TRANSFER" && payment.status === "PENDING") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="confirm-payment" data-id="${id}">ĐÃ NHẬN TIỀN</button>`);
+            }
+
+            if (payment.status === "REFUND_PENDING") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="refund" data-id="${id}">ĐÃ HOÀN TIỀN</button>`);
+            }
+
+        } else {
+
+            return "";
+
+        }
+
+
+        return `
+            <div class="admin-payment-box">
+                <h4>Thanh toán</h4>
+                <dl class="admin-order-facts">
+                    ${facts.map(function (fact) {
+                        return `<div><dt>${fact[0]}</dt><dd>${fact[1]}</dd></div>`;
+                    }).join("")}
+                </dl>
+                ${actions.length ? `<div class="admin-payment-actions">${actions.join("")}</div>` : ""}
             </div>
         `;
 
@@ -490,9 +622,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         } else if (status === "DELIVERED") {
 
+            const paymentNote = order.paymentMethod === "COD"
+                ? " Tiền COD được ghi nhận là đã thu."
+                : order.installment ? " Lịch trả góp bắt đầu từ hôm nay (kỳ đầu đến hạn sau 1 tháng)." : "";
+
             openConfirmModal({
                 title: "Đã giao đơn " + order.code + "?",
-                message: "Đơn chuyển sang Đã giao hàng và được cộng vào tổng chi tiêu của khách. Không thể hoàn tác.",
+                message: "Đơn chuyển sang Đã giao hàng và được cộng vào tổng chi tiêu của khách." + paymentNote + " Không thể hoàn tác.",
                 confirmLabel: "ĐÃ GIAO",
                 cancelLabel: "Quay lại",
                 onConfirm: function () {
@@ -502,9 +638,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         } else if (status === "CANCELLED") {
 
+            const paid = order.payment && order.payment.status === "PAID";
+
             openConfirmModal({
                 title: "Hủy đơn " + order.code + "?",
-                message: "Khách sẽ thấy đơn ở trạng thái Đã hủy. Không thể hoàn tác.",
+                message: "Khách sẽ thấy đơn ở trạng thái Đã hủy."
+                    + (paid ? " Khoản tiền khách đã trả sẽ chuyển sang Chờ hoàn tiền." : "") + " Không thể hoàn tác.",
                 confirmLabel: "HỦY ĐƠN",
                 cancelLabel: "Quay lại",
                 onConfirm: function () {
@@ -537,6 +676,114 @@ document.addEventListener("DOMContentLoaded", async function () {
                 );
             }
         });
+
+    }
+
+
+    /* ================= THANH TOÁN / TRẢ GÓP ================= */
+
+    function confirmPayment(order) {
+
+        openPaymentConfirmModal({
+            title: "Đã nhận tiền đơn " + order.code + "?",
+            message: "Đối chiếu sao kê: " + formatPrice(Number(order.payment.amount)) + ", nội dung " + order.code
+                + ". Sau khi xác nhận, đơn mới chuyển được sang Đã xác nhận.",
+            confirmLabel: "ĐÃ NHẬN TIỀN",
+            onConfirm: function (body) {
+                postAction(order, "payment/confirm", body, "Đã ghi nhận tiền chuyển khoản của đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function confirmRefund(order) {
+
+        openConfirmModal({
+            title: "Đã hoàn tiền đơn " + order.code + "?",
+            message: "Xác nhận đã chuyển trả " + formatPrice(Number(order.payment.amount)) + " cho khách. Không thể hoàn tác.",
+            confirmLabel: "ĐÃ HOÀN TIỀN",
+            cancelLabel: "Quay lại",
+            onConfirm: function () {
+                postAction(order, "payment/refund", undefined, "Đã ghi nhận hoàn tiền đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function approveInstallment(order) {
+
+        openConfirmModal({
+            title: "Duyệt trả góp đơn " + order.code + "?",
+            message: "Đã xác minh khách (CCCD " + order.installment.citizenId + ", thẻ "
+                + (order.installment.cardBankName || order.installment.cardBank) + "). Sau khi duyệt, đơn mới chuyển được sang Đã xác nhận.",
+            confirmLabel: "DUYỆT",
+            cancelLabel: "Quay lại",
+            onConfirm: function () {
+                postAction(order, "installment/approve", undefined, "Đã duyệt trả góp đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function rejectInstallment(order) {
+
+        openConfirmModal({
+            title: "Từ chối trả góp đơn " + order.code + "?",
+            message: "Đơn sẽ bị hủy và khách thấy lý do bên dưới. Không thể hoàn tác.",
+            confirmLabel: "TỪ CHỐI",
+            cancelLabel: "Quay lại",
+            input: {
+                label: "Lý do từ chối (bắt buộc)",
+                placeholder: "VD: Không xác minh được thông tin CCCD",
+                maxLength: REJECTION_REASON_MAX_LENGTH
+            },
+            onConfirm: function (reason) {
+
+                if (!reason) {
+
+                    showToast("Vui lòng nhập lý do từ chối.", "error");
+
+                    return;
+
+                }
+
+                postAction(order, "installment/reject", { reason: reason }, "Đã từ chối trả góp, đơn " + order.code + " đã hủy.");
+
+            }
+        });
+
+    }
+
+
+    async function postAction(order, action, body, successMessage) {
+
+        tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
+            control.disabled = true;
+        });
+
+
+        try {
+
+            await apiRequest("/admin/orders/" + order.id + "/" + action, {
+                method: "POST",
+                body: body,
+                auth: true
+            });
+
+            showToast(successMessage, "success");
+
+        } catch (error) {
+
+            handleError(error, function (message) {
+                showToast(message, "error");
+            });
+
+        }
+
+        loadOrders();
 
     }
 

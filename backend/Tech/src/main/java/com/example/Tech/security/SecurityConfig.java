@@ -19,7 +19,8 @@ import org.springframework.security.web.SecurityFilterChain;
  * <ul>
  *     <li>Auth endpoints, Swagger and uploaded images (GET /uploads/**) are public.</li>
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
- *     <li>/api/v1/admin/orders/** requires STAFF or ADMIN (Phase 4); the rest of /api/v1/admin/** requires
+ *     <li>/api/v1/admin/orders/** (Phase 4) and /api/v1/admin/installments/** (Phase 5) require STAFF or ADMIN;
+ *         the rest of /api/v1/admin/** requires
  *         ADMIN; any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
  * </ul>
@@ -75,8 +76,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole(ADMIN)
-                        // Phase 4: shop staff manage orders too (must come before the ADMIN-only admin rule)
-                        .requestMatchers("/api/v1/admin/orders/**").hasAnyRole(STAFF, ADMIN)
+                        // shop staff manage orders and installments too (must come before the ADMIN-only admin rule)
+                        .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**")
+                        .hasAnyRole(STAFF, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()

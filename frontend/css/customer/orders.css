@@ -435,3 +435,256 @@
 #justPlacedBanner {
     margin-bottom: 24px;
 }
+
+
+/* ================= PHASE 5: THANH TOÁN / TRẢ GÓP ================= */
+
+.payment-badge {
+    display: inline-block;
+
+    padding: 4px 10px;
+
+    border-radius: var(--radius-full);
+
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+
+    white-space: nowrap;
+}
+
+.payment-badge--pending {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.payment-badge--warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    border: 1px solid var(--color-warning);
+}
+
+.payment-badge--success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.payment-badge--info {
+    background: #e6f0fb;
+    color: #1a5aab;
+}
+
+.payment-badge--danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.payment-badge--muted {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
+.order-card-footer {
+    align-items: center;
+}
+
+.order-card-footer .payment-badge {
+    margin-left: 10px;
+}
+
+.order-payment-status {
+    margin-top: 8px;
+}
+
+.order-payment-info {
+    margin-top: 8px;
+}
+
+/* Câu báo phía trên chi tiết đơn (chờ chuyển khoản, chờ duyệt trả góp, quá hạn…) */
+.order-payment-notice {
+    margin: -20px 0 40px;
+    padding: 14px 16px;
+
+    border-radius: var(--radius-sm);
+
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.order-payment-notice--pending,
+.order-payment-notice--warning {
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+}
+
+.order-payment-notice--success {
+    background: var(--color-success-bg);
+    color: var(--color-success);
+}
+
+.order-payment-notice--info {
+    background: #e6f0fb;
+    color: #1a5aab;
+}
+
+.order-payment-notice--danger {
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+}
+
+.order-detail-main {
+    display: flex;
+    flex-direction: column;
+
+    gap: 40px;
+
+    min-width: 0;
+}
+
+/* Cặp nhãn / giá trị trong khối chuyển khoản và trả góp */
+.order-facts {
+    display: flex;
+    flex-direction: column;
+
+    gap: 8px;
+
+    font-size: 13px;
+}
+
+.order-fact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 4px 12px;
+}
+
+.order-fact dt {
+    color: var(--gray-600);
+}
+
+.order-fact dd {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin: 0;
+
+    text-align: right;
+    word-break: break-word;
+}
+
+.order-transfer {
+    border: 2px solid #111;
+    background: #fff;
+}
+
+.order-transfer-qr {
+    display: block;
+
+    width: 100%;
+    max-width: 260px;
+
+    margin: 0 auto 16px;
+}
+
+.order-transfer-qr-error {
+    margin-bottom: 12px;
+
+    color: var(--color-warning) !important;
+}
+
+.order-transfer-deadline {
+    margin-top: 14px;
+
+    font-size: 12px !important;
+}
+
+.order-copy-btn {
+    padding: 3px 8px;
+
+    border: 1px solid var(--gray-400);
+    border-radius: var(--radius-sm);
+    background: #fff;
+
+    font-family: inherit;
+    font-size: 11px;
+
+    cursor: pointer;
+}
+
+.order-copy-btn:hover {
+    border-color: #111;
+}
+
+.order-installment {
+    padding: 25px;
+
+    border: 1px solid #ddd;
+}
+
+.order-installment h4 {
+    margin-bottom: 15px;
+
+    font-size: 11px;
+    letter-spacing: 1px;
+}
+
+.order-installment-reason {
+    margin-top: 16px;
+    padding: 12px 14px;
+
+    border-radius: var(--radius-sm);
+
+    background: var(--color-danger-bg);
+    color: var(--color-danger);
+    font-size: 13px;
+}
+
+.order-installment-hint {
+    margin-top: 16px;
+
+    color: var(--gray-600);
+    font-size: 12px;
+}
+
+.order-installment-table {
+    width: 100%;
+
+    margin-top: 20px;
+
+    border-collapse: collapse;
+
+    font-size: 12px;
+}
+
+.order-installment-table th,
+.order-installment-table td {
+    padding: 10px 8px;
+
+    border-bottom: 1px solid #eee;
+
+    text-align: left;
+}
+
+.order-installment-table th {
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+.order-installment-table td:nth-child(-n + 3) {
+    white-space: nowrap;
+}
+
+.installment-period--paid td {
+    color: var(--color-success);
+}
+
+.installment-period--overdue td {
+    color: var(--color-danger);
+    font-weight: 600;
+}

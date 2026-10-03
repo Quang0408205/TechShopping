@@ -2,6 +2,10 @@ package com.example.Tech.service.impl.order;
 
 import com.example.Tech.dto.request.order.AdminOrderSearchRequest;
 import com.example.Tech.dto.request.order.OrderStatusUpdateRequest;
+import com.example.Tech.dto.request.payment.InstallmentRejectRequest;
+import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
+import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
+import org.mockito.InOrder;
 import com.example.Tech.dto.response.order.AdminOrderResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
 import com.example.Tech.entity.order.Order;
@@ -38,7 +42,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -64,6 +71,11 @@ class AdminOrderServiceImplTest {
     @Mock
     private OrderViewLoader orderViewLoader;
 
+    @Mock
+    private OrderPaymentLifecycle orderPaymentLifecycle;
+
+    private final User staff = new User();
+
     private AdminOrderServiceImpl adminOrderService;
 
     private User customer;
@@ -71,13 +83,14 @@ class AdminOrderServiceImplTest {
     @BeforeEach
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
-                orderViewLoader, CLOCK);
+                orderViewLoader, orderPaymentLifecycle, CLOCK);
         customer = new User();
         customer.setId(CUSTOMER_ID);
         customer.setUsername("khach");
         customer.setFullname("Khách Hàng");
         customer.setEmail("khach@example.com");
-        when(orderViewLoader.toResponses(any())).thenReturn(List.of(mock(OrderResponse.class)));
+        when(orderViewLoader.toStaffResponses(any())).thenReturn(List.of(mock(OrderResponse.class)));
+        when(currentUserLoader.loadWithAnyRole(STAFF_ID, RoleName.STAFF, RoleName.ADMIN)).thenReturn(staff);
     }
 
     @Test
@@ -117,10 +130,15 @@ class AdminOrderServiceImplTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
         assertThat(order.getDeliveredAt()).isEqualTo(NOW);
         verify(customerProfileRepository).addToTotalSpent(CUSTOMER_ID, new BigDecimal("31980000"));
+        // payment changes happen before the flush that precedes addToTotalSpent (it clears the persistence context)
+        InOrder inOrder = inOrder(orderPaymentLifecycle, orderRepository, customerProfileRepository);
+        inOrder.verify(orderPaymentLifecycle).onOrderDelivered(order, staff, NOW);
+        inOrder.verify(orderRepository).saveAndFlush(order);
+        inOrder.verify(customerProfileRepository).addToTotalSpent(anyLong(), any());
     }
 
     @Test
-    void updateStatus_confirmedToCancelled_setsCancelledAt() {
+    void updateStatus_confirmedToCancelled_setsCancelledAt_andCancelsThePayment() {
         Order order = stored(OrderStatus.CONFIRMED);
 
         adminOrderService.updateStatus(STAFF_ID, 5L, new OrderStatusUpdateRequest(OrderStatus.CANCELLED, null));
@@ -128,6 +146,59 @@ class AdminOrderServiceImplTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
         verify(customerProfileRepository, never()).addToTotalSpent(anyLong(), any());
+        verify(orderPaymentLifecycle).onOrderCancelled(order);
+        verify(orderPaymentLifecycle, never()).onOrderDelivered(any(), any(), any());
+    }
+
+    @Test
+    void updateStatus_toConfirmed_whenThePaymentRulesRefuse_savesNothing() {
+        Order order = stored(OrderStatus.PENDING);
+        doThrow(new BusinessException(ErrorCode.PAYMENT_REQUIRED)).when(orderPaymentLifecycle).checkCanConfirm(order);
+
+        assertThatThrownBy(() -> adminOrderService.updateStatus(STAFF_ID, 5L,
+                new OrderStatusUpdateRequest(OrderStatus.CONFIRMED, "GHN1")))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.PAYMENT_REQUIRED);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(order.getTrackingNumber()).isNull();
+        verify(orderRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void updateStatus_sameStatusConfirmed_doesNotCheckThePaymentAgain() {
+        stored(OrderStatus.CONFIRMED);
+
+        adminOrderService.updateStatus(STAFF_ID, 5L, new OrderStatusUpdateRequest(OrderStatus.CONFIRMED, "GHN1"));
+
+        verify(orderPaymentLifecycle, never()).checkCanConfirm(any());
+    }
+
+    @Test
+    void paymentActions_lockTheOrder_andPassTheStaffMember() {
+        Order order = stored(OrderStatus.PENDING);
+
+        adminOrderService.confirmPayment(STAFF_ID, 5L, new PaymentConfirmRequest("FT1"));
+        adminOrderService.confirmPayment(STAFF_ID, 5L, null);
+        adminOrderService.refundPayment(STAFF_ID, 5L);
+        adminOrderService.approveInstallment(STAFF_ID, 5L);
+
+        verify(orderPaymentLifecycle).confirmTransfer(order, staff, "FT1", NOW);
+        verify(orderPaymentLifecycle).confirmTransfer(order, staff, null, NOW);
+        verify(orderPaymentLifecycle).confirmRefund(order, staff, NOW);
+        verify(orderPaymentLifecycle).approveInstallment(order, staff, NOW);
+        verify(orderRepository, times(4)).findByIdForUpdate(5L);
+    }
+
+    @Test
+    void rejectInstallment_cancelsTheOrder() {
+        Order order = stored(OrderStatus.PENDING);
+
+        adminOrderService.rejectInstallment(STAFF_ID, 5L, new InstallmentRejectRequest("Sai CCCD"));
+
+        verify(orderPaymentLifecycle).rejectInstallment(order, staff, "Sai CCCD", NOW);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(order.getCancelledAt()).isEqualTo(NOW);
+        verify(orderRepository).saveAndFlush(order);
     }
 
     @ParameterizedTest

@@ -223,20 +223,7 @@ create table order_items (
 -- nhóm 4: thanh toán và trả góp
 -- =====================================================
 
--- bảng payments: quản lý các giao dịch thanh toán
-create table payments (
-    payment_id bigserial primary key,
-    order_id bigint not null references orders(order_id),
-    amount decimal(15, 2) not null,
-    payment_method varchar(50) not null,
-    transaction_id varchar(100),
-    status varchar(50) default 'pending',
-    paid_at timestamp,
-    created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
-);
-
--- bảng installment_orders: quản lý thông tin đơn hàng trả góp
+-- bảng installment_orders: hợp đồng trả góp của đơn hàng (hồ sơ + kết quả duyệt)
 create table installment_orders (
     installment_id bigserial primary key,
     order_id bigint unique not null references orders(order_id),
@@ -244,8 +231,14 @@ create table installment_orders (
     monthly_payment decimal(15, 2) not null,
     interest_rate decimal(5, 2),
     total_interest decimal(15, 2),
-    status varchar(50) default 'active',
-    created_at timestamp default current_timestamp
+    status varchar(50) default 'PENDING_APPROVAL',
+    citizen_id varchar(20) not null,
+    card_bank_code varchar(20) not null,
+    rejection_reason text,
+    reviewed_by bigint references users(user_id),
+    reviewed_at timestamp,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp
 );
 
 -- bảng installment_payments: quản lý các kỳ thanh toán trả góp
@@ -256,8 +249,25 @@ create table installment_payments (
     amount decimal(15, 2) not null,
     due_date date not null,
     paid_date date,
-    status varchar(50) default 'pending',
+    status varchar(50) default 'PENDING',
     unique(installment_id, payment_number)
+);
+
+-- bảng payments: quản lý các giao dịch thanh toán (khoản chính của đơn, hoặc khoản thu của 1 kỳ trả góp)
+create table payments (
+    payment_id bigserial primary key,
+    order_id bigint not null references orders(order_id),
+    amount decimal(15, 2) not null,
+    payment_method varchar(50) not null,
+    transaction_id varchar(100),
+    status varchar(50) default 'PENDING',
+    paid_at timestamp,
+    confirmed_by bigint references users(user_id),
+    refunded_at timestamp,
+    refunded_by bigint references users(user_id),
+    installment_payment_id bigint unique references installment_payments(installment_payment_id),
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp
 );
 
 -- =====================================================
@@ -512,6 +522,9 @@ create index idx_orders_status on orders(status);
 -- payment indexes
 create index idx_payments_order_id on payments(order_id);
 create index idx_payments_status on payments(status);
+create unique index uq_payments_order_main on payments(order_id) where installment_payment_id is null;
+create index idx_installment_orders_status on installment_orders(status);
+create index idx_installment_payments_due on installment_payments(status, due_date);
 
 -- interaction indexes
 create index idx_user_interactions_user_id on user_interactions(user_id);
@@ -549,6 +562,19 @@ alter table product_variants add constraint chk_variant_price_positive check (pr
 alter table orders add constraint chk_total_amount_positive check (total_amount >= 0);
 alter table order_items add constraint chk_order_item_quantity_positive check (quantity > 0);
 alter table installment_payments add constraint chk_installment_amount_positive check (amount > 0);
+alter table payments add constraint chk_payments_status
+    check (status in ('PENDING', 'PAID', 'REFUND_PENDING', 'REFUNDED', 'CANCELLED'));
+alter table payments add constraint chk_payments_method check (payment_method in ('COD', 'BANK_TRANSFER', 'INSTALLMENT'));
+alter table payments add constraint chk_payments_amount_positive check (amount > 0);
+alter table installment_orders add constraint chk_installment_orders_status
+    check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
+alter table installment_orders add constraint chk_installment_orders_months_positive check (num_months > 0);
+alter table installment_orders add constraint chk_installment_orders_monthly_positive check (monthly_payment > 0);
+alter table installment_orders add constraint chk_installment_orders_citizen_id_digits check (citizen_id ~ '^[0-9]+$');
+alter table installment_orders add constraint chk_installment_orders_rejection_reason
+    check (status <> 'REJECTED' or rejection_reason is not null);
+alter table installment_payments add constraint chk_installment_payments_status check (status in ('PENDING', 'PAID'));
+alter table installment_payments add constraint chk_installment_payments_number_positive check (payment_number > 0);
 alter table promotions add constraint chk_promotions_date_range check (end_date > start_date);
 alter table promotions add constraint chk_promotions_discount_value_positive check (discount_value > 0);
 alter table promotions add constraint chk_promotions_discount_type check (discount_type in ('PERCENTAGE', 'FIXED_AMOUNT'));

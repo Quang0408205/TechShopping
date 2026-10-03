@@ -1,4 +1,4 @@
-/* ================= ĐƠN HÀNG (Phase 4): ĐƠN TRÊN SERVER ================= */
+/* ================= ĐƠN HÀNG (Phase 4–5): ĐƠN TRÊN SERVER ================= */
 
 /*
  * Đơn hàng lưu ở backend theo tài khoản: /api/v1/orders (cần đăng nhập).
@@ -38,7 +38,30 @@ const ORDER_STATUS_LABELS = {
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng (COD)",
     BANK_TRANSFER: "Chuyển khoản ngân hàng",
-    INSTALLMENT: "Trả góp qua thẻ tín dụng"
+    INSTALLMENT: "Trả góp 0% qua thẻ tín dụng"
+};
+
+/* Phase 5: trạng thái thanh toán (COD / chuyển khoản) và hợp đồng trả góp; tone = màu huy hiệu */
+const PAYMENT_STATUS_LABELS = {
+    PENDING: { label: "Chờ thanh toán", tone: "pending" },
+    PAID: { label: "Đã thanh toán", tone: "success" },
+    REFUND_PENDING: { label: "Chờ hoàn tiền", tone: "warning" },
+    REFUNDED: { label: "Đã hoàn tiền", tone: "muted" },
+    CANCELLED: { label: "Đã hủy", tone: "muted" }
+};
+
+const INSTALLMENT_STATUS_LABELS = {
+    PENDING_APPROVAL: { label: "Chờ duyệt trả góp", tone: "pending" },
+    APPROVED: { label: "Đã duyệt trả góp", tone: "info" },
+    REJECTED: { label: "Từ chối trả góp", tone: "danger" },
+    ACTIVE: { label: "Đang trả góp", tone: "info" },
+    COMPLETED: { label: "Đã trả góp xong", tone: "success" },
+    CANCELLED: { label: "Đã hủy trả góp", tone: "muted" }
+};
+
+const INSTALLMENT_PERIOD_LABELS = {
+    PENDING: "Chưa thanh toán",
+    PAID: "Đã thanh toán"
 };
 
 
@@ -65,7 +88,8 @@ function removeLegacyOrders() {
 
 
 /*
- * input: { recipientName, recipientPhone, shippingAddress, note, paymentMethod }
+ * input: { recipientName, recipientPhone, shippingAddress, note, paymentMethod,
+ *          installment?: { months, citizenId, cardBank } (chỉ khi INSTALLMENT) }
  * Không gửi sản phẩm / giá: server lấy từ giỏ hàng của tài khoản.
  */
 
@@ -172,8 +196,124 @@ function toOrderView(order) {
         orderDate: order.orderDate,
         deliveredAt: order.deliveredAt,
         cancelledAt: order.cancelledAt,
-        cancellable: order.cancellable === true
+        cancellable: order.cancellable === true,
+        payment: toPaymentView(order.payment),
+        installment: toInstallmentView(order.installment)
     };
+
+}
+
+
+/* Khoản thanh toán chính của đơn COD / chuyển khoản (null với đơn trả góp) */
+
+function toPaymentView(payment) {
+
+    if (!payment) {
+        return null;
+    }
+
+    const transfer = payment.bankTransfer;
+
+    return {
+        status: payment.status,
+        amount: Number(payment.amount) || 0,
+        transactionId: payment.transactionId || "",
+        paidAt: payment.paidAt,
+        refundedAt: payment.refundedAt,
+        /* chỉ có khi đơn chuyển khoản đang chờ tiền */
+        bankTransfer: transfer ? {
+            bankName: transfer.bankName || "",
+            accountNumber: transfer.accountNumber || "",
+            accountName: transfer.accountName || "",
+            amount: Number(transfer.amount) || 0,
+            transferContent: transfer.transferContent || "",
+            qrImageUrl: isSafeImageUrl(transfer.qrImageUrl) ? transfer.qrImageUrl.trim() : null,
+            payBefore: transfer.payBefore
+        } : null
+    };
+
+}
+
+
+/* Hợp đồng trả góp (null với đơn COD / chuyển khoản); CCCD đã được server che */
+
+function toInstallmentView(installment) {
+
+    if (!installment) {
+        return null;
+    }
+
+    return {
+        status: installment.status,
+        numMonths: installment.numMonths,
+        monthlyPayment: Number(installment.monthlyPayment) || 0,
+        lastPayment: Number(installment.lastPayment) || 0,
+        totalAmount: Number(installment.totalAmount) || 0,
+        citizenId: installment.citizenId || "",
+        cardBankName: installment.cardBankName || installment.cardBank || "",
+        rejectionReason: installment.rejectionReason || "",
+        reviewedAt: installment.reviewedAt,
+        paidPeriods: installment.paidPeriods || 0,
+        paidAmount: Number(installment.paidAmount) || 0,
+        remainingAmount: Number(installment.remainingAmount) || 0,
+        periods: (Array.isArray(installment.periods) ? installment.periods : []).map(function (period) {
+            return {
+                number: period.number,
+                amount: Number(period.amount) || 0,
+                dueDate: period.dueDate,
+                paidDate: period.paidDate,
+                status: period.status,
+                overdue: period.overdue === true
+            };
+        })
+    };
+
+}
+
+
+/*
+ * Huy hiệu thanh toán của một đơn: { label, tone }. Đơn trả góp theo trạng thái
+ * hợp đồng; COD chưa thu tiền thì ghi "Trả khi nhận hàng".
+ */
+
+function getPaymentBadge(order) {
+
+    if (order.installment) {
+        return INSTALLMENT_STATUS_LABELS[order.installment.status]
+            || { label: order.installment.status, tone: "muted" };
+    }
+
+    if (!order.payment) {
+        return null;
+    }
+
+    if (order.paymentMethod === "COD" && order.payment.status === "PENDING") {
+        return { label: "Trả khi nhận hàng", tone: "muted" };
+    }
+
+    return PAYMENT_STATUS_LABELS[order.payment.status] || { label: order.payment.status, tone: "muted" };
+
+}
+
+
+function getInstallmentPeriodLabel(period) {
+
+    if (period.overdue) {
+        return "Quá hạn";
+    }
+
+    return INSTALLMENT_PERIOD_LABELS[period.status] || period.status;
+
+}
+
+
+/* Ngày "2026-11-03" (LocalDate từ server) → "03/11/2026"; tách chuỗi để không lệch múi giờ */
+
+function formatOrderDate(value) {
+
+    const match = typeof value === "string" ? /^(\d{4})-(\d{2})-(\d{2})/.exec(value) : null;
+
+    return match ? match[3] + "/" + match[2] + "/" + match[1] : "";
 
 }
 

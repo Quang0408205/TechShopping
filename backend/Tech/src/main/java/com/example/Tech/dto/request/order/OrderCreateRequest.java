@@ -1,7 +1,9 @@
 package com.example.Tech.dto.request.order;
 
+import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.order.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -31,8 +33,18 @@ public record OrderCreateRequest(
         @Size(max = 1000, message = "Note must be at most 1000 characters")
         String note,
 
-        @Schema(description = "COD, BANK_TRANSFER or INSTALLMENT (only recorded until Phase 5)", example = "COD")
+        @Schema(description = "COD, BANK_TRANSFER or INSTALLMENT", example = "COD")
         @NotNull(message = "Payment method is required")
-        PaymentMethod paymentMethod
+        PaymentMethod paymentMethod,
+
+        @Schema(description = "Required when paymentMethod is INSTALLMENT, must be absent otherwise")
+        @Valid
+        InstallmentRequest installment
 ) {
+
+    /** Checkout without installment data (COD / BANK_TRANSFER). */
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, null);
+    }
 }

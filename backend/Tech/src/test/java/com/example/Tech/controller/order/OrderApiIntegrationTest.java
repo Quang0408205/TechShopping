@@ -5,6 +5,7 @@ import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductImage;
 import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
@@ -78,6 +79,9 @@ class OrderApiIntegrationTest {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Autowired
+    private InstallmentOrderRepository installmentOrderRepository;
 
     @Autowired
     private ProductService productService;
@@ -276,6 +280,128 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("INVALID_ORDER_STATUS"));
     }
 
+    @Test
+    void codOrder_hasAPendingPayment_cancelledWithTheOrder() throws Exception {
+        addToCart(cover, 1);
+        long orderId = data(send(post("/api/v1/orders"), token, orderBody())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.payment.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.payment.amount").value(230000))
+                .andExpect(jsonPath("$.data.payment.bankTransfer").doesNotExist())
+                .andExpect(jsonPath("$.data.installment").doesNotExist())).get("id").asLong();
+
+        send(post("/api/v1/orders/" + orderId + "/cancel"), token, null)
+                .andExpect(jsonPath("$.data.payment.status").value("CANCELLED"));
+        send(get("/api/v1/orders"), token, null)
+                .andExpect(jsonPath("$.data.content[0].payment.status").value("CANCELLED"));
+    }
+
+    @Test
+    void bankTransferOrder_showsTheTransferInstructions() throws Exception {
+        addToCart(black, 1);
+        JsonNode order = data(send(post("/api/v1/orders"), token, orderBody("BANK_TRANSFER"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.payment.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.bankName").value("Vietcombank"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.accountNumber").value("0123456789"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.accountName").value("CONG TY POY"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.amount").value(14990000))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.payBefore", notNullValue())));
+        String code = order.get("code").asString();
+        JsonNode transfer = order.get("payment").get("bankTransfer");
+
+        assertThat(transfer.get("transferContent").asString()).isEqualTo(code);
+        assertThat(transfer.get("qrImageUrl").asString())
+                .startsWith("https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=14990000&addInfo=" + code);
+    }
+
+    @Test
+    void installmentOrder_createsAPlanWaitingForApproval_citizenIdMaskedForTheCustomer() throws Exception {
+        addToCart(black, 1);
+        long orderId = data(send(post("/api/v1/orders"), token, installmentBody(6, " 0123456789 ", "TCB"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.paymentMethod").value("INSTALLMENT"))
+                .andExpect(jsonPath("$.data.payment").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.status").value("PENDING_APPROVAL"))
+                .andExpect(jsonPath("$.data.installment.numMonths").value(6))
+                .andExpect(jsonPath("$.data.installment.monthlyPayment").value(2498333))
+                .andExpect(jsonPath("$.data.installment.lastPayment").value(2498335))
+                .andExpect(jsonPath("$.data.installment.totalAmount").value(14990000))
+                .andExpect(jsonPath("$.data.installment.interestRate").value(0))
+                .andExpect(jsonPath("$.data.installment.citizenId").value("******6789"))
+                .andExpect(jsonPath("$.data.installment.cardBank").value("TCB"))
+                .andExpect(jsonPath("$.data.installment.cardBankName").value("Techcombank"))
+                .andExpect(jsonPath("$.data.installment.remainingAmount").value(14990000))
+                .andExpect(jsonPath("$.data.installment.periods.length()").value(0))).get("id").asLong();
+        assertThat(installmentOrderRepository.findByOrderId(orderId).orElseThrow().getCitizenId()).isEqualTo("0123456789");
+
+        send(get("/api/v1/orders/" + orderId), token, null)
+                .andExpect(jsonPath("$.data.installment.citizenId").value("******6789"));
+        send(post("/api/v1/orders/" + orderId + "/cancel"), token, null)
+                .andExpect(jsonPath("$.data.installment.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.installment.remainingAmount").value(0));
+    }
+
+    @Test
+    void installmentOrder_invalidApplications_areRefused_andTheCartIsKept() throws Exception {
+        addToCart(black, 1);
+
+        send(post("/api/v1/orders"), token, orderBody("INSTALLMENT"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.details.installment").value("Vui lòng nhập thông tin trả góp"));
+        send(post("/api/v1/orders"), token, installmentBody(5, "0123456789", "VCB"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.months']").exists());
+        send(post("/api/v1/orders"), token, installmentBody(6, "01234567", "VCB"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.citizenId']").value("Số CCCD phải gồm đúng 10 chữ số"));
+        send(post("/api/v1/orders"), token, installmentBody(6, "012345678901", "VCB"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.citizenId']").exists());
+        send(post("/api/v1/orders"), token, installmentBody(6, "0123456789", "XYZ"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("MALFORMED_REQUEST"));
+        Map<String, Object> codWithInstallment = installmentBody(6, "0123456789", "VCB");
+        codWithInstallment.put("paymentMethod", "COD");
+        send(post("/api/v1/orders"), token, codWithInstallment)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.installment").exists());
+
+        send(get("/api/v1/cart"), token, null)
+                .andExpect(jsonPath("$.data.items.length()").value(1));
+        assertThat(orderRepository.findAllByUserId(userId, PageRequest.of(0, 10)).getTotalElements()).isZero();
+    }
+
+    @Test
+    void installmentOrder_belowThreeMillion_isNotEligible() throws Exception {
+        addToCart(cover, 2);
+
+        send(post("/api/v1/orders"), token, installmentBody(3, "0123456789", "VCB"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_ELIGIBLE"))
+                .andExpect(jsonPath("$.error.message").value("Đơn hàng từ 3.000.000đ trở lên mới được trả góp"));
+        send(get("/api/v1/cart"), token, null)
+                .andExpect(jsonPath("$.data.items.length()").value(1));
+    }
+
+    @Test
+    void installmentOptions_listTheTermsAndBanks() throws Exception {
+        send(get("/api/v1/payments/installment-options"), null, null)
+                .andExpect(status().isUnauthorized());
+        send(get("/api/v1/payments/installment-options"), token, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.termsInMonths.length()").value(4))
+                .andExpect(jsonPath("$.data.termsInMonths[0]").value(3))
+                .andExpect(jsonPath("$.data.termsInMonths[3]").value(12))
+                .andExpect(jsonPath("$.data.minOrderTotal").value(3000000))
+                .andExpect(jsonPath("$.data.interestRate").value(0))
+                .andExpect(jsonPath("$.data.citizenIdLength").value(10))
+                .andExpect(jsonPath("$.data.banks.length()").value(10))
+                .andExpect(jsonPath("$.data.banks[0].code").value("VCB"))
+                .andExpect(jsonPath("$.data.banks[0].name").value("Vietcombank"));
+    }
+
     private JsonNode register(String username) throws Exception {
         JsonNode data = data(send(post("/api/v1/auth/register"), null, Map.of(
                 "email", username + "@example.com", "username", username, "password", PASSWORD,
@@ -291,12 +417,22 @@ class OrderApiIntegrationTest {
     }
 
     private static Map<String, Object> orderBody() {
+        return orderBody("COD");
+    }
+
+    private static Map<String, Object> orderBody(String paymentMethod) {
         Map<String, Object> body = new HashMap<>();
         body.put("recipientName", "  Nguyễn Văn An ");
         body.put("recipientPhone", "0901 234 567");
         body.put("shippingAddress", "12 Nguyễn Trãi, Phường 3, Quận 5, TP. Hồ Chí Minh");
         body.put("note", "Gọi trước khi giao");
-        body.put("paymentMethod", "COD");
+        body.put("paymentMethod", paymentMethod);
+        return body;
+    }
+
+    private static Map<String, Object> installmentBody(int months, String citizenId, String cardBank) {
+        Map<String, Object> body = orderBody("INSTALLMENT");
+        body.put("installment", Map.of("months", months, "citizenId", citizenId, "cardBank", cardBank));
         return body;
     }
 

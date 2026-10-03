@@ -79,8 +79,14 @@
     background: #f6f6f6;
 }
 
+/* .checkout-form input (ô chữ) cũng khớp radio: trả lại kích thước gốc */
 .payment-method input {
+    flex: none;
+
+    width: auto;
+
     margin-top: 4px;
+    padding: 0;
 
     accent-color: #111;
 }
@@ -109,6 +115,60 @@
 
     color: #7a5b00;
     font-size: 12px;
+}
+
+/* ================= PHASE 5: HỒ SƠ TRẢ GÓP ================= */
+
+.payment-method.is-disabled {
+    cursor: not-allowed;
+
+    opacity: 0.55;
+}
+
+.payment-method.is-disabled small {
+    color: var(--color-warning);
+}
+
+.installment-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    margin-top: 15px;
+    padding: 20px;
+
+    border: 1px solid #111;
+}
+
+.installment-box .installment-note {
+    margin-top: 0;
+}
+
+.checkout-form select {
+    width: 100%;
+
+    padding: 15px;
+
+    border: 1px solid #ddd;
+    background: #fff;
+
+    outline: none;
+
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.checkout-form select:focus {
+    border-color: #111;
+}
+
+.installment-preview {
+    padding: 12px 14px;
+
+    background: var(--gray-100);
+
+    font-size: 12px;
+    line-height: 1.6;
 }
 
 .checkout-submit {

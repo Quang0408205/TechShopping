@@ -1,6 +1,9 @@
 package com.example.Tech.service.impl.order;
 
 import com.example.Tech.dto.request.order.OrderCreateRequest;
+import com.example.Tech.dto.request.payment.InstallmentRequest;
+import com.example.Tech.entity.payment.InstallmentBank;
+import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.dto.response.order.OrderResponse;
 import com.example.Tech.entity.cart.Cart;
 import com.example.Tech.entity.cart.CartItem;
@@ -43,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -75,6 +79,9 @@ class OrderServiceImplTest {
     @Mock
     private PromotionProductRepository promotionProductRepository;
 
+    @Mock
+    private OrderPaymentLifecycle orderPaymentLifecycle;
+
     private OrderServiceImpl orderService;
 
     private User user;
@@ -87,7 +94,7 @@ class OrderServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), CLOCK);
         orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, cartMapper,
-                currentUserLoader, orderViewLoader, CLOCK);
+                currentUserLoader, orderViewLoader, orderPaymentLifecycle, CLOCK);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);
@@ -134,6 +141,38 @@ class OrderServiceImplTest {
         assertThat(order.getTotalAmount()).isEqualByComparingTo("31980000");
         verify(cartItemRepository).deleteAllByCartId(30L);
         verify(cartRepository).touch(30L);
+        verify(orderPaymentLifecycle).validateSelection(PaymentMethod.BANK_TRANSFER, null);
+        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.BANK_TRANSFER, order.getTotalAmount());
+        verify(orderPaymentLifecycle).onOrderPlaced(order, null);
+    }
+
+    @Test
+    void placeOrder_passesTheInstallmentApplicationToThePaymentLifecycle() {
+        cartWith(line(black, 1));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        InstallmentRequest installment = new InstallmentRequest(6, "0123456789", InstallmentBank.TCB);
+
+        orderService.placeOrder(USER_ID, new OrderCreateRequest("Nguyễn Văn An", "0901234567", "12 Nguyễn Trãi", null,
+                PaymentMethod.INSTALLMENT, installment));
+
+        Order order = savedOrder();
+        verify(orderPaymentLifecycle).validateSelection(PaymentMethod.INSTALLMENT, installment);
+        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.INSTALLMENT, order.getTotalAmount());
+        verify(orderPaymentLifecycle).onOrderPlaced(order, installment);
+    }
+
+    @Test
+    void placeOrder_whenThePaymentChoiceIsRefused_savesNothingAndKeepsTheCart() {
+        cartWith(line(white, 1));
+        doThrow(new BusinessException(ErrorCode.INSTALLMENT_NOT_ELIGIBLE))
+                .when(orderPaymentLifecycle).checkEligible(any(), any());
+
+        assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.INSTALLMENT)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
+        verify(orderRepository, never()).save(any());
+        verify(cartItemRepository, never()).deleteAllByCartId(anyLong());
+        verify(orderPaymentLifecycle, never()).onOrderPlaced(any(), any());
     }
 
     @Test
@@ -240,6 +279,7 @@ class OrderServiceImplTest {
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
+        verify(orderPaymentLifecycle).onOrderCancelled(order);
         verify(orderViewLoader).toResponse(order);
     }
 
@@ -253,6 +293,7 @@ class OrderServiceImplTest {
                 .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(orderRepository, never()).saveAndFlush(any());
+        verify(orderPaymentLifecycle, never()).onOrderCancelled(any());
     }
 
     @Test

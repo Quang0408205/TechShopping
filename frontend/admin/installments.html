@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Trả góp - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Trả góp" data-roles="">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="installments"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/installments): hợp đồng trả góp 0% của khách. Duyệt / từ chối hồ sơ ở trang Đơn hàng.
+                Lịch các kỳ được tạo khi đơn giao xong; ghi nhận lần lượt từng kỳ, thu đủ số tiền của kỳ.
+            </p>
+
+
+            <form class="admin-filter-bar" id="installmentFilterForm" role="search">
+
+                <input type="search" id="installmentKeyword" placeholder="Mã đơn, người nhận, SĐT, email khách, CCCD…" maxlength="255" aria-label="Từ khoá">
+
+                <select id="installmentStatusFilter" aria-label="Trạng thái hợp đồng">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="PENDING_APPROVAL">Chờ duyệt</option>
+                    <option value="APPROVED">Đã duyệt</option>
+                    <option value="ACTIVE">Đang trả góp</option>
+                    <option value="COMPLETED">Đã trả đủ</option>
+                    <option value="REJECTED">Từ chối</option>
+                    <option value="CANCELLED">Đã hủy</option>
+                </select>
+
+                <label class="admin-check-filter">
+                    <input type="checkbox" id="installmentOverdueFilter">
+                    Chỉ hợp đồng có kỳ quá hạn
+                </label>
+
+                <button type="submit" class="btn btn-dark">TÌM</button>
+
+            </form>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Hợp đồng trả góp</h2>
+                    <span class="admin-row-count" id="installmentRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide">
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Đơn hàng</th>
+                                <th>Khách hàng</th>
+                                <th>Kỳ hạn</th>
+                                <th>Đã thu / còn lại</th>
+                                <th>Kỳ tiếp theo</th>
+                                <th>Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="installmentTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination" id="installmentPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/admin-payments.js"></script>
+<script src="../js/admin/installments.js"></script>
+
+</body>
+</html>

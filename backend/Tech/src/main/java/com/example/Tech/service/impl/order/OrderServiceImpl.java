@@ -17,6 +17,7 @@ import com.example.Tech.mapper.cart.CartMapper;
 import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.OrderService;
 import com.example.Tech.service.order.ShippingPolicy;
 import com.example.Tech.service.user.CurrentUserLoader;
@@ -43,12 +44,14 @@ public class OrderServiceImpl implements OrderService {
     private final CartMapper cartMapper;
     private final CurrentUserLoader currentUserLoader;
     private final OrderViewLoader orderViewLoader;
+    private final OrderPaymentLifecycle orderPaymentLifecycle;
     private final Clock clock;
 
     @Override
     @Transactional
     public OrderResponse placeOrder(Long userId, OrderCreateRequest request) {
         User user = currentUserLoader.load(userId);
+        orderPaymentLifecycle.validateSelection(request.paymentMethod(), request.installment());
 
         // SELECT … FOR UPDATE: a concurrent second submit waits here, then finds the emptied cart
         Cart cart = cartRepository.findByUserIdForUpdate(userId).orElseThrow(OrderServiceImpl::cartEmpty);
@@ -86,8 +89,10 @@ public class OrderServiceImpl implements OrderService {
         order.setShippingCost(shippingFee);
         order.setTaxAmount(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.add(shippingFee));
+        orderPaymentLifecycle.checkEligible(request.paymentMethod(), order.getTotalAmount());
 
         Order saved = orderRepository.save(order);
+        orderPaymentLifecycle.onOrderPlaced(saved, request.installment());
         int removed = cartItemRepository.deleteAllByCartId(cart.getId());
         cartRepository.touch(cart.getId());
         log.info("User id={} placed order id={} ({} line(s), total {}); {} cart line(s) removed",
@@ -121,6 +126,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(LocalDateTime.now(clock));
+        orderPaymentLifecycle.onOrderCancelled(order);
         Order saved = orderRepository.saveAndFlush(order);
         log.info("User id={} cancelled order id={}", userId, orderId);
         return orderViewLoader.toResponse(saved);

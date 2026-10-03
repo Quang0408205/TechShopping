@@ -45,7 +45,8 @@ public class OrderController {
     @Operation(summary = "Place an order from my cart (items, prices and shipping come from the server cart)")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Order placed, cart emptied"),
-            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR, MALFORMED_REQUEST (unknown payment method)"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (incl. installment data missing / not "
+                    + "allowed / bad term), MALFORMED_REQUEST (unknown payment method or bank), INSTALLMENT_NOT_ELIGIBLE"),
             @ApiResponse(responseCode = "409", description = "CART_EMPTY (also a double submit), PRODUCT_NOT_AVAILABLE")
     })
     public ResponseEntity<ApiResult<OrderResponse>> placeOrder(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,

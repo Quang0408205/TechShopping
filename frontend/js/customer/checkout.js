@@ -1,4 +1,4 @@
-/* ================= TRANG THANH TOÁN (Phase 4) ================= */
+/* ================= TRANG THANH TOÁN (Phase 4–5) ================= */
 
 /*
  * Chỉ dành cho người đã đăng nhập.
@@ -6,9 +6,13 @@
  *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
  * - Tóm tắt lấy từ giỏ trên server (/api/v1/cart), kể cả phí ship. Có dòng
  *   ngừng bán thì không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
- * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) chỉ gửi
- *   người nhận / địa chỉ / ghi chú / phương thức thanh toán; server tạo đơn từ
- *   giỏ, xoá giỏ, rồi chuyển sang trang chi tiết đơn.
+ * - Trả góp (Phase 5): kỳ hạn, mức tối thiểu, độ dài CCCD và danh sách ngân hàng
+ *   lấy từ GET /payments/installment-options; đơn dưới mức tối thiểu (hoặc không
+ *   tải được) thì khoá lựa chọn trả góp. Tiền mỗi kỳ = tổng / số kỳ làm tròn
+ *   xuống, kỳ cuối nhận phần lẻ (giống server).
+ * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) gửi
+ *   người nhận / địa chỉ / ghi chú / phương thức thanh toán (+ hồ sơ trả góp);
+ *   server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang trang chi tiết đơn.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -35,7 +39,21 @@ document.addEventListener(
 
         const form = document.getElementById("checkoutForm");
 
-        const installmentNote = document.getElementById("installmentNote");
+        const installmentRadio = form.querySelector('input[name="paymentMethod"][value="INSTALLMENT"]');
+
+        const installmentMethod = document.getElementById("installmentMethod");
+
+        const installmentHint = document.getElementById("installmentMethodHint");
+
+        const installmentBox = document.getElementById("installmentBox");
+
+        const monthsSelect = document.getElementById("installmentMonths");
+
+        const citizenInput = document.getElementById("citizenId");
+
+        const bankSelect = document.getElementById("cardBank");
+
+        const preview = document.getElementById("installmentPreview");
 
 
         const FIELD_MESSAGES = {
@@ -44,11 +62,20 @@ document.addEventListener(
             recipientPhone:
                 "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).",
             shippingAddress:
-                "Vui lòng nhập địa chỉ nhận hàng đầy đủ."
+                "Vui lòng nhập địa chỉ nhận hàng đầy đủ.",
+            "installment.months":
+                "Vui lòng chọn kỳ hạn trả góp.",
+            "installment.cardBank":
+                "Vui lòng chọn ngân hàng phát hành thẻ."
         };
 
         const UNAVAILABLE_MESSAGE =
             "Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng quay lại giỏ hàng để xóa trước khi đặt hàng.";
+
+
+        /* Tải song song với giỏ hàng; lỗi → null (khoá lựa chọn trả góp) */
+        const optionsPromise = apiRequest("/payments/installment-options", { auth: true })
+            .catch(function () { return null; });
 
 
         let summary;
@@ -87,7 +114,14 @@ document.addEventListener(
         }
 
 
+        const installmentOptions = await optionsPromise;
+
+        let currentTotal = summary.total;
+
+
         content.hidden = false;
+
+        fillInstallmentChoices();
 
         renderSummary(summary);
 
@@ -103,11 +137,22 @@ document.addEventListener(
         }
 
 
-        document.querySelectorAll('input[name="paymentMethod"]').forEach(function (radio) {
+        form.querySelectorAll('input[name="paymentMethod"]').forEach(function (radio) {
 
-            radio.addEventListener("change", function () {
-                installmentNote.hidden = radio.value !== "INSTALLMENT" || !radio.checked;
-            });
+            radio.addEventListener("change", updateInstallmentBox);
+
+        });
+
+        monthsSelect.addEventListener("change", renderPreview);
+
+        /* CCCD chỉ gồm chữ số */
+        citizenInput.addEventListener("input", function () {
+
+            const digits = citizenInput.value.replace(/\D/g, "");
+
+            if (digits !== citizenInput.value) {
+                citizenInput.value = digits;
+            }
 
         });
 
@@ -193,8 +238,142 @@ document.addEventListener(
 
             document.getElementById("checkoutTotal").textContent = formatPrice(cartSummary.total);
 
+
+            currentTotal = cartSummary.total;
+
+            applyInstallmentEligibility();
+
         }
 
+
+        /* ================= TRẢ GÓP ================= */
+
+        function fillInstallmentChoices() {
+
+            if (!installmentOptions) {
+                return;
+            }
+
+            citizenInput.maxLength = installmentOptions.citizenIdLength;
+
+            citizenInput.placeholder = installmentOptions.citizenIdLength + " chữ số";
+
+            bankSelect.insertAdjacentHTML("beforeend", (installmentOptions.banks || []).map(function (bank) {
+                return `<option value="${escapeHtml(bank.code)}">${escapeHtml(bank.name)}</option>`;
+            }).join(""));
+
+        }
+
+
+        /* Khoá "Trả góp" khi không có thông tin trả góp hoặc tổng đơn dưới mức tối thiểu */
+
+        function applyInstallmentEligibility() {
+
+            let reason = "";
+
+            if (!installmentOptions) {
+
+                reason = "Hiện chưa tải được thông tin trả góp. Vui lòng chọn cách thanh toán khác hoặc tải lại trang.";
+
+            } else if (currentTotal < Number(installmentOptions.minOrderTotal)) {
+
+                reason = "Áp dụng cho đơn từ " + formatPrice(Number(installmentOptions.minOrderTotal))
+                    + " (đơn của bạn: " + formatPrice(currentTotal) + ").";
+
+            }
+
+
+            installmentRadio.disabled = reason !== "";
+
+            installmentMethod.classList.toggle("is-disabled", reason !== "");
+
+            if (reason) {
+
+                installmentHint.textContent = reason;
+
+                if (installmentRadio.checked) {
+                    form.querySelector('input[name="paymentMethod"][value="COD"]').checked = true;
+                }
+
+            } else {
+
+                installmentHint.textContent = "Lãi suất 0%, không cần trả trước, kỳ hạn "
+                    + installmentOptions.termsInMonths.join(", ") + " tháng.";
+
+                renderMonthOptions();
+
+            }
+
+            updateInstallmentBox();
+
+        }
+
+
+        /* "6 tháng · 2.498.333đ/tháng"; giữ kỳ hạn đang chọn khi tổng tiền đổi */
+
+        function renderMonthOptions() {
+
+            const selected = monthsSelect.value;
+
+            monthsSelect.innerHTML = `<option value="">-- Chọn kỳ hạn --</option>` +
+                installmentOptions.termsInMonths.map(function (months) {
+                    return `<option value="${months}">${months} tháng · ${formatPrice(monthlyPaymentOf(months))}/tháng</option>`;
+                }).join("");
+
+            monthsSelect.value = selected;
+
+            renderPreview();
+
+        }
+
+
+        function renderPreview() {
+
+            const months = Number(monthsSelect.value);
+
+            if (!months) {
+
+                preview.hidden = true;
+
+                return;
+
+            }
+
+            const monthly = monthlyPaymentOf(months);
+
+            const last = currentTotal - monthly * (months - 1);
+
+            preview.textContent = "Trả " + formatPrice(monthly) + " mỗi tháng trong " + months + " tháng"
+                + (last !== monthly ? " (kỳ cuối " + formatPrice(last) + ")" : "")
+                + ". Tổng " + formatPrice(currentTotal) + ", lãi suất 0%.";
+
+            preview.hidden = false;
+
+        }
+
+
+        function monthlyPaymentOf(months) {
+
+            return Math.floor(currentTotal / months);
+
+        }
+
+
+        function updateInstallmentBox() {
+
+            installmentBox.hidden = !installmentRadio.checked;
+
+        }
+
+
+        function selectedPaymentMethod() {
+
+            return form.querySelector('input[name="paymentMethod"]:checked').value;
+
+        }
+
+
+        /* ================= ĐẶT HÀNG ================= */
 
         async function handleSubmit(event) {
 
@@ -208,7 +387,7 @@ document.addEventListener(
                 recipientPhone: valueOf("recipientPhone").trim(),
                 shippingAddress: valueOf("shippingAddress").trim(),
                 note: valueOf("orderNote").trim(),
-                paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
+                paymentMethod: selectedPaymentMethod()
             };
 
 
@@ -227,13 +406,44 @@ document.addEventListener(
             }
 
 
+            let installment = null;
+
+            if (data.paymentMethod === "INSTALLMENT") {
+
+                installment = {
+                    months: Number(monthsSelect.value) || null,
+                    citizenId: citizenInput.value.trim(),
+                    cardBank: bankSelect.value || null
+                };
+
+                if (!installment.months) {
+                    invalid.push("installment.months");
+                }
+
+                const citizenIdLength = installmentOptions ? installmentOptions.citizenIdLength : 10;
+
+                if (!new RegExp("^\\d{" + citizenIdLength + "}$").test(installment.citizenId)) {
+                    FIELD_MESSAGES["installment.citizenId"] = "Số CCCD phải gồm đúng " + citizenIdLength + " chữ số.";
+                    invalid.push("installment.citizenId");
+                }
+
+                if (!installment.cardBank) {
+                    invalid.push("installment.cardBank");
+                }
+
+            }
+
+
             if (invalid.length > 0) {
 
                 invalid.forEach(function (field) {
                     showFieldError(field, FIELD_MESSAGES[field]);
                 });
 
-                showFormError("Vui lòng kiểm tra lại thông tin giao hàng.");
+                showFormError(invalid.some(function (field) { return field.indexOf("installment") === 0; })
+                    && invalid.every(function (field) { return field.indexOf("installment") === 0; })
+                    ? "Vui lòng kiểm tra lại thông tin trả góp."
+                    : "Vui lòng kiểm tra lại thông tin giao hàng.");
 
                 return;
 
@@ -265,13 +475,19 @@ document.addEventListener(
 
             try {
 
-                order = await placeOrder({
+                const input = {
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
                     shippingAddress: data.shippingAddress,
                     note: data.note || null,
                     paymentMethod: data.paymentMethod
-                });
+                };
+
+                if (installment) {
+                    input.installment = installment;
+                }
+
+                order = await placeOrder(input);
 
             } catch (error) {
 
@@ -300,7 +516,7 @@ document.addEventListener(
                 }
 
 
-                /* Sai dữ liệu: hiện lỗi ở đúng ô (backend trả tên trường) */
+                /* Sai dữ liệu: hiện lỗi ở đúng ô (backend trả tên trường, kể cả "installment.citizenId") */
                 if (error.code === "VALIDATION_ERROR" && error.details) {
 
                     Object.keys(error.details).forEach(function (field) {
@@ -312,8 +528,12 @@ document.addEventListener(
                 showFormError(getErrorMessage(error));
 
 
-                /* Giỏ đã đổi (trống / có sản phẩm ngừng bán): vẽ lại tóm tắt từ server */
-                if (error.code === "CART_EMPTY" || error.code === "PRODUCT_NOT_AVAILABLE") {
+                /*
+                 * Giỏ đã đổi (trống / có sản phẩm ngừng bán / tổng tiền không còn đủ
+                 * để trả góp): vẽ lại tóm tắt từ server
+                 */
+                if (error.code === "CART_EMPTY" || error.code === "PRODUCT_NOT_AVAILABLE"
+                    || error.code === "INSTALLMENT_NOT_ELIGIBLE") {
 
                     try {
 
