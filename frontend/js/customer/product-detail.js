@@ -355,6 +355,17 @@ document.addEventListener(
 
             thumbnails.querySelectorAll(".detail-thumb").forEach(function (button) {
 
+                /* Ảnh phụ hỏng: bỏ khỏi dải; còn dưới 2 ảnh thì ẩn cả dải */
+                button.querySelector("img").addEventListener("error", function () {
+
+                    button.remove();
+
+                    if (thumbnails.querySelectorAll(".detail-thumb").length < 2) {
+                        thumbnails.hidden = true;
+                    }
+
+                });
+
                 button.addEventListener("click", function () {
 
                     mainImage.src = button.dataset.url;
@@ -476,6 +487,15 @@ document.addEventListener(
             }
 
 
+            /* Giá đến từ chương trình khuyến mãi → ghi tên chương trình (textContent: tên do admin nhập) */
+
+            const promoEl = document.getElementById("detailPromo");
+
+            promoEl.textContent = prices.promotionName ? "Khuyến mãi: " + prices.promotionName : "";
+
+            promoEl.hidden = !prices.promotionName;
+
+
             /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ */
 
             addToCartBtn.disabled = !hasPrice;
@@ -539,12 +559,12 @@ document.addEventListener(
         /* ================= THÊM VÀO GIỎ / MUA NGAY ================= */
 
         /*
-         * F2: giỏ hàng lưu snapshot theo productId + variantId (cart-store.js),
+         * Phase 3: giỏ hàng trên server, mỗi dòng là một variantId (cart-store.js),
          * nên cùng một phiên bản thêm từ trang danh sách hay trang chi tiết
-         * luôn gộp chung một dòng.
+         * luôn gộp chung một dòng. Giá do server tính.
          */
 
-        function addCurrentToCart() {
+        async function addCurrentToCart() {
 
             const prices = getPrices();
 
@@ -555,7 +575,7 @@ document.addEventListener(
 
             const mainImage = document.getElementById("mainImage");
 
-            /* false khi chưa đăng nhập (addToCart đã chuyển tới trang đăng nhập) */
+            /* false khi chưa đăng nhập (addToCart đã chuyển tới trang đăng nhập) hoặc API báo lỗi */
             return addToCart(
                 {
                     productId: product.id,
@@ -575,17 +595,47 @@ document.addEventListener(
         function setupActions() {
 
             addToCartBtn.addEventListener("click", function () {
-                addCurrentToCart();
+                runCartAction(false);
             });
 
 
             buyNowBtn.addEventListener("click", function () {
-
-                if (addCurrentToCart()) {
-                    window.location.href = siteUrl("customer/cart.html");
-                }
-
+                runCartAction(true);
             });
+
+        }
+
+
+        /* Khoá 2 nút trong lúc chờ API để không bấm trùng; "Mua ngay" xong thì sang giỏ hàng */
+
+        async function runCartAction(goToCart) {
+
+            addToCartBtn.disabled = true;
+
+            buyNowBtn.disabled = true;
+
+
+            let added = false;
+
+            try {
+
+                added = await addCurrentToCart();
+
+            } finally {
+
+                /* Người dùng có thể đã đổi sang phiên bản khác trong lúc chờ */
+                const hasPrice = getPrices().price > 0;
+
+                addToCartBtn.disabled = !hasPrice;
+
+                buyNowBtn.disabled = !hasPrice;
+
+            }
+
+
+            if (added && goToCart) {
+                window.location.href = siteUrl("customer/cart.html");
+            }
 
         }
 

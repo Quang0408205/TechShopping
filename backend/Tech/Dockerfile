@@ -13,6 +13,8 @@ FROM eclipse-temurin:21-jre
 ENV TZ=Asia/Ho_Chi_Minh
 RUN useradd --system --no-create-home app
 WORKDIR /app
+# Uploaded images (docker compose mounts the uploads_data volume here; a new volume takes this owner)
+RUN mkdir -p /app/uploads && chown app /app/uploads
 COPY --from=build /app/app.jar app.jar
 USER app
 EXPOSE 8080

@@ -1,7 +1,3 @@
--- sql schema: hệ thống quản lý và khuyến nghị mua sắm thiết bị công nghệ
--- database: postgresql 15+
--- encoding: utf-8
-
 -- =====================================================
 -- nhóm 1: người dùng và phân quyền
 -- =====================================================
@@ -195,6 +191,8 @@ create table orders (
     order_id bigserial primary key,
     user_id bigint not null references users(user_id),
     order_date timestamp default current_timestamp,
+    recipient_name varchar(120) not null,
+    recipient_phone varchar(20) not null,
     shipping_address text not null,
     billing_address text,
     shipping_cost decimal(15, 2) default 0,
@@ -461,6 +459,36 @@ create table support_tickets (
 );
 
 -- =====================================================
+-- nhóm 9: khuyến mãi
+-- =====================================================
+
+-- bảng promotions: chương trình khuyến mãi (có thời hạn, mức giảm mặc định)
+create table promotions (
+    promotion_id bigserial primary key,
+    name varchar(255) not null,
+    description text,
+    discount_type varchar(20) not null,
+    discount_value decimal(15, 2) not null,
+    max_discount_amount decimal(15, 2),
+    start_date timestamp not null,
+    end_date timestamp not null,
+    is_active boolean not null default true,
+    created_by bigint not null references users(user_id),
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
+);
+
+-- bảng promotion_products: sản phẩm tham gia chương trình, có thể ghi đè mức giảm riêng
+create table promotion_products (
+    promotion_id bigint not null references promotions(promotion_id) on delete cascade,
+    product_id bigint not null references products(product_id) on delete cascade,
+    discount_type varchar(20),
+    discount_value decimal(15, 2),
+    created_at timestamp not null default current_timestamp,
+    primary key (promotion_id, product_id)
+);
+
+-- =====================================================
 -- indexes để tối ưu hiệu suất
 -- =====================================================
 
@@ -507,6 +535,10 @@ create index idx_chat_messages_session_id on chat_messages(session_id);
 create index idx_employee_assignments_employee_id on employee_assignments(employee_id);
 create index idx_employee_assignments_store_id on employee_assignments(store_id);
 
+-- promotion indexes
+create index idx_promotions_active_window on promotions(is_active, start_date, end_date);
+create index idx_promotion_products_product on promotion_products(product_id);
+
 -- =====================================================
 -- constraints bổ sung
 -- =====================================================
@@ -517,6 +549,19 @@ alter table product_variants add constraint chk_variant_price_positive check (pr
 alter table orders add constraint chk_total_amount_positive check (total_amount >= 0);
 alter table order_items add constraint chk_order_item_quantity_positive check (quantity > 0);
 alter table installment_payments add constraint chk_installment_amount_positive check (amount > 0);
+alter table promotions add constraint chk_promotions_date_range check (end_date > start_date);
+alter table promotions add constraint chk_promotions_discount_value_positive check (discount_value > 0);
+alter table promotions add constraint chk_promotions_discount_type check (discount_type in ('PERCENTAGE', 'FIXED_AMOUNT'));
+alter table promotions add constraint chk_promotions_percentage_range
+    check (discount_type <> 'PERCENTAGE' or discount_value <= 100);
+alter table promotion_products add constraint chk_promotion_products_discount_type
+    check (discount_type is null or discount_type in ('PERCENTAGE', 'FIXED_AMOUNT'));
+alter table promotion_products add constraint chk_promotion_products_discount_value_positive
+    check (discount_value is null or discount_value > 0);
+alter table promotion_products add constraint chk_promotion_products_percentage_range
+    check (discount_type <> 'PERCENTAGE' or discount_value <= 100);
+alter table promotion_products add constraint chk_promotion_products_pair
+    check ((discount_type is null) = (discount_value is null));
 
 -- =====================================================
 -- tạo các view hữu ích

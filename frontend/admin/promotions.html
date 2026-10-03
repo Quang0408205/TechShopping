@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Khuyến mãi - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Khuyến mãi" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="promotions"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (/api/v1/admin/promotions). Khi chương trình đang diễn ra, giỏ hàng và thanh toán tính ngay giá
+                khuyến mãi; đơn đã đặt giữ nguyên giá kể cả khi chương trình bị sửa hoặc xoá. Mỗi sản phẩm chỉ thuộc
+                một chương trình đang bật tại cùng thời điểm.
+            </p>
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="promotionFilterForm" role="search">
+
+                    <input type="search" id="promotionKeyword" placeholder="Tìm tên chương trình…" maxlength="255" aria-label="Từ khoá">
+
+                    <select id="promotionStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="RUNNING">Đang diễn ra</option>
+                        <option value="UPCOMING">Sắp diễn ra</option>
+                        <option value="PAUSED">Tạm dừng</option>
+                        <option value="ENDED">Đã kết thúc</option>
+                    </select>
+
+                    <label class="admin-date-filter">
+                        Từ
+                        <input type="date" id="promotionFromDate" aria-label="Còn chạy từ ngày">
+                    </label>
+
+                    <label class="admin-date-filter">
+                        Đến
+                        <input type="date" id="promotionToDate" aria-label="Bắt đầu trước ngày">
+                    </label>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newPromotionBtn">
+                    + THÊM KHUYẾN MÃI
+                </button>
+
+            </div>
+
+            <p id="promotionFilterError" class="form-error" role="alert" hidden></p>
+
+
+            <!-- Thêm / sửa chương trình -->
+            <section class="admin-panel" id="promotionFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="promotionFormTitle">Thêm chương trình khuyến mãi</h2>
+                </div>
+
+                <form id="promotionForm" novalidate>
+
+                    <p id="promotionFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="pmName">Tên chương trình *</label>
+                            <input type="text" id="pmName" maxlength="255" required>
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="pmDescription">Mô tả</label>
+                            <textarea id="pmDescription" rows="2" maxlength="2000"></textarea>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pmDiscountType">Kiểu giảm mặc định *</label>
+                            <select id="pmDiscountType">
+                                <option value="PERCENTAGE">Giảm theo %</option>
+                                <option value="FIXED_AMOUNT">Giảm số tiền (đ)</option>
+                            </select>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pmDiscountValue" id="pmDiscountValueLabel">Mức giảm (%) *</label>
+                            <input type="number" id="pmDiscountValue" min="0" step="any" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pmMaxDiscount">Giảm tối đa (đ)</label>
+                            <input type="number" id="pmMaxDiscount" min="0" step="1000" placeholder="Áp dụng cho mọi mức giảm theo %">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pmStartDate">Bắt đầu *</label>
+                            <input type="datetime-local" id="pmStartDate" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="pmEndDate">Kết thúc *</label>
+                            <input type="datetime-local" id="pmEndDate" required>
+                        </div>
+
+                        <label class="admin-field-check">
+                            <input type="checkbox" id="pmActive" checked>
+                            Đang bật (bỏ chọn = tạm dừng)
+                        </label>
+
+                        <!-- Sản phẩm áp dụng: tìm qua /products, mỗi sản phẩm có thể có mức giảm riêng -->
+                        <fieldset class="admin-field admin-field-wide admin-promo-products">
+
+                            <legend>Sản phẩm áp dụng *</legend>
+
+                            <p class="admin-field-hint">
+                                Để "Mặc định" để dùng mức giảm của chương trình. Giá sau giảm tính trên giá gốc của sản phẩm;
+                                mỗi phiên bản được giảm trên giá riêng của nó. Mức giảm làm giá về 0 sẽ không được áp dụng.
+                            </p>
+
+                            <div class="admin-promo-picker">
+                                <input type="search" id="pmProductKeyword" placeholder="Tìm sản phẩm theo tên…" maxlength="255" aria-label="Tìm sản phẩm">
+                                <button type="button" class="btn btn-outline-dark" id="pmProductSearchBtn">TÌM SẢN PHẨM</button>
+                            </div>
+
+                            <ul class="admin-promo-results" id="pmProductResults" aria-live="polite" hidden></ul>
+
+                            <div class="admin-table-wrapper">
+
+                                <table class="admin-table">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Sản phẩm</th>
+                                            <th>Giá gốc</th>
+                                            <th>Mức giảm</th>
+                                            <th>Giá sau giảm</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="pmSelectedBody"></tbody>
+
+                                </table>
+
+                            </div>
+
+                        </fieldset>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="promotionSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="promotionCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Chương trình khuyến mãi</h2>
+                    <span class="admin-row-count" id="promotionRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Chương trình</th>
+                                <th>Mức giảm</th>
+                                <th>Thời gian</th>
+                                <th>Sản phẩm</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="promotionTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="promotionPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/promotions.js"></script>
+
+</body>
+</html>

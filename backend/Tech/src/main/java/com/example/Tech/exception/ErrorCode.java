@@ -36,6 +36,13 @@ public enum ErrorCode {
 
     // Product image
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Product image not found"),
+    PRODUCT_IMAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The product already has the maximum number of images"),
+    LAST_PRODUCT_IMAGE(HttpStatus.CONFLICT, "The last image of a product cannot be deleted"),
+    PRIMARY_IMAGE_REQUIRED(HttpStatus.CONFLICT, "Set another image as primary instead of unsetting the primary image"),
+
+    // Image upload
+    INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "Only JPEG, PNG or WebP images are accepted"),
+    IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Image must be at most 5 MB"),
 
     // Product specification
     PRODUCT_SPECIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Product specification not found"),
@@ -69,7 +76,24 @@ public enum ErrorCode {
     // Admin user management
     CANNOT_MODIFY_OWN_ACCOUNT(HttpStatus.CONFLICT, "Administrators cannot deactivate, delete or demote their own account"),
     LAST_ADMIN(HttpStatus.CONFLICT, "The last active administrator cannot be removed"),
-    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted");
+    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted"),
+
+    // Cart
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Product variant is not in the cart"),
+    PRODUCT_NOT_AVAILABLE(HttpStatus.CONFLICT, "Product is not available for purchase"),
+    CART_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The cart already holds the maximum number of different items"),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
+    CART_EMPTY(HttpStatus.CONFLICT, "The cart is empty"),
+    INVALID_ORDER_STATUS(HttpStatus.CONFLICT, "The order status does not allow this change"),
+
+    // Promotion
+    PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chương trình khuyến mãi"),
+    INVALID_PROMOTION_DATE_RANGE(HttpStatus.BAD_REQUEST, "Ngày kết thúc phải sau ngày bắt đầu"),
+    INVALID_PROMOTION_DISCOUNT(HttpStatus.BAD_REQUEST, "Mức giảm giá không hợp lệ"),
+    PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
+            "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này");
 
     private final HttpStatus status;
     private final String defaultMessage;

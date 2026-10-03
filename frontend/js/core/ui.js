@@ -200,8 +200,8 @@ function getProductDetailUrl(productId) {
 
 /*
  * Ảnh thay thế theo slug danh mục, dùng khi sản phẩm không có ảnh (116 sản
- * phẩm) hoặc tải ảnh lỗi. ProductResponse không có URL ảnh nên mỗi thẻ tải
- * ảnh riêng qua GET /products/{id}/images (xem loadProductImages).
+ * phẩm dữ liệu crawl) hoặc tải ảnh lỗi. Ảnh của thẻ lấy thẳng từ
+ * ProductResponse.primaryImageUrl (IMG-3), không gọi API riêng cho từng thẻ.
  */
 
 const CATEGORY_FALLBACK_IMAGES = {
@@ -249,8 +249,28 @@ function variantLabelOf(variant) {
 
 
 /*
+ * Giá đang bán do backend tính (effectivePrice): giá thấp hơn giữa giá giảm thủ công (discountPrice)
+ * và giá của chương trình khuyến mãi đang diễn ra — đúng giá giỏ hàng / thanh toán sẽ tính.
+ * Không có effectivePrice (dữ liệu cũ) → dùng discountPrice như trước.
+ */
+
+function salePriceOf(source) {
+
+    if (source.effectivePrice !== null && source.effectivePrice !== undefined) {
+        return Number(source.effectivePrice);
+    }
+
+    return source.discountPrice !== null && source.discountPrice !== undefined
+        ? Number(source.discountPrice)
+        : null;
+
+}
+
+
+/*
  * Giá bán của một phiên bản (hoặc của sản phẩm khi không có phiên bản):
- * { price, oldPrice } — oldPrice chỉ có khi giá khuyến mãi thấp hơn giá gốc.
+ * { price, oldPrice, promotionName } — oldPrice chỉ có khi giá bán thấp hơn giá gốc,
+ * promotionName khi giá đó đến từ một chương trình khuyến mãi.
  */
 
 function resolvePrices(product, variant) {
@@ -259,29 +279,26 @@ function resolvePrices(product, variant) {
 
     const original = Number(variant ? variant.price : product.basePrice) || 0;
 
-    const discount =
-        source.discountPrice !== null && source.discountPrice !== undefined
-            ? Number(source.discountPrice)
-            : null;
+    const sale = salePriceOf(source);
+
+    const discounted = sale !== null && sale < original;
 
     return {
-        price: discount !== null && discount < original ? discount : original,
-        oldPrice: discount !== null && discount < original ? original : null
+        price: discounted ? sale : original,
+        oldPrice: discounted ? original : null,
+        promotionName: discounted && source.activePromotionName ? source.activePromotionName : null
     };
 
 }
 
 
-/* Giá hiển thị: giá khuyến mãi nếu có, không thì giá gốc */
+/* Giá hiển thị trên thẻ / danh sách: giá đang bán nếu có, không thì giá gốc */
 
 function getDisplayPrice(product) {
 
-    const price =
-        product.discountPrice !== null && product.discountPrice !== undefined
-            ? product.discountPrice
-            : product.basePrice;
+    const sale = salePriceOf(product);
 
-    return Number(price) || 0;
+    return (sale !== null ? sale : Number(product.basePrice)) || 0;
 
 }
 
@@ -294,11 +311,20 @@ function getDisplayPrice(product) {
  * data-price vì giỏ hàng còn lưu theo tên cho tới Phase 3.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
  * không cho thêm vào giỏ.
+ * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
+ * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
+ * thay thế (bindProductImageFallbacks).
  */
 
 function productCardHtml(product, categorySlug) {
 
     const price = getDisplayPrice(product);
+
+    const fallbackImage = getFallbackImage(categorySlug);
+
+    const imageUrl = isSafeImageUrl(product.primaryImageUrl)
+        ? product.primaryImageUrl.trim()
+        : fallbackImage;
 
     const hasPrice = price > 0;
 
@@ -308,17 +334,22 @@ function productCardHtml(product, categorySlug) {
 
     const basePrice = Number(product.basePrice) || 0;
 
-    /* Có giảm giá thật (discountPrice < basePrice): nhãn -x% + giá gốc gạch ngang */
+    /* Có giảm giá thật (giá bán < basePrice): nhãn -x% + giá gốc gạch ngang; di chuột lên nhãn → tên chương trình */
     const hasDiscount = hasPrice && basePrice > price;
+
+    const promotionTitle = hasDiscount && product.activePromotionName
+        ? ` title="${escapeHtml("Khuyến mãi: " + product.activePromotionName)}"`
+        : "";
 
 
     return `
         <div class="product-card" data-product-id="${escapeHtml(product.id)}">
 
             <a href="${detailUrl}" class="product-image">
-                ${hasDiscount ? `<span class="product-badge">-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
+                ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
                 <img
-                    data-fallback="${escapeHtml(getFallbackImage(categorySlug))}"
+                    src="${escapeHtml(imageUrl)}"
+                    data-fallback="${escapeHtml(fallbackImage)}"
                     alt="${name}"
                     loading="lazy"
                 >
@@ -359,7 +390,8 @@ function productCardHtml(product, categorySlug) {
 
 /*
  * renderProductGrid(container, products, categorySlugById):
- * vẽ lưới thẻ, gắn "Thêm vào giỏ" cho các thẻ mới, rồi tải ảnh thật.
+ * vẽ lưới thẻ (ảnh từ primaryImageUrl), gắn "Thêm vào giỏ" cho các thẻ mới
+ * và ảnh thay thế cho ảnh hỏng.
  * categorySlugById: { [categoryId]: slug }, dùng để chọn ảnh thay thế.
  */
 
@@ -391,7 +423,7 @@ function renderProductGrid(container, products, categorySlugById) {
 
     setupAddToCart(container);
 
-    loadProductImages(container);
+    bindProductImageFallbacks(container);
 
     staggerRevealCards(container);
 
@@ -471,8 +503,10 @@ let modalOverlayElement = null;
 
 
 /*
- * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm }):
+ * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm, input }):
  * thay cho confirm() / alert() khi cần người dùng xác nhận (vd. xoá khỏi giỏ).
+ * input (tuỳ chọn) = { label, value, placeholder, maxLength }: thêm một ô nhập,
+ * onConfirm nhận giá trị đã trim; Enter trong ô = xác nhận.
  * Mọi chuỗi đều được escape.
  */
 
@@ -480,6 +514,8 @@ function openConfirmModal(options) {
 
     closeModal();
 
+
+    const input = options.input;
 
     const overlay = document.createElement("div");
 
@@ -489,6 +525,17 @@ function openConfirmModal(options) {
         <div class="modal-box" role="dialog" aria-modal="true">
             <h3>${escapeHtml(options.title || "Xác nhận")}</h3>
             <p>${escapeHtml(options.message || "")}</p>
+            ${input ? `
+                <label class="modal-field">
+                    <span>${escapeHtml(input.label || "")}</span>
+                    <input
+                        type="text"
+                        value="${escapeHtml(input.value || "")}"
+                        placeholder="${escapeHtml(input.placeholder || "")}"
+                        ${input.maxLength ? `maxlength="${Number(input.maxLength)}"` : ""}
+                    >
+                </label>
+            ` : ""}
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline-dark" data-action="cancel">
                     ${escapeHtml(options.cancelLabel || "Hủy")}
@@ -504,6 +551,21 @@ function openConfirmModal(options) {
 
     modalOverlayElement = overlay;
 
+    const inputElement = overlay.querySelector(".modal-field input");
+
+
+    function confirm() {
+
+        const value = inputElement ? inputElement.value.trim() : undefined;
+
+        closeModal();
+
+        if (typeof options.onConfirm === "function") {
+            options.onConfirm(value);
+        }
+
+    }
+
 
     overlay.addEventListener("click", function (event) {
 
@@ -515,15 +577,22 @@ function openConfirmModal(options) {
 
     overlay.querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 
-    overlay.querySelector('[data-action="confirm"]').addEventListener("click", function () {
+    overlay.querySelector('[data-action="confirm"]').addEventListener("click", confirm);
 
-        closeModal();
+    if (inputElement) {
 
-        if (typeof options.onConfirm === "function") {
-            options.onConfirm();
-        }
+        inputElement.addEventListener("keydown", function (event) {
 
-    });
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirm();
+            }
+
+        });
+
+        inputElement.focus();
+
+    }
 
 
     requestAnimationFrame(function () {
@@ -557,70 +626,23 @@ function isSafeImageUrl(url) {
 }
 
 
-function pickProductImage(images) {
-
-    if (!Array.isArray(images) || images.length === 0) {
-        return null;
-    }
-
-    const primary = images.find(function (image) {
-        return image.isPrimary && isSafeImageUrl(image.imageUrl);
-    });
-
-    if (primary) {
-        return primary.imageUrl;
-    }
-
-    const first = images.find(function (image) {
-        return isSafeImageUrl(image.imageUrl);
-    });
-
-    return first ? first.imageUrl : null;
-
-}
-
-
 /*
- * Với mỗi thẻ trong container: GET /products/{id}/images (công khai, không
- * gửi token), lấy ảnh chính hoặc ảnh đầu tiên. Không có ảnh / request lỗi /
- * ảnh hỏng → ảnh thay thế theo danh mục. Thẻ mới render chưa có src (ô ảnh
- * nền xám) để không hiện nhầm ảnh thay thế trong lúc chờ API.
+ * Ảnh thẻ hỏng (link sai, CDN lỗi, ảnh đã xoá) → ảnh thay thế theo danh mục
+ * (data-fallback). Đổi một lần, không lặp nếu chính ảnh thay thế cũng lỗi.
  */
 
-function loadProductImages(container) {
+function bindProductImageFallbacks(container) {
 
-    container.querySelectorAll(".product-card[data-product-id]")
-        .forEach(function (card) {
-
-            const img = card.querySelector(".product-image img");
-
-            if (!img) {
-                return;
-            }
-
+    container.querySelectorAll(".product-card .product-image img[data-fallback]")
+        .forEach(function (img) {
 
             img.addEventListener("error", function () {
 
-                if (img.src !== img.dataset.fallback) {
+                if (img.getAttribute("src") !== img.dataset.fallback) {
                     img.src = img.dataset.fallback;
                 }
 
             });
-
-
-            apiRequest(
-                "/products/" + encodeURIComponent(card.dataset.productId) + "/images"
-            )
-                .then(function (images) {
-
-                    img.src = pickProductImage(images) || img.dataset.fallback;
-
-                })
-                .catch(function () {
-
-                    img.src = img.dataset.fallback;
-
-                });
 
         });
 

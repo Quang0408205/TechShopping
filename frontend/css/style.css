@@ -1700,6 +1700,37 @@ img {
     justify-content: flex-end;
 }
 
+.modal-field {
+    display: block;
+
+    margin: -10px 0 25px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.modal-field input {
+    display: block;
+
+    width: 100%;
+
+    margin-top: 6px;
+    padding: 12px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+
+    outline: none;
+}
+
+.modal-field input:focus {
+    border-color: var(--color-ink);
+}
+
 /* ================= BỔ SUNG CHO DỮ LIỆU THẬT (giữ từ bản trước, F1) ================= */
 
 /* Trạng thái rỗng / lỗi nằm trong lưới sản phẩm: chiếm cả hàng */
@@ -1714,12 +1745,6 @@ img {
 
 .skeleton-card:hover {
     transform: none;
-}
-
-/* Ảnh thẻ sản phẩm chưa có src (đang chờ GET /products/{id}/images): chỉ hiện nền xám */
-
-.product-image img:not([src]) {
-    visibility: hidden;
 }
 
 /* Tên sản phẩm link sang trang chi tiết */

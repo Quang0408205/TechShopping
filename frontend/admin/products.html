@@ -39,7 +39,7 @@
 
             <p class="admin-mock-note admin-live-note">
                 Dữ liệu thật (catalogue /api/v1/products): thêm, sửa, ẩn / hiện và xoá có hiệu lực ngay trên website.
-                Phiên bản, ảnh và thông số kỹ thuật của sản phẩm được quản lý qua API riêng (chưa có màn hình).
+                Ảnh sản phẩm quản lý ngay trong form; phiên bản và thông số kỹ thuật được quản lý qua API riêng (chưa có màn hình).
             </p>
 
 
@@ -137,6 +137,32 @@
                             <label for="pfDescription">Mô tả</label>
                             <textarea id="pfDescription" rows="4"></textarea>
                         </div>
+
+                        <!-- Ảnh: thêm mới = gửi cùng sản phẩm khi LƯU; sửa = lưu ngay từng thao tác (js/admin/products.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-image-field" id="pfImages">
+
+                            <legend>Ảnh sản phẩm *</legend>
+
+                            <p class="admin-field-hint" id="pfImagesHint"></p>
+
+                            <p class="form-error" id="pfImagesError" role="alert" hidden></p>
+
+                            <div class="admin-image-list" id="pfImageList" aria-live="polite"></div>
+
+                            <div class="admin-image-add" id="pfImageAdd">
+
+                                <label class="btn btn-outline-dark admin-image-file-btn">
+                                    CHỌN ẢNH TỪ MÁY
+                                    <input type="file" id="pfImageFile" accept="image/jpeg,image/png,image/webp" multiple>
+                                </label>
+
+                                <input type="url" id="pfImageUrl" maxlength="2048" placeholder="Hoặc dán link ảnh https://…" aria-label="Link ảnh">
+
+                                <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
+
+                            </div>
+
+                        </fieldset>
 
                         <label class="admin-field-check admin-field-wide">
                             <input type="checkbox" id="pfActive" checked>

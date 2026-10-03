@@ -17,9 +17,10 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Stateless JWT security (OAuth2 resource server, see JwtConfig).
  * <ul>
- *     <li>Auth endpoints and Swagger are public.</li>
+ *     <li>Auth endpoints, Swagger and uploaded images (GET /uploads/**) are public.</li>
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
- *     <li>/api/v1/admin/** requires ADMIN; any other /api/v1/** requires a valid access token.</li>
+ *     <li>/api/v1/admin/orders/** requires STAFF or ADMIN (Phase 4); the rest of /api/v1/admin/** requires
+ *         ADMIN; any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
  * </ul>
  * A request that sends an invalid bearer token is rejected with 401 even on public endpoints.
@@ -30,6 +31,8 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     static final String ADMIN = "ADMIN";
+
+    static final String STAFF = "STAFF";
 
     /** Product catalogue resources: public reads, ADMIN-only writes (decision D4). */
     static final String[] CATALOG_PATHS = {
@@ -65,12 +68,15 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole(ADMIN)
+                        // Phase 4: shop staff manage orders too (must come before the ADMIN-only admin rule)
+                        .requestMatchers("/api/v1/admin/orders/**").hasAnyRole(STAFF, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()

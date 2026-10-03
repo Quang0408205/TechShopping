@@ -56,6 +56,9 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
     ports:
       - "8080:8080"
+    volumes:
+      # Ảnh sản phẩm upload từ trang admin; giữ lại khi build / tạo lại container
+      - uploads_data:/app/uploads
 
   # Static frontend: http://localhost:5510 (5500 = Oracle, 5501 = Live Server, 5502 = Antigravity).
   # ./frontend is mounted, so edits show on reload without rebuilding.
@@ -71,3 +74,4 @@ services:
 
 volumes:
   postgres_data:
+  uploads_data:

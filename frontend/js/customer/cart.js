@@ -1,9 +1,10 @@
-/* ================= TRANG GIỎ HÀNG (F2) ================= */
+/* ================= TRANG GIỎ HÀNG (Phase 3) ================= */
 
 /*
- * Giao diện lấy từ bản frontend mới; dữ liệu là snapshot trong
- * js/core/cart-store.js (giỏ hàng theo tài khoản). Chưa đăng nhập → mời
- * đăng nhập. Mọi dữ liệu đưa vào innerHTML đều escape.
+ * Giao diện lấy từ bản frontend mới; dữ liệu là giỏ trên server
+ * (js/core/cart-store.js → /api/v1/cart). Chưa đăng nhập → mời đăng nhập.
+ * Dòng đã ngừng bán: không tính tiền, chỉ còn nút xoá, và chặn thanh toán
+ * cho tới khi xoá hết. Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
 document.addEventListener(
@@ -14,56 +15,101 @@ document.addEventListener(
             await layoutReady;
         }
 
-        renderCart();
+        loadCart();
 
     }
 );
 
 
-function cartLineAttributes(item) {
+function getCartContainer() {
 
-    /* String(): variantId null → "null", khớp với cách so sánh ở findItem / cart-store */
-    return `data-product-id="${escapeHtml(String(item.productId))}" data-variant-id="${escapeHtml(String(item.variantId))}"`;
+    return document.getElementById("cartContainer");
 
 }
 
 
-function renderCart() {
+async function loadCart() {
 
-    const container =
-        document.getElementById(
-            "cartContainer"
-        );
+    const container = getCartContainer();
 
 
     if (!isLoggedIn()) {
 
-        container.innerHTML = `
-            <div class="empty-cart">
-                <h2>
-                    VUI LÒNG ĐĂNG NHẬP
-                </h2>
-                <p>
-                    Giỏ hàng được lưu theo tài khoản của bạn.
-                </p>
-                <br>
-                <button type="button" class="btn btn-dark" id="cartLoginBtn">
-                    ĐĂNG NHẬP
-                </button>
-            </div>
-        `;
-
-        document.getElementById("cartLoginBtn")
-            .addEventListener("click", function () {
-                redirectToLogin();
-            });
+        renderLoginPrompt();
 
         return;
 
     }
 
 
-    const summary = getCartSummary();
+    container.innerHTML = `
+        <div class="state-box">
+            <p>Đang tải giỏ hàng...</p>
+        </div>
+    `;
+
+
+    let summary;
+
+    try {
+
+        summary = await getCartSummary();
+
+    } catch (error) {
+
+        /* refresh thất bại → api.js đã xoá phiên */
+        if (!isLoggedIn()) {
+
+            renderLoginPrompt();
+
+            return;
+
+        }
+
+        container.innerHTML = errorStateHtml(getErrorMessage(error), "cartRetryBtn");
+
+        document.getElementById("cartRetryBtn").addEventListener("click", loadCart);
+
+        return;
+
+    }
+
+
+    setCartCount(summary.totalQuantity);
+
+    renderCart(summary);
+
+}
+
+
+function renderLoginPrompt() {
+
+    getCartContainer().innerHTML = `
+        <div class="empty-cart">
+            <h2>
+                VUI LÒNG ĐĂNG NHẬP
+            </h2>
+            <p>
+                Giỏ hàng được lưu theo tài khoản của bạn.
+            </p>
+            <br>
+            <button type="button" class="btn btn-dark" id="cartLoginBtn">
+                ĐĂNG NHẬP
+            </button>
+        </div>
+    `;
+
+    document.getElementById("cartLoginBtn")
+        .addEventListener("click", function () {
+            redirectToLogin();
+        });
+
+}
+
+
+function renderCart(summary) {
+
+    const container = getCartContainer();
 
 
     if (summary.items.length === 0) {
@@ -96,8 +142,15 @@ function renderCart() {
 
         const detailUrl = escapeHtml(getProductDetailUrl(item.productId));
 
+        const variantAttribute = `data-variant-id="${escapeHtml(String(item.variantId))}"`;
+
+        const unitPrice = item.available
+            ? formatPrice(item.price) +
+                (item.oldPrice ? `<span class="cart-old-price">${formatPrice(item.oldPrice)}</span>` : "")
+            : `<span class="cart-unavailable-tag">Ngừng bán</span>`;
+
         return `
-            <tr>
+            <tr class="${item.available ? "" : "cart-row-unavailable"}">
                 <td class="cart-product-cell">
                     <img
                         src="${escapeHtml(cartItemImageUrl(item))}"
@@ -114,30 +167,30 @@ function renderCart() {
 
                 <td>
                     <div class="quantity-control">
-                        <button type="button" data-action="decrease" ${cartLineAttributes(item)} aria-label="Giảm số lượng">
+                        <button type="button" data-action="decrease" ${variantAttribute} aria-label="Giảm số lượng"
+                            ${item.available ? "" : "disabled"}>
                             −
                         </button>
                         <span>
                             ${item.quantity}
                         </span>
-                        <button type="button" data-action="increase" ${cartLineAttributes(item)} aria-label="Tăng số lượng"
-                            ${item.quantity >= MAX_CART_LINE_QUANTITY ? "disabled" : ""}>
+                        <button type="button" data-action="increase" ${variantAttribute} aria-label="Tăng số lượng"
+                            ${!item.available || item.quantity >= MAX_CART_LINE_QUANTITY ? "disabled" : ""}>
                             +
                         </button>
                     </div>
                 </td>
 
                 <td>
-                    ${formatPrice(item.price)}
+                    ${unitPrice}
                 </td>
 
                 <td>
-                    ${formatPrice(item.lineTotal)}
+                    ${item.available ? formatPrice(item.lineTotal) : "—"}
                 </td>
 
                 <td>
-                    <button type="button" class="remove-btn" data-action="remove" ${cartLineAttributes(item)}
-                        data-name="${escapeHtml(item.name)}">
+                    <button type="button" class="remove-btn" data-action="remove" ${variantAttribute}>
                         Xóa
                     </button>
                 </td>
@@ -145,6 +198,26 @@ function renderCart() {
         `;
 
     }).join("");
+
+
+    const checkoutAction = summary.hasUnavailableItems
+        ? `
+            <p class="cart-unavailable-note" id="cartUnavailableNote">
+                Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng xóa các sản phẩm này trước khi thanh toán.
+            </p>
+            <button type="button" class="btn btn-dark" id="checkoutButton" disabled>
+                TIẾN HÀNH THANH TOÁN
+            </button>
+        `
+        : `
+            <a
+                href="${escapeHtml(siteUrl("customer/checkout.html"))}"
+                class="btn btn-dark"
+                id="checkoutButton"
+            >
+                TIẾN HÀNH THANH TOÁN
+            </a>
+        `;
 
 
     container.innerHTML = `
@@ -197,13 +270,7 @@ function renderCart() {
                         ${formatPrice(summary.total)}
                     </span>
                 </div>
-                <a
-                    href="${escapeHtml(siteUrl("customer/checkout.html"))}"
-                    class="btn btn-dark"
-                    id="checkoutButton"
-                >
-                    TIẾN HÀNH THANH TOÁN
-                </a>
+                ${checkoutAction}
             </div>
         </div>
     `;
@@ -216,17 +283,52 @@ function renderCart() {
 
 function bindCartEvents(items) {
 
+    const container = getCartContainer();
+
+
     function findItem(button) {
 
         return items.find(function (item) {
-            return String(item.productId) === button.dataset.productId &&
-                String(item.variantId) === button.dataset.variantId;
+            return String(item.variantId) === button.dataset.variantId;
         });
 
     }
 
 
-    document.querySelectorAll('[data-action="decrease"]').forEach(function (button) {
+    /*
+     * Gọi API rồi vẽ lại bằng giỏ server trả về. Trong lúc chờ khoá mọi nút để
+     * không bấm trùng; lỗi (vd. dòng đã bị xoá ở tab khác) → toast + tải lại giỏ.
+     */
+
+    async function runAction(request, successMessage) {
+
+        container.querySelectorAll("[data-action]").forEach(function (button) {
+            button.disabled = true;
+        });
+
+
+        try {
+
+            renderCart(await request());
+
+            if (successMessage) {
+                showToast(successMessage);
+            }
+
+        } catch (error) {
+
+            if (isLoggedIn()) {
+                showToast(getErrorMessage(error), "error");
+            }
+
+            loadCart();
+
+        }
+
+    }
+
+
+    container.querySelectorAll('[data-action="decrease"]').forEach(function (button) {
 
         button.addEventListener("click", function () {
 
@@ -234,9 +336,9 @@ function bindCartEvents(items) {
 
             if (item) {
 
-                updateCartItemQuantity(item.productId, item.variantId, item.quantity - 1);
-
-                renderCart();
+                runAction(function () {
+                    return updateCartItemQuantity(item.productId, item.variantId, item.quantity - 1);
+                });
 
             }
 
@@ -245,7 +347,7 @@ function bindCartEvents(items) {
     });
 
 
-    document.querySelectorAll('[data-action="increase"]').forEach(function (button) {
+    container.querySelectorAll('[data-action="increase"]').forEach(function (button) {
 
         button.addEventListener("click", function () {
 
@@ -253,9 +355,9 @@ function bindCartEvents(items) {
 
             if (item) {
 
-                updateCartItemQuantity(item.productId, item.variantId, item.quantity + 1);
-
-                renderCart();
+                runAction(function () {
+                    return updateCartItemQuantity(item.productId, item.variantId, item.quantity + 1);
+                });
 
             }
 
@@ -264,7 +366,7 @@ function bindCartEvents(items) {
     });
 
 
-    document.querySelectorAll('[data-action="remove"]').forEach(function (button) {
+    container.querySelectorAll('[data-action="remove"]').forEach(function (button) {
 
         button.addEventListener("click", function () {
 
@@ -280,11 +382,9 @@ function bindCartEvents(items) {
                 confirmLabel: "XÓA",
                 onConfirm: function () {
 
-                    removeCartItem(item.productId, item.variantId);
-
-                    showToast("Đã xóa sản phẩm khỏi giỏ hàng.");
-
-                    renderCart();
+                    runAction(function () {
+                        return removeCartItem(item.productId, item.variantId);
+                    }, "Đã xóa sản phẩm khỏi giỏ hàng.");
 
                 }
             });

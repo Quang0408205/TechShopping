@@ -1,11 +1,14 @@
-/* ================= TRANG THANH TOÁN (F2, mô phỏng) ================= */
+/* ================= TRANG THANH TOÁN (Phase 4) ================= */
 
 /*
- * Giao diện lấy từ bản frontend mới. Chỉ dành cho người đã đăng nhập.
+ * Chỉ dành cho người đã đăng nhập.
  * - Điền sẵn họ tên / số điện thoại / địa chỉ từ API tài khoản thật
  *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
- * - Đặt hàng: chưa có backend Order (Phase 4) → lưu đơn theo tài khoản bằng
- *   createLocalOrder() (js/core/order-store.js), rồi xoá giỏ hàng.
+ * - Tóm tắt lấy từ giỏ trên server (/api/v1/cart), kể cả phí ship. Có dòng
+ *   ngừng bán thì không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
+ * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) chỉ gửi
+ *   người nhận / địa chỉ / ghi chú / phương thức thanh toán; server tạo đơn từ
+ *   giỏ, xoá giỏ, rồi chuyển sang trang chi tiết đơn.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -44,8 +47,36 @@ document.addEventListener(
                 "Vui lòng nhập địa chỉ nhận hàng đầy đủ."
         };
 
+        const UNAVAILABLE_MESSAGE =
+            "Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng quay lại giỏ hàng để xóa trước khi đặt hàng.";
 
-        const summary = getCartSummary();
+
+        let summary;
+
+        try {
+
+            summary = await getCartSummary();
+
+        } catch (error) {
+
+            if (!isLoggedIn()) {
+
+                redirectToLogin();
+
+                return;
+
+            }
+
+            emptyBox.hidden = false;
+
+            showToast(getErrorMessage(error), "error");
+
+            return;
+
+        }
+
+
+        setCartCount(summary.totalQuantity);
 
         if (summary.items.length === 0) {
 
@@ -61,6 +92,15 @@ document.addEventListener(
         renderSummary(summary);
 
         prefillFromAccount();
+
+
+        if (summary.hasUnavailableItems) {
+
+            showFormError(UNAVAILABLE_MESSAGE);
+
+            document.getElementById("checkoutSubmitBtn").disabled = true;
+
+        }
 
 
         document.querySelectorAll('input[name="paymentMethod"]').forEach(function (radio) {
@@ -156,7 +196,7 @@ document.addEventListener(
         }
 
 
-        function handleSubmit(event) {
+        async function handleSubmit(event) {
 
             event.preventDefault();
 
@@ -200,17 +240,6 @@ document.addEventListener(
             }
 
 
-            const cartSummary = getCartSummary();
-
-            if (cartSummary.items.length === 0) {
-
-                showFormError("Giỏ hàng của bạn đang trống.");
-
-                return;
-
-            }
-
-
             const button = document.getElementById("checkoutSubmitBtn");
 
             button.disabled = true;
@@ -218,38 +247,51 @@ document.addEventListener(
             button.textContent = "ĐANG XỬ LÝ...";
 
 
-            /* Độ trễ giả lập thời gian xử lý đơn ở backend */
+            function restoreButton() {
 
-            setTimeout(function () {
+                button.disabled = false;
 
-                const order = createLocalOrder({
+                button.textContent = "ĐẶT HÀNG";
+
+            }
+
+
+            /*
+             * Server đặt hàng từ giỏ của tài khoản (giá, phí ship tính lại lúc đặt)
+             * và xoá giỏ. Nút đã khoá nên không gửi 2 lần; nếu vẫn trùng (2 tab),
+             * lần sau nhận CART_EMPTY.
+             */
+            let order;
+
+            try {
+
+                order = await placeOrder({
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
                     shippingAddress: data.shippingAddress,
-                    note: data.note,
-                    paymentMethod: data.paymentMethod,
-                    items: cartSummary.items.map(function (item) {
-                        return {
-                            productId: item.productId,
-                            variantId: item.variantId,
-                            name: item.name,
-                            variantLabel: item.variantLabel,
-                            image: item.image,
-                            price: item.price,
-                            quantity: item.quantity
-                        };
-                    }),
-                    subtotal: cartSummary.subtotal,
-                    shippingFee: cartSummary.shippingFee,
-                    total: cartSummary.total
+                    note: data.note || null,
+                    paymentMethod: data.paymentMethod
                 });
 
+            } catch (error) {
 
-                if (!order) {
+                await handlePlaceOrderError(error);
 
-                    button.disabled = false;
+                return;
 
-                    button.textContent = "ĐẶT HÀNG";
+            }
+
+
+            setCartCount(0);
+
+            window.location.href = getOrderDetailUrl(order.id, true);
+
+
+            async function handlePlaceOrderError(error) {
+
+                if (!isLoggedIn()) {
+
+                    restoreButton();
 
                     showFormError("Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
 
@@ -258,12 +300,58 @@ document.addEventListener(
                 }
 
 
-                clearCart();
+                /* Sai dữ liệu: hiện lỗi ở đúng ô (backend trả tên trường) */
+                if (error.code === "VALIDATION_ERROR" && error.details) {
 
-                window.location.href =
-                    siteUrl("customer/order-detail.html?id=" + encodeURIComponent(order.id) + "&justPlaced=1");
+                    Object.keys(error.details).forEach(function (field) {
+                        showFieldError(field, FIELD_MESSAGES[field] || error.details[field]);
+                    });
 
-            }, 700);
+                }
+
+                showFormError(getErrorMessage(error));
+
+
+                /* Giỏ đã đổi (trống / có sản phẩm ngừng bán): vẽ lại tóm tắt từ server */
+                if (error.code === "CART_EMPTY" || error.code === "PRODUCT_NOT_AVAILABLE") {
+
+                    try {
+
+                        const fresh = await getCartSummary();
+
+                        setCartCount(fresh.totalQuantity);
+
+                        if (fresh.items.length > 0) {
+                            renderSummary(fresh);
+                        }
+
+                        if (fresh.hasUnavailableItems) {
+
+                            showFormError(UNAVAILABLE_MESSAGE);
+
+                            button.textContent = "ĐẶT HÀNG";
+
+                            return;
+
+                        }
+
+                        if (fresh.items.length === 0) {
+
+                            button.textContent = "ĐẶT HÀNG";
+
+                            return;
+
+                        }
+
+                    } catch (reloadError) {
+                        /* giữ thông báo lỗi đặt hàng */
+                    }
+
+                }
+
+                restoreButton();
+
+            }
 
         }
 
