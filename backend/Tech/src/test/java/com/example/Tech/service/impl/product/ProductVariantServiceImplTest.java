@@ -21,6 +21,8 @@ import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.VariantAttributeValueRepository;
+import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +32,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -63,13 +67,18 @@ class ProductVariantServiceImplTest {
     @Mock
     private OrderItemRepository orderItemRepository;
 
+    @Mock
+    private PromotionProductRepository promotionProductRepository;
+
     private ProductVariantServiceImpl variantService;
 
     @BeforeEach
     void setUp() {
+        lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
                 attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
-                new ProductVariantMapper(new AttributeValueMapper()));
+                new ProductVariantMapper(new AttributeValueMapper()),
+                new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
     }
 
     @Test

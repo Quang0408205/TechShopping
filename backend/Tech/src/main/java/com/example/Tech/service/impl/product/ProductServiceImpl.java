@@ -21,6 +21,8 @@ import com.example.Tech.repository.product.ProductFilterSpecifications;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.service.product.ProductService;
+import com.example.Tech.service.promotion.EffectivePrice;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.util.SlugUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,6 +51,8 @@ public class ProductServiceImpl implements ProductService {
     private final ProductImageRepository imageRepository;
     private final ProductMapper productMapper;
     private final ProductImageMapper imageMapper;
+    private final PromotionPricingService pricingService;
+    private final Clock clock;
 
     @Override
     public PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable) {
@@ -57,7 +62,9 @@ public class ProductServiceImpl implements ProductService {
         }
         Page<Product> page = productRepository.findAll(ProductFilterSpecifications.matching(filter), pageable);
         Map<Long, String> imageUrls = primaryImageUrls(page.getContent().stream().map(Product::getId).toList());
-        return PageResponse.from(page.map(product -> productMapper.toResponse(product, imageUrls.get(product.getId()))));
+        Map<Long, EffectivePrice> prices = pricingService.resolveProducts(page.getContent(), LocalDateTime.now(clock));
+        return PageResponse.from(page.map(product ->
+                productMapper.toResponse(product, imageUrls.get(product.getId()), prices.get(product.getId()))));
     }
 
     @Override
@@ -109,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElse(null);
 
         log.info("Created product id={} with {} image(s)", saved.getId(), imageEntities.size());
-        return productMapper.toResponse(saved, primaryImageUrl);
+        return productMapper.toResponse(saved, primaryImageUrl, priceOf(saved));
     }
 
     @Override
@@ -151,7 +158,12 @@ public class ProductServiceImpl implements ProductService {
     }
 
     private ProductResponse toResponse(Product product) {
-        return productMapper.toResponse(product, primaryImageUrls(List.of(product.getId())).get(product.getId()));
+        return productMapper.toResponse(product, primaryImageUrls(List.of(product.getId())).get(product.getId()),
+                priceOf(product));
+    }
+
+    private EffectivePrice priceOf(Product product) {
+        return pricingService.resolveProducts(List.of(product), LocalDateTime.now(clock)).get(product.getId());
     }
 
     /** One query for all products: the best image of each (primary, else the first by display order). */

@@ -487,6 +487,15 @@ document.addEventListener(
             }
 
 
+            /* Giá đến từ chương trình khuyến mãi → ghi tên chương trình (textContent: tên do admin nhập) */
+
+            const promoEl = document.getElementById("detailPromo");
+
+            promoEl.textContent = prices.promotionName ? "Khuyến mãi: " + prices.promotionName : "";
+
+            promoEl.hidden = !prices.promotionName;
+
+
             /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ */
 
             addToCartBtn.disabled = !hasPrice;

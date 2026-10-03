@@ -19,6 +19,8 @@ import com.example.Tech.repository.product.BrandRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -58,12 +62,17 @@ class ProductServiceImplTest {
     @Mock
     private ProductImageRepository imageRepository;
 
+    @Mock
+    private PromotionProductRepository promotionProductRepository;
+
     private ProductServiceImpl productService;
 
     @BeforeEach
     void setUp() {
+        lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         productService = new ProductServiceImpl(productRepository, categoryRepository, brandRepository,
-                imageRepository, new ProductMapper(), new ProductImageMapper());
+                imageRepository, new ProductMapper(), new ProductImageMapper(),
+                new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
     }
 
     @Test

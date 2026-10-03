@@ -249,8 +249,28 @@ function variantLabelOf(variant) {
 
 
 /*
+ * Giá đang bán do backend tính (effectivePrice): giá thấp hơn giữa giá giảm thủ công (discountPrice)
+ * và giá của chương trình khuyến mãi đang diễn ra — đúng giá giỏ hàng / thanh toán sẽ tính.
+ * Không có effectivePrice (dữ liệu cũ) → dùng discountPrice như trước.
+ */
+
+function salePriceOf(source) {
+
+    if (source.effectivePrice !== null && source.effectivePrice !== undefined) {
+        return Number(source.effectivePrice);
+    }
+
+    return source.discountPrice !== null && source.discountPrice !== undefined
+        ? Number(source.discountPrice)
+        : null;
+
+}
+
+
+/*
  * Giá bán của một phiên bản (hoặc của sản phẩm khi không có phiên bản):
- * { price, oldPrice } — oldPrice chỉ có khi giá khuyến mãi thấp hơn giá gốc.
+ * { price, oldPrice, promotionName } — oldPrice chỉ có khi giá bán thấp hơn giá gốc,
+ * promotionName khi giá đó đến từ một chương trình khuyến mãi.
  */
 
 function resolvePrices(product, variant) {
@@ -259,29 +279,26 @@ function resolvePrices(product, variant) {
 
     const original = Number(variant ? variant.price : product.basePrice) || 0;
 
-    const discount =
-        source.discountPrice !== null && source.discountPrice !== undefined
-            ? Number(source.discountPrice)
-            : null;
+    const sale = salePriceOf(source);
+
+    const discounted = sale !== null && sale < original;
 
     return {
-        price: discount !== null && discount < original ? discount : original,
-        oldPrice: discount !== null && discount < original ? original : null
+        price: discounted ? sale : original,
+        oldPrice: discounted ? original : null,
+        promotionName: discounted && source.activePromotionName ? source.activePromotionName : null
     };
 
 }
 
 
-/* Giá hiển thị: giá khuyến mãi nếu có, không thì giá gốc */
+/* Giá hiển thị trên thẻ / danh sách: giá đang bán nếu có, không thì giá gốc */
 
 function getDisplayPrice(product) {
 
-    const price =
-        product.discountPrice !== null && product.discountPrice !== undefined
-            ? product.discountPrice
-            : product.basePrice;
+    const sale = salePriceOf(product);
 
-    return Number(price) || 0;
+    return (sale !== null ? sale : Number(product.basePrice)) || 0;
 
 }
 
@@ -317,15 +334,19 @@ function productCardHtml(product, categorySlug) {
 
     const basePrice = Number(product.basePrice) || 0;
 
-    /* Có giảm giá thật (discountPrice < basePrice): nhãn -x% + giá gốc gạch ngang */
+    /* Có giảm giá thật (giá bán < basePrice): nhãn -x% + giá gốc gạch ngang; di chuột lên nhãn → tên chương trình */
     const hasDiscount = hasPrice && basePrice > price;
+
+    const promotionTitle = hasDiscount && product.activePromotionName
+        ? ` title="${escapeHtml("Khuyến mãi: " + product.activePromotionName)}"`
+        : "";
 
 
     return `
         <div class="product-card" data-product-id="${escapeHtml(product.id)}">
 
             <a href="${detailUrl}" class="product-image">
-                ${hasDiscount ? `<span class="product-badge">-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
+                ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
                 <img
                     src="${escapeHtml(imageUrl)}"
                     data-fallback="${escapeHtml(fallbackImage)}"

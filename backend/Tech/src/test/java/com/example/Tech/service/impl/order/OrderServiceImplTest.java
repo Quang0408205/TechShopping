@@ -10,6 +10,9 @@ import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.order.PaymentMethod;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.entity.promotion.DiscountType;
+import com.example.Tech.entity.promotion.Promotion;
+import com.example.Tech.entity.promotion.PromotionProduct;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
@@ -17,6 +20,8 @@ import com.example.Tech.mapper.cart.CartMapper;
 import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +43,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -66,6 +72,9 @@ class OrderServiceImplTest {
     @Mock
     private OrderViewLoader orderViewLoader;
 
+    @Mock
+    private PromotionProductRepository promotionProductRepository;
+
     private OrderServiceImpl orderService;
 
     private User user;
@@ -75,7 +84,9 @@ class OrderServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, new CartMapper(),
+        lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
+        CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), CLOCK);
+        orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, cartMapper,
                 currentUserLoader, orderViewLoader, CLOCK);
         user = new User();
         user.setId(USER_ID);
@@ -136,6 +147,31 @@ class OrderServiceImplTest {
         assertThat(order.getShippingCost()).isEqualByComparingTo("30000");
         assertThat(order.getTotalAmount()).isEqualByComparingTo("4030000");
         assertThat(order.getNotes()).isEqualTo("Giao giờ hành chính");
+    }
+
+    @Test
+    void placeOrder_whenAPromotionIsActiveForTheVariantsProduct_chargesThePromotionPrice() {
+        ProductVariant plain = variant(20L, product(3L), "1000000", null);
+        cartWith(line(plain, 1));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Promotion promotion = new Promotion();
+        promotion.setId(1L);
+        promotion.setName("Sale 30%");
+        promotion.setDiscountType(DiscountType.PERCENTAGE);
+        promotion.setDiscountValue(new BigDecimal("30"));
+        promotion.setStartDate(NOW.minusDays(1));
+        promotion.setEndDate(NOW.plusDays(1));
+        promotion.setActive(true);
+        PromotionProduct promotionProduct = new PromotionProduct(promotion, plain.getProduct(), null, null);
+        when(promotionProductRepository.findActiveForProducts(List.of(plain.getProduct().getId()), NOW))
+                .thenReturn(List.of(promotionProduct));
+
+        orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD));
+
+        OrderItem item = savedOrder().getItems().getFirst();
+        assertThat(item.getUnitPrice()).isEqualByComparingTo("700000");
+        assertThat(item.getDiscountAmount()).isEqualByComparingTo("300000");
     }
 
     @Test

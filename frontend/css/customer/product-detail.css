@@ -111,6 +111,7 @@
 
 .detail-price-box {
     display: flex;
+    flex-wrap: wrap;
     align-items: baseline;
     gap: 12px;
     padding: 20px 0;
@@ -128,6 +129,20 @@
     color: #999;
     font-size: 15px;
     text-decoration: line-through;
+}
+
+/* Tên chương trình khuyến mãi đang cho giá này */
+.detail-promo {
+    padding: 4px 10px;
+
+    border-radius: var(--radius-full);
+
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+
+    font-size: 12px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 

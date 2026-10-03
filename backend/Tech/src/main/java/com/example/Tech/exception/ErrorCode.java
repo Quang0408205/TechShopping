@@ -86,7 +86,14 @@ public enum ErrorCode {
     // Order
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
     CART_EMPTY(HttpStatus.CONFLICT, "The cart is empty"),
-    INVALID_ORDER_STATUS(HttpStatus.CONFLICT, "The order status does not allow this change");
+    INVALID_ORDER_STATUS(HttpStatus.CONFLICT, "The order status does not allow this change"),
+
+    // Promotion
+    PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chương trình khuyến mãi"),
+    INVALID_PROMOTION_DATE_RANGE(HttpStatus.BAD_REQUEST, "Ngày kết thúc phải sau ngày bắt đầu"),
+    INVALID_PROMOTION_DISCOUNT(HttpStatus.BAD_REQUEST, "Mức giảm giá không hợp lệ"),
+    PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
+            "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này");
 
     private final HttpStatus status;
     private final String defaultMessage;

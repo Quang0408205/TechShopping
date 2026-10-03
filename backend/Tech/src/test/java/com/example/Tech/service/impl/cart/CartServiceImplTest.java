@@ -17,9 +17,11 @@ import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
+import com.example.Tech.repository.promotion.PromotionProductRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.service.cart.CartService;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,14 +31,17 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,6 +71,9 @@ class CartServiceImplTest {
     @Mock
     private UserRoleRepository userRoleRepository;
 
+    @Mock
+    private PromotionProductRepository promotionProductRepository;
+
     private CartServiceImpl cartService;
 
     private User user;
@@ -73,8 +81,10 @@ class CartServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
+        CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
         cartService = new CartServiceImpl(cartRepository, cartItemRepository, variantRepository, imageRepository,
-                new CurrentUserLoader(userRepository, userRoleRepository), new CartMapper());
+                new CurrentUserLoader(userRepository, userRoleRepository), cartMapper);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);

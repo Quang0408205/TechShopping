@@ -6,6 +6,7 @@ import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.entity.product.Brand;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
+import com.example.Tech.service.promotion.EffectivePrice;
 import org.springframework.stereotype.Component;
 
 /**
@@ -51,8 +52,11 @@ public class ProductMapper {
         }
     }
 
-    /** The primary image URL is looked up by the service (one query per page, see ProductImageRepository). */
-    public ProductResponse toResponse(Product product, String primaryImageUrl) {
+    /**
+     * The primary image URL and the effective price are looked up by the service (one query per page each, see
+     * ProductImageRepository and PromotionPricingService).
+     */
+    public ProductResponse toResponse(Product product, String primaryImageUrl, EffectivePrice price) {
         Category category = product.getCategory();
         Brand brand = product.getBrand();
         return new ProductResponse(
@@ -76,7 +80,9 @@ public class ProductMapper {
                 product.getActive(),
                 product.getCreatedAt(),
                 product.getUpdatedAt(),
-                primaryImageUrl
+                primaryImageUrl,
+                price.unitPrice(),
+                price.activePromotionName()
         );
     }
 }

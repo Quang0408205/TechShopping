@@ -7,9 +7,13 @@ import com.example.Tech.entity.cart.CartItem;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.service.order.ShippingPolicy;
+import com.example.Tech.service.promotion.PromotionPricingService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -19,7 +23,12 @@ import java.util.List;
  * unitPrice / isPurchasable rules.
  */
 @Component
+@RequiredArgsConstructor
 public class CartMapper {
+
+    private final PromotionPricingService promotionPricingService;
+
+    private final Clock clock;
 
     public CartResponse toResponse(Cart cart, List<CartItemResponse> items) {
         int totalQuantity = items.stream().mapToInt(CartItemResponse::quantity).sum();
@@ -50,21 +59,23 @@ public class CartMapper {
                 originalPrice,
                 item.getQuantity(),
                 unitPrice.multiply(BigDecimal.valueOf(item.getQuantity())),
-                isPurchasable(variant),
+                isPurchasable(product, unitPrice),
                 item.getAddedAt());
     }
 
-    /** The discount price when it is set and lower than the price, else the price. */
+    /** The lower of the manual discount price and any currently active promotion for the variant's product. */
     public BigDecimal unitPrice(ProductVariant variant) {
-        BigDecimal discount = variant.getDiscountPrice();
-        return discount != null && discount.compareTo(variant.getPrice()) < 0 ? discount : variant.getPrice();
+        return promotionPricingService.resolve(variant, LocalDateTime.now(clock)).unitPrice();
     }
 
     /** Not soft-deleted, not hidden (is_active NULL counts as active) and a price above 0. */
     public boolean isPurchasable(ProductVariant variant) {
-        Product product = variant.getProduct();
+        return isPurchasable(variant.getProduct(), unitPrice(variant));
+    }
+
+    private boolean isPurchasable(Product product, BigDecimal unitPrice) {
         return product.getDeletedAt() == null
                 && !Boolean.FALSE.equals(product.getActive())
-                && unitPrice(variant).signum() > 0;
+                && unitPrice.signum() > 0;
     }
 }

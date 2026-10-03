@@ -313,10 +313,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const active = product.isActive !== false;
 
+        /* Giá đang bán (gồm cả khuyến mãi đang chạy); ô "Giá khuyến mãi" của form vẫn là discountPrice thô */
         const price = getDisplayPrice(product);
 
-        const hasDiscount = product.discountPrice !== null && product.discountPrice !== undefined &&
-            Number(product.discountPrice) < Number(product.basePrice);
+        const hasDiscount = price > 0 && price < Number(product.basePrice);
 
 
         return `
@@ -337,6 +337,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>
                     ${price > 0 ? formatPrice(price) : "Liên hệ"}
                     ${hasDiscount ? `<div class="admin-subtext"><s>${formatPrice(Number(product.basePrice))}</s></div>` : ""}
+                    ${product.activePromotionName ? `<div class="admin-subtext">KM: ${escapeHtml(product.activePromotionName)}</div>` : ""}
                 </td>
                 <td>
                     <span class="admin-badge ${active ? "admin-badge-success" : "admin-badge-neutral"}">

@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.product.ProductVariantUpdateRequest;
 import com.example.Tech.dto.response.product.ProductVariantResponse;
 import com.example.Tech.entity.product.AttributeValue;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.service.promotion.EffectivePrice;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +46,9 @@ public class ProductVariantMapper {
         }
     }
 
-    public ProductVariantResponse toResponse(ProductVariant variant, List<AttributeValue> attributeValues) {
+    /** The effective price is computed by the service (PromotionPricingService, one query per list). */
+    public ProductVariantResponse toResponse(ProductVariant variant, List<AttributeValue> attributeValues,
+                                             EffectivePrice price) {
         return new ProductVariantResponse(
                 variant.getId(),
                 variant.getProduct().getId(),
@@ -60,7 +63,9 @@ public class ProductVariantMapper {
                 variant.getRam(),
                 attributeValues.stream().map(attributeValueMapper::toResponse).toList(),
                 variant.getCreatedAt(),
-                variant.getUpdatedAt()
+                variant.getUpdatedAt(),
+                price.unitPrice(),
+                price.activePromotionName()
         );
     }
 }

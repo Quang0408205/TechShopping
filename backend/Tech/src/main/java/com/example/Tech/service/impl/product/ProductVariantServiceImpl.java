@@ -19,12 +19,16 @@ import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.VariantAttributeValueRepository;
 import com.example.Tech.service.product.ProductVariantService;
+import com.example.Tech.service.promotion.EffectivePrice;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +51,8 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductVariantMapper variantMapper;
+    private final PromotionPricingService pricingService;
+    private final Clock clock;
 
     @Override
     public List<ProductVariantResponse> getByProductId(Long productId) {
@@ -54,9 +60,10 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         List<ProductVariant> variants = variantRepository.findAllByProductIdOrderByIdAsc(productId);
         Map<Long, List<AttributeValue>> valuesByVariant = loadAttributeValues(
                 variants.stream().map(ProductVariant::getId).toList());
+        Map<Long, EffectivePrice> prices = pricingService.resolveVariants(variants, LocalDateTime.now(clock));
         return variants.stream()
                 .map(variant -> variantMapper.toResponse(variant,
-                        valuesByVariant.getOrDefault(variant.getId(), List.of())))
+                        valuesByVariant.getOrDefault(variant.getId(), List.of()), prices.get(variant.getId())))
                 .toList();
     }
 
@@ -80,7 +87,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
         ProductVariant saved = variantRepository.save(variant);
         log.info("Created product variant id={} for product id={}", saved.getId(), request.productId());
-        return variantMapper.toResponse(saved, List.of());
+        return variantMapper.toResponse(saved, List.of(), pricingService.resolve(saved, LocalDateTime.now(clock)));
     }
 
     @Override
@@ -164,7 +171,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private ProductVariantResponse toResponse(ProductVariant variant) {
         List<AttributeValue> values = loadAttributeValues(List.of(variant.getId()))
                 .getOrDefault(variant.getId(), List.of());
-        return variantMapper.toResponse(variant, values);
+        return variantMapper.toResponse(variant, values, pricingService.resolve(variant, LocalDateTime.now(clock)));
     }
 
     /** Loads attribute values of several variants in one query, grouped by variant id. */
