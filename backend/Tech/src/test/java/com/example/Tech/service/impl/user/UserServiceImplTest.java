@@ -68,7 +68,7 @@ class UserServiceImplTest {
     void setUp() {
         userService = new UserServiceImpl(userRepository, userRoleRepository, customerProfileRepository,
                 passwordEncoder, refreshTokenService, new UserMapper(), new CustomerProfileMapper(),
-                new CurrentUserLoader(userRepository));
+                new CurrentUserLoader(userRepository, userRoleRepository));
         user = new User();
         user.setId(USER_ID);
         user.setEmail("an@example.com");

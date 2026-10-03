@@ -207,7 +207,18 @@ const API_ERROR_MESSAGES = {
         "Sản phẩm không còn trong giỏ hàng (có thể đã được xóa ở tab khác).",
 
     CART_LIMIT_EXCEEDED:
-        "Giỏ hàng đã đủ 50 sản phẩm khác nhau. Vui lòng xóa bớt trước khi thêm mới."
+        "Giỏ hàng đã đủ 50 sản phẩm khác nhau. Vui lòng xóa bớt trước khi thêm mới.",
+
+    /* Đơn hàng (Phase 4) */
+
+    ORDER_NOT_FOUND:
+        "Không tìm thấy đơn hàng.",
+
+    CART_EMPTY:
+        "Giỏ hàng của bạn đang trống (đơn hàng có thể đã được đặt ở tab khác).",
+
+    INVALID_ORDER_STATUS:
+        "Đơn hàng đã được xử lý nên không thể thực hiện thao tác này. Vui lòng tải lại trang."
 
 };
 

@@ -1,9 +1,9 @@
 /* ================= DỮ LIỆU MẪU (MOCK) — KHU QUẢN TRỊ NỘI BỘ admin/ ================= */
 
 /*
- * Checkpoint B1: toàn bộ khu admin/ chạy trên dữ liệu mẫu vì backend chưa có
- * các module Đơn hàng (Phase 4), Bảo hành / Bảo trì / Đổi trả (Phase 6),
- * Chi nhánh / Nhân viên / Doanh số (Phase 7), Chatbot / Hỗ trợ (Phase 9).
+ * Checkpoint B1: các trang admin/ chưa có API chạy trên dữ liệu mẫu: Bảo hành /
+ * Bảo trì / Đổi trả (Phase 6), Chi nhánh / Nhân viên / Doanh số (Phase 7),
+ * Chatbot / Hỗ trợ (Phase 9). Đơn hàng đã dùng API thật (Phase 4.5).
  *
  * Nguyên tắc (giống cart / recommendation / contact phía khách hàng):
  *   - mọi hàm là HÀM ĐỒNG BỘ trả về dữ liệu tĩnh, KHÔNG gọi mạng;
@@ -484,89 +484,6 @@ function getServiceRequests(filter) {
 /* Mô phỏng PATCH /service-requests/{id}/status */
 
 function updateServiceRequestStatus(id, status) {
-
-    setStaffOverride(id, { status: status });
-
-}
-
-
-/* ================= ĐƠN HÀNG THEO CHI NHÁNH ================= */
-
-/*
- * Bảng orders của DB chưa có cột chi nhánh (chi nhánh đi qua sales_records);
- * mock ghi thẳng storeId cho gọn. Đơn online chưa gán chi nhánh có
- * storeId = null (chỉ ADMIN thấy, lọc "chưa gán").
- */
-
-const ORDER_STATUS_LABELS = {
-    PENDING: "Chờ xác nhận",
-    CONFIRMED: "Đã xác nhận",
-    SHIPPING: "Đang giao hàng",
-    DELIVERED: "Đã giao hàng",
-    CANCELLED: "Đã huỷ"
-};
-
-
-const PAYMENT_METHOD_LABELS = {
-    COD: "Tiền mặt khi nhận hàng",
-    BANK_TRANSFER: "Chuyển khoản"
-};
-
-
-const MOCK_STAFF_ORDERS = [
-    { id: "DH000123", createdAt: "2026-09-18T09:30:00+07:00", status: "DELIVERED", paymentMethod: "COD", storeId: "CN02", customerName: "Nguyễn Văn An", shippingAddress: "12 Nguyễn Trãi, Phường 3, Quận 5, TP. Hồ Chí Minh", items: [{ name: "Điện thoại iPhone 18 Pro 256GB", variantLabel: "256 GB - Đỏ Burgundy", price: 38990000, quantity: 1 }], shippingFee: 0 },
-    { id: "DH000118", createdAt: "2026-09-10T14:05:00+07:00", status: "SHIPPING", paymentMethod: "BANK_TRANSFER", storeId: "CN01", customerName: "Hoàng Văn Sơn", shippingAddress: "45 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh", items: [{ name: "Sạc nhanh 2 cổng Type-C QC3.0 PD 30W Ugreen X516", variantLabel: "Trắng", price: 250000, quantity: 2 }, { name: "Ốp lưng Magnetic iPhone 17 Pro Max Nhựa cứng TORRAS C1S", variantLabel: "Đen", price: 369000, quantity: 1 }], shippingFee: 30000 },
-    { id: "DH000102", createdAt: "2026-08-27T11:20:00+07:00", status: "CONFIRMED", paymentMethod: "COD", storeId: "CN01", customerName: "Lê Hoàng Nam", shippingAddress: "7 Hai Bà Trưng, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh", items: [{ name: "Laptop MacBook Neo 13 inch A18 Pro 8GB/256GB", variantLabel: "8GB/256GB - Bạc", price: 18990000, quantity: 1 }], shippingFee: 0 },
-    { id: "DH000131", createdAt: "2026-09-24T20:15:00+07:00", status: "PENDING", paymentMethod: "BANK_TRANSFER", storeId: "CN03", customerName: "Đặng Quốc Bảo", shippingAddress: "88 Trần Thái Tông, Cầu Giấy, Hà Nội", items: [{ name: "Máy tính bảng iPad A16 WiFi 128GB", variantLabel: "Xanh", price: 12290000, quantity: 1 }], shippingFee: 0 },
-    { id: "DH000135", createdAt: "2026-09-25T08:40:00+07:00", status: "PENDING", paymentMethod: "COD", storeId: null, customerName: "Vũ Thị Ngọc", shippingAddress: "20 Lý Thường Kiệt, Hải Châu, Đà Nẵng", items: [{ name: "Điện thoại Xiaomi Redmi Note 17 4G 4GB/128GB", variantLabel: "4GB/128GB - Tím", price: 5790000, quantity: 1 }], shippingFee: 30000 }
-];
-
-
-/* Tổng tiền tính từ items + phí ship (giống cách backend sẽ tính total_amount) */
-
-function toStaffOrder(order) {
-
-    const subtotal = order.items.reduce(function (sum, item) {
-        return sum + item.price * item.quantity;
-    }, 0);
-
-    return Object.assign({}, order, {
-        subtotal: subtotal,
-        total: subtotal + (order.shippingFee || 0)
-    });
-
-}
-
-
-/* filter: { storeId ("UNASSIGNED" = chưa gán), status } */
-
-function getOrdersForStaff(filter) {
-
-    const f = filter || {};
-
-    return MOCK_STAFF_ORDERS
-        .map(applyOverride)
-        .map(toStaffOrder)
-        .filter(function (order) {
-
-            if (f.storeId === "UNASSIGNED" && order.storeId) {
-                return false;
-            }
-
-            if (f.storeId && f.storeId !== "UNASSIGNED" && order.storeId !== f.storeId) {
-                return false;
-            }
-
-            return !f.status || order.status === f.status;
-
-        });
-
-}
-
-
-/* Mô phỏng PATCH /orders/{id}/status */
-
-function updateOrderStatus(id, status) {
 
     setStaffOverride(id, { status: status });
 

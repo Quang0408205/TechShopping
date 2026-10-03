@@ -1,13 +1,14 @@
-/* ================= TRANG THANH TOÁN (F2, mô phỏng) ================= */
+/* ================= TRANG THANH TOÁN (Phase 4) ================= */
 
 /*
- * Giao diện lấy từ bản frontend mới. Chỉ dành cho người đã đăng nhập.
+ * Chỉ dành cho người đã đăng nhập.
  * - Điền sẵn họ tên / số điện thoại / địa chỉ từ API tài khoản thật
  *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
- * - Giỏ hàng lấy từ server (/api/v1/cart, Phase 3). Có dòng ngừng bán thì
- *   không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
- * - Đặt hàng: chưa có backend Order (Phase 4) → lưu đơn theo tài khoản bằng
- *   createLocalOrder() (js/core/order-store.js), rồi xoá giỏ hàng trên server.
+ * - Tóm tắt lấy từ giỏ trên server (/api/v1/cart), kể cả phí ship. Có dòng
+ *   ngừng bán thì không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
+ * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) chỉ gửi
+ *   người nhận / địa chỉ / ghi chú / phương thức thanh toán; server tạo đơn từ
+ *   giỏ, xoá giỏ, rồi chuyển sang trang chi tiết đơn.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -255,94 +256,102 @@ document.addEventListener(
             }
 
 
-            /* Đọc lại giỏ trên server ngay lúc đặt: giá / tình trạng có thể đã đổi */
-
-            let cartSummary;
+            /*
+             * Server đặt hàng từ giỏ của tài khoản (giá, phí ship tính lại lúc đặt)
+             * và xoá giỏ. Nút đã khoá nên không gửi 2 lần; nếu vẫn trùng (2 tab),
+             * lần sau nhận CART_EMPTY.
+             */
+            let order;
 
             try {
 
-                cartSummary = await getCartSummary();
+                order = await placeOrder({
+                    recipientName: data.recipientName,
+                    recipientPhone: data.recipientPhone,
+                    shippingAddress: data.shippingAddress,
+                    note: data.note || null,
+                    paymentMethod: data.paymentMethod
+                });
 
             } catch (error) {
 
+                await handlePlaceOrderError(error);
+
+                return;
+
+            }
+
+
+            setCartCount(0);
+
+            window.location.href = getOrderDetailUrl(order.id, true);
+
+
+            async function handlePlaceOrderError(error) {
+
+                if (!isLoggedIn()) {
+
+                    restoreButton();
+
+                    showFormError("Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
+
+                    return;
+
+                }
+
+
+                /* Sai dữ liệu: hiện lỗi ở đúng ô (backend trả tên trường) */
+                if (error.code === "VALIDATION_ERROR" && error.details) {
+
+                    Object.keys(error.details).forEach(function (field) {
+                        showFieldError(field, FIELD_MESSAGES[field] || error.details[field]);
+                    });
+
+                }
+
+                showFormError(getErrorMessage(error));
+
+
+                /* Giỏ đã đổi (trống / có sản phẩm ngừng bán): vẽ lại tóm tắt từ server */
+                if (error.code === "CART_EMPTY" || error.code === "PRODUCT_NOT_AVAILABLE") {
+
+                    try {
+
+                        const fresh = await getCartSummary();
+
+                        setCartCount(fresh.totalQuantity);
+
+                        if (fresh.items.length > 0) {
+                            renderSummary(fresh);
+                        }
+
+                        if (fresh.hasUnavailableItems) {
+
+                            showFormError(UNAVAILABLE_MESSAGE);
+
+                            button.textContent = "ĐẶT HÀNG";
+
+                            return;
+
+                        }
+
+                        if (fresh.items.length === 0) {
+
+                            button.textContent = "ĐẶT HÀNG";
+
+                            return;
+
+                        }
+
+                    } catch (reloadError) {
+                        /* giữ thông báo lỗi đặt hàng */
+                    }
+
+                }
+
                 restoreButton();
 
-                showFormError(isLoggedIn()
-                    ? getErrorMessage(error)
-                    : "Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
-
-                return;
-
             }
-
-
-            if (cartSummary.items.length === 0) {
-
-                restoreButton();
-
-                showFormError("Giỏ hàng của bạn đang trống.");
-
-                return;
-
-            }
-
-
-            if (cartSummary.hasUnavailableItems) {
-
-                button.textContent = "ĐẶT HÀNG";
-
-                renderSummary(cartSummary);
-
-                showFormError(UNAVAILABLE_MESSAGE);
-
-                return;
-
-            }
-
-
-            const order = createLocalOrder({
-                recipientName: data.recipientName,
-                recipientPhone: data.recipientPhone,
-                shippingAddress: data.shippingAddress,
-                note: data.note,
-                paymentMethod: data.paymentMethod,
-                items: cartSummary.items.map(function (item) {
-                    return {
-                        productId: item.productId,
-                        variantId: item.variantId,
-                        name: item.name,
-                        variantLabel: item.variantLabel,
-                        image: item.image,
-                        price: item.price,
-                        quantity: item.quantity
-                    };
-                }),
-                subtotal: cartSummary.subtotal,
-                shippingFee: cartSummary.shippingFee,
-                total: cartSummary.total
-            });
-
-
-            if (!order) {
-
-                restoreButton();
-
-                showFormError("Phiên đăng nhập đã hết, vui lòng đăng nhập lại.");
-
-                return;
-
-            }
-
-
-            /* Đơn (mô phỏng) đã lưu; xoá giỏ trên server lỗi thì vẫn sang trang đơn hàng */
-            try {
-                await clearCart();
-            } catch (error) {
-                /* bỏ qua: người dùng tự xoá trong trang giỏ hàng */
-            }
-
-            window.location.href =
-                siteUrl("customer/order-detail.html?id=" + encodeURIComponent(order.id) + "&justPlaced=1");
 
         }
 

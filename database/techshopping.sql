@@ -191,6 +191,8 @@ create table orders (
     order_id bigserial primary key,
     user_id bigint not null references users(user_id),
     order_date timestamp default current_timestamp,
+    recipient_name varchar(120) not null,
+    recipient_phone varchar(20) not null,
     shipping_address text not null,
     billing_address text,
     shipping_cost decimal(15, 2) default 0,

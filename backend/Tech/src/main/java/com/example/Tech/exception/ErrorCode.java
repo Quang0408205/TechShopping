@@ -81,7 +81,12 @@ public enum ErrorCode {
     // Cart
     CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Product variant is not in the cart"),
     PRODUCT_NOT_AVAILABLE(HttpStatus.CONFLICT, "Product is not available for purchase"),
-    CART_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The cart already holds the maximum number of different items");
+    CART_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The cart already holds the maximum number of different items"),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
+    CART_EMPTY(HttpStatus.CONFLICT, "The cart is empty"),
+    INVALID_ORDER_STATUS(HttpStatus.CONFLICT, "The order status does not allow this change");
 
     private final HttpStatus status;
     private final String defaultMessage;

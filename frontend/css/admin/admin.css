@@ -518,6 +518,38 @@ button.admin-badge {
     margin-top: 10px;
 }
 
+.admin-order-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 20px;
+    margin: 0;
+}
+
+.admin-order-facts dt {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray-500);
+}
+
+.admin-order-facts dd {
+    margin: 2px 0 0;
+    color: var(--color-ink);
+    overflow-wrap: anywhere;
+}
+
+.admin-old-price {
+    text-decoration: line-through;
+}
+
+.admin-date-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
 
 /* ================= BIỂU ĐỒ ================= */
 

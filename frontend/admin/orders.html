@@ -10,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Đơn hàng chi nhánh - Quản trị POY</title>
+    <title>Đơn hàng - Quản trị POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
 
@@ -24,7 +24,7 @@
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
-<body class="admin-body" data-page-title="Đơn hàng chi nhánh" data-roles="BRANCH_MANAGER,ADMIN">
+<body class="admin-body" data-page-title="Đơn hàng" data-roles="">
 
 
 <div class="admin-shell">
@@ -39,26 +39,40 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/orders): đổi trạng thái có hiệu lực ngay và khách thấy trên trang "Đơn hàng của tôi".
+                Chưa lọc được theo chi nhánh: đơn hàng chỉ được gắn với chi nhánh ở Phase 7, nên mọi nhân viên đều thấy tất cả đơn.
             </p>
 
-            <div class="admin-filter-bar">
 
-                <!-- js/admin/orders.js dựng theo vai trò -->
-                <select id="storeFilter" aria-label="Chi nhánh"></select>
+            <form class="admin-filter-bar" id="orderFilterForm" role="search">
 
-                <select id="statusFilter" aria-label="Trạng thái">
+                <input type="search" id="orderKeyword" placeholder="Mã đơn, người nhận, SĐT, email khách…" maxlength="255" aria-label="Từ khoá">
+
+                <select id="orderStatusFilter" aria-label="Trạng thái">
                     <option value="">Tất cả trạng thái</option>
                     <option value="PENDING">Chờ xác nhận</option>
                     <option value="CONFIRMED">Đã xác nhận</option>
                     <option value="SHIPPING">Đang giao hàng</option>
                     <option value="DELIVERED">Đã giao hàng</option>
-                    <option value="CANCELLED">Đã huỷ</option>
+                    <option value="CANCELLED">Đã hủy</option>
                 </select>
 
-            </div>
+                <label class="admin-date-filter">
+                    Từ
+                    <input type="date" id="orderFromDate" aria-label="Đặt từ ngày">
+                </label>
+
+                <label class="admin-date-filter">
+                    đến
+                    <input type="date" id="orderToDate" aria-label="Đặt đến ngày">
+                </label>
+
+                <button type="submit" class="btn btn-dark">TÌM</button>
+
+            </form>
+
+            <p id="orderFilterError" class="form-error" role="alert" hidden></p>
 
 
             <section class="admin-panel">
@@ -73,10 +87,10 @@
                         <thead>
                             <tr>
                                 <th></th>
-                                <th>Mã đơn</th>
-                                <th>Ngày đặt</th>
-                                <th>Chi nhánh</th>
-                                <th>Sản phẩm</th>
+                                <th>Mã đơn / ngày đặt</th>
+                                <th>Khách hàng</th>
+                                <th>Người nhận</th>
+                                <th>SL</th>
                                 <th>Tổng tiền</th>
                                 <th>Thanh toán</th>
                                 <th>Trạng thái</th>
@@ -85,6 +99,8 @@
                         <tbody id="orderTableBody"></tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="orderPagination"></div>
 
             </section>
 

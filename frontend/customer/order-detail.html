@@ -59,9 +59,15 @@
 
                 <div id="orderNotFound" class="state-box empty-state" hidden>
                     <h3>Không tìm thấy đơn hàng</h3>
-                    <p>Đơn hàng này không tồn tại hoặc đã bị xóa.</p>
+                    <p>Đơn hàng này không tồn tại hoặc không thuộc tài khoản của bạn.</p>
                     <a href="orders.html" class="btn btn-dark">VỀ DANH SÁCH ĐƠN HÀNG</a>
                 </div>
+
+                <div id="orderLoading" class="state-box">
+                    <p>Đang tải đơn hàng…</p>
+                </div>
+
+                <div id="orderError" hidden></div>
 
                 <div id="orderDetailBox" hidden>
 
@@ -73,6 +79,8 @@
                         <span id="orderStatusBadge" class="order-status-badge"></span>
                     </div>
 
+
+                    <p id="orderCancelledNote" class="order-cancelled-note" hidden></p>
 
                     <div class="order-status-timeline" id="orderTimeline"></div>
 
@@ -93,6 +101,16 @@
                                 <p id="orderPaymentMethod"></p>
                             </div>
 
+                            <div class="order-detail-block" id="orderTrackingBlock" hidden>
+                                <h4>Mã vận đơn</h4>
+                                <p id="orderTracking"></p>
+                            </div>
+
+                            <div class="order-detail-block" id="orderNoteBlock" hidden>
+                                <h4>Ghi chú</h4>
+                                <p id="orderNote"></p>
+                            </div>
+
                             <div class="order-detail-block order-detail-totals">
                                 <div class="checkout-total-row">
                                     <span>Tạm tính</span>
@@ -106,6 +124,12 @@
                                     <span>Tổng cộng</span>
                                     <span id="orderTotal"></span>
                                 </div>
+                            </div>
+
+                            <!-- Chỉ hiện khi đơn còn "Chờ xác nhận" (cancellable) -->
+                            <div class="order-detail-actions" id="orderActions" hidden>
+                                <button type="button" class="btn btn-outline-dark" id="orderCancelBtn">HỦY ĐƠN HÀNG</button>
+                                <p>Bạn có thể hủy khi đơn còn chờ xác nhận.</p>
                             </div>
 
                         </div>

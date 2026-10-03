@@ -17,11 +17,6 @@
  * Thứ tự nạp: api.js → ui.js → cart-store.js → layout.js → main.js.
  */
 
-/* Phí vận chuyển mô phỏng: backend chưa tính phí ship (Phase 4 – Order) */
-const FREE_SHIPPING_THRESHOLD = 10000000;
-
-const DEFAULT_SHIPPING_FEE = 30000;
-
 /* Tối đa mỗi dòng, giống CartService.MAX_LINE_QUANTITY ở backend */
 const MAX_CART_LINE_QUANTITY = 10;
 
@@ -33,7 +28,11 @@ function emptyCartSummary() {
 }
 
 
-/* CartResponse của API → dạng dùng ở giao diện (+ phí ship mô phỏng) */
+/*
+ * CartResponse của API → dạng dùng ở giao diện. Phí ship và tổng tiền do
+ * server tính (Phase 4: 30.000đ, miễn phí từ 10.000.000đ), đúng bằng số tiền
+ * đơn hàng sẽ tính khi đặt.
+ */
 
 function toCartSummary(cart) {
 
@@ -57,23 +56,12 @@ function toCartSummary(cart) {
     });
 
 
-    const subtotal = cart ? Number(cart.subtotal) || 0 : 0;
-
-    const hasPayableItems = items.some(function (item) {
-        return item.available;
-    });
-
-    const shippingFee =
-        !hasPayableItems ? 0 :
-            (subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : DEFAULT_SHIPPING_FEE);
-
-
     return {
         items: items,
         totalQuantity: cart ? cart.totalQuantity || 0 : 0,
-        subtotal: subtotal,
-        shippingFee: shippingFee,
-        total: subtotal + shippingFee,
+        subtotal: cart ? Number(cart.subtotal) || 0 : 0,
+        shippingFee: cart ? Number(cart.shippingFee) || 0 : 0,
+        total: cart ? Number(cart.total) || 0 : 0,
         hasUnavailableItems: Boolean(cart && cart.hasUnavailableItems)
     };
 

@@ -16,6 +16,7 @@ import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.AttributeValueMapper;
 import com.example.Tech.mapper.product.ProductVariantMapper;
 import com.example.Tech.repository.cart.CartItemRepository;
+import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
@@ -59,12 +60,15 @@ class ProductVariantServiceImplTest {
     @Mock
     private CartItemRepository cartItemRepository;
 
+    @Mock
+    private OrderItemRepository orderItemRepository;
+
     private ProductVariantServiceImpl variantService;
 
     @BeforeEach
     void setUp() {
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
-                attributeValueRepository, variantAttributeValueRepository, cartItemRepository,
+                attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
                 new ProductVariantMapper(new AttributeValueMapper()));
     }
 
@@ -293,6 +297,18 @@ class ProductVariantServiceImplTest {
         InOrder inOrder = inOrder(cartItemRepository, variantRepository);
         inOrder.verify(cartItemRepository).deleteAllByVariantId(5L);
         inOrder.verify(variantRepository).delete(existing);
+    }
+
+    @Test
+    void delete_variantInAnOrder_throwsResourceInUseAndDeletesNothing() {
+        when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.of(variant()));
+        when(orderItemRepository.existsByVariantId(5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> variantService.delete(5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.RESOURCE_IN_USE);
+        verify(cartItemRepository, never()).deleteAllByVariantId(any());
+        verify(variantRepository, never()).delete(any(ProductVariant.class));
     }
 
     @Test

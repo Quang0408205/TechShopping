@@ -13,6 +13,7 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.ProductVariantMapper;
 import com.example.Tech.repository.cart.CartItemRepository;
+import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
@@ -44,6 +45,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final AttributeValueRepository attributeValueRepository;
     private final VariantAttributeValueRepository variantAttributeValueRepository;
     private final CartItemRepository cartItemRepository;
+    private final OrderItemRepository orderItemRepository;
     private final ProductVariantMapper variantMapper;
 
     @Override
@@ -102,12 +104,17 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
     /**
      * Links to attribute values are removed by the database (ON DELETE CASCADE). cart_items has no cascade,
-     * so the variant is first removed from every cart (carts are temporary data).
+     * so the variant is first removed from every cart (carts are temporary data). A variant that appears in
+     * an order is never deleted (order history; order_items has no cascade) → 409 RESOURCE_IN_USE.
      */
     @Override
     @Transactional
     public void delete(Long id) {
         ProductVariant variant = findVariant(id);
+        if (orderItemRepository.existsByVariantId(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
+                    "Product variant %d appears in orders and cannot be deleted; hide the product instead".formatted(id));
+        }
         int cartLines = cartItemRepository.deleteAllByVariantId(id);
         if (cartLines > 0) {
             log.info("Removed product variant id={} from {} cart line(s)", id, cartLines);

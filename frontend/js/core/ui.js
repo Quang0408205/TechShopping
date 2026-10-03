@@ -482,8 +482,10 @@ let modalOverlayElement = null;
 
 
 /*
- * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm }):
+ * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm, input }):
  * thay cho confirm() / alert() khi cần người dùng xác nhận (vd. xoá khỏi giỏ).
+ * input (tuỳ chọn) = { label, value, placeholder, maxLength }: thêm một ô nhập,
+ * onConfirm nhận giá trị đã trim; Enter trong ô = xác nhận.
  * Mọi chuỗi đều được escape.
  */
 
@@ -491,6 +493,8 @@ function openConfirmModal(options) {
 
     closeModal();
 
+
+    const input = options.input;
 
     const overlay = document.createElement("div");
 
@@ -500,6 +504,17 @@ function openConfirmModal(options) {
         <div class="modal-box" role="dialog" aria-modal="true">
             <h3>${escapeHtml(options.title || "Xác nhận")}</h3>
             <p>${escapeHtml(options.message || "")}</p>
+            ${input ? `
+                <label class="modal-field">
+                    <span>${escapeHtml(input.label || "")}</span>
+                    <input
+                        type="text"
+                        value="${escapeHtml(input.value || "")}"
+                        placeholder="${escapeHtml(input.placeholder || "")}"
+                        ${input.maxLength ? `maxlength="${Number(input.maxLength)}"` : ""}
+                    >
+                </label>
+            ` : ""}
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline-dark" data-action="cancel">
                     ${escapeHtml(options.cancelLabel || "Hủy")}
@@ -515,6 +530,21 @@ function openConfirmModal(options) {
 
     modalOverlayElement = overlay;
 
+    const inputElement = overlay.querySelector(".modal-field input");
+
+
+    function confirm() {
+
+        const value = inputElement ? inputElement.value.trim() : undefined;
+
+        closeModal();
+
+        if (typeof options.onConfirm === "function") {
+            options.onConfirm(value);
+        }
+
+    }
+
 
     overlay.addEventListener("click", function (event) {
 
@@ -526,15 +556,22 @@ function openConfirmModal(options) {
 
     overlay.querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 
-    overlay.querySelector('[data-action="confirm"]').addEventListener("click", function () {
+    overlay.querySelector('[data-action="confirm"]').addEventListener("click", confirm);
 
-        closeModal();
+    if (inputElement) {
 
-        if (typeof options.onConfirm === "function") {
-            options.onConfirm();
-        }
+        inputElement.addEventListener("keydown", function (event) {
 
-    });
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirm();
+            }
+
+        });
+
+        inputElement.focus();
+
+    }
 
 
     requestAnimationFrame(function () {

@@ -1,7 +1,9 @@
 package com.example.Tech.repository.cart;
 
 import com.example.Tech.entity.cart.Cart;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
@@ -10,6 +12,14 @@ import java.util.Optional;
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
     Optional<Cart> findByUserId(Long userId);
+
+    /**
+     * Locks the cart row (SELECT … FOR UPDATE) during checkout: a second "Đặt hàng" sent at the same time
+     * waits, then finds the cart already emptied (Phase 4).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Cart c where c.user.id = :userId")
+    Optional<Cart> findByUserIdForUpdate(Long userId);
 
     /**
      * Creates the cart of a user if it does not exist yet. ON CONFLICT makes two concurrent first adds

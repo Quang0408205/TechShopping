@@ -18,6 +18,7 @@ import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.user.UserRepository;
+import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.service.cart.CartService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -62,6 +63,9 @@ class CartServiceImplTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserRoleRepository userRoleRepository;
+
     private CartServiceImpl cartService;
 
     private User user;
@@ -70,7 +74,7 @@ class CartServiceImplTest {
     @BeforeEach
     void setUp() {
         cartService = new CartServiceImpl(cartRepository, cartItemRepository, variantRepository, imageRepository,
-                new CurrentUserLoader(userRepository), new CartMapper());
+                new CurrentUserLoader(userRepository, userRoleRepository), new CartMapper());
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);

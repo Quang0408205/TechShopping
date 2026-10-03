@@ -102,12 +102,13 @@ docker compose up -d backend
 | Khu vực | Tính năng | Dữ liệu |
 |---|---|---|
 | Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
-| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm, trang khuyến nghị | **Thật** (877 sản phẩm) |
-| Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu theo từng tài khoản, hiệu ứng bay vào giỏ | Lưu trên trình duyệt (backend giỏ hàng: Phase 3) |
-| Khách hàng | Thanh toán, đơn hàng, chi tiết đơn | Mô phỏng, lưu trên trình duyệt (backend đơn hàng: Phase 4) |
+| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ), trang khuyến nghị | **Thật** (877 sản phẩm) |
+| Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
+| Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận | **Thật** (API) |
 | Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
-| Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** | **Thật** (API) |
-| Quản trị | Tổng quan, bảo hành / đổi trả, hỗ trợ khách hàng, đơn chi nhánh, báo cáo, nhân viên, chi nhánh, lịch sử chatbot | Dữ liệu mẫu (Phase 4–9) |
+| Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
+| Quản trị | **Đơn hàng** (STAFF và ADMIN): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn. Chưa lọc theo chi nhánh (Phase 7) | **Thật** (API) |
+| Quản trị | Tổng quan, bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo, nhân viên, chi nhánh, lịch sử chatbot | Dữ liệu mẫu (Phase 5–10) |
 
 ---
 
@@ -120,7 +121,13 @@ docker compose up -d backend
 | Sửa **backend** (`backend/Tech/`) | `docker compose up -d --build backend` |
 | Xem log backend | `docker compose logs -f backend` |
 | Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
-| Cập nhật code mới | `git pull` rồi `docker compose up -d --build` |
+| Cập nhật code mới | `git pull` rồi chạy các file **mới** trong `database/migrations/` (xem dưới), rồi `docker compose up -d --build` |
+
+> **Cập nhật database đã có:** database chỉ được tạo từ `database/techshopping.sql` **một lần** (khi volume còn trống), nên khi schema đổi, database cũ cần chạy file migration tương ứng (chạy lại nhiều lần vẫn an toàn). Ví dụ đơn hàng (2026-10-02):
+> ```powershell
+> Get-Content database\migrations\2026-10-02_orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\2026-10-02_orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> ```
 
 > ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 877 sản phẩm mẫu.
 
@@ -137,6 +144,8 @@ docker compose up -d backend
 | Bấm "Thêm vào giỏ" thì bị chuyển sang trang đăng nhập | Đúng thiết kế: phải đăng nhập mới thêm được vào giỏ; đăng nhập xong sẽ quay lại đúng trang |
 | Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: ADMIN cấp quyền **Nhân viên** ở trang Người dùng & phân quyền, hoặc tạo ADMIN đầu tiên ở **Bước 5** |
 | Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
+| Log backend có `Schema-validation: missing column` (ví dụ `recipient_name`) | Database tạo từ schema cũ: chạy các file trong `database/migrations/` (mục **4. Dùng hằng ngày**), rồi `docker compose restart backend` |
+| Backend cứ khởi động lại, log có `UnknownHostException: postgres` | Container backend bị rơi khỏi mạng Docker: `docker compose up -d --force-recreate --no-deps backend` |
 | Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu |
 
 ---

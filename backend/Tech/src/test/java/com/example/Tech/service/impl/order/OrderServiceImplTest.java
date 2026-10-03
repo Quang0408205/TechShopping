@@ -1,0 +1,276 @@
+package com.example.Tech.service.impl.order;
+
+import com.example.Tech.dto.request.order.OrderCreateRequest;
+import com.example.Tech.dto.response.order.OrderResponse;
+import com.example.Tech.entity.cart.Cart;
+import com.example.Tech.entity.cart.CartItem;
+import com.example.Tech.entity.order.Order;
+import com.example.Tech.entity.order.OrderItem;
+import com.example.Tech.entity.order.OrderStatus;
+import com.example.Tech.entity.order.PaymentMethod;
+import com.example.Tech.entity.product.Product;
+import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.entity.user.User;
+import com.example.Tech.exception.BusinessException;
+import com.example.Tech.exception.ErrorCode;
+import com.example.Tech.mapper.cart.CartMapper;
+import com.example.Tech.repository.cart.CartItemRepository;
+import com.example.Tech.repository.cart.CartRepository;
+import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.service.user.CurrentUserLoader;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class OrderServiceImplTest {
+
+    private static final Long USER_ID = 7L;
+    private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2026-10-02T03:00:00Z"), ZONE);
+    private static final LocalDateTime NOW = LocalDateTime.now(CLOCK);
+
+    @Mock
+    private OrderRepository orderRepository;
+
+    @Mock
+    private CartRepository cartRepository;
+
+    @Mock
+    private CartItemRepository cartItemRepository;
+
+    @Mock
+    private CurrentUserLoader currentUserLoader;
+
+    @Mock
+    private OrderViewLoader orderViewLoader;
+
+    private OrderServiceImpl orderService;
+
+    private User user;
+    private Cart cart;
+    private ProductVariant black;
+    private ProductVariant white;
+
+    @BeforeEach
+    void setUp() {
+        orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, new CartMapper(),
+                currentUserLoader, orderViewLoader, CLOCK);
+        user = new User();
+        user.setId(USER_ID);
+        cart = new Cart(user);
+        cart.setId(30L);
+        Product phone = product(1L);
+        black = variant(11L, phone, "15990000", "14990000");
+        white = variant(12L, phone, "2000000", null);
+    }
+
+    @Test
+    void placeOrder_buildsTheOrderFromTheCart_freeShippingFrom10Million_emptiesTheCart() {
+        cartWith(line(black, 2), line(white, 1));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
+            Order order = invocation.getArgument(0);
+            order.setId(100L);
+            return order;
+        });
+        OrderResponse expected = mock(OrderResponse.class);
+        when(orderViewLoader.toResponse(any(Order.class))).thenReturn(expected);
+
+        OrderResponse response = orderService.placeOrder(USER_ID, new OrderCreateRequest(
+                "  Nguyễn Văn An ", " 0901 234 567 ", " 12 Nguyễn Trãi, Quận 5 ", "   ", PaymentMethod.BANK_TRANSFER));
+
+        assertThat(response).isSameAs(expected);
+        Order order = savedOrder();
+        assertThat(order.getUser()).isSameAs(user);
+        assertThat(order.getRecipientName()).isEqualTo("Nguyễn Văn An");
+        assertThat(order.getRecipientPhone()).isEqualTo("0901 234 567");
+        assertThat(order.getShippingAddress()).isEqualTo("12 Nguyễn Trãi, Quận 5");
+        assertThat(order.getNotes()).isNull();
+        assertThat(order.getPaymentMethod()).isEqualTo(PaymentMethod.BANK_TRANSFER);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(order.getOrderDate()).isEqualTo(NOW);
+        assertThat(order.getItems())
+                .extracting(item -> item.getVariant().getId(), OrderItem::getQuantity,
+                        item -> item.getUnitPrice().toPlainString(), item -> item.getDiscountAmount().toPlainString(),
+                        item -> item.getSubtotal().toPlainString())
+                .containsExactly(
+                        tuple(11L, 2, "14990000", "2000000", "29980000"),
+                        tuple(12L, 1, "2000000", "0", "2000000"));
+        assertThat(order.getItems()).allSatisfy(item -> assertThat(item.getOrder()).isSameAs(order));
+        assertThat(order.getShippingCost()).isEqualByComparingTo("0");
+        assertThat(order.getTaxAmount()).isEqualByComparingTo("0");
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("31980000");
+        verify(cartItemRepository).deleteAllByCartId(30L);
+        verify(cartRepository).touch(30L);
+    }
+
+    @Test
+    void placeOrder_belowTheThreshold_chargesTheFlatShippingFee_keepsTheNote() {
+        cartWith(line(white, 2));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.placeOrder(USER_ID, request(" Giao giờ hành chính ", PaymentMethod.COD));
+
+        Order order = savedOrder();
+        assertThat(order.getShippingCost()).isEqualByComparingTo("30000");
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("4030000");
+        assertThat(order.getNotes()).isEqualTo("Giao giờ hành chính");
+    }
+
+    @Test
+    void placeOrder_withoutCart_throwsCartEmpty() {
+        when(currentUserLoader.load(USER_ID)).thenReturn(user);
+        when(cartRepository.findByUserIdForUpdate(USER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.CART_EMPTY);
+        verify(orderRepository, never()).save(any());
+    }
+
+    @Test
+    void placeOrder_withEmptyCart_throwsCartEmpty() {
+        cartWith();
+
+        assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.CART_EMPTY);
+        verify(orderRepository, never()).save(any());
+        verify(cartItemRepository, never()).deleteAllByCartId(anyLong());
+    }
+
+    @Test
+    void placeOrder_withAnUnavailableLine_throwsAndKeepsTheCart() {
+        white.getProduct().setActive(false);
+        cartWith(line(black, 1), line(white, 1));
+
+        assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining("12")
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.PRODUCT_NOT_AVAILABLE);
+        verify(orderRepository, never()).save(any());
+        verify(cartItemRepository, never()).deleteAllByCartId(anyLong());
+    }
+
+    @Test
+    void placeOrder_withAZeroPriceLine_throwsProductNotAvailable() {
+        ProductVariant free = variant(13L, product(2L), "0", null);
+        cartWith(line(free, 1));
+
+        assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.PRODUCT_NOT_AVAILABLE);
+    }
+
+    @Test
+    void getMyOrder_ofAnotherUser_throwsOrderNotFound() {
+        when(orderRepository.findByIdAndUserId(5L, USER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.getMyOrder(USER_ID, 5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.ORDER_NOT_FOUND);
+        verify(currentUserLoader).load(USER_ID);
+    }
+
+    @Test
+    void cancelMyOrder_pending_becomesCancelledWithATimestamp() {
+        Order order = order(5L, user, OrderStatus.PENDING);
+        when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order));
+        when(orderRepository.saveAndFlush(order)).thenReturn(order);
+
+        orderService.cancelMyOrder(USER_ID, 5L);
+
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(order.getCancelledAt()).isEqualTo(NOW);
+        verify(orderViewLoader).toResponse(order);
+    }
+
+    @Test
+    void cancelMyOrder_confirmed_throwsInvalidOrderStatus() {
+        Order order = order(5L, user, OrderStatus.CONFIRMED);
+        when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
+        verify(orderRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void cancelMyOrder_ofAnotherUser_throwsOrderNotFound() {
+        User other = new User();
+        other.setId(8L);
+        when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order(5L, other, OrderStatus.PENDING)));
+
+        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.ORDER_NOT_FOUND);
+    }
+
+    private void cartWith(CartItem... lines) {
+        when(currentUserLoader.load(USER_ID)).thenReturn(user);
+        when(cartRepository.findByUserIdForUpdate(USER_ID)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findAllWithProductByCartId(30L)).thenReturn(List.of(lines));
+    }
+
+    private Order savedOrder() {
+        ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository).save(captor.capture());
+        return captor.getValue();
+    }
+
+    private CartItem line(ProductVariant variant, int quantity) {
+        return new CartItem(cart, variant, quantity);
+    }
+
+    private static OrderCreateRequest request(String note, PaymentMethod method) {
+        return new OrderCreateRequest("Nguyễn Văn An", "0901234567", "12 Nguyễn Trãi", note, method);
+    }
+
+    private static Order order(Long id, User owner, OrderStatus status) {
+        Order order = new Order();
+        order.setId(id);
+        order.setUser(owner);
+        order.setStatus(status);
+        return order;
+    }
+
+    private static Product product(Long id) {
+        Product product = new Product();
+        product.setId(id);
+        product.setName("Điện thoại " + id);
+        return product;
+    }
+
+    private static ProductVariant variant(Long id, Product product, String price, String discountPrice) {
+        ProductVariant variant = new ProductVariant();
+        variant.setId(id);
+        variant.setProduct(product);
+        variant.setPrice(new BigDecimal(price));
+        variant.setDiscountPrice(discountPrice != null ? new BigDecimal(discountPrice) : null);
+        return variant;
+    }
+}
