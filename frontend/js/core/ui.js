@@ -507,6 +507,8 @@ let modalOverlayElement = null;
  * thay cho confirm() / alert() khi cần người dùng xác nhận (vd. xoá khỏi giỏ).
  * input (tuỳ chọn) = { label, value, placeholder, maxLength }: thêm một ô nhập,
  * onConfirm nhận giá trị đã trim; Enter trong ô = xác nhận.
+ * select (tuỳ chọn, thay cho input) = { label, value, options: [{ value, label }] }:
+ * thêm một ô chọn, onConfirm nhận giá trị đang chọn.
  * Mọi chuỗi đều được escape.
  */
 
@@ -516,6 +518,8 @@ function openConfirmModal(options) {
 
 
     const input = options.input;
+
+    const select = options.select;
 
     const overlay = document.createElement("div");
 
@@ -536,6 +540,16 @@ function openConfirmModal(options) {
                     >
                 </label>
             ` : ""}
+            ${!input && select ? `
+                <label class="modal-field">
+                    <span>${escapeHtml(select.label || "")}</span>
+                    <select>
+                        ${(select.options || []).map(function (option) {
+                            return `<option value="${escapeHtml(option.value)}" ${String(option.value) === String(select.value) ? "selected" : ""}>${escapeHtml(option.label)}</option>`;
+                        }).join("")}
+                    </select>
+                </label>
+            ` : ""}
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline-dark" data-action="cancel">
                     ${escapeHtml(options.cancelLabel || "Hủy")}
@@ -553,10 +567,14 @@ function openConfirmModal(options) {
 
     const inputElement = overlay.querySelector(".modal-field input");
 
+    const selectElement = overlay.querySelector(".modal-field select");
+
 
     function confirm() {
 
-        const value = inputElement ? inputElement.value.trim() : undefined;
+        const value = inputElement
+            ? inputElement.value.trim()
+            : (selectElement ? selectElement.value : undefined);
 
         closeModal();
 
@@ -591,6 +609,10 @@ function openConfirmModal(options) {
         });
 
         inputElement.focus();
+
+    } else if (selectElement) {
+
+        selectElement.focus();
 
     }
 

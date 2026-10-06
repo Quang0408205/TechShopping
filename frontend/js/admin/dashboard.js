@@ -90,22 +90,35 @@ document.addEventListener(
             ];
 
 
+            document.getElementById("statGrid").innerHTML = adminStatCardsHtml(cards);
+
+
+            /* Chi nhánh / nhân viên là số liệu THẬT (Phase 7), các thẻ khác vẫn là dữ liệu mẫu */
+
             if (isAdmin) {
 
-                const activeEmployees = getEmployees().filter(function (e) {
-                    return e.status === "ACTIVE";
-                });
+                Promise.all([
+                    apiRequest("/admin/stores?active=true&size=1", { auth: true }),
+                    apiRequest("/admin/employees?active=true&size=1", { auth: true })
+                ]).then(function (pages) {
 
-                cards.push({
-                    label: "Chi nhánh",
-                    value: String(getStores().length),
-                    sub: activeEmployees.length + " nhân viên đang làm việc"
+                    cards.push({
+                        label: "Chi nhánh đang mở",
+                        value: String(pages[0].totalElements),
+                        sub: pages[1].totalElements + " nhân viên đang làm việc"
+                    });
+
+                }).catch(function () {
+
+                    cards.push({ label: "Chi nhánh đang mở", value: "—", sub: "Không tải được số liệu" });
+
+                }).then(function () {
+
+                    document.getElementById("statGrid").innerHTML = adminStatCardsHtml(cards);
+
                 });
 
             }
-
-
-            document.getElementById("statGrid").innerHTML = adminStatCardsHtml(cards);
 
         }
 

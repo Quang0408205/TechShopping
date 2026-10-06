@@ -1,8 +1,8 @@
 -- phase 5 (2026-10-03): thanh toán (COD / chuyển khoản / trả góp) và hợp đồng trả góp có bước duyệt.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thay đổi này; file này chỉ dành cho db tạo từ bản schema cũ
 -- (volume postgres_data đã có từ trước). chạy lại nhiều lần vẫn an toàn.
---   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/2026-10-03_payments.sql
---   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/2026-10-03_payments.sql
+--   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/payments.sql
+--   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/payments.sql
 
 -- installment_orders: hồ sơ trả góp (CCCD, ngân hàng thẻ) + kết quả duyệt.
 -- trước phase 5 ứng dụng chưa từng ghi vào bảng này nên set not null không gặp dòng cũ.

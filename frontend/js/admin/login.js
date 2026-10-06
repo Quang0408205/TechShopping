@@ -98,7 +98,7 @@ document.addEventListener(
                 }
 
 
-                saveStaffSession(authResponse);
+                await saveStaffSession(authResponse);
 
                 window.location.href = getRedirectTarget("admin/dashboard.html");
 

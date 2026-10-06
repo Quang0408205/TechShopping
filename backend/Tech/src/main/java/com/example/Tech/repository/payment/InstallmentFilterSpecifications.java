@@ -30,10 +30,17 @@ public final class InstallmentFilterSpecifications {
     private InstallmentFilterSpecifications() {
     }
 
-    /** {@code today}: a period is overdue when it is unpaid and its due date is before today. */
-    public static Specification<InstallmentOrder> matching(AdminInstallmentSearchRequest filter, LocalDate today) {
+    /**
+     * {@code today}: a period is overdue when it is unpaid and its due date is before today. {@code storeId}: only
+     * plans whose order is handled by that store (a STAFF member's list); null = every plan.
+     */
+    public static Specification<InstallmentOrder> matching(AdminInstallmentSearchRequest filter, LocalDate today,
+                                                           Integer storeId) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if (storeId != null) {
+                predicates.add(cb.equal(root.get("order").get("store").get("id"), storeId));
+            }
             if (filter.keyword() != null && !filter.keyword().isBlank()) {
                 String keyword = filter.keyword().trim();
                 String pattern = contains(keyword.toLowerCase(Locale.ROOT));

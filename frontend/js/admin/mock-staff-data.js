@@ -2,8 +2,9 @@
 
 /*
  * Checkpoint B1: các trang admin/ chưa có API chạy trên dữ liệu mẫu: Bảo hành /
- * Bảo trì / Đổi trả (Phase 6), Chi nhánh / Nhân viên / Doanh số (Phase 7),
- * Chatbot / Hỗ trợ (Phase 9). Đơn hàng đã dùng API thật (Phase 4.5).
+ * Bảo trì / Đổi trả (Phase 6), Doanh số / Tổng quan / Báo cáo (Phase 10),
+ * Chatbot / Hỗ trợ (Phase 9). Đơn hàng (Phase 4.5), Chi nhánh / Nhân viên (Phase 7)
+ * đã dùng API thật.
  *
  * Nguyên tắc (giống cart / recommendation / contact phía khách hàng):
  *   - mọi hàm là HÀM ĐỒNG BỘ trả về dữ liệu tĩnh, KHÔNG gọi mạng;
@@ -14,20 +15,13 @@
  *     hàng / đơn hàng / bảo hành lưu sẵn tên sản phẩm (snapshot), giống cách
  *     order_items của backend sẽ lưu.
  *
- * Mã vai trò hiển thị (RBAC ở giao diện):
- *   EMPLOYEE (Nhân viên) · BRANCH_MANAGER (Quản lý chi nhánh) · ADMIN.
- * Backend thật chỉ có role STAFF / ADMIN; phân biệt nhân viên và quản lý chi
- * nhánh sẽ lấy từ employees / employee_assignments ở Phase 7.
+ * Mã vai trò hiển thị (EMPLOYEE / BRANCH_MANAGER / ADMIN) nằm ở staff-auth.js.
  *
  * Nạp sau js/core/api.js và js/core/ui.js, trước js/admin/staff-auth.js.
  */
 
 
 /* ================= LƯU TRỮ localStorage (tiền tố poy_) ================= */
-
-const EXTRA_STORES_KEY = "poy_extra_stores";
-
-const EXTRA_EMPLOYEES_KEY = "poy_extra_employees";
 
 const STAFF_OVERRIDES_KEY = "poy_staff_overrides";
 
@@ -97,7 +91,14 @@ function applyOverride(record) {
 }
 
 
-/* ================= CHI NHÁNH (stores) ================= */
+/* ================= CHI NHÁNH / NHÂN VIÊN MẪU ================= */
+
+/*
+ * Chi nhánh và nhân viên THẬT đã có API từ Phase 7 (admin/stores, admin/employees,
+ * GET /employees/me). Hai danh sách dưới đây chỉ còn là dữ liệu riêng của các trang
+ * mẫu (Tổng quan, Báo cáo, Bảo hành / Đổi trả, Hỗ trợ) để chúng vẫn demo được cho
+ * tới phase thay chúng (6, 9, 10); mã CN01… không trùng mã chi nhánh thật (số).
+ */
 
 const MOCK_STORES = [
     { id: "CN01", name: "Chi nhánh Quận 1", address: "45 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh", phone: "028 1234 5678" },
@@ -106,51 +107,21 @@ const MOCK_STORES = [
 ];
 
 
-function getStores() {
+function getMockStores() {
 
-    return MOCK_STORES.concat(readStoredJson(EXTRA_STORES_KEY, []));
+    return MOCK_STORES.slice();
 
 }
 
 
-function getStoreById(id) {
+function getMockStoreById(id) {
 
-    return getStores().find(function (store) {
+    return MOCK_STORES.find(function (store) {
         return store.id === id;
     }) || null;
 
 }
 
-
-/* Mô phỏng POST /stores (chỉ ADMIN) */
-
-function createStore(input) {
-
-    const extras = readStoredJson(EXTRA_STORES_KEY, []);
-
-    const id = "CN" + String(getStores().length + 1).padStart(2, "0");
-
-    extras.push({
-        id: id,
-        name: input.name,
-        address: input.address,
-        phone: input.phone || ""
-    });
-
-    writeStoredJson(EXTRA_STORES_KEY, extras);
-
-    return getStoreById(id);
-
-}
-
-
-/* ================= NHÂN VIÊN & VAI TRÒ ================= */
-
-/*
- * Hồ sơ nhân viên mẫu (vai trò hiển thị + chi nhánh) tới Phase 7. Từ B2 KHÔNG còn
- * mật khẩu: đăng nhập qua POST /api/v1/auth/login thật, tài khoản STAFF được
- * ghép với hồ sơ ở đây theo email (getEmployeeByEmail, staff-auth.js).
- */
 
 const MOCK_EMPLOYEES = [
     { id: "nv-admin-01", fullname: "Trần Văn Quản", email: "admin@poy.vn", phone: "0901 111 222", role: "ADMIN", storeId: null, position: "Quản trị hệ thống", status: "ACTIVE", joinedAt: "2023-01-10" },
@@ -163,145 +134,22 @@ const MOCK_EMPLOYEES = [
 ];
 
 
-const STAFF_ROLE_LABELS = {
-    EMPLOYEE: "Nhân viên",
-    BRANCH_MANAGER: "Quản lý chi nhánh",
-    ADMIN: "Quản trị viên"
-};
+function getMockEmployeeById(id) {
 
-
-function getStaffRoleLabel(role) {
-
-    return STAFF_ROLE_LABELS[role] || role;
+    return MOCK_EMPLOYEES.find(function (employee) {
+        return employee.id === id;
+    }) || null;
 
 }
 
 
-/* Bản ghi gốc (kể cả nhân viên do ADMIN thêm) + thay đổi đã lưu đè */
+/* Bản lưu trên trình duyệt của các màn chi nhánh / nhân viên mẫu cũ: không còn dùng */
 
-function getEmployeeRecords() {
-
-    return MOCK_EMPLOYEES
-        .concat(readStoredJson(EXTRA_EMPLOYEES_KEY, []))
-        .map(applyOverride);
-
-}
-
-
-/* Bản tóm tắt dùng cho giao diện */
-
-function toStaffSummary(employee) {
-
-    const store = employee.storeId ? getStoreById(employee.storeId) : null;
-
-    return {
-        id: employee.id,
-        fullname: employee.fullname,
-        email: employee.email,
-        phone: employee.phone,
-        role: employee.role,
-        roleLabel: getStaffRoleLabel(employee.role),
-        storeId: employee.storeId,
-        storeName: store ? store.name : "Toàn hệ thống",
-        position: employee.position,
-        status: employee.status,
-        joinedAt: employee.joinedAt
-    };
-
-}
-
-
-function getEmployees() {
-
-    return getEmployeeRecords().map(toStaffSummary);
-
-}
-
-
-function getEmployeeById(id) {
-
-    const employee = getEmployeeRecords().find(function (e) {
-        return e.id === id;
-    });
-
-    return employee ? toStaffSummary(employee) : null;
-
-}
-
-
-function getEmployeesByStore(storeId) {
-
-    return getEmployees().filter(function (e) {
-        return e.storeId === storeId;
-    });
-
-}
-
-
-/* Mô phỏng POST /employees (chỉ ADMIN), tới Phase 7 */
-
-function createEmployee(input) {
-
-    const extras = readStoredJson(EXTRA_EMPLOYEES_KEY, []);
-
-    const id = "nv-" + Date.now();
-
-    extras.push({
-        id: id,
-        fullname: input.fullname,
-        email: input.email,
-        phone: input.phone || "",
-        role: input.role || "EMPLOYEE",
-        storeId: input.role === "ADMIN" ? null : (input.storeId || null),
-        position: input.position || "Nhân viên",
-        status: "ACTIVE",
-        joinedAt: new Date().toISOString().slice(0, 10)
-    });
-
-    writeStoredJson(EXTRA_EMPLOYEES_KEY, extras);
-
-    return getEmployeeById(id);
-
-}
-
-
-function isEmployeeEmailTaken(email) {
-
-    const normalized = String(email).trim().toLowerCase();
-
-    return getEmployeeRecords().some(function (e) {
-        return e.email.toLowerCase() === normalized;
-    });
-
-}
-
-
-/* Mô phỏng PATCH /employees/{id} (khoá / mở tài khoản) */
-
-function updateEmployee(id, patch) {
-
-    setStaffOverride(id, patch);
-
-    return getEmployeeById(id);
-
-}
-
-
-/*
- * Hồ sơ mẫu của một tài khoản STAFF thật, theo email (không phân biệt hoa
- * thường). Hồ sơ đang "khoá" trong dữ liệu mẫu thì coi như không có.
- */
-
-function getEmployeeByEmail(email) {
-
-    const normalized = String(email || "").trim().toLowerCase();
-
-    const employee = getEmployeeRecords().find(function (e) {
-        return e.email.toLowerCase() === normalized && e.status === "ACTIVE";
-    });
-
-    return employee ? toStaffSummary(employee) : null;
-
+try {
+    localStorage.removeItem("poy_extra_stores");
+    localStorage.removeItem("poy_extra_employees");
+} catch (error) {
+    /* localStorage bị chặn: không có gì để xoá */
 }
 
 
@@ -381,7 +229,7 @@ function getSalesSummary(filter) {
 
         if (!byStore[record.storeId]) {
 
-            const store = getStoreById(record.storeId);
+            const store = getMockStoreById(record.storeId);
 
             byStore[record.storeId] = {
                 storeId: record.storeId,

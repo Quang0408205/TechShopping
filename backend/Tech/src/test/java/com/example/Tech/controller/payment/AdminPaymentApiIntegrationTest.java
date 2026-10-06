@@ -3,6 +3,7 @@ package com.example.Tech.controller.payment;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
@@ -11,6 +12,7 @@ import com.example.Tech.repository.user.RoleRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.support.StoreFixtures;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Staff payment actions (/api/v1/admin/orders/{id}/payment|installment/…, /api/v1/admin/installments) over HTTP
  * against the test database (rolled back), with a real STAFF account and orders placed through the real checkout.
+ * The STAFF account works at the store the orders are sent to, which has the products in stock (Phase 7.6).
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -109,6 +112,11 @@ class AdminPaymentApiIntegrationTest {
         laptop = variantRepository.save(variant(product, "16GB", "10000000"));
         mouse = variantRepository.save(variant(product, "Chuột kèm", "300000"));
         entityManager.flush();
+
+        Store store = StoreFixtures.store(entityManager, "ZZ CN Thanh Toán", "Quận 5");
+        StoreFixtures.assign(entityManager, registeredUserIds.get(1), store);
+        StoreFixtures.stock(entityManager, store, laptop, 10);
+        StoreFixtures.stock(entityManager, store, mouse, 10);
     }
 
     @AfterEach
@@ -320,6 +328,29 @@ class AdminPaymentApiIntegrationTest {
         send(get("/api/v1/admin/installments/999999999"), staffToken, null)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_FOUND"));
+    }
+
+    @Test
+    void installments_ofOrdersOutsideTheStaffMembersStore_areHiddenAndRefused() throws Exception {
+        long own = placeOrder(laptop, "INSTALLMENT", 3);
+        long other = placeOrder(laptop, "INSTALLMENT", 6);
+        entityManager.createNativeQuery("update orders set store_id = null where order_id = :id")
+                .setParameter("id", other)
+                .executeUpdate();
+        entityManager.clear();
+
+        assertOrderIds(searchInstallments("keyword", "pay.customer"), own);
+        Number otherPlanId = (Number) entityManager.createNativeQuery(
+                        "select installment_id from installment_orders where order_id = :id")
+                .setParameter("id", other)
+                .getSingleResult();
+        send(get("/api/v1/admin/installments/" + otherPlanId), staffToken, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
+        send(post(periodUrl(otherPlanId.longValue(), 1)), staffToken, null)
+                .andExpect(status().isForbidden());
+        send(post(orderUrl(other, "installment/approve")), staffToken, null)
+                .andExpect(status().isForbidden());
     }
 
     private long placeOrder(ProductVariant variant, String method, Integer months) throws Exception {

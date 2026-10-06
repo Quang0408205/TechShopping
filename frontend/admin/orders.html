@@ -43,7 +43,8 @@
                 Dữ liệu thật (GET /api/v1/admin/orders): đổi trạng thái có hiệu lực ngay và khách thấy trên trang "Đơn hàng của tôi".
                 Đơn chuyển khoản phải được bấm "Đã nhận tiền", đơn trả góp phải được duyệt, trước khi chuyển sang Đã xác nhận
                 (mở ▸ để xem khối Thanh toán).
-                Chưa lọc được theo chi nhánh: đơn hàng chỉ được gắn với chi nhánh ở Phase 7, nên mọi nhân viên đều thấy tất cả đơn.
+                Nhân viên chỉ thấy đơn của chi nhánh mình đang được gán; ADMIN thấy mọi đơn. Xác nhận đơn trừ tồn kho của
+                chi nhánh xử lý (thiếu hàng thì không xác nhận được); ADMIN đổi chi nhánh cho đơn đang chờ ở dòng chi tiết.
             </p>
 
 
@@ -69,6 +70,9 @@
                     đến
                     <input type="date" id="orderToDate" aria-label="Đặt đến ngày">
                 </label>
+
+                <!-- ADMIN: mọi chi nhánh; nhân viên: khoá vào chi nhánh của mình -->
+                <select id="orderStoreFilter" aria-label="Chi nhánh"></select>
 
                 <button type="submit" class="btn btn-dark">TÌM</button>
 

@@ -54,7 +54,10 @@ public class OrderMapper {
                 order.getUpdatedAt(),
                 order.getStatus() != null && order.getStatus().canBeCancelledByCustomer(),
                 payment,
-                installment);
+                installment,
+                order.getDeliveryType(),
+                order.getStore() == null ? null : order.getStore().getId(),
+                order.getStore() == null ? null : order.getStore().getName());
     }
 
     public OrderItemResponse toItemResponse(OrderItem item, String imageUrl) {

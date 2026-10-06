@@ -181,17 +181,110 @@ function setupPageTitle() {
 /* ================= HÀM DÙNG CHUNG CHO CÁC TRANG ================= */
 
 /*
- * Bộ lọc chi nhánh: ADMIN chọn được mọi chi nhánh; nhân viên / quản lý chi
- * nhánh bị khoá cứng vào chi nhánh của mình.
- * extraOptions: [{ value, label }] thêm sau danh sách (chỉ ADMIN).
+ * Mọi dòng của một API phân trang (size tối đa của backend là 100).
+ * path đã có "?" hoặc chưa đều được.
  */
 
-function setupStoreFilter(select, staff, extraOptions) {
+async function fetchAllPages(path) {
+
+    const rows = [];
+
+    const separator = path.indexOf("?") === -1 ? "?" : "&";
+
+    for (let page = 0; ; page++) {
+
+        const result = await apiRequest(path + separator + "size=100&page=" + page, { auth: true });
+
+        rows.push.apply(rows, result.content || []);
+
+        if (page + 1 >= (result.totalPages || 0)) {
+            return rows;
+        }
+
+    }
+
+}
+
+
+/* Mọi chi nhánh thật (cả chi nhánh tạm đóng), theo tên; chỉ ADMIN gọi được */
+
+function loadAllStores() {
+
+    return fetchAllPages("/admin/stores?sort=name");
+
+}
+
+
+/* "Chi nhánh A" hoặc "Chi nhánh A (tạm đóng)" */
+
+function storeOptionLabel(store) {
+
+    return store.name + (store.active === false ? " (tạm đóng)" : "");
+
+}
+
+
+/*
+ * Bộ lọc chi nhánh THẬT (Phase 7): ADMIN chọn được mọi chi nhánh (đọc API);
+ * nhân viên / quản lý chi nhánh bị khoá cứng vào chi nhánh của mình.
+ * extraOptions: [{ value, label }] thêm sau danh sách (chỉ ADMIN).
+ * Trả về Promise; lỗi tải danh sách → chỉ còn "Tất cả chi nhánh" (ném lại lỗi).
+ */
+
+async function setupStoreFilter(select, staff, extraOptions) {
+
+    if (staff.role !== "ADMIN") {
+
+        select.innerHTML =
+            `<option value="${escapeHtml(staff.storeId || "")}">${escapeHtml(staff.storeName)}</option>`;
+
+        select.disabled = true;
+
+        return;
+
+    }
+
+
+    select.innerHTML = '<option value="">Tất cả chi nhánh</option>';
+
+    const stores = await loadAllStores();
+
+    fillStoreOptions(select, [{ value: "", label: "Tất cả chi nhánh" }], stores, extraOptions);
+
+}
+
+
+function fillStoreOptions(select, leadingOptions, stores, extraOptions) {
+
+    const current = select.value;
+
+    const options = leadingOptions
+        .concat(stores.map(function (store) {
+            return { value: store.id, label: storeOptionLabel(store) };
+        }))
+        .concat(extraOptions || []);
+
+    select.innerHTML = options.map(function (option) {
+        return `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`;
+    }).join("");
+
+    select.value = current;
+
+}
+
+
+/*
+ * Bộ lọc chi nhánh của các trang còn dùng DỮ LIỆU MẪU (Tổng quan, Báo cáo, Bảo
+ * hành, Hỗ trợ): dùng 3 chi nhánh mẫu CN01–CN03 của mock-staff-data.js cho tới phase
+ * thay các trang đó. Nhân viên thật có chi nhánh thật nên không khớp dữ liệu mẫu nào.
+ */
+
+function setupMockStoreFilter(select, staff, extraOptions) {
 
     if (staff.role === "ADMIN") {
 
         const options = [{ value: "", label: "Tất cả chi nhánh" }]
-            .concat(getStores().map(function (store) {
+            .concat(getMockStores().map(function (store) {
                 return { value: store.id, label: store.name };
             }))
             .concat(extraOptions || []);
@@ -206,7 +299,7 @@ function setupStoreFilter(select, staff, extraOptions) {
 
 
     select.innerHTML =
-        `<option value="${escapeHtml(staff.storeId)}">${escapeHtml(staff.storeName)}</option>`;
+        `<option value="${escapeHtml(staff.storeId || "")}">${escapeHtml(staff.storeName)}</option>`;
 
     select.disabled = true;
 
@@ -219,9 +312,8 @@ function setupStoreFilter(select, staff, extraOptions) {
  */
 
 /*
- * Nhân viên chưa được gán chi nhánh (tài khoản STAFF thật chưa có hồ sơ mẫu,
- * B2) nhận mã không khớp chi nhánh nào, để không bao giờ thấy dữ liệu của
- * mọi chi nhánh (các bộ lọc coi storeId rỗng là "tất cả").
+ * Nhân viên chưa được gán chi nhánh nhận mã không khớp chi nhánh nào, để không
+ * bao giờ thấy dữ liệu của mọi chi nhánh (các bộ lọc coi storeId rỗng là "tất cả").
  */
 
 const NO_STORE_SCOPE = "NO_STORE";

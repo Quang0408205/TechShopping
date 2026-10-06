@@ -2,6 +2,7 @@ package com.example.Tech.controller.order;
 
 import com.example.Tech.dto.request.order.AdminOrderSearchRequest;
 import com.example.Tech.dto.request.order.OrderStatusUpdateRequest;
+import com.example.Tech.dto.request.order.OrderStoreRequest;
 import com.example.Tech.dto.request.payment.InstallmentRejectRequest;
 import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
 import com.example.Tech.dto.response.common.ApiResult;
@@ -33,7 +34,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Order management for staff. Protected by URL (/api/v1/admin/orders/** = STAFF or ADMIN in SecurityConfig)
- * and by @PreAuthorize; the service also re-checks the caller's roles in the database.
+ * and by @PreAuthorize; the service also re-checks the caller's roles in the database and limits a STAFF member
+ * to the orders of their store.
  */
 @RestController
 @RequestMapping("/api/v1/admin/orders")
@@ -81,7 +83,7 @@ public class AdminOrderController {
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR, MALFORMED_REQUEST (unknown status)"),
             @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND"),
             @ApiResponse(responseCode = "409", description = "INVALID_ORDER_STATUS, PAYMENT_REQUIRED (unpaid bank "
-                    + "transfer → CONFIRMED), INSTALLMENT_NOT_APPROVED")
+                    + "transfer → CONFIRMED), INSTALLMENT_NOT_APPROVED, ORDER_STORE_MISSING, INSUFFICIENT_STOCK")
     })
     public ResponseEntity<ApiResult<AdminOrderResponse>> updateStatus(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
@@ -144,6 +146,22 @@ public class AdminOrderController {
             @PathVariable Long id,
             @Valid @RequestBody InstallmentRejectRequest request) {
         return ResponseEntity.ok(ApiResult.ok(adminOrderService.rejectInstallment(staffId(jwt), id, request)));
+    }
+
+    @PatchMapping("/{id}/store")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "ADMIN: move a pending order to another open store (e.g. after INSUFFICIENT_STOCK)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Order moved; a pickup order gets the new store's address"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (storeId missing, store closed)"),
+            @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND, STORE_NOT_FOUND"),
+            @ApiResponse(responseCode = "409", description = "INVALID_ORDER_STATUS (no longer pending)")
+    })
+    public ResponseEntity<ApiResult<AdminOrderResponse>> reassignStore(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Long id,
+            @Valid @RequestBody OrderStoreRequest request) {
+        return ResponseEntity.ok(ApiResult.ok(adminOrderService.reassignStore(staffId(jwt), id, request)));
     }
 
     /** The access token subject is the user id (see JwtTokenService). */

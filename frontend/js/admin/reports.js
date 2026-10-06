@@ -28,7 +28,7 @@ document.addEventListener(
         const dateError = document.getElementById("reportDateError");
 
 
-        setupStoreFilter(storeFilter, staff);
+        setupMockStoreFilter(storeFilter, staff);
 
         [storeFilter, fromDateFilter, toDateFilter].forEach(function (input) {
             input.addEventListener("change", render);
@@ -165,9 +165,9 @@ document.addEventListener(
             document.querySelector("#salesDetailTable tbody").innerHTML =
                 records.map(function (record) {
 
-                    const store = getStoreById(record.storeId);
+                    const store = getMockStoreById(record.storeId);
 
-                    const employee = getEmployeeById(record.employeeId);
+                    const employee = getMockEmployeeById(record.employeeId);
 
                     return `
                         <tr>

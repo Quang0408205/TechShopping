@@ -2,15 +2,16 @@
 
 /*
  * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&page=&size=  mới nhất trước
+ *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&storeId=&page=&size=  mới nhất trước
+ *         (nhân viên: backend chỉ trả đơn của chi nhánh mình, Phase 7)
  *   PATCH /admin/orders/{id}/status  { status, trackingNumber? }
  *   POST  /admin/orders/{id}/payment/confirm { transactionId? }   chuyển khoản đã nhận tiền
  *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
  *   POST  /admin/orders/{id}/installment/approve | reject { reason }
+ *   PATCH /admin/orders/{id}/store { storeId }   chỉ ADMIN, đơn đang chờ (vd. chi nhánh thiếu hàng)
  * Chỉ cho chọn bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
  * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại;
- * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED (xác nhận khi chưa nhận tiền / chưa duyệt) → câu của server.
- * Chưa lọc theo chi nhánh: orders chỉ gắn chi nhánh qua sales_records ở Phase 7.
+ * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED / INSUFFICIENT_STOCK / ORDER_STORE_MISSING → câu của server.
  */
 
 const ORDER_PAGE_SIZE = 20;
@@ -29,6 +30,11 @@ const ORDER_NEXT_STATUSES = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["SHIPPING", "CANCELLED"],
     SHIPPING: ["DELIVERED"]
+};
+
+const STAFF_DELIVERY_TYPE_LABELS = {
+    HOME_DELIVERY: "Giao tận nhà",
+    PICKUP: "Nhận tại cửa hàng"
 };
 
 const STAFF_PAYMENT_METHOD_LABELS = {
@@ -57,6 +63,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const toDateInput = document.getElementById("orderToDate");
 
+    const storeFilter = document.getElementById("orderStoreFilter");
+
+    const isAdmin = staff.role === "ADMIN";
+
     const filterError = document.getElementById("orderFilterError");
 
     const tbody = document.getElementById("orderTableBody");
@@ -72,6 +82,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const expandedIds = new Set();
 
+    let allStores = null;
+
 
     form.addEventListener("submit", function (event) {
 
@@ -81,8 +93,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     });
 
-    [statusFilter, fromDateInput, toDateInput].forEach(function (control) {
+    [statusFilter, fromDateInput, toDateInput, storeFilter].forEach(function (control) {
         control.addEventListener("change", reloadFromFirstPage);
+    });
+
+    setupStoreFilter(storeFilter, staff).catch(function (error) {
+        handleError(error, function (message) {
+            showToast("Không tải được danh sách chi nhánh: " + message, "error");
+        });
     });
 
 
@@ -110,6 +128,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             approveInstallment(order);
         } else if (action === "reject") {
             rejectInstallment(order);
+        } else if (action === "store") {
+            reassignStore(order);
         }
 
     });
@@ -207,6 +227,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             params.set("toDate", toDate);
         }
 
+        if (isAdmin && storeFilter.value) {
+            params.set("storeId", storeFilter.value);
+        }
+
 
         tbody.innerHTML = adminEmptyRow(8,"Đang tải…");
 
@@ -299,6 +323,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>
                     <strong>${escapeHtml(order.code)}</strong>
                     <span class="admin-subtext">${escapeHtml(formatDateTimeVi(order.orderDate))}</span>
+                    <span class="admin-subtext">${escapeHtml(order.storeName || "Chưa có chi nhánh")}</span>
                 </td>
                 <td>
                     ${escapeHtml(customerName)}
@@ -367,6 +392,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "";
         }
 
+        if (!order.storeId) {
+            return "Chưa có chi nhánh xử lý";
+        }
+
         if (order.paymentMethod === "BANK_TRANSFER" && order.payment && order.payment.status !== "PAID") {
             return "Chờ nhận tiền chuyển khoản";
         }
@@ -413,7 +442,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         const customerPhone = order.customer && order.customer.phone;
 
 
+        const storeHtml = escapeHtml(order.storeName || "Chưa có chi nhánh") +
+            (isAdmin && order.status === "PENDING"
+                ? ` <button type="button" class="admin-link-btn" data-action="store" data-id="${escapeHtml(String(order.id))}">Đổi</button>`
+                : "");
+
+
         const facts = [
+            ["Chi nhánh xử lý", storeHtml],
+            ["Hình thức nhận", escapeHtml(STAFF_DELIVERY_TYPE_LABELS[order.deliveryType] || order.deliveryType || "—")],
             ["Giao tới", escapeHtml(order.shippingAddress)],
             ["Ghi chú", order.note ? escapeHtml(order.note) : "—"],
             ["Tạm tính", escapeHtml(formatPrice(Number(order.subtotal)))],
@@ -758,6 +795,86 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    /* ================= ĐỔI CHI NHÁNH (ADMIN, đơn đang chờ) ================= */
+
+    async function reassignStore(order) {
+
+        try {
+
+            if (!allStores) {
+                allStores = await loadAllStores();
+            }
+
+        } catch (error) {
+
+            handleError(error, function (message) {
+                showToast(message, "error");
+            });
+
+            return;
+
+        }
+
+
+        const openStores = allStores.filter(function (store) {
+            return store.active !== false;
+        });
+
+        if (openStores.length === 0) {
+
+            showToast("Chưa có chi nhánh nào đang mở.", "error");
+
+            return;
+
+        }
+
+
+        openConfirmModal({
+            title: "Đổi chi nhánh xử lý đơn " + order.code + "?",
+            message: order.deliveryType === "PICKUP"
+                ? "Đơn nhận tại cửa hàng: địa chỉ nhận hàng của khách sẽ đổi theo chi nhánh mới."
+                : "Tồn kho được trừ ở chi nhánh mới khi xác nhận đơn.",
+            confirmLabel: "ĐỔI CHI NHÁNH",
+            cancelLabel: "Quay lại",
+            select: {
+                label: "Chi nhánh",
+                value: order.storeId || openStores[0].id,
+                options: openStores.map(function (store) {
+                    return { value: store.id, label: store.name };
+                })
+            },
+            onConfirm: async function (storeId) {
+
+                tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
+                    control.disabled = true;
+                });
+
+                try {
+
+                    const updated = await apiRequest("/admin/orders/" + order.id + "/store", {
+                        method: "PATCH",
+                        body: { storeId: Number(storeId) },
+                        auth: true
+                    });
+
+                    showToast("Đơn " + order.code + " chuyển sang " + updated.order.storeName + ".", "success");
+
+                } catch (error) {
+
+                    handleError(error, function (message) {
+                        showToast(message, "error");
+                    });
+
+                }
+
+                loadOrders();
+
+            }
+        });
+
+    }
+
+
     async function postAction(order, action, body, successMessage) {
 
         tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
@@ -809,12 +926,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             handleError(error, function (message) {
 
-                showToast(
-                    error.code === "INVALID_ORDER_STATUS"
-                        ? "Đơn " + order.code + " vừa được cập nhật ở nơi khác (khách hủy hoặc nhân viên khác xử lý). Danh sách đã được tải lại."
-                        : message,
-                    "error"
-                );
+                let text = message;
+
+                if (error.code === "INVALID_ORDER_STATUS") {
+                    text = "Đơn " + order.code + " vừa được cập nhật ở nơi khác (khách hủy hoặc nhân viên khác xử lý). Danh sách đã được tải lại.";
+                } else if (error.code === "INSUFFICIENT_STOCK" || error.code === "ORDER_STORE_MISSING") {
+                    text = message + (isAdmin
+                        ? ". Mở ▸ để đổi chi nhánh xử lý."
+                        : ". Hãy nhập thêm hàng hoặc báo ADMIN chuyển đơn sang chi nhánh khác.");
+                }
+
+                showToast(text, "error");
 
             });
 

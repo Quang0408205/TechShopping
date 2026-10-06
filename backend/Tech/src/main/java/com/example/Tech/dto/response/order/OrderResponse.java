@@ -2,6 +2,7 @@ package com.example.Tech.dto.response.order;
 
 import com.example.Tech.dto.response.payment.InstallmentResponse;
 import com.example.Tech.dto.response.payment.PaymentResponse;
+import com.example.Tech.entity.order.DeliveryType;
 import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.order.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -39,6 +40,12 @@ public record OrderResponse(
         @Schema(description = "Main payment of a COD / BANK_TRANSFER order; null for INSTALLMENT")
         PaymentResponse payment,
         @Schema(description = "Installment plan of an INSTALLMENT order; null otherwise")
-        InstallmentResponse installment
+        InstallmentResponse installment,
+        @Schema(description = "HOME_DELIVERY or PICKUP")
+        DeliveryType deliveryType,
+        @Schema(description = "Store that handles the order (nearest to the address, or the pickup store); "
+                + "null for orders placed before stores existed")
+        Integer storeId,
+        String storeName
 ) {
 }

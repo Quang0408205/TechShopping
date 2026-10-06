@@ -1,8 +1,8 @@
 -- khuyến mãi sản phẩm (2026-10-03): chương trình khuyến mãi có thời hạn, chọn sản phẩm tham gia.
 -- db tạo mới từ database/techshopping.sql đã có sẵn 2 bảng này; file này chỉ dành cho db tạo từ bản schema cũ
 -- (volume postgres_data đã có từ trước). chạy lại nhiều lần vẫn an toàn.
---   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/2026-10-03_promotions.sql
---   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/2026-10-03_promotions.sql
+--   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/promotions.sql
+--   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/promotions.sql
 
 create table if not exists promotions (
     promotion_id bigserial primary key,

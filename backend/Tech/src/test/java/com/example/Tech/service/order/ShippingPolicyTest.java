@@ -1,5 +1,6 @@
 package com.example.Tech.service.order;
 
+import com.example.Tech.entity.order.DeliveryType;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -16,5 +17,12 @@ class ShippingPolicyTest {
         assertThat(ShippingPolicy.feeFor(new BigDecimal("45000000"))).isEqualByComparingTo("0");
         assertThat(ShippingPolicy.feeFor(BigDecimal.ZERO)).isEqualByComparingTo("0");
         assertThat(ShippingPolicy.feeFor(null)).isEqualByComparingTo("0");
+    }
+
+    @Test
+    void feeFor_pickupIsAlwaysFree_homeDeliveryUsesTheNormalRule() {
+        assertThat(ShippingPolicy.feeFor(new BigDecimal("200000"), DeliveryType.PICKUP)).isEqualByComparingTo("0");
+        assertThat(ShippingPolicy.feeFor(new BigDecimal("200000"), DeliveryType.HOME_DELIVERY))
+                .isEqualByComparingTo("30000");
     }
 }

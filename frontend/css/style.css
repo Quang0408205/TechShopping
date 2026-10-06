@@ -1709,7 +1709,8 @@ img {
     font-weight: 700;
 }
 
-.modal-field input {
+.modal-field input,
+.modal-field select {
     display: block;
 
     width: 100%;
@@ -1727,7 +1728,8 @@ img {
     outline: none;
 }
 
-.modal-field input:focus {
+.modal-field input:focus,
+.modal-field select:focus {
     border-color: var(--color-ink);
 }
 

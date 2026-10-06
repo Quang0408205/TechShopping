@@ -30,7 +30,7 @@ document.addEventListener(
         const tbody = document.getElementById("ticketTableBody");
 
 
-        setupStoreFilter(storeFilter, staff);
+        setupMockStoreFilter(storeFilter, staff);
 
         [statusFilter, storeFilter].forEach(function (select) {
             select.addEventListener("change", render);
@@ -71,10 +71,10 @@ document.addEventListener(
 
         function renderRow(ticket) {
 
-            const store = getStoreById(ticket.storeId);
+            const store = getMockStoreById(ticket.storeId);
 
             const employee = ticket.assignedEmployeeId
-                ? getEmployeeById(ticket.assignedEmployeeId)
+                ? getMockEmployeeById(ticket.assignedEmployeeId)
                 : null;
 
 

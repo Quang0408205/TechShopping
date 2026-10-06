@@ -5,6 +5,7 @@ import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
 import com.example.Tech.entity.cart.Cart;
 import com.example.Tech.entity.cart.CartItem;
+import com.example.Tech.entity.order.DeliveryType;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.order.OrderItem;
 import com.example.Tech.entity.order.OrderStatus;
@@ -45,6 +46,7 @@ public class OrderServiceImpl implements OrderService {
     private final CurrentUserLoader currentUserLoader;
     private final OrderViewLoader orderViewLoader;
     private final OrderPaymentLifecycle orderPaymentLifecycle;
+    private final OrderStockLifecycle orderStockLifecycle;
     private final Clock clock;
 
     @Override
@@ -52,6 +54,8 @@ public class OrderServiceImpl implements OrderService {
     public OrderResponse placeOrder(Long userId, OrderCreateRequest request) {
         User user = currentUserLoader.load(userId);
         orderPaymentLifecycle.validateSelection(request.paymentMethod(), request.installment());
+        DeliveryType deliveryType = request.deliveryTypeOrDefault();
+        orderStockLifecycle.validateDeliverySelection(deliveryType, request.pickupStoreId(), request.shippingAddress());
 
         // SELECT … FOR UPDATE: a concurrent second submit waits here, then finds the emptied cart
         Cart cart = cartRepository.findByUserIdForUpdate(userId).orElseThrow(OrderServiceImpl::cartEmpty);
@@ -74,10 +78,12 @@ public class OrderServiceImpl implements OrderService {
         order.setOrderDate(LocalDateTime.now(clock));
         order.setRecipientName(request.recipientName().trim());
         order.setRecipientPhone(request.recipientPhone().trim());
-        order.setShippingAddress(request.shippingAddress().trim());
+        order.setShippingAddress(trimToNull(request.shippingAddress()));
         order.setNotes(trimToNull(request.note()));
         order.setPaymentMethod(request.paymentMethod());
         order.setStatus(OrderStatus.PENDING);
+        // after the address is set: home delivery picks the store nearest to it, pickup replaces it
+        orderStockLifecycle.assignBranch(order, deliveryType, request.pickupStoreId());
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem line : lines) {
@@ -85,7 +91,7 @@ public class OrderServiceImpl implements OrderService {
             order.addItem(item);
             subtotal = subtotal.add(item.getSubtotal());
         }
-        BigDecimal shippingFee = ShippingPolicy.feeFor(subtotal);
+        BigDecimal shippingFee = ShippingPolicy.feeFor(subtotal, deliveryType);
         order.setShippingCost(shippingFee);
         order.setTaxAmount(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.add(shippingFee));

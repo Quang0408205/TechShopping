@@ -1,10 +1,12 @@
 package com.example.Tech.controller.order;
 
 import com.example.Tech.entity.product.Category;
+import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductImage;
 import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
@@ -82,6 +84,9 @@ class OrderApiIntegrationTest {
 
     @Autowired
     private InstallmentOrderRepository installmentOrderRepository;
+
+    @Autowired
+    private StoreRepository storeRepository;
 
     @Autowired
     private ProductService productService;
@@ -222,8 +227,13 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
                 .andExpect(jsonPath("$.error.details.recipientName").exists())
                 .andExpect(jsonPath("$.error.details.recipientPhone").exists())
-                .andExpect(jsonPath("$.error.details.shippingAddress").exists())
                 .andExpect(jsonPath("$.error.details.paymentMethod").exists());
+        // the address is only required for home delivery, so it is checked after the field rules
+        Map<String, Object> noAddress = orderBody();
+        noAddress.remove("shippingAddress");
+        send(post("/api/v1/orders"), token, noAddress)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.shippingAddress").exists());
         Map<String, Object> badPhone = orderBody();
         badPhone.put("recipientPhone", "gọi tôi");
         send(post("/api/v1/orders"), token, badPhone)
@@ -234,6 +244,76 @@ class OrderApiIntegrationTest {
         send(post("/api/v1/orders"), token, badMethod)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("MALFORMED_REQUEST"));
+
+        send(get("/api/v1/cart"), token, null)
+                .andExpect(jsonPath("$.data.items.length()").value(1));
+    }
+
+    @Test
+    void homeDelivery_goesToTheStoreOfTheAddressDistrict() throws Exception {
+        Store q1 = storeRepository.save(store("ZZ DH Quận 1", "Quận 1", true));
+        Store q5 = storeRepository.save(store("ZZ DH Quận 5", "Quận 5", true));
+        entityManager.flush();
+        addToCart(cover, 1);
+
+        JsonNode order = data(send(post("/api/v1/orders"), token, orderBody())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.deliveryType").value("HOME_DELIVERY"))
+                .andExpect(jsonPath("$.data.shippingFee").value(30000)));
+
+        assertThat(order.get("storeId").asInt()).isEqualTo(q5.getId());
+        assertThat(order.get("storeName").asString()).isEqualTo("ZZ DH Quận 5");
+        assertThat(orderRepository.findById(order.get("id").asLong()).orElseThrow().getStore().getId())
+                .isEqualTo(q5.getId())
+                .isNotEqualTo(q1.getId());
+    }
+
+    @Test
+    void pickup_atTheChosenStore_isFreeOfShipping_andNeedsNoAddress() throws Exception {
+        Store q1 = storeRepository.save(store("ZZ DH Quận 1", "Quận 1", true));
+        entityManager.flush();
+        addToCart(cover, 2);
+        Map<String, Object> body = orderBody();
+        body.remove("shippingAddress");
+        body.put("deliveryType", "PICKUP");
+        body.put("pickupStoreId", q1.getId());
+
+        long orderId = data(send(post("/api/v1/orders"), token, body)
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.deliveryType").value("PICKUP"))
+                .andExpect(jsonPath("$.data.storeId").value(q1.getId()))
+                .andExpect(jsonPath("$.data.shippingAddress")
+                        .value("Nhận tại cửa hàng: ZZ DH Quận 1, 1 Đường Test, Quận 1, Hồ Chí Minh"))
+                .andExpect(jsonPath("$.data.shippingFee").value(0))
+                .andExpect(jsonPath("$.data.total").value(400000))
+                .andExpect(jsonPath("$.data.payment.amount").value(400000))).get("id").asLong();
+
+        send(get("/api/v1/orders/" + orderId), token, null)
+                .andExpect(jsonPath("$.data.storeName").value("ZZ DH Quận 1"));
+    }
+
+    @Test
+    void pickup_withoutAStore_atAClosedStore_orHomeDeliveryWithAStore_isRefused_andTheCartIsKept() throws Exception {
+        Store closed = storeRepository.save(store("ZZ DH Đã đóng", "Quận 3", false));
+        entityManager.flush();
+        addToCart(cover, 1);
+
+        Map<String, Object> noStore = orderBody();
+        noStore.put("deliveryType", "PICKUP");
+        send(post("/api/v1/orders"), token, noStore)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.pickupStoreId").exists());
+        Map<String, Object> closedStore = orderBody();
+        closedStore.put("deliveryType", "PICKUP");
+        closedStore.put("pickupStoreId", closed.getId());
+        send(post("/api/v1/orders"), token, closedStore)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.pickupStoreId").exists());
+        Map<String, Object> homeWithStore = orderBody();
+        homeWithStore.put("pickupStoreId", closed.getId());
+        send(post("/api/v1/orders"), token, homeWithStore)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.pickupStoreId").exists());
 
         send(get("/api/v1/cart"), token, null)
                 .andExpect(jsonPath("$.data.items.length()").value(1));
@@ -448,6 +528,16 @@ class OrderApiIntegrationTest {
 
     private JsonNode data(ResultActions result) throws Exception {
         return jsonMapper.readTree(result.andReturn().getResponse().getContentAsString()).get("data");
+    }
+
+    private static Store store(String name, String district, boolean active) {
+        Store store = new Store();
+        store.setName(name);
+        store.setAddress("1 Đường Test");
+        store.setDistrict(district);
+        store.setCity("Hồ Chí Minh");
+        store.setActive(active);
+        return store;
     }
 
     private static Product product(String name, String slug, Category category, String price) {

@@ -108,10 +108,11 @@ docker compose up -d backend
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
 | Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
 | Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
-| Quản trị | **Đơn hàng** (STAFF và ADMIN): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Chưa lọc theo chi nhánh (Phase 7) | **Thật** (API) |
+| Quản trị | **Đơn hàng** (STAFF và ADMIN): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được, ADMIN chuyển đơn sang chi nhánh khác), hủy đơn đã xác nhận thì hoàn kho | **Thật** (API) |
 | Quản trị | **Trả góp** (STAFF và ADMIN): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
 | Quản trị | **Khuyến mãi** (chỉ ADMIN): chương trình có thời gian bắt đầu / kết thúc, giảm theo % (có mức giảm tối đa) hoặc số tiền, chọn sản phẩm và đặt mức giảm riêng từng sản phẩm, tạm dừng / bật lại. Một sản phẩm chỉ thuộc một chương trình đang bật tại cùng thời điểm; giỏ hàng và thanh toán lấy giá thấp hơn giữa "Giá khuyến mãi" của sản phẩm và giá chương trình; đơn đã đặt giữ nguyên giá | **Thật** (API) |
-| Quản trị | Tổng quan, bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo, nhân viên, chi nhánh, lịch sử chatbot | Dữ liệu mẫu (Phase 5–10) |
+| Quản trị | **Chi nhánh** (chỉ ADMIN): thêm / sửa / tạm đóng / xoá (chỉ khi chưa dùng); quận / huyện + tỉnh / thành dùng để tự gán chi nhánh cho đơn giao tận nhà. **Nhân viên** (chỉ ADMIN): hồ sơ cho tài khoản có quyền Nhân viên, gán / chuyển / rút chi nhánh (giữ lịch sử), vị trí "Quản lý chi nhánh", đã nghỉ. Nhân viên thấy vai trò + chi nhánh của mình trên thanh trên cùng | **Thật** (API) |
+| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
 
 ---
 
@@ -126,17 +127,29 @@ docker compose up -d backend
 | Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
 | Cập nhật code mới | `git pull` rồi chạy các file **mới** trong `database/migrations/` (xem dưới), rồi `docker compose up -d --build` |
 
-> **Cập nhật database đã có:** database chỉ được tạo từ `database/techshopping.sql` **một lần** (khi volume còn trống), nên khi schema đổi, database cũ cần chạy các file migration theo thứ tự ngày (chạy lại nhiều lần vẫn an toàn):
+> **Cập nhật database đã có:** database chỉ được tạo từ `database/techshopping.sql` **một lần** (khi volume còn trống), nên khi schema đổi, database cũ cần chạy các file migration **theo đúng thứ tự dưới đây** (chạy lại nhiều lần vẫn an toàn):
 > ```powershell
-> # Đơn hàng (2026-10-02)
-> Get-Content database\migrations\2026-10-02_orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
-> Get-Content database\migrations\2026-10-02_orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
-> # Khuyến mãi (2026-10-03)
-> Get-Content database\migrations\2026-10-03_promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
-> Get-Content database\migrations\2026-10-03_promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
-> # Thanh toán + trả góp (2026-10-03)
-> Get-Content database\migrations\2026-10-03_payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
-> Get-Content database\migrations\2026-10-03_payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 1. Đơn hàng
+> Get-Content database\migrations\orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 2. Khuyến mãi
+> Get-Content database\migrations\promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 3. Thanh toán + trả góp
+> Get-Content database\migrations\payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 4. Chi nhánh / tồn kho
+> Get-Content database\migrations\stores_inventory.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\stores_inventory.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 5. Thuộc tính theo danh mục
+> Get-Content database\migrations\category_attributes.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\category_attributes.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 6. Lịch sử trạng thái đơn hàng
+> Get-Content database\migrations\order_status_history.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\order_status_history.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 7. Đánh giá sản phẩm
+> Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 877 sản phẩm mẫu.
@@ -191,6 +204,6 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 37 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `database/` | `techshopping.sql` (cấu trúc 43 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Dữ liệu crawl gốc (CSV) |
