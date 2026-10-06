@@ -69,7 +69,7 @@ docker compose up -d --build
 
 Mở trình duyệt vào **http://localhost:5510**.
 
-> **Dữ liệu có sẵn.** Lần chạy đầu tiên, Docker tự tạo database và nạp **877 sản phẩm mẫu** (crawl từ Thế Giới Di Động: danh mục, thương hiệu, phiên bản, ảnh) từ `database/docker-init/03_seed_catalog.sql`. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
+> **Dữ liệu có sẵn.** Lần chạy đầu tiên, Docker tự tạo database và nạp **4.288 sản phẩm mẫu** (crawl từ Thế Giới Di Động ngày 06/10/2026: danh mục, thương hiệu, phiên bản, ảnh, mô tả, thông số kỹ thuật, điểm đánh giá) từ `database/docker-init/03_seed_catalog.sql`. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
 >
 > Dữ liệu được lưu trong volume Docker `postgres_data`, nên tắt / mở máy hay `docker compose down` đều **không mất**. File seed chỉ được nạp khi database còn trống, nên không ghi đè dữ liệu bạn đã tạo.
 
@@ -102,7 +102,7 @@ docker compose up -d backend
 | Khu vực | Tính năng | Dữ liệu |
 |---|---|---|
 | Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
-| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (877 sản phẩm) |
+| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
 | Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
 | Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận | **Thật** (API) |
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
@@ -152,7 +152,17 @@ docker compose up -d backend
 > Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
-> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 877 sản phẩm mẫu.
+> **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
+> ```powershell
+> $env:PGHOST = "localhost"; $env:PGPORT = "5432"; $env:PGUSER = "postgres"; $env:PGPASSWORD = "postgres"; $env:PGDATABASE = "techshopping"
+> python Raw_data/import_catalog.py --dry-run   # chạy thử rồi rollback, chỉ in số liệu
+> python Raw_data/import_catalog.py
+> ```
+> - Chạy được nhiều lần: mỗi sản phẩm nhận diện bằng mã `TGDD-<id nguồn>`, lần sau chỉ cập nhật (tên, giá, mô tả, thông số, điểm đánh giá, thêm ảnh mới).
+> - Sản phẩm mẫu cũ có cùng trang TGDĐ được **cập nhật tại chỗ** (giữ id, nên giỏ hàng / đơn hàng / khuyến mãi / tồn kho đang trỏ tới vẫn đúng); sản phẩm cũ không còn trong dữ liệu mới bị **ẩn** (không xoá). Thương hiệu bị tách ("iPhone (Apple)", "MacBook"…) được gộp về tên chuẩn.
+> - Muốn crawl lại từ đầu: `python -m pip install -r requirements.txt`, `python -m playwright install chromium`, rồi `python Raw_data/crawler.py` và `python Raw_data/clean_data.py` trước khi import.
+
+> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 4.288 sản phẩm mẫu.
 
 ---
 
@@ -169,7 +179,8 @@ docker compose up -d backend
 | Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
 | Log backend có `Schema-validation: missing column` (ví dụ `recipient_name`, `citizen_id`, `confirmed_by`) hoặc `missing table [promotions]` | Database tạo từ schema cũ: chạy các file trong `database/migrations/` (mục **4. Dùng hằng ngày**), rồi `docker compose restart backend` |
 | Backend cứ khởi động lại, log có `UnknownHostException: postgres` | Container backend bị rơi khỏi mạng Docker: `docker compose up -d --force-recreate --no-deps backend` |
-| Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu |
+| Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu; muốn giữ dữ liệu thì nạp catalogue bằng `Raw_data/import_catalog.py` (mục **4. Dùng hằng ngày**) |
+| Trang Sản phẩm chỉ có 877 sản phẩm, tên dạng "Điện thoại iPhone…" | Database còn catalogue mẫu cũ: chạy `Raw_data/import_catalog.py` (mục **4. Dùng hằng ngày**) |
 
 ---
 
@@ -206,4 +217,4 @@ cd backend\Tech
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
 | `database/` | `techshopping.sql` (cấu trúc 43 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
-| `Raw_data/` | Dữ liệu crawl gốc (CSV) |
+| `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |
