@@ -1,12 +1,17 @@
 -- =====================================================================
+-- LEGACY DUMP: không còn được Docker nạp tự động.
+-- Dữ liệu này dùng phiên bản schema cũ, không khớp database/techshopping.sql hiện tại.
+-- Tạo database mới bằng schema hiện tại rồi dùng Raw_data/import_catalog.py để nạp CSV.
+-- Không chạy file này lên database hiện tại.
+-- =====================================================================
+--
 -- TechShopping: dữ liệu catalogue mẫu (seed)
 -- 877 sản phẩm crawl từ Thế Giới Di Động (Raw_data/tgdd_products_cleaned.csv):
 -- danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thuộc tính.
 -- KHÔNG chứa user / mật khẩu / token. Đã bỏ dữ liệu thử nghiệm (E2E).
 --
--- Docker tự nạp file này SAU 01_schema.sql, chỉ khi volume postgres_data
--- còn trống (lần chạy đầu tiên). Database đang có dữ liệu không bị ảnh hưởng.
--- Tạo lại từ DB dev: pg_dump -a --disable-triggers --no-owner --no-privileges -t <9 bảng catalogue>
+-- File được giữ để tham khảo dữ liệu cũ; Docker Compose hiện không mount file này.
+-- Đừng dùng lệnh dump bên dưới để nạp vào schema hiện tại.
 -- =====================================================================
 
 --
@@ -4574,4 +4579,3 @@ SELECT pg_catalog.setval('public.products_product_id_seq', 879, true);
 --
 
 \unrestrict kFDbZwiYJcdJhcE1piSXDkdOaIDjLzzTwdZx0XLIOHXacLPA56CEWN14eNf58qV
-

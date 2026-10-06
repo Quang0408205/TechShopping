@@ -69,9 +69,65 @@ docker compose up -d --build
 
 Mở trình duyệt vào **http://localhost:5510**.
 
-> **Dữ liệu có sẵn.** Lần chạy đầu tiên, Docker tự tạo database và nạp **877 sản phẩm mẫu** (crawl từ Thế Giới Di Động: danh mục, thương hiệu, phiên bản, ảnh) từ `database/docker-init/03_seed_catalog.sql`. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
+> Database dùng schema trong `database/techshopping.sql`. Docker không tự nạp catalog để bạn có thể kiểm tra schema trước, sau đó chủ động import dữ liệu crawl. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
 >
-> Dữ liệu được lưu trong volume Docker `postgres_data`, nên tắt / mở máy hay `docker compose down` đều **không mất**. File seed chỉ được nạp khi database còn trống, nên không ghi đè dữ liệu bạn đã tạo.
+> Schema init chỉ chạy tự động khi PostgreSQL khởi tạo volume `postgres_data` mới. Volume/database đã tồn tại sẽ không tự được cập nhật schema khi chạy lại Docker; dùng migration cho thay đổi schema và không xóa volume nếu chưa sao lưu dữ liệu.
+
+### Crawl và import catalogue TGDĐ
+
+Trước hết khởi động PostgreSQL và chờ healthy:
+
+```powershell
+docker compose up -d postgres
+docker compose ps
+```
+
+Sau đó chạy từ thư mục gốc dự án trong PowerShell:
+
+```powershell
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+python Raw_data/crawler.py
+python Raw_data/clean_data.py
+```
+
+Trên macOS/Linux, các lệnh tương đương là:
+
+```sh
+python -m pip install -r requirements.txt
+python -m playwright install chromium
+python Raw_data/crawler.py
+python Raw_data/clean_data.py
+```
+
+`crawler.py` lưu CSV cạnh các script trong `Raw_data/` và lấy thêm mô tả, ảnh, thông số kỹ thuật
+và số đánh giá từ trang chi tiết. Quá trình có nghỉ giữa các trang; danh mục tải chưa hết hoặc trang
+chi tiết lỗi được ghi trạng thái trong CSV để nhận biết. `import_catalog.py` kiểm tra schema trước,
+chạy trong một transaction và có thể chạy lại để cập nhật danh mục, thương hiệu, sản phẩm, phiên bản,
+ảnh, thông số và thuộc tính mà không tạo lặp ảnh/thông số đã nhập.
+
+Khi đã kiểm tra CSV, import vào database PostgreSQL Docker của TechShopping (`techshopping`):
+
+```powershell
+$env:PGHOST = "localhost"
+$env:PGPORT = "5432"
+$env:PGUSER = "postgres"
+$env:PGPASSWORD = "postgres"
+$env:PGDATABASE = "techshopping"
+python Raw_data/import_catalog.py
+```
+
+Trên macOS/Linux, thay các dòng đặt biến môi trường phía trên bằng:
+
+```sh
+PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres \
+PGDATABASE=techshopping python Raw_data/import_catalog.py
+```
+
+Đừng import chồng lên catalog seed cũ: khóa nhận diện catalog cũ khác với importer và có thể tạo sản phẩm trùng. File `database/docker-init/03_seed_catalog.sql` là dump cũ, không còn được Docker nạp và không khớp schema hiện tại.
+
+Crawler công khai không thể lấy tồn kho thực theo chi nhánh, người dùng, đơn hàng hay thanh toán;
+những bảng vận hành này không được tự điền bằng dữ liệu đoán.
 
 ### Bước 5 (tuỳ chọn): Tạo tài khoản ADMIN đầu tiên
 
@@ -122,7 +178,7 @@ docker compose up -d backend
 | Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
 | Cập nhật code mới | `git pull` rồi `docker compose up -d --build` |
 
-> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 877 sản phẩm mẫu.
+> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại schema rỗng; cần chạy crawler/import riêng để nạp catalog.
 
 ---
 

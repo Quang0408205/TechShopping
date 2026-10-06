@@ -14,8 +14,6 @@ services:
       # Init scripts run only when the data volume is empty
       - ./database/techshopping.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
       - ./database/docker-init/02_create_test_db.sh:/docker-entrypoint-initdb.d/02_create_test_db.sh:ro
-      # Catalogue mẫu (877 sản phẩm), chỉ nạp vào DB techshopping, không có user
-      - ./database/docker-init/03_seed_catalog.sql:/docker-entrypoint-initdb.d/03_seed_catalog.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s
