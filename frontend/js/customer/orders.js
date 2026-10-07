@@ -1,8 +1,9 @@
-/* ================= ĐƠN HÀNG CỦA TÔI (Phase 4) ================= */
+/* ================= ĐƠN HÀNG CỦA TÔI (Phase 4–5) ================= */
 
 /*
  * Danh sách đơn hàng của tài khoản đang đăng nhập: GET /api/v1/orders
  * (fetchMyOrders, js/core/order-store.js), mới nhất trước, 10 đơn / trang.
+ * Mỗi thẻ có huy hiệu thanh toán / trả góp (getPaymentBadge).
  * Chưa đăng nhập: account-sidebar.js đã chuyển tới trang đăng nhập.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
@@ -120,13 +121,16 @@ document.addEventListener(
 
         function orderCardHtml(order) {
 
+            const payment = getPaymentBadge(order);
+
             return `
                 <a href="${escapeHtml(getOrderDetailUrl(order.id))}" class="order-card" data-order-id="${escapeHtml(String(order.id))}">
 
                     <div class="order-card-header">
                         <div>
                             <strong>${escapeHtml(order.code)}</strong>
-                            <span class="order-card-date">${escapeHtml(formatOrderDateTime(order.orderDate))}</span>
+                            <span class="order-card-date">${escapeHtml(formatOrderDateTime(order.orderDate)
+                                + (order.deliveryType === "PICKUP" ? " · " + getDeliveryTypeLabel(order.deliveryType) : ""))}</span>
                         </div>
                         <span class="order-status-badge status-${escapeHtml(String(order.status).toLowerCase())}">
                             ${escapeHtml(getOrderStatusLabel(order.status))}
@@ -141,7 +145,10 @@ document.addEventListener(
                     </div>
 
                     <div class="order-card-footer">
-                        <span>Tổng cộng</span>
+                        <span>
+                            Tổng cộng
+                            ${payment ? `<span class="payment-badge payment-badge--${escapeHtml(payment.tone)}">${escapeHtml(payment.label)}</span>` : ""}
+                        </span>
                         <strong>${formatPrice(order.total)}</strong>
                     </div>
 

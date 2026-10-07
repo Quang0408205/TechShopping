@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Void>> handleBusiness(BusinessException ex) {
-        return build(ex.getErrorCode(), ex.getMessage(), null);
+        return build(ex.getErrorCode(), ex.getMessage(), ex.getDetails());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

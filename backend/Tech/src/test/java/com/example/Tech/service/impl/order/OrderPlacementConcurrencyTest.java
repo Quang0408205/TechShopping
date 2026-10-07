@@ -101,10 +101,14 @@ class OrderPlacementConcurrencyTest {
                 + "where o.user_id = ?", Long.class, userId)).isEqualTo(1);
         assertThat(jdbc.queryForObject("select count(*) from cart_items i join carts c on c.cart_id = i.cart_id "
                 + "where c.user_id = ?", Long.class, userId)).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from payments p join orders o on o.order_id = p.order_id "
+                + "where o.user_id = ? and p.status = 'PENDING'", Long.class, userId)).isEqualTo(1);
     }
 
     /** Removes the rows of this test (also leftovers of an interrupted run). */
     private void cleanUp() {
+        jdbc.update("delete from payments where order_id in (select o.order_id from orders o "
+                + "join users u on u.user_id = o.user_id where u.username = ?)", TAG);
         jdbc.update("delete from order_items where order_id in (select o.order_id from orders o "
                 + "join users u on u.user_id = o.user_id where u.username = ?)", TAG);
         jdbc.update("delete from orders where user_id in (select user_id from users where username = ?)", TAG);

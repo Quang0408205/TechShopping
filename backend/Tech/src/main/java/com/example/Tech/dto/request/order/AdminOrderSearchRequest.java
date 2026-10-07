@@ -26,6 +26,9 @@ public record AdminOrderSearchRequest(
 
         @Schema(description = "Orders placed on or before this day (yyyy-MM-dd)", example = "2026-10-31")
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
-        LocalDate toDate
+        LocalDate toDate,
+
+        @Schema(description = "Store that handles the order", example = "1")
+        Integer storeId
 ) {
 }

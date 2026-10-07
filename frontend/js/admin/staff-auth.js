@@ -13,15 +13,39 @@
  *
  * staff.role là mã hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN:
  *   - role ADMIN của backend → ADMIN (toàn hệ thống);
- *   - role STAFF → vai trò + chi nhánh lấy từ dữ liệu mẫu theo email
- *     (getEmployeeByEmail, mock-staff-data.js) cho tới Phase 7 (employees /
- *     employee_assignments); không có trong dữ liệu mẫu → Nhân viên, chưa gán
- *     chi nhánh (các trang theo chi nhánh sẽ không có dữ liệu).
+ *   - role STAFF → hồ sơ nhân viên thật (GET /employees/me, Phase 7): đang được
+ *     gán chi nhánh với vị trí "Quản lý chi nhánh" → BRANCH_MANAGER, vị trí khác →
+ *     EMPLOYEE; chưa có hồ sơ / chưa được gán → Nhân viên, "Chưa gán chi nhánh"
+ *     (backend từ chối mọi thao tác theo chi nhánh của tài khoản này).
  *
- * Nạp sau js/core/api.js và js/admin/mock-staff-data.js.
+ * Nạp sau js/core/api.js.
  */
 
 const STAFF_BACKEND_ROLES = ["STAFF", "ADMIN"];
+
+
+const STAFF_ROLE_LABELS = {
+    EMPLOYEE: "Nhân viên",
+    BRANCH_MANAGER: "Quản lý chi nhánh",
+    ADMIN: "Quản trị viên"
+};
+
+
+function getStaffRoleLabel(role) {
+
+    return STAFF_ROLE_LABELS[role] || role;
+
+}
+
+
+/*
+ * Vị trí tại chi nhánh (employee_assignments.position_at_store) chọn từ danh sách
+ * cố định ở trang Nhân viên; chỉ vị trí này được coi là Quản lý chi nhánh.
+ */
+
+const BRANCH_MANAGER_POSITION = "Quản lý chi nhánh";
+
+const STORE_POSITIONS = ["Nhân viên bán hàng", "Nhân viên kỹ thuật", "Thu ngân", BRANCH_MANAGER_POSITION];
 
 
 /* Tài khoản (user của AuthResponse / UserResponse) có quyền vào khu nội bộ */
@@ -37,21 +61,20 @@ function hasStaffAccess(user) {
 }
 
 
-/* Hồ sơ hiển thị của nhân viên (vai trò / chi nhánh) từ tài khoản thật */
+/*
+ * Hồ sơ hiển thị của nhân viên. employee: EmployeeResponse của GET /employees/me
+ * (null = chưa có hồ sơ). Chi nhánh = phân công đang hiệu lực.
+ */
 
-function buildStaffProfile(user) {
+function buildStaffProfile(user, employee) {
 
     const isAdmin = (user.roles || []).indexOf("ADMIN") !== -1;
 
-    const employee = isAdmin ? null : getEmployeeByEmail(user.email);
+    const assignment = !isAdmin && employee && employee.active ? employee.assignment : null;
 
     const role = isAdmin
         ? "ADMIN"
-        : (employee && employee.role !== "ADMIN" ? employee.role : "EMPLOYEE");
-
-    const storeId = role === "ADMIN" ? null : (employee ? employee.storeId : null);
-
-    const store = storeId ? getStoreById(storeId) : null;
+        : (assignment && assignment.positionAtStore === BRANCH_MANAGER_POSITION ? "BRANCH_MANAGER" : "EMPLOYEE");
 
 
     return {
@@ -60,26 +83,61 @@ function buildStaffProfile(user) {
         email: user.email,
         role: role,
         roleLabel: getStaffRoleLabel(role),
-        storeId: storeId,
-        storeName: role === "ADMIN"
+        storeId: assignment ? assignment.storeId : null,
+        storeName: isAdmin
             ? "Toàn hệ thống"
-            : (store ? store.name : "Chưa gán chi nhánh")
+            : (assignment ? assignment.storeName : "Chưa gán chi nhánh")
     };
+
+}
+
+
+/*
+ * Đọc hồ sơ nhân viên thật cho tài khoản STAFF (ADMIN không cần). 404 = chưa có hồ sơ.
+ * Lỗi mạng → giữ hồ sơ đã lưu trong phiên (previous) nếu có.
+ */
+
+async function loadStaffProfile(user, previous) {
+
+    if ((user.roles || []).indexOf("ADMIN") !== -1) {
+        return buildStaffProfile(user, null);
+    }
+
+
+    try {
+
+        return buildStaffProfile(user, await apiRequest("/employees/me", { auth: true }));
+
+    } catch (error) {
+
+        if (error.code === "NETWORK_ERROR" && previous) {
+            return previous;
+        }
+
+        return buildStaffProfile(user, null);
+
+    }
 
 }
 
 
 /* Lưu AuthResponse của /auth/login kèm hồ sơ nhân viên */
 
-function saveStaffSession(authResponse) {
+async function saveStaffSession(authResponse) {
 
     saveAuth(authResponse);
 
+    const staff = await loadStaffProfile(authResponse.user, null);
+
     const auth = getAuth();
 
-    auth.staff = buildStaffProfile(authResponse.user);
+    if (auth) {
 
-    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+        auth.staff = staff;
+
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
+
+    }
 
 }
 
@@ -144,13 +202,7 @@ async function checkStaffSession() {
     }
 
 
-    const auth = getAuth();
-
-    if (!auth) {
-        return { reason: "expired" };
-    }
-
-    auth.user = {
+    const user = {
         id: me.id,
         email: me.email,
         username: me.username,
@@ -158,7 +210,20 @@ async function checkStaffSession() {
         roles: me.roles
     };
 
-    auth.staff = buildStaffProfile(auth.user);
+    const previous = getAuth();
+
+    const staff = await loadStaffProfile(user, previous && previous.staff);
+
+    /* Đọc lại sau lời gọi mạng: phiên có thể vừa được làm mới / xoá */
+    const auth = getAuth();
+
+    if (!auth) {
+        return { reason: "expired" };
+    }
+
+    auth.user = user;
+
+    auth.staff = staff;
 
     localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(auth));
 

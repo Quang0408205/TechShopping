@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Tồn kho - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Tồn kho" data-roles="">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="inventory"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (/api/v1/admin/stores/{id}/inventory). Nhân viên chỉ xem và nhập kho cho chi nhánh mình đang
+                được gán; ADMIN xem từng chi nhánh hoặc "Tất cả chi nhánh" (tổng số lượng của mọi chi nhánh, kể cả chi
+                nhánh tạm đóng). Bảng chỉ có phiên bản đã từng nhập; hàng mới thì bấm "+ NHẬP KHO" và tìm sản phẩm.
+                Nhập kho có hiệu lực ngay; xác nhận đơn trừ kho, huỷ đơn đã xác nhận hoàn kho (mở ▸ để xem lịch sử).
+            </p>
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="inventoryFilterForm" role="search">
+
+                    <input type="search" id="inventoryKeyword" placeholder="Tên sản phẩm, phiên bản, SKU…" maxlength="255" aria-label="Từ khoá">
+
+                    <!-- ADMIN: "Tất cả chi nhánh" + mọi chi nhánh; nhân viên: khoá vào chi nhánh của mình -->
+                    <select id="inventoryStoreFilter" aria-label="Chi nhánh"></select>
+
+                    <label class="admin-check-filter">
+                        <input type="checkbox" id="inventoryOutOfStock">
+                        Chỉ hàng hết
+                    </label>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newStockInBtn">
+                    + NHẬP KHO
+                </button>
+
+            </div>
+
+
+            <!-- Nhập kho: chi nhánh + phiên bản + số lượng (+ nhà cung cấp, ghi chú), áp dụng ngay -->
+            <section class="admin-panel" id="stockInPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Nhập kho</h2>
+                </div>
+
+                <form id="stockInForm" novalidate>
+
+                    <p id="stockInError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="siStore">Chi nhánh *</label>
+                            <select id="siStore" required></select>
+                        </div>
+
+                        <fieldset class="admin-field admin-field-wide admin-promo-products" id="siProductPicker">
+
+                            <legend>Sản phẩm *</legend>
+
+                            <p class="admin-field-hint" id="siChosenProduct" hidden></p>
+
+                            <div class="admin-promo-picker" id="siSearchBox">
+                                <input type="search" id="siProductKeyword" placeholder="Tìm sản phẩm theo tên…" maxlength="255" aria-label="Tìm sản phẩm">
+                                <button type="button" class="btn btn-outline-dark" id="siProductSearchBtn">TÌM SẢN PHẨM</button>
+                            </div>
+
+                            <ul class="admin-promo-results" id="siProductResults" aria-live="polite" hidden></ul>
+
+                        </fieldset>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="siVariant">Phiên bản *</label>
+                            <select id="siVariant" required disabled>
+                                <option value="">Chọn sản phẩm trước</option>
+                            </select>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="siQuantity">Số lượng nhập *</label>
+                            <input type="number" id="siQuantity" min="1" max="100000" step="1" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="siSupplier">Nhà cung cấp</label>
+                            <input type="text" id="siSupplier" maxlength="150" placeholder="vd. Công ty ABC">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="siNote">Ghi chú</label>
+                            <textarea id="siNote" maxlength="1000" rows="2"></textarea>
+                        </div>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="stockInSaveBtn">NHẬP KHO</button>
+                        <button type="button" class="btn btn-outline-dark" id="stockInCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2 id="inventoryTableTitle">Tồn kho</h2>
+                    <span class="admin-row-count" id="inventoryRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide">
+                        <thead id="inventoryTableHead"></thead>
+                        <tbody id="inventoryTableBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="admin-pagination" id="inventoryPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/inventory.js"></script>
+
+</body>
+</html>

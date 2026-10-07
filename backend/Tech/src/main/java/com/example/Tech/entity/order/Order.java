@@ -1,5 +1,6 @@
 package com.example.Tech.entity.order;
 
+import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.User;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -29,7 +30,7 @@ import java.util.List;
 /**
  * An order placed from the customer's server cart (Phase 4). Prices are copied into the order and its items
  * at checkout, so later catalogue price changes do not affect it. users are only soft-deleted, so user_id
- * (no ON DELETE action) always points to an existing row. The store link (sales_records) is Phase 7.
+ * (no ON DELETE action) always points to an existing row. store = the branch that handles it (Phase 7).
  */
 @Entity
 @Table(name = "orders")
@@ -92,6 +93,15 @@ public class Order {
 
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
+
+    /** Store that handles the order and whose stock is used (Phase 7); null for orders placed before it. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_type", length = 20, nullable = false)
+    private DeliveryType deliveryType = DeliveryType.HOME_DELIVERY;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

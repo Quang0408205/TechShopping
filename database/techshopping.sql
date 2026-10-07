@@ -157,6 +157,16 @@ create table attribute_values (
     unique(attribute_id, value)
 );
 
+-- bảng category_attributes: danh mục nào dùng những thuộc tính nào (sinh form nhập sản phẩm + bộ lọc)
+create table category_attributes (
+    category_id int not null references categories(category_id) on delete cascade,
+    attribute_id int not null references attributes(attribute_id) on delete cascade,
+    is_required boolean not null default true,
+    is_filterable boolean not null default true,
+    display_order int,
+    primary key (category_id, attribute_id)
+);
+
 -- bảng variant_attribute_values: liên kết phiên bản sản phẩm với giá trị thuộc tính
 create table variant_attribute_values (
     variant_id bigint not null references product_variants(variant_id) on delete cascade,
@@ -204,6 +214,8 @@ create table orders (
     notes text,
     delivered_at timestamp,
     cancelled_at timestamp,
+    store_id int,
+    delivery_type varchar(20) not null default 'HOME_DELIVERY',
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
@@ -219,24 +231,21 @@ create table order_items (
     subtotal decimal(15, 2) not null
 );
 
+-- bảng order_status_history: lịch sử đổi trạng thái đơn hàng, ghi bằng code java mỗi lần orders.status đổi
+create table order_status_history (
+    history_id bigserial primary key,
+    order_id bigint not null references orders(order_id) on delete cascade,
+    old_status varchar(50),
+    new_status varchar(50) not null,
+    changed_by bigint references users(user_id),
+    changed_at timestamp not null default current_timestamp
+);
+
 -- =====================================================
 -- nhóm 4: thanh toán và trả góp
 -- =====================================================
 
--- bảng payments: quản lý các giao dịch thanh toán
-create table payments (
-    payment_id bigserial primary key,
-    order_id bigint not null references orders(order_id),
-    amount decimal(15, 2) not null,
-    payment_method varchar(50) not null,
-    transaction_id varchar(100),
-    status varchar(50) default 'pending',
-    paid_at timestamp,
-    created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
-);
-
--- bảng installment_orders: quản lý thông tin đơn hàng trả góp
+-- bảng installment_orders: hợp đồng trả góp của đơn hàng (hồ sơ + kết quả duyệt)
 create table installment_orders (
     installment_id bigserial primary key,
     order_id bigint unique not null references orders(order_id),
@@ -244,8 +253,14 @@ create table installment_orders (
     monthly_payment decimal(15, 2) not null,
     interest_rate decimal(5, 2),
     total_interest decimal(15, 2),
-    status varchar(50) default 'active',
-    created_at timestamp default current_timestamp
+    status varchar(50) default 'PENDING_APPROVAL',
+    citizen_id varchar(20) not null,
+    card_bank_code varchar(20) not null,
+    rejection_reason text,
+    reviewed_by bigint references users(user_id),
+    reviewed_at timestamp,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp
 );
 
 -- bảng installment_payments: quản lý các kỳ thanh toán trả góp
@@ -256,8 +271,25 @@ create table installment_payments (
     amount decimal(15, 2) not null,
     due_date date not null,
     paid_date date,
-    status varchar(50) default 'pending',
+    status varchar(50) default 'PENDING',
     unique(installment_id, payment_number)
+);
+
+-- bảng payments: quản lý các giao dịch thanh toán (khoản chính của đơn, hoặc khoản thu của 1 kỳ trả góp)
+create table payments (
+    payment_id bigserial primary key,
+    order_id bigint not null references orders(order_id),
+    amount decimal(15, 2) not null,
+    payment_method varchar(50) not null,
+    transaction_id varchar(100),
+    status varchar(50) default 'PENDING',
+    paid_at timestamp,
+    confirmed_by bigint references users(user_id),
+    refunded_at timestamp,
+    refunded_by bigint references users(user_id),
+    installment_payment_id bigint unique references installment_payments(installment_payment_id),
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp
 );
 
 -- =====================================================
@@ -384,6 +416,30 @@ create table sales_records (
     recorded_at timestamp default current_timestamp
 );
 
+-- bảng inventory: tồn kho của từng phiên bản sản phẩm tại từng chi nhánh
+create table inventory (
+    store_id int not null references stores(store_id),
+    variant_id bigint not null references product_variants(variant_id),
+    quantity int not null default 0,
+    updated_at timestamp default current_timestamp,
+    primary key (store_id, variant_id)
+);
+
+-- bảng stock_movements: sổ kho, mỗi lần tồn thay đổi ghi 1 dòng (nhập hàng / bán hàng lúc xác nhận đơn /
+-- hoàn kho khi hủy đơn đã xác nhận); không có phiếu nhập nhiều dòng, không theo imei
+create table stock_movements (
+    movement_id bigserial primary key,
+    store_id int not null references stores(store_id),
+    variant_id bigint not null references product_variants(variant_id),
+    movement_type varchar(20) not null,
+    quantity_change int not null,
+    supplier_name varchar(150),
+    note text,
+    order_id bigint references orders(order_id),
+    created_by bigint references users(user_id),
+    created_at timestamp default current_timestamp
+);
+
 -- =====================================================
 -- nhóm 7: hệ thống khuyến nghị
 -- =====================================================
@@ -489,6 +545,36 @@ create table promotion_products (
 );
 
 -- =====================================================
+-- nhóm 10: đánh giá sản phẩm
+-- =====================================================
+
+-- bảng reviews: đánh giá sao + bình luận của 1 tài khoản cho 1 sản phẩm (mỗi tài khoản 1 đánh giá / sản phẩm)
+create table reviews (
+    review_id bigserial primary key,
+    user_id bigint not null references users(user_id),
+    product_id bigint not null references products(product_id),
+    rating smallint not null,
+    comment text not null,
+    is_hidden boolean not null default false,
+    hidden_reason text,
+    hidden_by bigint references users(user_id),
+    hidden_at timestamp,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp,
+    unique (user_id, product_id)
+);
+
+-- bảng review_images: ảnh khách gửi kèm đánh giá (tối đa 5 ảnh, kiểm tra ở ứng dụng)
+create table review_images (
+    image_id bigserial primary key,
+    review_id bigint not null references reviews(review_id) on delete cascade,
+    image_url text not null,
+    display_order int not null,
+    created_at timestamp default current_timestamp,
+    unique (review_id, display_order)
+);
+
+-- =====================================================
 -- indexes để tối ưu hiệu suất
 -- =====================================================
 
@@ -503,15 +589,22 @@ create index idx_products_brand_id on products(brand_id);
 create index idx_products_slug on products(slug);
 create index idx_products_is_active on products(is_active);
 create index idx_products_name on products using gin(to_tsvector('english', name));
+create index idx_category_attributes_attribute_id on category_attributes(attribute_id);
 
 -- order indexes
 create index idx_orders_user_id on orders(user_id);
 create index idx_orders_order_date on orders(order_date);
 create index idx_orders_status on orders(status);
+create index idx_orders_store on orders(store_id);
+create index idx_order_status_history_order on order_status_history(order_id, changed_at);
+create index idx_order_status_history_changed_by on order_status_history(changed_by);
 
 -- payment indexes
 create index idx_payments_order_id on payments(order_id);
 create index idx_payments_status on payments(status);
+create unique index uq_payments_order_main on payments(order_id) where installment_payment_id is null;
+create index idx_installment_orders_status on installment_orders(status);
+create index idx_installment_payments_due on installment_payments(status, due_date);
 
 -- interaction indexes
 create index idx_user_interactions_user_id on user_interactions(user_id);
@@ -535,9 +628,21 @@ create index idx_chat_messages_session_id on chat_messages(session_id);
 create index idx_employee_assignments_employee_id on employee_assignments(employee_id);
 create index idx_employee_assignments_store_id on employee_assignments(store_id);
 
+-- inventory indexes
+create index idx_inventory_store on inventory(store_id);
+create index idx_stock_movements_store_date on stock_movements(store_id, created_at);
+
+-- mỗi nhân viên chỉ có 1 phân công chi nhánh đang hiệu lực tại 1 thời điểm
+create unique index uq_employee_assignments_active
+    on employee_assignments (employee_id) where is_active and end_date is null;
+
 -- promotion indexes
 create index idx_promotions_active_window on promotions(is_active, start_date, end_date);
 create index idx_promotion_products_product on promotion_products(product_id);
+
+-- review indexes
+create index idx_reviews_product_id on reviews(product_id, created_at desc);
+create index idx_reviews_hidden_by on reviews(hidden_by);
 
 -- =====================================================
 -- constraints bổ sung
@@ -549,6 +654,19 @@ alter table product_variants add constraint chk_variant_price_positive check (pr
 alter table orders add constraint chk_total_amount_positive check (total_amount >= 0);
 alter table order_items add constraint chk_order_item_quantity_positive check (quantity > 0);
 alter table installment_payments add constraint chk_installment_amount_positive check (amount > 0);
+alter table payments add constraint chk_payments_status
+    check (status in ('PENDING', 'PAID', 'REFUND_PENDING', 'REFUNDED', 'CANCELLED'));
+alter table payments add constraint chk_payments_method check (payment_method in ('COD', 'BANK_TRANSFER', 'INSTALLMENT'));
+alter table payments add constraint chk_payments_amount_positive check (amount > 0);
+alter table installment_orders add constraint chk_installment_orders_status
+    check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
+alter table installment_orders add constraint chk_installment_orders_months_positive check (num_months > 0);
+alter table installment_orders add constraint chk_installment_orders_monthly_positive check (monthly_payment > 0);
+alter table installment_orders add constraint chk_installment_orders_citizen_id_digits check (citizen_id ~ '^[0-9]+$');
+alter table installment_orders add constraint chk_installment_orders_rejection_reason
+    check (status <> 'REJECTED' or rejection_reason is not null);
+alter table installment_payments add constraint chk_installment_payments_status check (status in ('PENDING', 'PAID'));
+alter table installment_payments add constraint chk_installment_payments_number_positive check (payment_number > 0);
 alter table promotions add constraint chk_promotions_date_range check (end_date > start_date);
 alter table promotions add constraint chk_promotions_discount_value_positive check (discount_value > 0);
 alter table promotions add constraint chk_promotions_discount_type check (discount_type in ('PERCENTAGE', 'FIXED_AMOUNT'));
@@ -562,6 +680,14 @@ alter table promotion_products add constraint chk_promotion_products_percentage_
     check (discount_type <> 'PERCENTAGE' or discount_value <= 100);
 alter table promotion_products add constraint chk_promotion_products_pair
     check ((discount_type is null) = (discount_value is null));
+alter table orders add constraint fk_orders_store foreign key (store_id) references stores(store_id);
+alter table orders add constraint chk_orders_delivery_type check (delivery_type in ('HOME_DELIVERY', 'PICKUP'));
+alter table inventory add constraint chk_inventory_quantity_non_negative check (quantity >= 0);
+alter table stock_movements add constraint chk_stock_movements_type
+    check (movement_type in ('IN', 'OUT', 'ADJUSTMENT', 'RETURN'));
+alter table reviews add constraint chk_reviews_rating_range check (rating between 1 and 5);
+alter table reviews add constraint chk_reviews_comment_length check (char_length(comment) between 10 and 2000);
+alter table reviews add constraint chk_reviews_hidden_reason check (not is_hidden or hidden_reason is not null);
 
 -- =====================================================
 -- tạo các view hữu ích

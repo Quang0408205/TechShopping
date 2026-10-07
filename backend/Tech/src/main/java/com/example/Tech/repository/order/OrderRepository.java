@@ -18,14 +18,15 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     /** A customer's own order; another user's order gives empty (answered as 404, not 403). */
     Optional<Order> findByIdAndUserId(Long id, Long userId);
 
+    @EntityGraph(attributePaths = "store")
     Page<Order> findAllByUserId(Long userId, Pageable pageable);
 
-    /** Staff list: the customer is loaded with the orders (no query per row). */
+    /** Staff list: the customer and the store are loaded with the orders (no query per row). */
     @Override
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "store"})
     Page<Order> findAll(Specification<Order> spec, Pageable pageable);
 
-    @EntityGraph(attributePaths = "user")
+    @EntityGraph(attributePaths = {"user", "store"})
     Optional<Order> findWithUserById(Long id);
 
     /**
@@ -35,4 +36,6 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(Long id);
+
+    boolean existsByStoreId(Integer storeId);
 }

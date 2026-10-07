@@ -54,6 +54,9 @@ public final class OrderFilterSpecifications {
             if (filter.toDate() != null) {
                 predicates.add(cb.lessThan(root.get("orderDate"), filter.toDate().plusDays(1).atStartOfDay()));
             }
+            if (filter.storeId() != null) {
+                predicates.add(cb.equal(root.get("store").get("id"), filter.storeId()));
+            }
             return cb.and(predicates.toArray(Predicate[]::new));
         };
     }

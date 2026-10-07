@@ -84,21 +84,52 @@
 
                     <div class="order-status-timeline" id="orderTimeline"></div>
 
+                    <!-- Phase 5: việc khách cần làm / đang chờ (chuyển khoản, duyệt trả góp) -->
+                    <p id="orderPaymentNotice" class="order-payment-notice" hidden></p>
+
 
                     <div class="order-detail-grid">
 
-                        <div class="order-detail-items" id="orderItemsList"></div>
+                        <div class="order-detail-main">
+
+                            <div class="order-detail-items" id="orderItemsList"></div>
+
+                            <!-- Phase 5: hợp đồng trả góp + lịch các kỳ -->
+                            <div class="order-installment" id="orderInstallmentBlock" hidden>
+                                <h4>Trả góp</h4>
+                                <dl class="order-facts" id="orderInstallmentFacts"></dl>
+                                <p class="order-installment-reason" id="orderInstallmentReason" hidden></p>
+                                <div id="orderInstallmentSchedule"></div>
+                            </div>
+
+                        </div>
 
                         <div class="order-detail-side">
 
-                            <div class="order-detail-block">
-                                <h4>Địa chỉ giao hàng</h4>
-                                <p id="orderShippingInfo"></p>
+                            <!-- Phase 5: chỉ khi đơn chuyển khoản đang chờ tiền -->
+                            <div class="order-detail-block order-transfer" id="orderTransferBlock" hidden>
+                                <h4>Thông tin chuyển khoản</h4>
+                                <img id="orderTransferQr" class="order-transfer-qr" alt="Mã QR chuyển khoản" hidden>
+                                <p id="orderTransferQrError" class="order-transfer-qr-error" hidden>
+                                    Không tải được mã QR, vui lòng chuyển khoản theo thông tin bên dưới.
+                                </p>
+                                <dl class="order-facts" id="orderTransferFacts"></dl>
+                                <p id="orderTransferDeadline" class="order-transfer-deadline"></p>
                             </div>
 
                             <div class="order-detail-block">
-                                <h4>Phương thức thanh toán</h4>
+                                <h4 id="orderShippingTitle">Giao tận nhà</h4>
+                                <p id="orderShippingInfo"></p>
+                                <p id="orderPickupStore" class="order-pickup-store" hidden></p>
+                            </div>
+
+                            <div class="order-detail-block">
+                                <h4>Thanh toán</h4>
                                 <p id="orderPaymentMethod"></p>
+                                <p class="order-payment-status">
+                                    <span id="orderPaymentBadge" class="payment-badge" hidden></span>
+                                </p>
+                                <p id="orderPaymentInfo" class="order-payment-info" hidden></p>
                             </div>
 
                             <div class="order-detail-block" id="orderTrackingBlock" hidden>

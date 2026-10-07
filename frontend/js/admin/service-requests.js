@@ -25,7 +25,7 @@ document.addEventListener(
         const tbody = document.getElementById("requestTableBody");
 
 
-        setupStoreFilter(storeFilter, staff);
+        setupMockStoreFilter(storeFilter, staff);
 
         [typeFilter, statusFilter, storeFilter].forEach(function (select) {
             select.addEventListener("change", render);
@@ -67,10 +67,10 @@ document.addEventListener(
 
         function renderRow(request) {
 
-            const store = getStoreById(request.storeId);
+            const store = getMockStoreById(request.storeId);
 
             const employee = request.assignedEmployeeId
-                ? getEmployeeById(request.assignedEmployeeId)
+                ? getMockEmployeeById(request.assignedEmployeeId)
                 : null;
 
 

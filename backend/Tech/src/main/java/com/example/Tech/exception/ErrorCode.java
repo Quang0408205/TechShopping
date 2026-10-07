@@ -93,7 +93,32 @@ public enum ErrorCode {
     INVALID_PROMOTION_DATE_RANGE(HttpStatus.BAD_REQUEST, "Ngày kết thúc phải sau ngày bắt đầu"),
     INVALID_PROMOTION_DISCOUNT(HttpStatus.BAD_REQUEST, "Mức giảm giá không hợp lệ"),
     PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
-            "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này");
+            "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này"),
+
+    // Payment / installment
+    INSTALLMENT_NOT_ELIGIBLE(HttpStatus.BAD_REQUEST, "Đơn hàng từ 3.000.000đ trở lên mới được trả góp"),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Đơn hàng không có khoản thanh toán này"),
+    INVALID_PAYMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái thanh toán không cho phép thao tác này"),
+    PAYMENT_REQUIRED(HttpStatus.CONFLICT, "Đơn chuyển khoản chưa được xác nhận đã nhận tiền"),
+    INSTALLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hợp đồng trả góp"),
+    INVALID_INSTALLMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái hợp đồng trả góp không cho phép thao tác này"),
+    INSTALLMENT_NOT_APPROVED(HttpStatus.CONFLICT, "Hợp đồng trả góp chưa được duyệt"),
+    INSTALLMENT_PERIOD_OUT_OF_ORDER(HttpStatus.CONFLICT, "Phải ghi nhận kỳ trả góp sớm nhất chưa thanh toán"),
+
+    // Store
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chi nhánh"),
+    STORE_IN_USE(HttpStatus.CONFLICT,
+            "Chi nhánh đã có nhân viên, tồn kho hoặc đơn hàng nên không xoá được; hãy tạm đóng chi nhánh"),
+
+    // Employee
+    EMPLOYEE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ nhân viên"),
+    EMPLOYEE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản này đã có hồ sơ nhân viên"),
+    DUPLICATE_EMPLOYEE_CODE(HttpStatus.CONFLICT, "Mã nhân viên đã được dùng"),
+    NO_ACTIVE_STORE_ASSIGNMENT(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được gán vào chi nhánh nào"),
+
+    // Inventory
+    INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),
+    ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước");
 
     private final HttpStatus status;
     private final String defaultMessage;

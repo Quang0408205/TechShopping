@@ -1,12 +1,17 @@
-/* ================= ĐƠN HÀNG (admin/orders.html) — Phase 4.5 ================= */
+/* ================= ĐƠN HÀNG (admin/orders.html) — Phase 4.5 + 5 ================= */
 
 /*
  * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&page=&size=  mới nhất trước
+ *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&storeId=&page=&size=  mới nhất trước
+ *         (nhân viên: backend chỉ trả đơn của chi nhánh mình, Phase 7)
  *   PATCH /admin/orders/{id}/status  { status, trackingNumber? }
+ *   POST  /admin/orders/{id}/payment/confirm { transactionId? }   chuyển khoản đã nhận tiền
+ *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
+ *   POST  /admin/orders/{id}/installment/approve | reject { reason }
+ *   PATCH /admin/orders/{id}/store { storeId }   chỉ ADMIN, đơn đang chờ (vd. chi nhánh thiếu hàng)
  * Chỉ cho chọn bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
- * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại.
- * Chưa lọc theo chi nhánh: orders chỉ gắn chi nhánh qua sales_records ở Phase 7.
+ * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại;
+ * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED / INSUFFICIENT_STOCK / ORDER_STORE_MISSING → câu của server.
  */
 
 const ORDER_PAGE_SIZE = 20;
@@ -25,6 +30,11 @@ const ORDER_NEXT_STATUSES = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["SHIPPING", "CANCELLED"],
     SHIPPING: ["DELIVERED"]
+};
+
+const STAFF_DELIVERY_TYPE_LABELS = {
+    HOME_DELIVERY: "Giao tận nhà",
+    PICKUP: "Nhận tại cửa hàng"
 };
 
 const STAFF_PAYMENT_METHOD_LABELS = {
@@ -53,6 +63,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const toDateInput = document.getElementById("orderToDate");
 
+    const storeFilter = document.getElementById("orderStoreFilter");
+
+    const isAdmin = staff.role === "ADMIN";
+
     const filterError = document.getElementById("orderFilterError");
 
     const tbody = document.getElementById("orderTableBody");
@@ -68,6 +82,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const expandedIds = new Set();
 
+    let allStores = null;
+
+
+    /* admin/orders.html?keyword=DH00000042 (vd. link mã đơn ở lịch sử Tồn kho) */
+    keywordInput.value = new URLSearchParams(window.location.search).get("keyword") || "";
+
 
     form.addEventListener("submit", function (event) {
 
@@ -77,8 +97,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     });
 
-    [statusFilter, fromDateInput, toDateInput].forEach(function (control) {
+    [statusFilter, fromDateInput, toDateInput, storeFilter].forEach(function (control) {
         control.addEventListener("change", reloadFromFirstPage);
+    });
+
+    setupStoreFilter(storeFilter, staff).catch(function (error) {
+        handleError(error, function (message) {
+            showToast("Không tải được danh sách chi nhánh: " + message, "error");
+        });
     });
 
 
@@ -92,10 +118,22 @@ document.addEventListener("DOMContentLoaded", async function () {
             return;
         }
 
-        if (button.dataset.action === "toggle") {
+        const action = button.dataset.action;
+
+        if (action === "toggle") {
             toggleDetail(order.id);
-        } else if (button.dataset.action === "tracking") {
+        } else if (action === "tracking") {
             editTrackingNumber(order);
+        } else if (action === "confirm-payment") {
+            confirmPayment(order);
+        } else if (action === "refund") {
+            confirmRefund(order);
+        } else if (action === "approve") {
+            approveInstallment(order);
+        } else if (action === "reject") {
+            rejectInstallment(order);
+        } else if (action === "store") {
+            reassignStore(order);
         }
 
     });
@@ -193,6 +231,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             params.set("toDate", toDate);
         }
 
+        if (isAdmin && storeFilter.value) {
+            params.set("storeId", storeFilter.value);
+        }
+
 
         tbody.innerHTML = adminEmptyRow(8,"Đang tải…");
 
@@ -285,6 +327,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>
                     <strong>${escapeHtml(order.code)}</strong>
                     <span class="admin-subtext">${escapeHtml(formatDateTimeVi(order.orderDate))}</span>
+                    <span class="admin-subtext">${escapeHtml(order.storeName || "Chưa có chi nhánh")}</span>
                 </td>
                 <td>
                     ${escapeHtml(customerName)}
@@ -297,7 +340,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
                 <td>${escapeHtml(String(order.totalQuantity))}</td>
                 <td>${escapeHtml(formatPrice(Number(order.total)))}</td>
-                <td>${escapeHtml(STAFF_PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod)}</td>
+                <td>
+                    ${escapeHtml(STAFF_PAYMENT_METHOD_LABELS[order.paymentMethod] || order.paymentMethod)}
+                    <span class="admin-subtext admin-payment-cell">${orderPaymentBadgeHtml(order)}</span>
+                </td>
                 <td>${statusCellHtml(order)}</td>
             </tr>
             <tr class="js-order-detail" data-order-id="${id}" ${expanded ? "" : "hidden"}>
@@ -334,7 +380,35 @@ document.addEventListener("DOMContentLoaded", async function () {
             labels[status] = "→ " + STAFF_ORDER_STATUS_LABELS[status];
         });
 
-        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code);
+        const waiting = waitingFor(order);
+
+        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code)
+            + (waiting ? `<span class="admin-subtext admin-waiting">${escapeHtml(waiting)}</span>` : "");
+
+    }
+
+
+    /* Đơn chờ xác nhận nhưng chưa xác nhận được (backend sẽ trả 409) */
+
+    function waitingFor(order) {
+
+        if (order.status !== "PENDING") {
+            return "";
+        }
+
+        if (!order.storeId) {
+            return "Chưa có chi nhánh xử lý";
+        }
+
+        if (order.paymentMethod === "BANK_TRANSFER" && order.payment && order.payment.status !== "PAID") {
+            return "Chờ nhận tiền chuyển khoản";
+        }
+
+        if (order.installment && order.installment.status !== "APPROVED") {
+            return "Chờ duyệt trả góp";
+        }
+
+        return "";
 
     }
 
@@ -372,7 +446,15 @@ document.addEventListener("DOMContentLoaded", async function () {
         const customerPhone = order.customer && order.customer.phone;
 
 
+        const storeHtml = escapeHtml(order.storeName || "Chưa có chi nhánh") +
+            (isAdmin && order.status === "PENDING"
+                ? ` <button type="button" class="admin-link-btn" data-action="store" data-id="${escapeHtml(String(order.id))}">Đổi</button>`
+                : "");
+
+
         const facts = [
+            ["Chi nhánh xử lý", storeHtml],
+            ["Hình thức nhận", escapeHtml(STAFF_DELIVERY_TYPE_LABELS[order.deliveryType] || order.deliveryType || "—")],
             ["Giao tới", escapeHtml(order.shippingAddress)],
             ["Ghi chú", order.note ? escapeHtml(order.note) : "—"],
             ["Tạm tính", escapeHtml(formatPrice(Number(order.subtotal)))],
@@ -403,6 +485,97 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </thead>
                     <tbody>${itemRows}</tbody>
                 </table>
+                ${paymentSectionHtml(order)}
+            </div>
+        `;
+
+    }
+
+
+    /* Khối thanh toán trong dòng chi tiết: thông tin + nút thao tác hợp lệ ở trạng thái hiện tại */
+
+    function paymentSectionHtml(order) {
+
+        const id = escapeHtml(String(order.id));
+
+        const facts = [];
+
+        const actions = [];
+
+
+        if (order.installment) {
+
+            const plan = order.installment;
+
+            facts.push(["Trả góp", installmentBadgeHtml(plan)]);
+            facts.push(["Kỳ hạn", escapeHtml(installmentTermText(plan))]);
+            facts.push(["Số CCCD", escapeHtml(plan.citizenId)]);
+            facts.push(["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)]);
+
+            if (plan.reviewedAt) {
+                facts.push([plan.status === "REJECTED" ? "Từ chối lúc" : "Duyệt lúc", escapeHtml(formatDateTimeVi(plan.reviewedAt))]);
+            }
+
+            if (plan.rejectionReason) {
+                facts.push(["Lý do từ chối", escapeHtml(plan.rejectionReason)]);
+            }
+
+            if (plan.status === "ACTIVE" || plan.status === "COMPLETED") {
+
+                facts.push(["Đã thu", escapeHtml(plan.paidPeriods + "/" + plan.numMonths + " kỳ · " + formatPrice(Number(plan.paidAmount)))]);
+
+                actions.push(`<a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/installments.html?keyword=" + encodeURIComponent(order.code)))}">XEM LỊCH TRẢ GÓP</a>`);
+
+            }
+
+            if (plan.status === "PENDING_APPROVAL") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="approve" data-id="${id}">DUYỆT TRẢ GÓP</button>`);
+                actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn admin-action-danger" data-action="reject" data-id="${id}">TỪ CHỐI</button>`);
+            }
+
+        } else if (order.payment) {
+
+            const payment = order.payment;
+
+            facts.push(["Thanh toán", orderPaymentBadgeHtml(order)]);
+            facts.push(["Số tiền", escapeHtml(formatPrice(Number(payment.amount)))]);
+
+            if (payment.paidAt) {
+                facts.push(["Đã thu lúc", escapeHtml(formatDateTimeVi(payment.paidAt))]);
+            }
+
+            if (payment.transactionId) {
+                facts.push(["Mã giao dịch", escapeHtml(payment.transactionId)]);
+            }
+
+            if (payment.refundedAt) {
+                facts.push(["Hoàn tiền lúc", escapeHtml(formatDateTimeVi(payment.refundedAt))]);
+            }
+
+            if (order.paymentMethod === "BANK_TRANSFER" && payment.status === "PENDING") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="confirm-payment" data-id="${id}">ĐÃ NHẬN TIỀN</button>`);
+            }
+
+            if (payment.status === "REFUND_PENDING") {
+                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="refund" data-id="${id}">ĐÃ HOÀN TIỀN</button>`);
+            }
+
+        } else {
+
+            return "";
+
+        }
+
+
+        return `
+            <div class="admin-payment-box">
+                <h4>Thanh toán</h4>
+                <dl class="admin-order-facts">
+                    ${facts.map(function (fact) {
+                        return `<div><dt>${fact[0]}</dt><dd>${fact[1]}</dd></div>`;
+                    }).join("")}
+                </dl>
+                ${actions.length ? `<div class="admin-payment-actions">${actions.join("")}</div>` : ""}
             </div>
         `;
 
@@ -490,9 +663,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         } else if (status === "DELIVERED") {
 
+            const paymentNote = order.paymentMethod === "COD"
+                ? " Tiền COD được ghi nhận là đã thu."
+                : order.installment ? " Lịch trả góp bắt đầu từ hôm nay (kỳ đầu đến hạn sau 1 tháng)." : "";
+
             openConfirmModal({
                 title: "Đã giao đơn " + order.code + "?",
-                message: "Đơn chuyển sang Đã giao hàng và được cộng vào tổng chi tiêu của khách. Không thể hoàn tác.",
+                message: "Đơn chuyển sang Đã giao hàng và được cộng vào tổng chi tiêu của khách." + paymentNote + " Không thể hoàn tác.",
                 confirmLabel: "ĐÃ GIAO",
                 cancelLabel: "Quay lại",
                 onConfirm: function () {
@@ -502,9 +679,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         } else if (status === "CANCELLED") {
 
+            const paid = order.payment && order.payment.status === "PAID";
+
             openConfirmModal({
                 title: "Hủy đơn " + order.code + "?",
-                message: "Khách sẽ thấy đơn ở trạng thái Đã hủy. Không thể hoàn tác.",
+                message: "Khách sẽ thấy đơn ở trạng thái Đã hủy."
+                    + (paid ? " Khoản tiền khách đã trả sẽ chuyển sang Chờ hoàn tiền." : "") + " Không thể hoàn tác.",
                 confirmLabel: "HỦY ĐƠN",
                 cancelLabel: "Quay lại",
                 onConfirm: function () {
@@ -541,6 +721,194 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    /* ================= THANH TOÁN / TRẢ GÓP ================= */
+
+    function confirmPayment(order) {
+
+        openPaymentConfirmModal({
+            title: "Đã nhận tiền đơn " + order.code + "?",
+            message: "Đối chiếu sao kê: " + formatPrice(Number(order.payment.amount)) + ", nội dung " + order.code
+                + ". Sau khi xác nhận, đơn mới chuyển được sang Đã xác nhận.",
+            confirmLabel: "ĐÃ NHẬN TIỀN",
+            onConfirm: function (body) {
+                postAction(order, "payment/confirm", body, "Đã ghi nhận tiền chuyển khoản của đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function confirmRefund(order) {
+
+        openConfirmModal({
+            title: "Đã hoàn tiền đơn " + order.code + "?",
+            message: "Xác nhận đã chuyển trả " + formatPrice(Number(order.payment.amount)) + " cho khách. Không thể hoàn tác.",
+            confirmLabel: "ĐÃ HOÀN TIỀN",
+            cancelLabel: "Quay lại",
+            onConfirm: function () {
+                postAction(order, "payment/refund", undefined, "Đã ghi nhận hoàn tiền đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function approveInstallment(order) {
+
+        openConfirmModal({
+            title: "Duyệt trả góp đơn " + order.code + "?",
+            message: "Đã xác minh khách (CCCD " + order.installment.citizenId + ", thẻ "
+                + (order.installment.cardBankName || order.installment.cardBank) + "). Sau khi duyệt, đơn mới chuyển được sang Đã xác nhận.",
+            confirmLabel: "DUYỆT",
+            cancelLabel: "Quay lại",
+            onConfirm: function () {
+                postAction(order, "installment/approve", undefined, "Đã duyệt trả góp đơn " + order.code + ".");
+            }
+        });
+
+    }
+
+
+    function rejectInstallment(order) {
+
+        openConfirmModal({
+            title: "Từ chối trả góp đơn " + order.code + "?",
+            message: "Đơn sẽ bị hủy và khách thấy lý do bên dưới. Không thể hoàn tác.",
+            confirmLabel: "TỪ CHỐI",
+            cancelLabel: "Quay lại",
+            input: {
+                label: "Lý do từ chối (bắt buộc)",
+                placeholder: "VD: Không xác minh được thông tin CCCD",
+                maxLength: REJECTION_REASON_MAX_LENGTH
+            },
+            onConfirm: function (reason) {
+
+                if (!reason) {
+
+                    showToast("Vui lòng nhập lý do từ chối.", "error");
+
+                    return;
+
+                }
+
+                postAction(order, "installment/reject", { reason: reason }, "Đã từ chối trả góp, đơn " + order.code + " đã hủy.");
+
+            }
+        });
+
+    }
+
+
+    /* ================= ĐỔI CHI NHÁNH (ADMIN, đơn đang chờ) ================= */
+
+    async function reassignStore(order) {
+
+        try {
+
+            if (!allStores) {
+                allStores = await loadAllStores();
+            }
+
+        } catch (error) {
+
+            handleError(error, function (message) {
+                showToast(message, "error");
+            });
+
+            return;
+
+        }
+
+
+        const openStores = allStores.filter(function (store) {
+            return store.active !== false;
+        });
+
+        if (openStores.length === 0) {
+
+            showToast("Chưa có chi nhánh nào đang mở.", "error");
+
+            return;
+
+        }
+
+
+        openConfirmModal({
+            title: "Đổi chi nhánh xử lý đơn " + order.code + "?",
+            message: order.deliveryType === "PICKUP"
+                ? "Đơn nhận tại cửa hàng: địa chỉ nhận hàng của khách sẽ đổi theo chi nhánh mới."
+                : "Tồn kho được trừ ở chi nhánh mới khi xác nhận đơn.",
+            confirmLabel: "ĐỔI CHI NHÁNH",
+            cancelLabel: "Quay lại",
+            select: {
+                label: "Chi nhánh",
+                value: order.storeId || openStores[0].id,
+                options: openStores.map(function (store) {
+                    return { value: store.id, label: store.name };
+                })
+            },
+            onConfirm: async function (storeId) {
+
+                tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
+                    control.disabled = true;
+                });
+
+                try {
+
+                    const updated = await apiRequest("/admin/orders/" + order.id + "/store", {
+                        method: "PATCH",
+                        body: { storeId: Number(storeId) },
+                        auth: true
+                    });
+
+                    showToast("Đơn " + order.code + " chuyển sang " + updated.order.storeName + ".", "success");
+
+                } catch (error) {
+
+                    handleError(error, function (message) {
+                        showToast(message, "error");
+                    });
+
+                }
+
+                loadOrders();
+
+            }
+        });
+
+    }
+
+
+    async function postAction(order, action, body, successMessage) {
+
+        tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
+            control.disabled = true;
+        });
+
+
+        try {
+
+            await apiRequest("/admin/orders/" + order.id + "/" + action, {
+                method: "POST",
+                body: body,
+                auth: true
+            });
+
+            showToast(successMessage, "success");
+
+        } catch (error) {
+
+            handleError(error, function (message) {
+                showToast(message, "error");
+            });
+
+        }
+
+        loadOrders();
+
+    }
+
+
     async function updateStatus(order, body, successMessage) {
 
         tbody.querySelectorAll('[data-id="' + order.id + '"]').forEach(function (control) {
@@ -562,12 +930,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             handleError(error, function (message) {
 
-                showToast(
-                    error.code === "INVALID_ORDER_STATUS"
-                        ? "Đơn " + order.code + " vừa được cập nhật ở nơi khác (khách hủy hoặc nhân viên khác xử lý). Danh sách đã được tải lại."
-                        : message,
-                    "error"
-                );
+                let text = message;
+
+                if (error.code === "INVALID_ORDER_STATUS") {
+                    text = "Đơn " + order.code + " vừa được cập nhật ở nơi khác (khách hủy hoặc nhân viên khác xử lý). Danh sách đã được tải lại.";
+                } else if (error.code === "INSUFFICIENT_STOCK" || error.code === "ORDER_STORE_MISSING") {
+                    text = message + (isAdmin
+                        ? ". Mở ▸ để đổi chi nhánh xử lý."
+                        : ". Hãy nhập thêm hàng hoặc báo ADMIN chuyển đơn sang chi nhánh khác.");
+                }
+
+                showToast(text, "error");
 
             });
 

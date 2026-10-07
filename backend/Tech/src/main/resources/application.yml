@@ -53,3 +53,13 @@ app:
     dir: ${APP_UPLOAD_DIR:uploads}
     # Origin the browser uses to reach this API; stored image URLs start with it
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+  payment:
+    # Demo shop account shown for bank transfers (payments are simulated: staff confirms the money)
+    bank-transfer:
+      bank-name: ${PAYMENT_BANK_NAME:Vietcombank}
+      # VietQR bank id for the QR image (970436 = Vietcombank)
+      bank-bin: ${PAYMENT_BANK_BIN:970436}
+      account-number: ${PAYMENT_BANK_ACCOUNT_NUMBER:0123456789}
+      account-name: ${PAYMENT_BANK_ACCOUNT_NAME:CONG TY POY}
+      # Shown to the customer as "pay before"; unpaid orders are not cancelled automatically
+      deadline-hours: 24

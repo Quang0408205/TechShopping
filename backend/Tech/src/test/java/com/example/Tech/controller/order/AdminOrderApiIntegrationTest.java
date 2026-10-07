@@ -1,8 +1,11 @@
 package com.example.Tech.controller.order;
 
+import com.example.Tech.entity.inventory.Inventory;
+import com.example.Tech.entity.inventory.InventoryId;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.repository.product.CategoryRepository;
@@ -14,6 +17,7 @@ import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.support.StoreFixtures;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +55,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * /api/v1/admin/orders over HTTP against the test database (rolled back): real STAFF / ADMIN accounts
  * (roles added in the DB, then logged in again so the token carries them), orders placed by a customer
- * through the real checkout. Refresh tokens of the registered users are revoked afterwards.
+ * through the real checkout. The STAFF account works at store A (Quận 5), where the checkout address sends the
+ * orders and where the products are in stock (Phase 7.6). Refresh tokens of the registered users are revoked
+ * afterwards.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -109,6 +115,8 @@ class AdminOrderApiIntegrationTest {
     private ProductVariant phone;
     private ProductVariant cover;
     private ProductVariant spare;
+    private Store storeA;
+    private Store storeB;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -127,6 +135,12 @@ class AdminOrderApiIntegrationTest {
         cover = variantRepository.save(variant(product, "Ốp lưng", "200000"));
         spare = variantRepository.save(variant(product, "Chưa ai mua", "100000"));
         entityManager.flush();
+
+        storeA = StoreFixtures.store(entityManager, "ZZ CN Test Quận 5", "Quận 5");
+        storeB = StoreFixtures.store(entityManager, "ZZ CN Test Quận 9", "Quận 9");
+        StoreFixtures.assign(entityManager, registeredUserIds.get(1), storeA);
+        StoreFixtures.stock(entityManager, storeA, phone, 10);
+        StoreFixtures.stock(entityManager, storeA, cover, 10);
     }
 
     @AfterEach
@@ -229,14 +243,110 @@ class AdminOrderApiIntegrationTest {
     }
 
     @Test
-    void staffCanCancelAConfirmedOrder() throws Exception {
+    void confirm_takesTheStockOfTheOrdersStore_cancelGivesItBack() throws Exception {
         long orderId = placeOrder(cover, 2, "Nguyễn Văn An", "0901234567");
-        patchStatus(orderId, "CONFIRMED", null).andExpect(status().isOk());
+        assertThat(StoreFixtures.quantity(entityManager, storeA, cover)).isEqualTo(10);
+
+        patchStatus(orderId, "CONFIRMED", null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.storeId").value(storeA.getId()));
+        assertThat(StoreFixtures.quantity(entityManager, storeA, cover)).isEqualTo(8);
+        assertThat(StoreFixtures.movements(entityManager, orderId)).containsExactly("OUT:-2");
 
         patchStatus(orderId, "CANCELLED", null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order.status").value("CANCELLED"))
                 .andExpect(jsonPath("$.data.order.cancelledAt", notNullValue()));
+        assertThat(StoreFixtures.quantity(entityManager, storeA, cover)).isEqualTo(10);
+        assertThat(StoreFixtures.movements(entityManager, orderId)).containsExactly("OUT:-2", "RETURN:2");
+
+        // a pending order cancelled took nothing and gives nothing back
+        long pending = placeOrder(cover, 1, "Nguyễn Văn An", "0901234567");
+        patchStatus(pending, "CANCELLED", null).andExpect(status().isOk());
+        assertThat(StoreFixtures.movements(entityManager, pending)).isEmpty();
+        assertThat(StoreFixtures.quantity(entityManager, storeA, cover)).isEqualTo(10);
+    }
+
+    @Test
+    void confirm_withoutEnoughStock_is409_adminMovesTheOrderToAStoreThatHasIt() throws Exception {
+        entityManager.find(Inventory.class, new InventoryId(storeA.getId(), phone.getId())).setQuantity(1);
+        long orderId = placeOrder(phone, 2, "Nguyễn Văn An", "0901234567");
+
+        patchStatus(orderId, "CONFIRMED", null)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INSUFFICIENT_STOCK"))
+                .andExpect(jsonPath("$.error.message").value(
+                        "Chi nhánh ZZ CN Test Quận 5 không đủ hàng: Điện thoại Quản Lý Đơn - Đen 128GB (cần 2, còn 1)"));
+        send(get("/api/v1/admin/orders/" + orderId), staffToken, null)
+                .andExpect(jsonPath("$.data.order.status").value("PENDING"));
+        assertThat(StoreFixtures.quantity(entityManager, storeA, phone)).isEqualTo(1);
+
+        // only an ADMIN moves an order, to an existing open store
+        send(patch(storeUrl(orderId)), staffToken, Map.of("storeId", storeB.getId()))
+                .andExpect(status().isForbidden());
+        send(patch(storeUrl(orderId)), adminToken, Map.of())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.storeId").exists());
+        send(patch(storeUrl(orderId)), adminToken, Map.of("storeId", 999999))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("STORE_NOT_FOUND"));
+        setStoreActive(storeB, false);
+        send(patch(storeUrl(orderId)), adminToken, Map.of("storeId", storeB.getId()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.storeId").exists());
+        setStoreActive(storeB, true);
+        StoreFixtures.stock(entityManager, storeB, phone, 20);
+
+        send(patch(storeUrl(orderId)), adminToken, Map.of("storeId", storeB.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.storeId").value(storeB.getId()))
+                .andExpect(jsonPath("$.data.order.storeName").value("ZZ CN Test Quận 9"));
+        // the order left the staff member's store
+        send(get("/api/v1/admin/orders/" + orderId), staffToken, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
+        patchStatus(orderId, "CONFIRMED", null)
+                .andExpect(status().isForbidden());
+        send(patch("/api/v1/admin/orders/" + orderId + "/status"), adminToken, Map.of("status", "CONFIRMED"))
+                .andExpect(status().isOk());
+        assertThat(StoreFixtures.quantity(entityManager, storeB, phone)).isEqualTo(18);
+        assertThat(StoreFixtures.quantity(entityManager, storeA, phone)).isEqualTo(1);
+
+        send(patch(storeUrl(orderId)), adminToken, Map.of("storeId", storeA.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INVALID_ORDER_STATUS"));
+    }
+
+    @Test
+    void staff_onlySeeTheOrdersOfTheirStore_ordersWithoutAStoreAreAdminOnly() throws Exception {
+        long own = placeOrder(cover, 1, "Nguyễn Văn An", "0901234567");
+        long noStore = placeOrder(cover, 1, "Trần Thị Bình", "0912345678");
+        entityManager.createNativeQuery("update orders set store_id = null where order_id = :id")
+                .setParameter("id", noStore)
+                .executeUpdate();
+        entityManager.clear();
+
+        assertIds(search("keyword", "adm.order.customer@"), own);
+        send(get("/api/v1/admin/orders").param("storeId", String.valueOf(storeB.getId())), staffToken, null)
+                .andExpect(jsonPath("$.data.content[0].order.id").value(own));
+        send(get("/api/v1/admin/orders/" + noStore), staffToken, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.message").value("Đơn DH%08d không thuộc chi nhánh của bạn".formatted(noStore)));
+        send(post("/api/v1/admin/orders/" + noStore + "/payment/refund"), staffToken, null)
+                .andExpect(status().isForbidden());
+
+        send(get("/api/v1/admin/orders/" + noStore), adminToken, null).andExpect(status().isOk());
+        send(get("/api/v1/admin/orders").param("keyword", "adm.order.customer@"), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+        send(patch("/api/v1/admin/orders/" + noStore + "/status"), adminToken, Map.of("status", "CONFIRMED"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("ORDER_STORE_MISSING"));
+
+        // a STAFF account with no current store reaches no order at all
+        String unassigned = registerWithRole("adm.order.staff2", "STAFF");
+        send(get("/api/v1/admin/orders"), unassigned, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("NO_ACTIVE_STORE_ASSIGNMENT"));
     }
 
     @Test
@@ -268,6 +378,19 @@ class AdminOrderApiIntegrationTest {
             body.put("trackingNumber", trackingNumber);
         }
         return send(patch("/api/v1/admin/orders/" + orderId + "/status"), staffToken, body);
+    }
+
+    /** Native update + clear: the checkout clears the persistence context, so the Store objects here are detached. */
+    private void setStoreActive(Store store, boolean active) {
+        entityManager.createNativeQuery("update stores set is_active = :active where store_id = :id")
+                .setParameter("active", active)
+                .setParameter("id", store.getId())
+                .executeUpdate();
+        entityManager.clear();
+    }
+
+    private static String storeUrl(long orderId) {
+        return "/api/v1/admin/orders/" + orderId + "/store";
     }
 
     private JsonNode search(String... params) throws Exception {

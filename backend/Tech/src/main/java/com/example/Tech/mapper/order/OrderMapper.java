@@ -2,6 +2,8 @@ package com.example.Tech.mapper.order;
 
 import com.example.Tech.dto.response.order.OrderItemResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
+import com.example.Tech.dto.response.payment.InstallmentResponse;
+import com.example.Tech.dto.response.payment.PaymentResponse;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.order.OrderItem;
 import com.example.Tech.entity.product.Product;
@@ -24,7 +26,8 @@ public class OrderMapper {
         return "DH%08d".formatted(orderId);
     }
 
-    public OrderResponse toResponse(Order order, List<OrderItemResponse> items) {
+    public OrderResponse toResponse(Order order, List<OrderItemResponse> items, PaymentResponse payment,
+                                    InstallmentResponse installment) {
         int totalQuantity = items.stream().mapToInt(OrderItemResponse::quantity).sum();
         BigDecimal subtotal = items.stream()
                 .map(OrderItemResponse::subtotal)
@@ -49,7 +52,12 @@ public class OrderMapper {
                 order.getDeliveredAt(),
                 order.getCancelledAt(),
                 order.getUpdatedAt(),
-                order.getStatus() != null && order.getStatus().canBeCancelledByCustomer());
+                order.getStatus() != null && order.getStatus().canBeCancelledByCustomer(),
+                payment,
+                installment,
+                order.getDeliveryType(),
+                order.getStore() == null ? null : order.getStore().getId(),
+                order.getStore() == null ? null : order.getStore().getName());
     }
 
     public OrderItemResponse toItemResponse(OrderItem item, String imageUrl) {
