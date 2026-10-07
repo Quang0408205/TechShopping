@@ -85,6 +85,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     let allStores = null;
 
 
+    /* admin/orders.html?keyword=DH00000042 (vd. link mã đơn ở lịch sử Tồn kho) */
+    keywordInput.value = new URLSearchParams(window.location.search).get("keyword") || "";
+
+
     form.addEventListener("submit", function (event) {
 
         event.preventDefault();

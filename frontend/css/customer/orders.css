@@ -296,6 +296,14 @@
     line-height: 1.6;
 }
 
+/* Phase 7: cửa hàng nhận hàng (đơn nhận tại cửa hàng) */
+.order-detail-block .order-pickup-store {
+    margin-top: 6px;
+
+    color: #111;
+    font-weight: 600;
+}
+
 
 @media (max-width: 1000px) {
 

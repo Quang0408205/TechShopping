@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +31,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, InventoryI
     Optional<Inventory> findByIdStoreIdAndIdVariantId(Integer storeId, Long variantId);
 
     List<Inventory> findByIdStoreIdAndIdVariantIdIn(Integer storeId, List<Long> variantIds);
+
+    /** Every store's row for the given variants, with the store (all-stores view). */
+    @EntityGraph(attributePaths = "store")
+    List<Inventory> findAllByIdVariantIdIn(Collection<Long> variantIds);
 
     /**
      * Locks the inventory rows of one store for the given variants (SELECT … FOR UPDATE, ordered by

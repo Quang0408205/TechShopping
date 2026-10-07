@@ -39,9 +39,67 @@
 
         <main class="admin-content">
 
+            <!-- Phase 7.10: hàng nhập kho theo chi nhánh, dữ liệu THẬT, chỉ ADMIN (js/admin/reports.js bỏ hidden) -->
+            <section class="admin-panel" id="stockInPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Hàng nhập kho theo chi nhánh</h2>
+                    <span class="admin-row-count" id="stockInPeriod"></span>
+                </div>
+
+                <p class="admin-mock-note admin-live-note">
+                    Dữ liệu thật (GET /api/v1/admin/inventory/stock-in-stats): các lần "Nhập kho" ở trang Tồn kho.
+                    Nhập kho chỉ ghi số lượng (không có giá nhập) nên thống kê tính theo số lượng; hàng xuất bán / hoàn kho
+                    không tính. Bỏ trống ngày = toàn bộ thời gian.
+                </p>
+
+                <div class="admin-filter-bar">
+
+                    <select id="stockInStoreFilter" aria-label="Chi nhánh (hàng nhập)"></select>
+
+                    <label class="admin-date-filter">
+                        Từ
+                        <input type="date" id="stockInFromDate" aria-label="Nhập từ ngày">
+                    </label>
+
+                    <label class="admin-date-filter">
+                        đến
+                        <input type="date" id="stockInToDate" aria-label="Nhập đến ngày">
+                    </label>
+
+                    <button type="button" class="btn btn-outline-dark" id="clearStockInFiltersBtn">
+                        XÓA LỌC
+                    </button>
+
+                </div>
+
+                <p id="stockInError" class="form-error admin-notice" role="alert" hidden></p>
+
+                <div class="admin-stat-grid admin-stat-grid--compact" id="stockInStatGrid"></div>
+
+                <div class="admin-chart-wrapper" id="stockInStoreChart"></div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="stockInStoreTable">
+                        <thead>
+                            <tr>
+                                <th>Chi nhánh</th>
+                                <th>Số lượng nhập</th>
+                                <th>Lần nhập</th>
+                                <th>Phiên bản</th>
+                                <th>Nhập gần nhất</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+            </section>
+
+
             <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+                Dữ liệu mẫu: phần doanh thu dưới đây chưa nối backend (làm ở Phase 10, dùng 3 chi nhánh mẫu
+                CN01–CN03). Thay đổi chỉ lưu trên trình duyệt này.
             </p>
 
             <div class="admin-filter-bar">

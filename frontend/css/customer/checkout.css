@@ -285,3 +285,30 @@
     }
 
 }
+
+
+/* ================= PHASE 7: HÌNH THỨC NHẬN HÀNG ================= */
+
+/* Ô địa chỉ / ô chọn cửa hàng: giữ khoảng cách như các ô khác của form */
+.checkout-delivery-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.checkout-delivery-fields[hidden] {
+    display: none;
+}
+
+.pickup-store-info {
+    padding: 12px 14px;
+
+    background: var(--gray-100);
+
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.pickup-store-info strong {
+    display: block;
+}

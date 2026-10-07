@@ -2,8 +2,11 @@ package com.example.Tech.service.inventory;
 
 import com.example.Tech.dto.request.inventory.InventorySearchRequest;
 import com.example.Tech.dto.request.inventory.StockInRequest;
+import com.example.Tech.dto.request.inventory.StockInStatsRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.inventory.InventoryItemResponse;
+import com.example.Tech.dto.response.inventory.InventoryOverviewResponse;
+import com.example.Tech.dto.response.inventory.StockInStatsResponse;
 import com.example.Tech.dto.response.inventory.StockMovementResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -20,4 +23,10 @@ public interface InventoryService {
     InventoryItemResponse stockIn(Long userId, Integer storeId, StockInRequest request);
 
     PageResponse<StockMovementResponse> movements(Long userId, Integer storeId, Long variantId, Pageable pageable);
+
+    /** ADMIN only: every variant stocked anywhere, with its quantity per store and in total. */
+    PageResponse<InventoryOverviewResponse> overview(Long userId, InventorySearchRequest filter, Pageable pageable);
+
+    /** ADMIN only: goods received (IN movements) over a period, in total and per store. */
+    StockInStatsResponse stockInStats(Long userId, StockInStatsRequest filter);
 }

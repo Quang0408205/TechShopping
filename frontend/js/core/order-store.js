@@ -35,6 +35,12 @@ const ORDER_STATUS_LABELS = {
     CANCELLED: "Đã hủy"
 };
 
+/* Phase 7: hình thức nhận hàng */
+const DELIVERY_TYPE_LABELS = {
+    HOME_DELIVERY: "Giao tận nhà",
+    PICKUP: "Nhận tại cửa hàng"
+};
+
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng (COD)",
     BANK_TRANSFER: "Chuyển khoản ngân hàng",
@@ -88,7 +94,8 @@ function removeLegacyOrders() {
 
 
 /*
- * input: { recipientName, recipientPhone, shippingAddress, note, paymentMethod,
+ * input: { recipientName, recipientPhone, deliveryType (HOME_DELIVERY | PICKUP),
+ *          shippingAddress (giao tận nhà) | pickupStoreId (nhận tại cửa hàng), note, paymentMethod,
  *          installment?: { months, citizenId, cardBank } (chỉ khi INSTALLMENT) }
  * Không gửi sản phẩm / giá: server lấy từ giỏ hàng của tài khoản.
  */
@@ -186,6 +193,8 @@ function toOrderView(order) {
         recipientName: order.recipientName,
         recipientPhone: order.recipientPhone,
         shippingAddress: order.shippingAddress,
+        deliveryType: order.deliveryType || "HOME_DELIVERY",
+        storeName: order.storeName || "",
         note: order.note || "",
         items: items,
         totalQuantity: order.totalQuantity || 0,
@@ -328,6 +337,13 @@ function getOrderDetailUrl(orderId, justPlaced) {
 function getOrderStatusLabel(statusCode) {
 
     return ORDER_STATUS_LABELS[statusCode] || statusCode;
+
+}
+
+
+function getDeliveryTypeLabel(code) {
+
+    return DELIVERY_TYPE_LABELS[code] || DELIVERY_TYPE_LABELS.HOME_DELIVERY;
 
 }
 

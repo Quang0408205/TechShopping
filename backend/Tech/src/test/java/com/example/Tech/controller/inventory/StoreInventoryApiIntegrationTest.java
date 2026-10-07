@@ -1,12 +1,15 @@
 package com.example.Tech.controller.inventory;
 
 import com.example.Tech.entity.inventory.InventoryId;
+import com.example.Tech.entity.inventory.MovementType;
+import com.example.Tech.entity.inventory.StockMovement;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.repository.inventory.InventoryRepository;
+import com.example.Tech.repository.inventory.StockMovementRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
@@ -33,6 +36,7 @@ import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,7 +51,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * /api/v1/admin/stores/{storeId}/inventory over HTTP against the test database (rolled back): store scoping for
- * STAFF (own store only, read from the DB on every call), stock-in, movement history, filters.
+ * STAFF (own store only, read from the DB on every call), stock-in, movement history, filters. Also the ADMIN-only
+ * all-stores view /api/v1/admin/inventory.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -56,6 +61,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class StoreInventoryApiIntegrationTest {
 
     private static final String PASSWORD = "Matkhau@123";
+
+    private static final String OVERVIEW_URL = "/api/v1/admin/inventory";
+
+    private static final String STATS_URL = "/api/v1/admin/inventory/stock-in-stats";
 
     @Autowired
     private MockMvc mockMvc;
@@ -80,6 +89,9 @@ class StoreInventoryApiIntegrationTest {
 
     @Autowired
     private InventoryRepository inventoryRepository;
+
+    @Autowired
+    private StockMovementRepository stockMovementRepository;
 
     @Autowired
     private CategoryRepository categoryRepository;
@@ -228,6 +240,101 @@ class StoreInventoryApiIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("PRODUCT_VARIANT_NOT_FOUND"));
         assertThat(inventoryRepository.existsByIdStoreId(storeA.getId())).isFalse();
+    }
+
+    @Test
+    void overview_isAdminOnly() throws Exception {
+        send(get(OVERVIEW_URL), null, null).andExpect(status().isUnauthorized());
+        send(get(OVERVIEW_URL), customerToken, null).andExpect(status().isForbidden());
+        send(get(OVERVIEW_URL), staffToken, null).andExpect(status().isForbidden());
+        send(get(OVERVIEW_URL), adminToken, null).andExpect(status().isOk());
+    }
+
+    @Test
+    void overview_sumsEveryStore_andOutOfStockMeansNoStoreHasAny() throws Exception {
+        send(post(url(storeA) + "/stock-in"), adminToken, stockIn(phoneBlack, 2, null)).andExpect(status().isOk());
+        send(post(url(storeA) + "/stock-in"), adminToken, stockIn(laptopBase, 1, null)).andExpect(status().isOk());
+        send(post(url(storeB) + "/stock-in"), adminToken, stockIn(laptopBase, 9, null)).andExpect(status().isOk());
+        inventoryRepository.findById(new InventoryId(storeA.getId(), laptopBase.getId())).orElseThrow().setQuantity(0);
+        entityManager.flush();
+
+        JsonNode rows = overview("keyword", "tk-");
+        assertThat(rows).hasSize(2);
+        assertThat(rows.get(0).get("variantId").asLong()).isEqualTo(phoneBlack.getId());
+        assertThat(rows.get(0).get("totalQuantity").asInt()).isEqualTo(2);
+        assertThat(rows.get(0).get("stores")).hasSize(1);
+        JsonNode laptop = rows.get(1);
+        assertThat(laptop.get("productName").asString()).isEqualTo("Laptop TK");
+        assertThat(laptop.get("totalQuantity").asInt()).isEqualTo(9);
+        assertThat(laptop.get("stores").get(0).get("storeName").asString()).isEqualTo("ZZ TK Chi nhánh A");
+        assertThat(laptop.get("stores").get(0).get("quantity").asInt()).isZero();
+        assertThat(laptop.get("stores").get(1).get("quantity").asInt()).isEqualTo(9);
+        assertThat(laptop.get("stores").get(1).get("storeActive").asBoolean()).isTrue();
+
+        assertThat(overview("keyword", "tk-", "outOfStock", "true")).isEmpty();
+        inventoryRepository.findById(new InventoryId(storeA.getId(), phoneBlack.getId())).orElseThrow().setQuantity(0);
+        entityManager.flush();
+        JsonNode outOfStock = overview("keyword", "tk-", "outOfStock", "true");
+        assertThat(outOfStock).hasSize(1);
+        assertThat(outOfStock.get(0).get("variantId").asLong()).isEqualTo(phoneBlack.getId());
+    }
+
+    @Test
+    void stockInStats_isAdminOnly_andValidatesItsFilter() throws Exception {
+        send(get(STATS_URL), null, null).andExpect(status().isUnauthorized());
+        send(get(STATS_URL), customerToken, null).andExpect(status().isForbidden());
+        send(get(STATS_URL), staffToken, null).andExpect(status().isForbidden());
+        send(get(STATS_URL).param("fromDate", "2026-10-08").param("toDate", "2026-10-07"), adminToken, null)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"));
+        send(get(STATS_URL).param("storeId", "-1"), adminToken, null)
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("STORE_NOT_FOUND"));
+    }
+
+    @Test
+    void stockInStats_countsOnlyStockIns_perStore_andByDay() throws Exception {
+        send(post(url(storeA) + "/stock-in"), adminToken, stockIn(phoneBlack, 5, "  Công ty ABC ")).andExpect(status().isOk());
+        send(post(url(storeA) + "/stock-in"), adminToken, stockIn(laptopBase, 3, "công ty abc")).andExpect(status().isOk());
+        send(post(url(storeA) + "/stock-in"), adminToken, stockIn(phoneBlack, 2, null)).andExpect(status().isOk());
+        send(post(url(storeB) + "/stock-in"), adminToken, stockIn(laptopBase, 9, "Nhà cung cấp B")).andExpect(status().isOk());
+        StockMovement out = new StockMovement();
+        out.setStore(storeA);
+        out.setVariant(phoneBlack);
+        out.setMovementType(MovementType.OUT);
+        out.setQuantityChange(-4);
+        stockMovementRepository.saveAndFlush(out);
+        String today = LocalDate.now().toString();
+
+        JsonNode storeAStats = data(send(get(STATS_URL).param("storeId", String.valueOf(storeA.getId()))
+                .param("fromDate", today).param("toDate", today), adminToken, null).andExpect(status().isOk()));
+        assertThat(storeAStats.get("totalQuantity").asLong()).isEqualTo(10);
+        assertThat(storeAStats.get("stockInCount").asLong()).isEqualTo(3);
+        assertThat(storeAStats.get("variantCount").asLong()).isEqualTo(2);
+        assertThat(storeAStats.get("supplierCount").asLong()).isEqualTo(1);
+        assertThat(storeAStats.get("stores")).hasSize(1);
+        assertThat(storeAStats.get("stores").get(0).get("quantity").asLong()).isEqualTo(10);
+        assertThat(storeAStats.get("stores").get(0).get("lastStockInAt").isNull()).isFalse();
+
+        JsonNode all = data(send(get(STATS_URL).param("fromDate", today), adminToken, null).andExpect(status().isOk()));
+        Map<Long, Long> quantities = new HashMap<>();
+        all.get("stores").forEach(row -> quantities.put(row.get("storeId").asLong(), row.get("quantity").asLong()));
+        assertThat(quantities).containsEntry(storeA.getId().longValue(), 10L).containsEntry(storeB.getId().longValue(), 9L);
+        assertThat(all.get("totalQuantity").asLong()).isGreaterThanOrEqualTo(19);
+
+        String tomorrow = LocalDate.now().plusDays(1).toString();
+        JsonNode later = data(send(get(STATS_URL).param("storeId", String.valueOf(storeA.getId()))
+                .param("fromDate", tomorrow), adminToken, null).andExpect(status().isOk()));
+        assertThat(later.get("totalQuantity").asLong()).isZero();
+        assertThat(later.get("stores").get(0).get("quantity").asLong()).isZero();
+    }
+
+    private JsonNode overview(String... params) throws Exception {
+        MockHttpServletRequestBuilder builder = get(OVERVIEW_URL);
+        for (int i = 0; i < params.length; i += 2) {
+            builder.param(params[i], params[i + 1]);
+        }
+        return data(send(builder, adminToken, null).andExpect(status().isOk())).get("content");
     }
 
     private static String url(Store store) {

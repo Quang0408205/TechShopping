@@ -248,8 +248,7 @@ function renderOrder(order) {
         }).join("");
 
 
-    document.getElementById("orderShippingInfo").textContent =
-        order.recipientName + " - " + order.recipientPhone + " - " + order.shippingAddress;
+    renderDelivery(order);
 
     document.getElementById("orderPaymentMethod").textContent =
         getPaymentMethodLabel(order.paymentMethod);
@@ -272,6 +271,42 @@ function renderOrder(order) {
     document.getElementById("orderTotal").textContent = formatPrice(order.total);
 
     document.getElementById("orderActions").hidden = !order.cancellable;
+
+}
+
+
+/*
+ * Phase 7: giao tận nhà → người nhận + địa chỉ; nhận tại cửa hàng → người nhận +
+ * cửa hàng (server ghi "Nhận tại cửa hàng: tên, địa chỉ…" vào địa chỉ đơn, và đổi
+ * theo nếu cửa hàng ADMIN chuyển đơn sang). Chi nhánh xử lý đơn giao tận nhà là
+ * việc nội bộ nên không hiện.
+ */
+
+const PICKUP_ADDRESS_PREFIX = "Nhận tại cửa hàng:";
+
+function renderDelivery(order) {
+
+    const pickup = order.deliveryType === "PICKUP";
+
+    const pickupStore = document.getElementById("orderPickupStore");
+
+    document.getElementById("orderShippingTitle").textContent = getDeliveryTypeLabel(order.deliveryType);
+
+    document.getElementById("orderShippingInfo").textContent = pickup
+        ? "Người nhận: " + order.recipientName + " - " + order.recipientPhone
+        : order.recipientName + " - " + order.recipientPhone + " - " + order.shippingAddress;
+
+    pickupStore.hidden = !pickup;
+
+    if (pickup) {
+
+        const address = String(order.shippingAddress || "");
+
+        pickupStore.textContent = "Cửa hàng: " + (address.indexOf(PICKUP_ADDRESS_PREFIX) === 0
+            ? address.slice(PICKUP_ADDRESS_PREFIX.length).trim()
+            : address || order.storeName);
+
+    }
 
 }
 

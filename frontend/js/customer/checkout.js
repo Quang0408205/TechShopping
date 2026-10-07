@@ -10,9 +10,15 @@
  *   lấy từ GET /payments/installment-options; đơn dưới mức tối thiểu (hoặc không
  *   tải được) thì khoá lựa chọn trả góp. Tiền mỗi kỳ = tổng / số kỳ làm tròn
  *   xuống, kỳ cuối nhận phần lẻ (giống server).
+ * - Hình thức nhận hàng (Phase 7): giao tận nhà (cần địa chỉ; server tự chọn
+ *   chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (chọn 1 cửa hàng đang mở từ
+ *   GET /stores, không cần địa chỉ, miễn phí vận chuyển giống server — GET /cart
+ *   luôn tính phí giao tận nhà nên tóm tắt tự bỏ phí khi chọn nhận tại cửa hàng).
+ *   Không tải được / chưa có cửa hàng nào → khoá lựa chọn nhận tại cửa hàng.
  * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) gửi
- *   người nhận / địa chỉ / ghi chú / phương thức thanh toán (+ hồ sơ trả góp);
- *   server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang trang chi tiết đơn.
+ *   người nhận / hình thức nhận (+ địa chỉ hoặc cửa hàng) / ghi chú / phương thức
+ *   thanh toán (+ hồ sơ trả góp); server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang
+ *   trang chi tiết đơn.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -55,6 +61,22 @@ document.addEventListener(
 
         const preview = document.getElementById("installmentPreview");
 
+        const pickupRadio = form.querySelector('input[name="deliveryType"][value="PICKUP"]');
+
+        const pickupMethod = document.getElementById("pickupMethod");
+
+        const pickupHint = document.getElementById("pickupMethodHint");
+
+        const homeDeliveryFields = document.getElementById("homeDeliveryFields");
+
+        const pickupFields = document.getElementById("pickupFields");
+
+        const pickupSelect = document.getElementById("pickupStore");
+
+        const pickupInfo = document.getElementById("pickupStoreInfo");
+
+        const PICKUP_HINT = "Miễn phí vận chuyển. Chọn cửa hàng gần bạn để đến nhận.";
+
 
         const FIELD_MESSAGES = {
             recipientName:
@@ -63,6 +85,8 @@ document.addEventListener(
                 "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).",
             shippingAddress:
                 "Vui lòng nhập địa chỉ nhận hàng đầy đủ.",
+            pickupStoreId:
+                "Vui lòng chọn cửa hàng đang mở để nhận hàng.",
             "installment.months":
                 "Vui lòng chọn kỳ hạn trả góp.",
             "installment.cardBank":
@@ -76,6 +100,9 @@ document.addEventListener(
         /* Tải song song với giỏ hàng; lỗi → null (khoá lựa chọn trả góp) */
         const optionsPromise = apiRequest("/payments/installment-options", { auth: true })
             .catch(function () { return null; });
+
+        /* Cửa hàng đang mở (công khai); lỗi → null (khoá "Nhận tại cửa hàng") */
+        const storesPromise = loadPickupStores();
 
 
         let summary;
@@ -116,12 +143,19 @@ document.addEventListener(
 
         const installmentOptions = await optionsPromise;
 
+        let pickupStores = await storesPromise;
+
         let currentTotal = summary.total;
+
+        /* Giỏ trên server gần nhất (phí ship trong đó luôn là phí giao tận nhà) */
+        let lastCart = summary;
 
 
         content.hidden = false;
 
         fillInstallmentChoices();
+
+        fillPickupStores();
 
         renderSummary(summary);
 
@@ -142,6 +176,14 @@ document.addEventListener(
             radio.addEventListener("change", updateInstallmentBox);
 
         });
+
+        form.querySelectorAll('input[name="deliveryType"]').forEach(function (radio) {
+
+            radio.addEventListener("change", updateDeliveryFields);
+
+        });
+
+        pickupSelect.addEventListener("change", renderPickupInfo);
 
         monthsSelect.addEventListener("change", renderPreview);
 
@@ -213,6 +255,8 @@ document.addEventListener(
 
         function renderSummary(cartSummary) {
 
+            lastCart = cartSummary;
+
             const itemsBox = document.getElementById("checkoutItems");
 
             itemsBox.innerHTML = cartSummary.items.map(function (item) {
@@ -233,15 +277,143 @@ document.addEventListener(
 
             document.getElementById("checkoutSubtotal").textContent = formatPrice(cartSummary.subtotal);
 
+            renderTotals();
+
+        }
+
+
+        /* Phí ship + tổng theo hình thức nhận: nhận tại cửa hàng miễn phí (giống ShippingPolicy ở server) */
+
+        function renderTotals() {
+
+            const shippingFee = selectedDeliveryType() === "PICKUP" ? 0 : lastCart.shippingFee;
+
+            currentTotal = lastCart.total - lastCart.shippingFee + shippingFee;
+
             document.getElementById("checkoutShipping").textContent =
-                cartSummary.shippingFee === 0 ? "Miễn phí" : formatPrice(cartSummary.shippingFee);
+                shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee);
 
-            document.getElementById("checkoutTotal").textContent = formatPrice(cartSummary.total);
-
-
-            currentTotal = cartSummary.total;
+            document.getElementById("checkoutTotal").textContent = formatPrice(currentTotal);
 
             applyInstallmentEligibility();
+
+        }
+
+
+        /* ================= HÌNH THỨC NHẬN HÀNG ================= */
+
+        async function loadPickupStores() {
+
+            try {
+
+                return await apiRequest("/stores") || [];
+
+            } catch (error) {
+
+                return null;
+
+            }
+
+        }
+
+
+        /* Điền ô chọn cửa hàng (giữ cửa hàng đang chọn nếu vẫn mở); không có cửa hàng nào → khoá lựa chọn */
+
+        function fillPickupStores() {
+
+            const selected = pickupSelect.value;
+
+            pickupSelect.innerHTML = `<option value="">-- Chọn cửa hàng --</option>` +
+                (pickupStores || []).map(function (store) {
+
+                    const area = [store.district, store.city].filter(Boolean).join(", ");
+
+                    return `<option value="${escapeHtml(String(store.id))}">${escapeHtml(store.name + (area ? " — " + area : ""))}</option>`;
+
+                }).join("");
+
+            if (findPickupStore(selected)) {
+                pickupSelect.value = selected;
+            }
+
+
+            let reason = "";
+
+            if (pickupStores === null) {
+                reason = "Hiện chưa tải được danh sách cửa hàng. Vui lòng chọn giao tận nhà hoặc tải lại trang.";
+            } else if (pickupStores.length === 0) {
+                reason = "Hiện chưa có cửa hàng nào nhận đơn tại chỗ.";
+            }
+
+            pickupRadio.disabled = reason !== "";
+
+            pickupMethod.classList.toggle("is-disabled", reason !== "");
+
+            pickupHint.textContent = reason || PICKUP_HINT;
+
+            if (reason && pickupRadio.checked) {
+                form.querySelector('input[name="deliveryType"][value="HOME_DELIVERY"]').checked = true;
+            }
+
+            renderPickupInfo();
+
+            updateDeliveryFields();
+
+        }
+
+
+        function findPickupStore(id) {
+
+            return (pickupStores || []).find(function (store) {
+                return String(store.id) === String(id);
+            });
+
+        }
+
+
+        function renderPickupInfo() {
+
+            const store = findPickupStore(pickupSelect.value);
+
+            if (!store) {
+
+                pickupInfo.hidden = true;
+
+                pickupInfo.innerHTML = "";
+
+                return;
+
+            }
+
+            const address = [store.address, store.district, store.city].filter(Boolean).join(", ");
+
+            pickupInfo.innerHTML = `<strong>${escapeHtml(store.name)}</strong>`
+                + escapeHtml(address)
+                + (store.phone ? `<br>Điện thoại: ${escapeHtml(store.phone)}` : "");
+
+            pickupInfo.hidden = false;
+
+        }
+
+
+        /* Giao tận nhà → ô địa chỉ; nhận tại cửa hàng → ô chọn cửa hàng. Tổng tiền đổi theo phí ship */
+
+        function updateDeliveryFields() {
+
+            const pickup = selectedDeliveryType() === "PICKUP";
+
+            homeDeliveryFields.hidden = pickup;
+
+            pickupFields.hidden = !pickup;
+
+            renderTotals();
+
+        }
+
+
+        function selectedDeliveryType() {
+
+            return form.querySelector('input[name="deliveryType"]:checked').value;
 
         }
 
@@ -385,7 +557,9 @@ document.addEventListener(
             const data = {
                 recipientName: valueOf("recipientName").trim(),
                 recipientPhone: valueOf("recipientPhone").trim(),
+                deliveryType: selectedDeliveryType(),
                 shippingAddress: valueOf("shippingAddress").trim(),
+                pickupStoreId: pickupSelect.value ? Number(pickupSelect.value) : null,
                 note: valueOf("orderNote").trim(),
                 paymentMethod: selectedPaymentMethod()
             };
@@ -401,7 +575,13 @@ document.addEventListener(
                 invalid.push("recipientPhone");
             }
 
-            if (!data.shippingAddress) {
+            if (data.deliveryType === "PICKUP") {
+
+                if (!findPickupStore(data.pickupStoreId)) {
+                    invalid.push("pickupStoreId");
+                }
+
+            } else if (!data.shippingAddress) {
                 invalid.push("shippingAddress");
             }
 
@@ -443,7 +623,7 @@ document.addEventListener(
                 showFormError(invalid.some(function (field) { return field.indexOf("installment") === 0; })
                     && invalid.every(function (field) { return field.indexOf("installment") === 0; })
                     ? "Vui lòng kiểm tra lại thông tin trả góp."
-                    : "Vui lòng kiểm tra lại thông tin giao hàng.");
+                    : "Vui lòng kiểm tra lại thông tin nhận hàng.");
 
                 return;
 
@@ -475,10 +655,15 @@ document.addEventListener(
 
             try {
 
+                /* Nhận tại cửa hàng: không gửi địa chỉ (server ghi địa chỉ cửa hàng vào đơn) */
+                const pickup = data.deliveryType === "PICKUP";
+
                 const input = {
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
-                    shippingAddress: data.shippingAddress,
+                    deliveryType: data.deliveryType,
+                    shippingAddress: pickup ? null : data.shippingAddress,
+                    pickupStoreId: pickup ? data.pickupStoreId : null,
                     note: data.note || null,
                     paymentMethod: data.paymentMethod
                 };
@@ -526,6 +711,16 @@ document.addEventListener(
                 }
 
                 showFormError(getErrorMessage(error));
+
+
+                /* Cửa hàng vừa tạm đóng: tải lại danh sách cửa hàng đang mở */
+                if (error.details && error.details.pickupStoreId) {
+
+                    pickupStores = await loadPickupStores();
+
+                    fillPickupStores();
+
+                }
 
 
                 /*

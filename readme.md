@@ -104,7 +104,7 @@ docker compose up -d backend
 | Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
 | Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
 | Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
-| Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận | **Thật** (API) |
+| Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
 | Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
 | Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
@@ -112,7 +112,9 @@ docker compose up -d backend
 | Quản trị | **Trả góp** (STAFF và ADMIN): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
 | Quản trị | **Khuyến mãi** (chỉ ADMIN): chương trình có thời gian bắt đầu / kết thúc, giảm theo % (có mức giảm tối đa) hoặc số tiền, chọn sản phẩm và đặt mức giảm riêng từng sản phẩm, tạm dừng / bật lại. Một sản phẩm chỉ thuộc một chương trình đang bật tại cùng thời điểm; giỏ hàng và thanh toán lấy giá thấp hơn giữa "Giá khuyến mãi" của sản phẩm và giá chương trình; đơn đã đặt giữ nguyên giá | **Thật** (API) |
 | Quản trị | **Chi nhánh** (chỉ ADMIN): thêm / sửa / tạm đóng / xoá (chỉ khi chưa dùng); quận / huyện + tỉnh / thành dùng để tự gán chi nhánh cho đơn giao tận nhà. **Nhân viên** (chỉ ADMIN): hồ sơ cho tài khoản có quyền Nhân viên, gán / chuyển / rút chi nhánh (giữ lịch sử), vị trí "Quản lý chi nhánh", đã nghỉ. Nhân viên thấy vai trò + chi nhánh của mình trên thanh trên cùng | **Thật** (API) |
-| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
+| Quản trị | **Tồn kho** (STAFF và ADMIN): tồn kho theo chi nhánh (nhân viên chỉ chi nhánh mình, ADMIN thêm chế độ "Tất cả chi nhánh" với tổng + số lượng từng chi nhánh), nhãn "Sắp hết" (≤ 5) / "Hết hàng", lọc hàng hết, **nhập kho** một bước (tìm sản phẩm → phiên bản → số lượng, nhà cung cấp, ghi chú), lịch sử nhập / xuất bán / hoàn kho của từng phiên bản | **Thật** (API) |
+| Quản trị | **Báo cáo → Hàng nhập kho theo chi nhánh** (chỉ ADMIN): tổng số lượng nhập, số lần nhập, số phiên bản, số nhà cung cấp, biểu đồ + bảng theo chi nhánh, lọc chi nhánh / khoảng ngày (tính theo số lượng, nhập kho không ghi giá nhập) | **Thật** (API) |
+| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo doanh thu, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
 
 ---
 

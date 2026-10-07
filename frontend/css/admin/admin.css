@@ -1255,3 +1255,45 @@ button.admin-badge {
     color: var(--color-danger);
     font-weight: 700;
 }
+
+
+/* ================= PHASE 7.8: TỒN KHO ================= */
+
+.admin-stock-qty {
+    margin-right: 4px;
+    font-size: 14px;
+}
+
+.admin-stock-in {
+    color: var(--color-success);
+    font-weight: 700;
+}
+
+.admin-stock-out {
+    color: var(--color-danger);
+    font-weight: 700;
+}
+
+.admin-inventory-history {
+    margin-top: 14px;
+}
+
+.admin-inventory-history-title {
+    margin-bottom: 6px;
+
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.admin-inventory-movements .admin-action-btn {
+    margin-top: 10px;
+}
+
+
+/* ================= PHASE 7.10: HÀNG NHẬP KHO (admin/reports) ================= */
+
+/* 4 thẻ trong 1 khung admin-panel: ô nhỏ hơn để vừa một hàng */
+.admin-stat-grid--compact {
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}

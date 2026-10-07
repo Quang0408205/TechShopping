@@ -129,7 +129,8 @@ document.addEventListener(
                     <div class="order-card-header">
                         <div>
                             <strong>${escapeHtml(order.code)}</strong>
-                            <span class="order-card-date">${escapeHtml(formatOrderDateTime(order.orderDate))}</span>
+                            <span class="order-card-date">${escapeHtml(formatOrderDateTime(order.orderDate)
+                                + (order.deliveryType === "PICKUP" ? " · " + getDeliveryTypeLabel(order.deliveryType) : ""))}</span>
                         </div>
                         <span class="order-status-badge status-${escapeHtml(String(order.status).toLowerCase())}">
                             ${escapeHtml(getOrderStatusLabel(order.status))}
