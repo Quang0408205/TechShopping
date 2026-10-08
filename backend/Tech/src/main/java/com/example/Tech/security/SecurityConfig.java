@@ -81,7 +81,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole(ADMIN)
                         // shop staff manage orders and installments too (must come before the ADMIN-only admin rule)
                         .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**",
-                                "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**")
+                                "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**",
+                                "/api/v1/admin/service-requests/**")
                         .hasAnyRole(STAFF, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/**").authenticated()

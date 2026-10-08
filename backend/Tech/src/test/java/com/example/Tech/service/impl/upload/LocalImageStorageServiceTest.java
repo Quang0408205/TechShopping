@@ -143,6 +143,22 @@ class LocalImageStorageServiceTest {
     }
 
     @Test
+    void serviceImages_storedInTheirOwnFolder_reviewPhotosDoNotCount() {
+        String service = storage.storeServiceImage(file("loi.png", PNG));
+        String review = storage.storeReviewImage(file("me.jpg", JPEG));
+
+        assertThat(service).startsWith(BASE_URL + ImageStorageService.SERVICE_IMAGE_PATH).endsWith(".png");
+        assertThat(uploadRoot.resolve("service").resolve(service.substring(service.lastIndexOf('/') + 1))).exists();
+        assertThat(storage.isStoredServiceImage(service)).isTrue();
+        assertThat(storage.isStoredServiceImage(review)).isFalse();
+        assertThat(storage.isStoredServiceImage(BASE_URL + "/uploads/service/../reviews/x.jpg")).isFalse();
+
+        storage.deleteAfterCommit(service);
+
+        assertThat(storage.isStoredServiceImage(service)).isFalse();
+    }
+
+    @Test
     void storeReviewImage_notAnImage_isRefused() {
         assertThatThrownBy(() -> storage.storeReviewImage(file("x.jpg", "<svg onload=alert(1)>".getBytes())))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())

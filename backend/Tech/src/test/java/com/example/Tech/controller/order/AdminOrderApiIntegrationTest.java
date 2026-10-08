@@ -1,5 +1,6 @@
 package com.example.Tech.controller.order;
 
+import com.example.Tech.entity.aftersales.Warranty;
 import com.example.Tech.entity.inventory.Inventory;
 import com.example.Tech.entity.inventory.InventoryId;
 import com.example.Tech.entity.product.Category;
@@ -229,6 +230,15 @@ class AdminOrderApiIntegrationTest {
 
         assertThat(customerProfileRepository.findById(customerId).orElseThrow().getTotalSpent())
                 .isEqualByComparingTo(spentBefore.add(new BigDecimal("15990000")));
+        // Phase 6: one warranty per line, from the delivery day for the product's 12 months
+        List<Warranty> warranties = entityManager.createQuery(
+                        "select w from Warranty w where w.orderItem.order.id = :orderId", Warranty.class)
+                .setParameter("orderId", orderId).getResultList();
+        LocalDate today = LocalDate.now(clock);
+        assertThat(warranties).singleElement().satisfies(warranty -> {
+            assertThat(warranty.getStartDate()).isEqualTo(today);
+            assertThat(warranty.getEndDate()).isEqualTo(today.plusMonths(12));
+        });
         send(get("/api/v1/orders/" + orderId), customerToken, null)
                 .andExpect(jsonPath("$.data.status").value("DELIVERED"))
                 .andExpect(jsonPath("$.data.trackingNumber").value("GHN123456"));

@@ -19,6 +19,7 @@ import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.order.OrderFilterSpecifications;
 import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.user.CustomerProfileRepository;
+import com.example.Tech.service.impl.aftersales.WarrantyIssuer;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.AdminOrderService;
 import com.example.Tech.service.store.StoreAccessGuard;
@@ -50,6 +51,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final OrderPaymentLifecycle orderPaymentLifecycle;
     private final OrderStockLifecycle orderStockLifecycle;
     private final StoreAccessGuard storeAccessGuard;
+    private final WarrantyIssuer warrantyIssuer;
     private final Clock clock;
 
     @Override
@@ -102,6 +104,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
             if (to == OrderStatus.DELIVERED) {
                 order.setDeliveredAt(now);
                 orderPaymentLifecycle.onOrderDelivered(order, staff, now);
+                warrantyIssuer.issueFor(order, now.toLocalDate());
             } else if (to == OrderStatus.CANCELLED) {
                 order.setCancelledAt(now);
                 orderPaymentLifecycle.onOrderCancelled(order);

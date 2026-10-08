@@ -122,7 +122,15 @@ public enum ErrorCode {
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),
-    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Bạn đã đánh giá sản phẩm này; hãy sửa đánh giá cũ");
+    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Bạn đã đánh giá sản phẩm này; hãy sửa đánh giá cũ"),
+
+    // After-sales (Phase 6)
+    SERVICE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu"),
+    AFTER_SALES_NOT_AVAILABLE(HttpStatus.CONFLICT, "Chỉ gửi yêu cầu bảo hành, bảo trì, đổi trả cho đơn đã giao"),
+    WARRANTY_NOT_VALID(HttpStatus.CONFLICT, "Sản phẩm không còn bảo hành; bạn có thể gửi yêu cầu bảo trì"),
+    SERVICE_REQUEST_ALREADY_OPEN(HttpStatus.CONFLICT, "Sản phẩm này đang có một yêu cầu chưa xử lý xong"),
+    RETURN_NOT_AVAILABLE(HttpStatus.CONFLICT, "Đơn hàng không trả hàng được"),
+    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này");
 
     private final HttpStatus status;
     private final String defaultMessage;

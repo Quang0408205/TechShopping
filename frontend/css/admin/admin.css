@@ -1410,3 +1410,54 @@ button.admin-badge {
     width: 320px;
     max-width: 100%;
 }
+
+
+/* ================= PHASE 6: BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests) ================= */
+
+.admin-action-modal {
+    max-width: 480px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+.admin-action-modal .modal-field textarea {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 400;
+    resize: vertical;
+    outline: none;
+}
+
+.admin-action-modal .modal-field textarea:focus {
+    border-color: var(--color-ink);
+}
+
+.admin-action-modal .form-error {
+    margin: -10px 0 20px;
+}
+
+.admin-modal-checks {
+    border: none;
+    padding: 0;
+}
+
+.admin-modal-checks legend {
+    margin-bottom: 8px;
+}
+
+.admin-modal-check {
+    display: flex;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.admin-filter-bar #requestKeyword {
+    width: 340px;
+    max-width: 100%;
+}

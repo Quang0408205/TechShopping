@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.order.OrderStatusUpdateRequest;
 import com.example.Tech.dto.request.order.OrderStoreRequest;
 import com.example.Tech.dto.request.payment.InstallmentRejectRequest;
 import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
+import com.example.Tech.service.impl.aftersales.WarrantyIssuer;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import org.mockito.InOrder;
 import com.example.Tech.dto.response.order.AdminOrderResponse;
@@ -85,6 +86,9 @@ class AdminOrderServiceImplTest {
     @Mock
     private StoreAccessGuard storeAccessGuard;
 
+    @Mock
+    private WarrantyIssuer warrantyIssuer;
+
     private final User staff = new User();
 
     private AdminOrderServiceImpl adminOrderService;
@@ -94,7 +98,7 @@ class AdminOrderServiceImplTest {
     @BeforeEach
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
-                orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, CLOCK);
+                orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer, CLOCK);
         customer = new User();
         customer.setId(CUSTOMER_ID);
         customer.setUsername("khach");
@@ -147,8 +151,9 @@ class AdminOrderServiceImplTest {
         assertThat(order.getDeliveredAt()).isEqualTo(NOW);
         verify(customerProfileRepository).addToTotalSpent(CUSTOMER_ID, new BigDecimal("31980000"));
         // payment changes happen before the flush that precedes addToTotalSpent (it clears the persistence context)
-        InOrder inOrder = inOrder(orderPaymentLifecycle, orderRepository, customerProfileRepository);
+        InOrder inOrder = inOrder(orderPaymentLifecycle, warrantyIssuer, orderRepository, customerProfileRepository);
         inOrder.verify(orderPaymentLifecycle).onOrderDelivered(order, staff, NOW);
+        inOrder.verify(warrantyIssuer).issueFor(order, NOW.toLocalDate());
         inOrder.verify(orderRepository).saveAndFlush(order);
         inOrder.verify(customerProfileRepository).addToTotalSpent(anyLong(), any());
     }
@@ -165,6 +170,7 @@ class AdminOrderServiceImplTest {
         verify(orderPaymentLifecycle).onOrderCancelled(order);
         verify(orderStockLifecycle).onOrderCancelled(order, OrderStatus.CONFIRMED, staff);
         verify(orderPaymentLifecycle, never()).onOrderDelivered(any(), any(), any());
+        verify(warrantyIssuer, never()).issueFor(any(), any());
     }
 
     @Test

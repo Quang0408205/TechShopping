@@ -315,13 +315,16 @@ create table warranty_requests (
     warranty_id bigint not null references warranties(warranty_id),
     user_id bigint not null references users(user_id),
     issue_description text not null,
-    status varchar(50) default 'pending',
+    status varchar(50) not null default 'PENDING',
     assigned_to_employee bigint references users(user_id),
     estimated_completion_date date,
     completed_at timestamp,
     notes text,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
+    updated_at timestamp default current_timestamp,
+    received_at timestamp,
+    rejection_reason text,
+    cancelled_at timestamp
 );
 
 -- bảng maintenance_requests: quản lý yêu cầu bảo trì
@@ -331,12 +334,18 @@ create table maintenance_requests (
     order_item_id bigint not null references order_items(order_item_id),
     maintenance_type varchar(100),
     description text not null,
-    status varchar(50) default 'pending',
+    status varchar(50) not null default 'PENDING',
     assigned_to_employee bigint references users(user_id),
     completion_date date,
     notes text,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
+    updated_at timestamp default current_timestamp,
+    estimated_completion_date date,
+    estimated_cost decimal(15, 2),
+    actual_cost decimal(15, 2),
+    received_at timestamp,
+    rejection_reason text,
+    cancelled_at timestamp
 );
 
 -- bảng return_requests: quản lý yêu cầu đổi trả
@@ -345,12 +354,17 @@ create table return_requests (
     order_id bigint not null references orders(order_id),
     user_id bigint not null references users(user_id),
     reason text not null,
-    status varchar(50) default 'pending',
+    status varchar(50) not null default 'PENDING',
     refund_amount decimal(15, 2),
     approved_at timestamp,
     completed_at timestamp,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
+    updated_at timestamp default current_timestamp,
+    reason_type varchar(30),
+    assigned_to_employee bigint references users(user_id),
+    received_at timestamp,
+    rejection_reason text,
+    cancelled_at timestamp
 );
 
 -- bảng return_items: lưu chi tiết sản phẩm trong yêu cầu đổi trả
@@ -359,7 +373,22 @@ create table return_items (
     return_request_id bigint not null references return_requests(return_request_id),
     order_item_id bigint not null references order_items(order_item_id),
     quantity int not null,
-    refund_amount decimal(15, 2)
+    refund_amount decimal(15, 2),
+    -- null = chưa nhận hàng; true = đã cộng lại tồn kho chi nhánh
+    restocked boolean
+);
+
+-- bảng service_request_images: ảnh khách đính kèm (tối đa 5 / yêu cầu); mỗi ảnh thuộc đúng 1 loại yêu cầu
+create table service_request_images (
+    image_id bigserial primary key,
+    warranty_request_id bigint references warranty_requests(warranty_request_id) on delete cascade,
+    maintenance_id bigint references maintenance_requests(maintenance_id) on delete cascade,
+    return_request_id bigint references return_requests(return_request_id) on delete cascade,
+    image_url text not null,
+    display_order int not null,
+    created_at timestamp default current_timestamp,
+    constraint chk_service_request_images_owner
+        check (num_nonnulls(warranty_request_id, maintenance_id, return_request_id) = 1)
 );
 
 -- =====================================================
@@ -620,6 +649,21 @@ create index idx_warranty_requests_status on warranty_requests(status);
 -- return indexes
 create index idx_return_requests_user_id on return_requests(user_id);
 create index idx_return_requests_status on return_requests(status);
+create index idx_return_requests_order_id on return_requests(order_id);
+create index idx_return_items_order_item_id on return_items(order_item_id);
+create index idx_maintenance_requests_user_id on maintenance_requests(user_id);
+create index idx_maintenance_requests_status on maintenance_requests(status);
+-- mỗi dòng đơn chỉ có 1 yêu cầu bảo hành / bảo trì đang mở
+create unique index uq_warranty_requests_open on warranty_requests(warranty_id)
+    where status in ('PENDING', 'RECEIVED', 'PROCESSING');
+create unique index uq_maintenance_requests_open on maintenance_requests(order_item_id)
+    where status in ('PENDING', 'RECEIVED', 'PROCESSING');
+create unique index uq_service_request_images_warranty
+    on service_request_images(warranty_request_id, display_order) where warranty_request_id is not null;
+create unique index uq_service_request_images_maintenance
+    on service_request_images(maintenance_id, display_order) where maintenance_id is not null;
+create unique index uq_service_request_images_return
+    on service_request_images(return_request_id, display_order) where return_request_id is not null;
 
 -- chat indexes
 create index idx_chat_sessions_user_id on chat_sessions(user_id);
@@ -690,6 +734,28 @@ alter table stock_movements add constraint chk_stock_movements_type
 alter table reviews add constraint chk_reviews_rating_range check (rating between 1 and 5);
 alter table reviews add constraint chk_reviews_comment_length check (char_length(comment) between 10 and 2000);
 alter table reviews add constraint chk_reviews_hidden_reason check (not is_hidden or hidden_reason is not null);
+alter table warranties add constraint chk_warranties_dates check (warranty_end_date >= warranty_start_date);
+alter table warranty_requests add constraint chk_warranty_requests_status
+    check (status in ('PENDING', 'RECEIVED', 'PROCESSING', 'COMPLETED', 'REJECTED', 'CANCELLED'));
+alter table warranty_requests add constraint chk_warranty_requests_rejection
+    check (status <> 'REJECTED' or rejection_reason is not null);
+alter table maintenance_requests add constraint chk_maintenance_requests_status
+    check (status in ('PENDING', 'RECEIVED', 'PROCESSING', 'COMPLETED', 'REJECTED', 'CANCELLED'));
+alter table maintenance_requests add constraint chk_maintenance_requests_rejection
+    check (status <> 'REJECTED' or rejection_reason is not null);
+alter table maintenance_requests add constraint chk_maintenance_requests_type
+    check (maintenance_type in ('CLEANING', 'SOFTWARE', 'REPAIR', 'OTHER'));
+alter table maintenance_requests add constraint chk_maintenance_requests_costs
+    check ((estimated_cost is null or estimated_cost >= 0) and (actual_cost is null or actual_cost >= 0));
+alter table return_requests add constraint chk_return_requests_status
+    check (status in ('PENDING', 'APPROVED', 'RECEIVED', 'REFUNDED', 'REJECTED', 'CANCELLED'));
+alter table return_requests add constraint chk_return_requests_rejection
+    check (status <> 'REJECTED' or rejection_reason is not null);
+alter table return_requests add constraint chk_return_requests_reason_type
+    check (reason_type in ('DEFECTIVE', 'NOT_AS_DESCRIBED', 'CHANGED_MIND', 'OTHER'));
+alter table return_requests add constraint chk_return_requests_refund check (refund_amount is null or refund_amount >= 0);
+alter table return_items add constraint chk_return_items_quantity check (quantity > 0);
+alter table return_items add constraint uq_return_items_request_item unique (return_request_id, order_item_id);
 
 -- =====================================================
 -- tạo các view hữu ích
@@ -743,6 +809,27 @@ left join orders o on u.user_id = o.user_id
 left join user_interactions ui on u.user_id = ui.user_id
 where u.deleted_at is null
 group by u.user_id, u.email, u.fullname, cp.total_spent, cp.loyalty_points;
+
+-- view: bảo hành / bảo trì / đổi trả gộp 1 danh sách (lọc + phân trang ở DB)
+create view service_requests_view as
+select 'WARRANTY' || '-' || wr.warranty_request_id as view_id, 'WARRANTY' as request_type,
+       wr.warranty_request_id as request_id, wr.user_id, o.order_id, o.store_id, oi.order_item_id,
+       wr.status, wr.issue_description as description, wr.assigned_to_employee, wr.created_at, wr.updated_at
+from warranty_requests wr
+join warranties w on w.warranty_id = wr.warranty_id
+join order_items oi on oi.order_item_id = w.order_item_id
+join orders o on o.order_id = oi.order_id
+union all
+select 'MAINTENANCE' || '-' || mr.maintenance_id, 'MAINTENANCE', mr.maintenance_id, mr.user_id, o.order_id,
+       o.store_id, oi.order_item_id, mr.status, mr.description, mr.assigned_to_employee, mr.created_at, mr.updated_at
+from maintenance_requests mr
+join order_items oi on oi.order_item_id = mr.order_item_id
+join orders o on o.order_id = oi.order_id
+union all
+select 'RETURN' || '-' || rr.return_request_id, 'RETURN', rr.return_request_id, rr.user_id, o.order_id,
+       o.store_id, null, rr.status, rr.reason, rr.assigned_to_employee, rr.created_at, rr.updated_at
+from return_requests rr
+join orders o on o.order_id = rr.order_id;
 
 -- =====================================================
 -- end of schema

@@ -13,6 +13,9 @@ public interface ImageStorageService {
     /** Public path prefix of photos attached to product reviews. */
     String REVIEW_IMAGE_PATH = "/uploads/reviews/";
 
+    /** Public path prefix of photos attached to warranty / maintenance / return requests. */
+    String SERVICE_IMAGE_PATH = "/uploads/service/";
+
     /**
      * Stores a JPEG, PNG or WebP image (checked by its content, not its name) under a random file name.
      *
@@ -28,6 +31,11 @@ public interface ImageStorageService {
      * file name of ours, the file exists). Reviews accept only such URLs, never links to other sites.
      */
     boolean isStoredReviewImage(String url);
+
+    String storeServiceImage(MultipartFile file);
+
+    /** Same rule as isStoredReviewImage, for the after-sales photo folder. */
+    boolean isStoredServiceImage(String url);
 
     /**
      * Deletes the stored file behind {@code url} when it is one of our uploads; any other URL is ignored.

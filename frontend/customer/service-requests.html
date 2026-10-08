@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Yêu cầu dịch vụ - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer/account.css">
+
+    <link rel="stylesheet" href="../css/customer/orders.css">
+
+    <link rel="stylesheet" href="../css/customer/after-sales.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body data-account-page="service-requests">
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <span class="section-label">POY</span>
+
+            <h1>YÊU CẦU DỊCH VỤ</h1>
+
+            <p>Bảo hành, bảo trì và trả hàng bạn đã gửi. Gửi yêu cầu mới từ trang chi tiết đơn hàng đã giao.</p>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="container account-layout">
+
+            <div id="accountSidebarRoot"></div>
+
+
+            <div class="account-main">
+
+                <div class="service-filters">
+
+                    <select id="serviceTypeFilter" aria-label="Loại yêu cầu">
+                        <option value="">Tất cả loại yêu cầu</option>
+                        <option value="WARRANTY">Bảo hành</option>
+                        <option value="MAINTENANCE">Bảo trì</option>
+                        <option value="RETURN">Trả hàng</option>
+                    </select>
+
+                    <select id="serviceStatusFilter" aria-label="Trạng thái">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="PENDING">Chờ tiếp nhận / chờ duyệt</option>
+                        <option value="APPROVED">Đã duyệt</option>
+                        <option value="RECEIVED">Đã nhận máy / nhận hàng</option>
+                        <option value="PROCESSING">Đang xử lý</option>
+                        <option value="COMPLETED">Hoàn tất</option>
+                        <option value="REFUNDED">Đã hoàn tiền</option>
+                        <option value="REJECTED">Từ chối</option>
+                        <option value="CANCELLED">Đã huỷ</option>
+                    </select>
+
+                </div>
+
+                <div id="serviceRequestList">
+                    <!-- js/customer/service-requests.js render động -->
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/core/after-sales.js"></script>
+<script src="../js/customer/account-sidebar.js"></script>
+<script src="../js/customer/service-requests.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+
+</body>
+</html>

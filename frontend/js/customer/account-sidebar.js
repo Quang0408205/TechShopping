@@ -79,6 +79,10 @@ function renderAccountSidebar() {
                     Đơn hàng
                 </a>
 
+                <a href="${escapeHtml(siteUrl("customer/service-requests.html"))}" data-account-page="service-requests">
+                    Yêu cầu dịch vụ
+                </a>
+
                 <a href="${escapeHtml(siteUrl("customer/account.html#wishlist"))}" data-account-page="wishlist">
                     Yêu thích
                 </a>

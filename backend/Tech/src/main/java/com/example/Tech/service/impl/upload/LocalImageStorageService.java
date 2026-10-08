@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Stores uploaded images on the local disk ({@code app.upload.dir}/products and /reviews). File names are random
+ * Stores uploaded images on the local disk ({@code app.upload.dir}/products, /reviews and /service). File names are random
  * UUIDs, never the client's name, so a request cannot choose or overwrite a path.
  */
 @Slf4j
@@ -37,12 +37,16 @@ public class LocalImageStorageService implements ImageStorageService {
     private final String productUrlPrefix;
     private final Path reviewDirectory;
     private final String reviewUrlPrefix;
+    private final Path serviceDirectory;
+    private final String serviceUrlPrefix;
 
     public LocalImageStorageService(UploadProperties properties) {
         this.productDirectory = properties.rootDirectory().resolve("products");
         this.productUrlPrefix = properties.publicBaseUrl() + PRODUCT_IMAGE_PATH;
         this.reviewDirectory = properties.rootDirectory().resolve("reviews");
         this.reviewUrlPrefix = properties.publicBaseUrl() + REVIEW_IMAGE_PATH;
+        this.serviceDirectory = properties.rootDirectory().resolve("service");
+        this.serviceUrlPrefix = properties.publicBaseUrl() + SERVICE_IMAGE_PATH;
     }
 
     @Override
@@ -58,6 +62,17 @@ public class LocalImageStorageService implements ImageStorageService {
     @Override
     public boolean isStoredReviewImage(String url) {
         Path file = storedFile(url, reviewDirectory, reviewUrlPrefix);
+        return file != null && Files.isRegularFile(file);
+    }
+
+    @Override
+    public String storeServiceImage(MultipartFile file) {
+        return store(file, serviceDirectory, serviceUrlPrefix, "service");
+    }
+
+    @Override
+    public boolean isStoredServiceImage(String url) {
+        Path file = storedFile(url, serviceDirectory, serviceUrlPrefix);
         return file != null && Files.isRegularFile(file);
     }
 
@@ -95,6 +110,9 @@ public class LocalImageStorageService implements ImageStorageService {
         Path file = storedFile(url, productDirectory, productUrlPrefix);
         if (file == null) {
             file = storedFile(url, reviewDirectory, reviewUrlPrefix);
+        }
+        if (file == null) {
+            file = storedFile(url, serviceDirectory, serviceUrlPrefix);
         }
         if (file == null) {
             return;

@@ -123,6 +123,8 @@ document.addEventListener(
 
             renderOrder(order);
 
+            initOrderAfterSales(order);
+
         }
 
 
