@@ -69,9 +69,15 @@ docker compose up -d --build
 
 Mở trình duyệt vào **http://localhost:5510**.
 
-> **Dữ liệu có sẵn.** Lần chạy đầu tiên, Docker tự tạo database và nạp **4.288 sản phẩm mẫu** (crawl từ Thế Giới Di Động ngày 06/10/2026: danh mục, thương hiệu, phiên bản, ảnh, mô tả, thông số kỹ thuật, điểm đánh giá) từ `database/docker-init/03_seed_catalog.sql`. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
+> **Dữ liệu mẫu có sẵn.** Khi khởi tạo database Docker lần đầu, Docker chạy lần lượt schema, catalogue 4.288 sản phẩm từ `database/docker-init/03_seed_catalog.sql`, rồi dữ liệu local từ `database/docker-init/04_seed_local_sample_data.sql`. Seed hoạt động tạo 50 tài khoản khách hàng mẫu, 200 đơn (199 chờ xử lý và 1 đã giao), dữ liệu thanh toán, đánh giá mẫu, lịch trả góp, yêu cầu bảo trì, quan hệ sản phẩm và lịch sử tồn kho. Đây là dữ liệu giả lập, có dấu `SAMPLE-DATA`; không phải hoạt động khách hàng thật.
 >
 > Dữ liệu được lưu trong volume Docker `postgres_data`, nên tắt / mở máy hay `docker compose down` đều **không mất**. File seed chỉ được nạp khi database còn trống, nên không ghi đè dữ liệu bạn đã tạo.
+
+#### Đăng nhập tài khoản mẫu (chỉ local)
+
+50 tài khoản có username theo tên Việt không dấu, email dạng `username@example.test` và mật khẩu dùng chung `SampleOnly123!`. Một đơn mẫu đã giao để minh họa đánh giá/bảo trì; các đơn còn lại đang chờ xử lý. Tạo ADMIN riêng ở Bước 5 nếu cần.
+
+> Seed tự chạy **chỉ khi Docker khởi tạo một volume database mới, còn trống**. Nó không chạy lại trên volume hiện có khi restart hoặc pull code mới. Không xóa volume đang chứa dữ liệu để thử seed. Nếu cần bộ dữ liệu này trên DB khác, hãy tạo một database local riêng và khởi tạo mới; không chạy lại initializer trực tiếp trên DB đang có dữ liệu. Không dùng các tài khoản hay dữ liệu này trên production.
 
 ### Bước 5 (tuỳ chọn): Tạo tài khoản ADMIN đầu tiên
 
@@ -164,7 +170,7 @@ docker compose up -d backend
 > - Sản phẩm mẫu cũ có cùng trang TGDĐ được **cập nhật tại chỗ** (giữ id, nên giỏ hàng / đơn hàng / khuyến mãi / tồn kho đang trỏ tới vẫn đúng); sản phẩm cũ không còn trong dữ liệu mới bị **ẩn** (không xoá). Thương hiệu bị tách ("iPhone (Apple)", "MacBook"…) được gộp về tên chuẩn.
 > - Muốn crawl lại từ đầu: `python -m pip install -r requirements.txt`, `python -m playwright install chromium`, rồi `python Raw_data/crawler.py` và `python Raw_data/clean_data.py` trước khi import.
 
-> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 4.288 sản phẩm mẫu.
+> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 4.288 sản phẩm đã crawl.
 
 ---
 
@@ -217,6 +223,6 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 43 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `database/` | `techshopping.sql` (cấu trúc 43 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test và nạp catalogue sản phẩm) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |
