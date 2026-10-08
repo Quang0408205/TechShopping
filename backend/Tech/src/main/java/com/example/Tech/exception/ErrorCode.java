@@ -118,7 +118,11 @@ public enum ErrorCode {
 
     // Inventory
     INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),
-    ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước");
+    ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước"),
+
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),
+    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Bạn đã đánh giá sản phẩm này; hãy sửa đánh giá cũ");
 
     private final HttpStatus status;
     private final String defaultMessage;

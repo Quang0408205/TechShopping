@@ -145,7 +145,8 @@ document.addEventListener(
  */
 
 const LOGIN_REASON_MESSAGES = {
-    cart: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng."
+    cart: "Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng.",
+    review: "Vui lòng đăng nhập để viết đánh giá sản phẩm."
 };
 
 

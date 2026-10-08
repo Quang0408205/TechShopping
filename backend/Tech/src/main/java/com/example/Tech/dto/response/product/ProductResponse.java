@@ -35,6 +35,13 @@ public record ProductResponse(
         BigDecimal effectivePrice,
 
         @Schema(description = "Name of the promotion giving effectivePrice; null when no promotion applies")
-        String activePromotionName
+        String activePromotionName,
+
+        @Schema(description = "Rating on Thế Giới Di Động (crawled, display only); null when unknown. rating / "
+                + "totalReviews are this site's own visible reviews")
+        BigDecimal tgddRating,
+
+        @Schema(description = "Number of ratings behind tgddRating on Thế Giới Di Động (0 when unknown)")
+        Integer tgddReviewCount
 ) {
 }

@@ -783,6 +783,11 @@ img {
     color: var(--gray-500);
 }
 
+/* Điểm crawl từ Thế Giới Di Động (sản phẩm chưa có đánh giá trên POY): nhạt hơn điểm thật */
+.product-rating--tgdd {
+    color: var(--gray-500);
+}
+
 .product-price-old {
     margin-left: 8px;
 

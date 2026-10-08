@@ -1297,3 +1297,116 @@ button.admin-badge {
 .admin-stat-grid--compact {
     grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
+
+
+/* ================= ĐÁNH GIÁ SẢN PHẨM (admin/reviews) — R5 ================= */
+
+/* Nhãn "Sản phẩm: … ×" trên thanh lọc */
+.admin-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 6px 6px 6px 12px;
+
+    border-radius: var(--radius-full);
+    background: var(--gray-100);
+
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.admin-filter-chip[hidden] {
+    display: none;
+}
+
+.admin-filter-chip span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-filter-chip button {
+    width: 22px;
+    height: 22px;
+
+    border: none;
+    border-radius: 50%;
+    background: var(--gray-300);
+
+    font-size: 14px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.admin-filter-chip button:hover {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.admin-review-cell {
+    min-width: 240px;
+}
+
+.admin-review-stars {
+    display: block;
+    color: var(--color-warning);
+    letter-spacing: 1px;
+}
+
+.admin-review-stars-off {
+    color: var(--gray-300);
+}
+
+.admin-review-excerpt {
+    display: block;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+/* Đánh giá đã ẩn: mờ đi, cột thao tác giữ nguyên độ đậm */
+.admin-review-row--hidden td:not(.admin-actions-cell) {
+    opacity: 0.6;
+}
+
+.admin-review-comment {
+    margin: 0 0 12px;
+    color: var(--color-ink);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.admin-review-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.admin-review-photos a {
+    display: block;
+    width: 72px;
+    height: 72px;
+
+    overflow: hidden;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+}
+
+.admin-review-photos img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.admin-review-hide-box .form-error {
+    margin: -15px 0 20px;
+}
+
+.admin-filter-bar #reviewKeyword {
+    width: 320px;
+    max-width: 100%;
+}

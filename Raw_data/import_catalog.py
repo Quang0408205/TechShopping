@@ -7,6 +7,9 @@ Lần chạy đầu trên database có catalogue seed cũ (877 sản phẩm, xem
   * sản phẩm cũ không còn trong CSV bị ẩn (is_active = false), không xoá;
   * thương hiệu bị tách ("iPhone (Apple)", "MacBook"...) được gộp về tên chuẩn, thương hiệu
     không còn sản phẩm đang bán bị ẩn.
+Điểm / số lượt đánh giá của TGDĐ ghi vào products.tgdd_rating / tgdd_review_count (chỉ để hiển thị);
+products.rating / total_reviews là đánh giá thật trên web, importer không đụng tới
+(cần migration database/migrations/product_tgdd_rating.sql với database cũ).
 Mọi thứ chạy trong một transaction; --dry-run chạy hết rồi rollback để xem trước số liệu.
 """
 
@@ -80,7 +83,7 @@ REQUIRED_COLUMNS = {
     "brands": {"brand_id", "name", "slug", "is_active"},
     "products": {
         "product_id", "name", "slug", "sku", "description", "brand_id", "category_id",
-        "base_price", "rating", "total_reviews", "is_active", "updated_at",
+        "base_price", "tgdd_rating", "tgdd_review_count", "is_active", "updated_at",
     },
     "product_variants": {
         "variant_id", "product_id", "variant_name", "sku_variant", "price",
@@ -518,7 +521,8 @@ class Importer:
                     name = %s, sku = %s,
                     description = COALESCE(%s, description),
                     brand_id = %s, category_id = %s, base_price = %s,
-                    rating = COALESCE(%s, rating), total_reviews = COALESCE(%s, total_reviews),
+                    tgdd_rating = COALESCE(%s, tgdd_rating),
+                    tgdd_review_count = COALESCE(%s, tgdd_review_count),
                     updated_at = current_timestamp
                 WHERE product_id = %s
                 """,
@@ -528,8 +532,9 @@ class Importer:
             cursor.execute(
                 """
                 INSERT INTO products
-                    (name, slug, sku, description, brand_id, category_id, base_price, rating, total_reviews)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, COALESCE(%s, 0), COALESCE(%s, 0))
+                    (name, slug, sku, description, brand_id, category_id, base_price,
+                     tgdd_rating, tgdd_review_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, 0))
                 RETURNING product_id
                 """,
                 (name, unique_slug(cursor, name, source_key), sku, description, brand_id,
@@ -700,6 +705,9 @@ class Importer:
 
 
 def main():
+    # Console Windows mặc định không phải UTF-8: in tiếng Việt sẽ lỗi UnicodeEncodeError
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Import catalogue TGDĐ vào database TechShopping.")
     parser.add_argument("--dry-run", action="store_true", help="chạy hết rồi rollback, chỉ in số liệu")
     args = parser.parse_args()

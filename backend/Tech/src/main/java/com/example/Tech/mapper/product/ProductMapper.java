@@ -82,7 +82,9 @@ public class ProductMapper {
                 product.getUpdatedAt(),
                 primaryImageUrl,
                 price.unitPrice(),
-                price.activePromotionName()
+                price.activePromotionName(),
+                product.getTgddRating(),
+                product.getTgddReviewCount()
         );
     }
 }

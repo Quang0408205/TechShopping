@@ -115,6 +115,9 @@
 
                 <p class="detail-meta" id="detailMeta"></p>
 
+                <!-- Điểm đánh giá (thật, chưa có thì Thế Giới Di Động); bấm → tab Đánh giá -->
+                <button type="button" class="detail-rating-link" id="detailRating" hidden></button>
+
 
                 <div class="detail-price-box">
                     <span class="detail-price" id="detailPrice"></span>
@@ -174,13 +177,14 @@
         </div>
 
 
-        <!-- ================= TABS: THÔNG SỐ / MÔ TẢ ================= -->
+        <!-- ================= TABS: THÔNG SỐ / MÔ TẢ / ĐÁNH GIÁ ================= -->
 
         <div class="detail-tabs">
 
             <div class="tab-buttons" role="tablist">
                 <button type="button" class="tab-btn active" data-tab="specs" role="tab">THÔNG SỐ KỸ THUẬT</button>
                 <button type="button" class="tab-btn" data-tab="description" role="tab">MÔ TẢ SẢN PHẨM</button>
+                <button type="button" class="tab-btn" data-tab="reviews" role="tab">ĐÁNH GIÁ (<span id="reviewsTabCount">0</span>)</button>
             </div>
 
             <div class="tab-panel active" data-tab-panel="specs" role="tabpanel">
@@ -189,6 +193,33 @@
 
             <div class="tab-panel" data-tab-panel="description" role="tabpanel">
                 <p id="detailDescription"></p>
+            </div>
+
+            <!-- Đánh giá của khách (js/customer/product-reviews.js): chỉ số thật, không bịa phân bố sao -->
+            <div class="tab-panel reviews-panel" data-tab-panel="reviews" role="tabpanel">
+
+                <div class="review-overview">
+
+                    <div class="review-score">
+                        <strong id="reviewAverage">0.0</strong>
+                        <span class="review-stars" id="reviewAverageStars" aria-hidden="true"></span>
+                        <span id="reviewTotal">Chưa có đánh giá</span>
+                    </div>
+
+                    <ul class="review-bars" id="reviewBars" aria-label="Số đánh giá theo số sao"></ul>
+
+                </div>
+
+                <p class="review-tgdd" id="reviewTgdd" hidden></p>
+
+                <div class="review-mine" id="reviewMine"></div>
+
+                <div class="review-filters" id="reviewFilters" role="group" aria-label="Lọc đánh giá"></div>
+
+                <div class="review-list" id="reviewList" aria-live="polite"></div>
+
+                <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>XEM THÊM ĐÁNH GIÁ</button>
+
             </div>
 
         </div>
@@ -220,6 +251,7 @@
 <script src="../js/core/cart-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
+<script src="../js/customer/product-reviews.js"></script>
 <script src="../js/customer/product-detail.js"></script>
 
 <script src="../js/customer/chatbot.js"></script>

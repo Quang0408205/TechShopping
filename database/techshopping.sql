@@ -96,8 +96,10 @@ create table products (
     sku varchar(50) unique,
     weight decimal(10, 2),
     warranty_months int default 12,
-    rating decimal(3, 2) default 0,
-    total_reviews int default 0,
+    rating decimal(3, 2) default 0,          -- điểm trung bình đánh giá thật (bảng reviews, đang hiện)
+    total_reviews int default 0,             -- số đánh giá thật đang hiện
+    tgdd_rating decimal(3, 2),               -- điểm trên Thế Giới Di Động (crawl, chỉ hiển thị)
+    tgdd_review_count int not null default 0, -- số lượt đánh giá trên Thế Giới Di Động (crawl)
     view_count int default 0,
     is_active boolean default true,
     created_at timestamp default current_timestamp,

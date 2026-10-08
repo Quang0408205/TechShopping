@@ -10,12 +10,24 @@ public interface ImageStorageService {
     /** Public path prefix of uploaded product images (served by UploadConfig). */
     String PRODUCT_IMAGE_PATH = "/uploads/products/";
 
+    /** Public path prefix of photos attached to product reviews. */
+    String REVIEW_IMAGE_PATH = "/uploads/reviews/";
+
     /**
      * Stores a JPEG, PNG or WebP image (checked by its content, not its name) under a random file name.
      *
      * @return the absolute public URL of the stored file
      */
     String storeProductImage(MultipartFile file);
+
+    /** Same checks as storeProductImage, stored under the review photo folder. */
+    String storeReviewImage(MultipartFile file);
+
+    /**
+     * True when {@code url} is a review photo this server stored and still has on disk (our prefix, a random
+     * file name of ours, the file exists). Reviews accept only such URLs, never links to other sites.
+     */
+    boolean isStoredReviewImage(String url);
 
     /**
      * Deletes the stored file behind {@code url} when it is one of our uploads; any other URL is ignored.

@@ -3,7 +3,7 @@
     Được js/core/layout.js chèn vào <div data-include="admin-sidebar" data-active="..."></div>.
     {{ROOT}} được thay bằng đường dẫn gốc của website; data-page khớp data-active để tô đậm mục đang xem.
     data-roles: vai trò được thấy mục này; js/admin/admin-layout.js ẩn các mục không khớp.
-    "Người dùng", "Sản phẩm" (B2), "Đơn hàng" (Phase 4), "Trả góp" (Phase 5), "Khuyến mãi", "Chi nhánh", "Nhân viên" và "Tồn kho" (Phase 7) dùng API thật; các mục còn lại chạy dữ liệu mẫu tới Phase 6–10.
+    "Người dùng", "Sản phẩm" (B2), "Đơn hàng" (Phase 4), "Trả góp" (Phase 5), "Khuyến mãi", "Chi nhánh", "Nhân viên", "Tồn kho" (Phase 7) và "Đánh giá" dùng API thật; các mục còn lại chạy dữ liệu mẫu tới Phase 6–10.
 -->
 <aside class="admin-sidebar" id="adminSidebar">
 
@@ -60,6 +60,10 @@
 
         <a href="{{ROOT}}admin/products.html" data-page="products" data-roles="ADMIN">
             Sản phẩm
+        </a>
+
+        <a href="{{ROOT}}admin/reviews.html" data-page="reviews" data-roles="ADMIN">
+            Đánh giá
         </a>
 
         <a href="{{ROOT}}admin/promotions.html" data-page="promotions" data-roles="ADMIN">
