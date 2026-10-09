@@ -574,6 +574,7 @@ body.buy-bar-open .chatbot-widget {
 @media (max-width: 1000px) {
 
     .product-detail-layout {
+        grid-template-columns: minmax(0, 1fr);
         gap: var(--space-4);
     }
 

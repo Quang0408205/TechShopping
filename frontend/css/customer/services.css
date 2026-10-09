@@ -224,6 +224,10 @@ a.svc-card:hover {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .faq-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .faq-layout .section-heading,
     .faq-list {
         grid-column: 1 / -1;

@@ -853,6 +853,10 @@
         grid-template-columns: 1fr;
     }
 
+    .services-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .services-layout .section-heading,
     .services-preview .service-grid {
         grid-column: 1 / -1;
