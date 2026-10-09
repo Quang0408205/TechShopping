@@ -159,43 +159,6 @@ img {
 }
 
 
-/* ================= HEADER ================= */
-
-.header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-
-    background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid transparent;
-
-    transition:
-        background-color var(--duration-base) var(--ease-standard),
-        border-color var(--duration-base) var(--ease-standard),
-        box-shadow var(--duration-base) var(--ease-standard);
-}
-
-/* main.js thêm class này khi cuộn xuống — hiệu ứng "kính mờ" tinh tế thay vì nền phẳng cố định */
-.header.is-scrolled {
-    background: rgba(255, 255, 255, 0.85);
-    border-bottom-color: var(--gray-200);
-
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-
-    box-shadow: var(--shadow-sm);
-}
-
-.header-inner {
-    min-height: 85px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
-}
-
-
 /* ================= LOGO ================= */
 
 .logo {
@@ -216,195 +179,6 @@ img {
     letter-spacing: 1.8px;
     margin-top: 5px;
     white-space: nowrap;
-}
-
-
-/* ================= NAV ================= */
-
-.nav {
-    display: flex;
-    align-items: center;
-    gap: 35px;
-}
-
-.nav a {
-    position: relative;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    transition: color var(--duration-base) var(--ease-standard);
-}
-
-.nav a:hover {
-    color: var(--color-accent);
-}
-
-.nav a::after {
-    content: "";
-
-    position: absolute;
-    left: 0;
-    bottom: -8px;
-
-    width: 0;
-    height: 2px;
-
-    background: var(--color-accent);
-
-    transition: width var(--duration-base) var(--ease-standard);
-}
-
-.nav a:hover::after,
-.nav a.active::after {
-    width: 100%;
-}
-
-.nav a.active {
-    color: var(--color-accent);
-}
-
-
-/* ================= HEADER ACTION ================= */
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.cart-btn {
-    position: relative;
-
-    width: 42px;
-    height: 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid var(--gray-300);
-    border-radius: 50%;
-
-    transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
-}
-
-.cart-btn:hover {
-    border-color: var(--color-ink);
-    transform: translateY(-1px);
-}
-
-.cart-count {
-    position: absolute;
-
-    top: -5px;
-    right: -5px;
-
-    width: 18px;
-    height: 18px;
-
-    background: var(--color-accent);
-    color: #fff;
-
-    border-radius: 50%;
-
-    font-size: 10px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    transition: transform var(--duration-fast) var(--ease-standard);
-}
-
-/* main.js thêm/xoá class này khi số lượng giỏ hàng thay đổi (bounce nhẹ, không "nảy" quá đà) */
-.cart-count.bump {
-    transform: scale(1.35);
-}
-
-/* ---- Hiệu ứng "bay vào giỏ hàng" (flyToCart trong main.js) ---- */
-
-.cart-flyer {
-    position: fixed;
-    z-index: 5000;
-
-    pointer-events: none;
-
-    object-fit: contain;
-
-    background: #fff;
-    border-radius: var(--radius-md);
-
-    box-shadow: var(--shadow-lg);
-
-    will-change: transform, opacity;
-}
-
-/* Chưa có ảnh: một chấm màu nhấn bay thay */
-.cart-flyer-dot {
-    border-radius: 50%;
-
-    background: var(--color-accent);
-}
-
-/* Icon giỏ hàng "nhận" sản phẩm: lắc nhẹ + viền màu nhấn */
-.cart-btn.cart-receive {
-    border-color: var(--color-accent);
-
-    animation: cart-receive 450ms var(--ease-standard);
-}
-
-@keyframes cart-receive {
-
-    0% { transform: scale(1); }
-    30% { transform: scale(1.18) rotate(-8deg); }
-    60% { transform: scale(0.95) rotate(5deg); }
-    100% { transform: scale(1) rotate(0); }
-
-}
-
-.login-btn {
-    padding: 12px 20px;
-
-    background: var(--color-ink);
-    color: #fff;
-
-    border-radius: var(--radius-md);
-
-    font-size: 12px;
-    font-weight: 600;
-
-    transition: background-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
-}
-
-.login-btn:hover {
-    background: var(--gray-800);
-    transform: translateY(-1px);
-}
-
-/* Khi đã đăng nhập: tên người dùng + nút đăng xuất (main.js) */
-
-.login-btn.user-name {
-    max-width: 180px;
-
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.login-btn.logout-btn {
-    background: #fff;
-    color: var(--color-ink);
-
-    border: 1px solid var(--color-ink);
-
-    cursor: pointer;
-}
-
-.login-btn.logout-btn:hover {
-    background: var(--color-ink);
-    color: #fff;
-    transform: none;
 }
 
 
@@ -1009,79 +783,9 @@ img {
 }
 
 
-/* ================= FOOTER ================= */
-
-.footer {
-    background: #111;
-    color: #fff;
-
-    padding-top: 80px;
-}
-
-.footer-grid {
-    display: grid;
-
-    grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
-
-    gap: 50px;
-
-    padding-bottom: 70px;
-}
-
-.footer-brand p {
-    max-width: 350px;
-
-    margin-top: 25px;
-
-    color: #888;
-
-    font-size: 13px;
-}
-
-.footer-column {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.footer-column h4 {
-    font-size: 11px;
-    letter-spacing: 2px;
-
-    margin-bottom: 10px;
-}
-
-.footer-column a,
-.footer-column p {
-    color: #888;
-    font-size: 12px;
-
-    transition: 0.3s;
-}
-
-.footer-column a:hover {
-    color: #fff;
-}
-
-.footer-bottom {
-    padding: 25px 0;
-
-    border-top: 1px solid #292929;
-}
-
-.footer-bottom p {
-    color: #666;
-    font-size: 11px;
-}
-
-
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 1000px) {
-
-    .nav {
-        gap: 15px;
-    }
 
     .benefits-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -1095,49 +799,18 @@ img {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .footer-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
 }
 
 @media (max-width: 700px) {
-
-    .header-inner {
-        flex-wrap: wrap;
-
-        padding: 15px 0;
-    }
-
-    .nav {
-        order: 3;
-
-        width: 100%;
-
-        justify-content: center;
-
-        overflow-x: auto;
-
-        padding-bottom: 5px;
-    }
-
-    .nav a {
-        white-space: nowrap;
-    }
 
     .page-hero h1 {
         font-size: 45px;
     }
 
-    .login-btn {
-        display: none;
-    }
-
     .benefits-grid,
     .category-grid,
     .product-grid,
-    .service-grid,
-    .footer-grid {
+    .service-grid {
         grid-template-columns: 1fr;
     }
 
@@ -1152,66 +825,6 @@ img {
     .ai-content h2,
     .cta h2 {
         font-size: 35px;
-    }
-
-}
-
-
-/* ================= TÌM KIẾM (HEADER) ================= */
-
-/* Ô tìm kiếm trong partials/header.html, xử lý submit ở js/core/main.js */
-
-.search-form {
-    display: flex;
-    align-items: center;
-    height: 42px;
-    padding: 0 6px 0 16px;
-    border: 1px solid #ddd;
-    border-radius: 21px;
-    background: #fff;
-    transition: 0.3s;
-}
-
-.search-form:focus-within {
-    border-color: #111;
-}
-
-.search-form input {
-    width: 150px;
-    border: none;
-    outline: none;
-    background: transparent;
-    font-family: inherit;
-    font-size: 12px;
-}
-
-.search-form button {
-    width: 32px;
-    height: 32px;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    cursor: pointer;
-}
-
-@media (max-width: 1200px) {
-
-    .search-form input {
-        width: 100px;
-    }
-
-}
-
-@media (max-width: 700px) {
-
-    .search-form {
-        order: 2;
-        width: 100%;
-        margin: 10px 0;
-    }
-
-    .search-form input {
-        width: 100%;
     }
 
 }
