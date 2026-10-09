@@ -128,7 +128,7 @@ document.addEventListener(
             button.disabled = loading;
 
             button.textContent =
-                loading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP";
+                loading ? "Đang đăng nhập..." : "Đăng nhập";
 
         }
 

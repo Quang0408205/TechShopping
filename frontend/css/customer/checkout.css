@@ -1,182 +1,246 @@
-/* ================= BỐ CỤC ================= */
+/* ================= THANH TOÁN ================= */
 
 .checkout-layout {
     display: grid;
-
-    grid-template-columns: 1.4fr 1fr;
-
-    gap: 60px;
-
-    align-items: flex-start;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: var(--space-5);
+    align-items: start;
 }
 
 
-/* ================= FORM (dùng lại kiểu .contact-form) ================= */
+/* ---- Form ---- */
 
 .checkout-form {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-1);
+
+    padding: var(--space-4);
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    background: #fff;
 }
 
-.checkout-form label {
-    margin-top: 15px;
+.checkout-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-    font-size: 11px;
+    margin-bottom: var(--space-1);
+
+    font-size: 18px;
     font-weight: 600;
 }
 
-.checkout-form input,
-.checkout-form textarea {
-    width: 100%;
+.checkout-heading span {
+    width: 28px;
+    height: 28px;
 
-    padding: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: var(--color-ink);
+    color: #fff;
 
-    outline: none;
-
-    resize: vertical;
-
-    font-family: inherit;
-}
-
-.checkout-form input:focus,
-.checkout-form textarea:focus {
-    border-color: #111;
+    font-size: 13px;
 }
 
 .checkout-section-spacer {
-    margin-top: 40px;
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+
+    border-top: 1px solid var(--gray-200);
+}
+
+.checkout-form label {
+    margin-top: 12px;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.checkout-form input,
+.checkout-form textarea,
+.checkout-form select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 14px;
+
+    border: 1px solid var(--gray-300);
+    background: #fff;
+
+    outline: none;
+
+    font-size: 15px;
+}
+
+.checkout-form textarea {
+    resize: vertical;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus,
+.checkout-form select:focus {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 3px var(--gray-200);
+}
+
+.checkout-form .field-error {
+    font-size: 13px;
 }
 
 
-/* ================= PHƯƠNG THỨC THANH TOÁN ================= */
+/* ---- Thẻ chọn: hình thức nhận hàng / phương thức thanh toán ---- */
 
 .payment-methods {
-    display: flex;
-    flex-direction: column;
-
+    display: grid;
     gap: 12px;
+}
+
+.delivery-types {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .payment-method {
     display: flex;
     align-items: flex-start;
-    gap: 14px;
+    gap: 12px;
 
-    padding: 18px 20px;
+    padding: var(--space-2);
 
-    border: 1px solid #ddd;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
 
     cursor: pointer;
 
-    transition: 0.3s;
+    transition: border-color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
+}
+
+.payment-method:hover {
+    border-color: var(--gray-500);
 }
 
 .payment-method:has(input:checked) {
-    border-color: #111;
-    background: #f6f6f6;
+    border-color: var(--color-ink);
+    background: var(--surface-warm);
+    box-shadow: inset 0 0 0 1px var(--color-ink);
 }
 
-/* .checkout-form input (ô chữ) cũng khớp radio: trả lại kích thước gốc */
-.payment-method input {
+/* Ô chữ của form cũng khớp radio: trả lại kích thước gốc */
+.checkout-form .payment-method input {
     flex: none;
 
-    width: auto;
+    width: 18px;
+    min-height: 0;
+    height: 18px;
 
-    margin-top: 4px;
+    margin: 2px 0 0;
     padding: 0;
 
-    accent-color: #111;
+    box-shadow: none;
+
+    accent-color: var(--color-ink);
 }
 
 .payment-method strong {
     display: block;
 
-    font-size: 13px;
+    margin-bottom: 2px;
 
-    margin-bottom: 4px;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .payment-method small {
-    color: #777;
-    font-size: 12px;
+    color: var(--text-muted);
+
+    font-size: 13px;
+    line-height: 1.5;
 }
-
-.installment-note {
-    margin-top: 15px;
-
-    padding: 14px 16px;
-
-    background: #fdf7e8;
-
-    border-left: 3px solid #d99a00;
-
-    color: #7a5b00;
-    font-size: 12px;
-}
-
-/* ================= PHASE 5: HỒ SƠ TRẢ GÓP ================= */
 
 .payment-method.is-disabled {
     cursor: not-allowed;
 
-    opacity: 0.55;
+    opacity: 0.6;
 }
 
 .payment-method.is-disabled small {
     color: var(--color-warning);
 }
 
+
+/* ---- Hồ sơ trả góp ---- */
+
 .installment-box {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: var(--space-1);
 
-    margin-top: 15px;
-    padding: 20px;
+    margin-top: 12px;
+    padding: var(--space-3);
 
-    border: 1px solid #111;
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-md);
 }
 
-.installment-box .installment-note {
-    margin-top: 0;
-}
+.installment-note {
+    padding: 12px 14px;
 
-.checkout-form select {
-    width: 100%;
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
 
-    padding: 15px;
-
-    border: 1px solid #ddd;
-    background: #fff;
-
-    outline: none;
-
-    font-family: inherit;
-    font-size: 13px;
-}
-
-.checkout-form select:focus {
-    border-color: #111;
+    font-size: 14px;
 }
 
 .installment-preview {
     padding: 12px 14px;
 
+    border-radius: var(--radius-sm);
     background: var(--gray-100);
 
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.6;
 }
 
+
+/* ---- Ô địa chỉ / cửa hàng (Phase 7) ---- */
+
+.checkout-delivery-fields {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.checkout-delivery-fields[hidden] {
+    display: none;
+}
+
+.pickup-store-info {
+    padding: 12px 14px;
+
+    border-radius: var(--radius-sm);
+    background: var(--gray-100);
+
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.pickup-store-info strong {
+    display: block;
+}
+
 .checkout-submit {
-    margin-top: 30px;
-
     width: 100%;
+    min-height: 54px;
 
-    border: none;
+    margin-top: var(--space-4);
+
+    font-size: 16px;
 
     cursor: pointer;
 }
@@ -188,64 +252,77 @@
 }
 
 
-/* ================= TÓM TẮT ĐƠN HÀNG ================= */
+/* ---- Tóm tắt đơn (dính khi cuộn) ---- */
 
 .checkout-summary {
     position: sticky;
-    top: 105px;
+    top: 96px;
 
-    padding: 35px;
+    padding: var(--space-3);
 
-    background: #f4f4f4;
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+}
+
+.checkout-summary-title {
+    font-size: 18px;
+    font-weight: 600;
 }
 
 .checkout-items {
     display: flex;
     flex-direction: column;
+    gap: var(--space-2);
 
-    gap: 18px;
+    max-height: 360px;
+    overflow-y: auto;
 
-    margin: 25px 0;
+    margin: var(--space-2) 0;
+    padding-bottom: var(--space-2);
 
-    padding-bottom: 25px;
-
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--surface-warm-strong);
 }
 
 .checkout-item {
     display: flex;
     align-items: center;
-
-    gap: 15px;
+    gap: 12px;
 }
 
 .checkout-item img {
-    width: 60px;
-    height: 60px;
+    width: 56px;
+    height: 56px;
 
-    object-fit: cover;
+    flex-shrink: 0;
 
-    background: #eee;
+    padding: 4px;
+
+    border-radius: var(--radius-md);
+    background: #fff;
+
+    object-fit: contain;
 }
 
 .checkout-item-info {
     flex: 1;
+    min-width: 0;
 }
 
 .checkout-item-name {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
+    line-height: 1.4;
 }
 
 .checkout-item-variant {
-    margin-top: 3px;
+    margin-top: 2px;
 
-    color: #888;
-    font-size: 11px;
+    color: var(--text-muted);
+    font-size: 13px;
 }
 
 .checkout-item-price {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
 
     white-space: nowrap;
@@ -254,21 +331,26 @@
 .checkout-total-row {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
 
-    margin-bottom: 15px;
+    margin-bottom: 12px;
 
-    font-size: 13px;
+    font-size: 14px;
 }
 
 .checkout-total-final {
-    font-size: 18px;
+    margin: var(--space-2) 0 0;
+    padding-top: var(--space-2);
+
+    border-top: 1px solid var(--surface-warm-strong);
+
+    font-size: 16px;
+    font-weight: 600;
+}
+
+#checkoutTotal {
+    font-size: 24px;
     font-weight: 700;
-
-    margin-top: 20px;
-
-    padding-top: 20px;
-
-    border-top: 1px solid #ddd;
 }
 
 
@@ -286,29 +368,14 @@
 
 }
 
+@media (max-width: 700px) {
 
-/* ================= PHASE 7: HÌNH THỨC NHẬN HÀNG ================= */
+    .checkout-form {
+        padding: var(--space-2);
+    }
 
-/* Ô địa chỉ / ô chọn cửa hàng: giữ khoảng cách như các ô khác của form */
-.checkout-delivery-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+    .delivery-types {
+        grid-template-columns: 1fr;
+    }
 
-.checkout-delivery-fields[hidden] {
-    display: none;
-}
-
-.pickup-store-info {
-    padding: 12px 14px;
-
-    background: var(--gray-100);
-
-    font-size: 12px;
-    line-height: 1.6;
-}
-
-.pickup-store-info strong {
-    display: block;
 }

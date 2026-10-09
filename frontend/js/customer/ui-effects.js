@@ -35,6 +35,8 @@
 
     setupBuyBar();
 
+    setupPasswordToggles();
+
 
     function reducedMotion() {
 
@@ -854,6 +856,39 @@
 
         barBuy.addEventListener("click", function () {
             buyButton.click();
+        });
+
+    }
+
+
+    /* ---------- Hiện / ẩn mật khẩu (trang đăng nhập, đăng ký) ---------- */
+
+    function setupPasswordToggles() {
+
+        document.querySelectorAll(".password-field").forEach(function (field) {
+
+            const input = field.querySelector("input");
+
+            const button = field.querySelector(".password-toggle");
+
+            if (!input || !button) {
+                return;
+            }
+
+            button.addEventListener("click", function () {
+
+                const show = input.type === "password";
+
+                input.type = show ? "text" : "password";
+
+                button.setAttribute("aria-pressed", String(show));
+
+                button.setAttribute("aria-label", show ? "Ẩn mật khẩu" : "Hiện mật khẩu");
+
+                input.focus();
+
+            });
+
         });
 
     }
