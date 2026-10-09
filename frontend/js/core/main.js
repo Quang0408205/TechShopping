@@ -163,7 +163,7 @@ function setupHeaderScrollEffect() {
  */
 
 const SCROLL_REVEAL_SELECTOR =
-    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid";
+    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid, .promo-grid, .review-grid";
 
 
 function setupScrollReveal() {
