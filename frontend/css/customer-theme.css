@@ -1,0 +1,119 @@
+/* ================= THEME KHU VỰC KHÁCH HÀNG ================= */
+
+/*
+ * Chỉ nạp ở index.html, customer/*, auth/* (ngay sau style.css). Trang admin/
+ * không nạp file này, nên đổi token / component ở đây không ảnh hưởng admin.
+ * Giữ đen - trắng - đồng; thêm nền kem ấm và một màu nhấn cho khuyến mãi.
+ */
+
+:root {
+
+    --surface-warm: #f5f1ea;
+    --surface-warm-strong: #ebe4d8;
+    --surface-ink: #111318;
+    --surface-ink-raised: #1c1e24;
+
+    /* Khuyến mãi: 5.6:1 trên nền trắng */
+    --color-promo: #c4281c;
+    --color-promo-soft: #fbeceb;
+
+    /* Chữ phụ đạt ≥ 4.5:1 (trên trắng / kem và trên nền tối) */
+    --text-muted: #5f5f68;
+    --text-on-dark: #f4f4f5;
+    --text-on-dark-muted: #b4b4bd;
+
+    --font-sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+
+    /* Thang khoảng cách 8px */
+    --space-1: 8px;
+    --space-2: 16px;
+    --space-3: 24px;
+    --space-4: 32px;
+    --space-5: 40px;
+    --space-6: 48px;
+    --space-8: 64px;
+    --space-10: 80px;
+    --space-12: 96px;
+
+    /* Bo góc vừa phải hơn bản cũ (16px) */
+    --radius-lg: 12px;
+
+    --gutter: 24px;
+    --container-max: 1280px;
+
+}
+
+
+body {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+}
+
+::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+}
+
+.container {
+    width: calc(100% - var(--gutter) * 2);
+    max-width: var(--container-max);
+}
+
+.section {
+    padding: var(--space-12) 0;
+}
+
+
+/* ================= TIÊU ĐỀ SECTION ================= */
+
+.section-heading {
+    margin-bottom: var(--space-5);
+}
+
+.section-label {
+    margin-bottom: var(--space-1);
+
+    font-size: 12px;
+    letter-spacing: 0.14em;
+}
+
+.section-heading h2 {
+    font-size: clamp(26px, 2.6vw, 36px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+
+    margin-bottom: var(--space-1);
+}
+
+.section-heading p {
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+
+@media (max-width: 700px) {
+
+    :root {
+        --gutter: 16px;
+    }
+
+    .section {
+        padding: var(--space-8) 0;
+    }
+
+    .section-heading h2 {
+        font-size: 26px;
+    }
+
+}
