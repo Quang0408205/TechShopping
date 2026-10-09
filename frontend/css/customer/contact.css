@@ -233,6 +233,10 @@
 
 @media (max-width: 1000px) {
 
+    .contact-page .contact-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
     .contact-page .contact-info,
     .contact-page .contact-form {
         grid-column: 1 / -1;
