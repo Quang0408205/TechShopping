@@ -25,6 +25,10 @@
 
     });
 
+    setupHeroCarousel();
+
+    setupWeekCountdown();
+
 
     function reducedMotion() {
 
@@ -332,6 +336,224 @@
             });
 
         });
+
+    }
+
+
+    /* ---------- Carousel hero (trang chủ) ---------- */
+
+    function setupHeroCarousel() {
+
+        const hero = document.querySelector(".hero[aria-roledescription='carousel']");
+
+        if (!hero) {
+            return;
+        }
+
+        const slides = Array.from(hero.querySelectorAll(".hero-slide"));
+
+        const dots = Array.from(hero.querySelectorAll("[data-hero-dot]"));
+
+        const INTERVAL = 6500;
+
+        let current = 0;
+
+        let timer = null;
+
+        let paused = false;
+
+
+        function show(index) {
+
+            current = (index + slides.length) % slides.length;
+
+            slides.forEach(function (slide, i) {
+
+                const active = i === current;
+
+                slide.classList.toggle("is-active", active);
+
+                slide.setAttribute("aria-hidden", String(!active));
+
+                slide.querySelectorAll("a, button").forEach(function (control) {
+                    control.tabIndex = active ? 0 : -1;
+                });
+
+            });
+
+            dots.forEach(function (dot, i) {
+
+                if (i === current) {
+                    dot.setAttribute("aria-current", "true");
+                } else {
+                    dot.removeAttribute("aria-current");
+                }
+
+            });
+
+        }
+
+        function schedule() {
+
+            clearTimeout(timer);
+
+            if (!paused && !reducedMotion() && !document.hidden) {
+
+                timer = setTimeout(function () {
+                    show(current + 1);
+                    schedule();
+                }, INTERVAL);
+
+            }
+
+        }
+
+        function go(index) {
+
+            show(index);
+
+            schedule();
+
+        }
+
+
+        hero.querySelector("[data-hero-prev]").addEventListener("click", function () { go(current - 1); });
+
+        hero.querySelector("[data-hero-next]").addEventListener("click", function () { go(current + 1); });
+
+        dots.forEach(function (dot) {
+
+            dot.addEventListener("click", function () {
+                go(Number(dot.dataset.heroDot));
+            });
+
+        });
+
+        hero.addEventListener("keydown", function (event) {
+
+            if (event.key === "ArrowLeft") {
+                go(current - 1);
+            }
+
+            if (event.key === "ArrowRight") {
+                go(current + 1);
+            }
+
+        });
+
+
+        function pause() {
+            paused = true;
+            clearTimeout(timer);
+        }
+
+        function resume() {
+            paused = false;
+            schedule();
+        }
+
+        hero.addEventListener("mouseenter", pause);
+
+        hero.addEventListener("mouseleave", resume);
+
+        hero.addEventListener("focusin", pause);
+
+        hero.addEventListener("focusout", function (event) {
+
+            if (!hero.contains(event.relatedTarget)) {
+                resume();
+            }
+
+        });
+
+        document.addEventListener("visibilitychange", schedule);
+
+
+        let startX = null;
+
+        hero.addEventListener("pointerdown", function (event) {
+
+            if (event.pointerType !== "mouse") {
+                startX = event.clientX;
+            }
+
+        });
+
+        hero.addEventListener("pointerup", function (event) {
+
+            if (startX === null) {
+                return;
+            }
+
+            const distance = event.clientX - startX;
+
+            startX = null;
+
+            if (Math.abs(distance) > 40) {
+                go(current + (distance < 0 ? 1 : -1));
+            }
+
+        });
+
+
+        show(0);
+
+        schedule();
+
+    }
+
+
+    /* ---------- Đếm ngược tới 23:59:59 Chủ nhật (MOCK: chưa có API ưu đãi) ---------- */
+
+    function setupWeekCountdown() {
+
+        const box = document.querySelector("[data-countdown-week]");
+
+        if (!box) {
+            return;
+        }
+
+        const units = {};
+
+        box.querySelectorAll("[data-unit]").forEach(function (element) {
+            units[element.dataset.unit] = element;
+        });
+
+
+        function endOfWeek() {
+
+            const end = new Date();
+
+            end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
+
+            end.setHours(23, 59, 59, 999);
+
+            return end;
+
+        }
+
+        function pad(value) {
+            return String(value).padStart(2, "0");
+        }
+
+        function tick() {
+
+            const seconds = Math.max(0, Math.floor((endOfWeek() - Date.now()) / 1000));
+
+            units.d.textContent = Math.floor(seconds / 86400);
+
+            units.h.textContent = pad(Math.floor(seconds / 3600) % 24);
+
+            units.m.textContent = pad(Math.floor(seconds / 60) % 60);
+
+            units.s.textContent = pad(seconds % 60);
+
+        }
+
+
+        tick();
+
+        setInterval(tick, 1000);
 
     }
 
