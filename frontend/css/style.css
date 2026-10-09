@@ -258,29 +258,6 @@ img {
 }
 
 
-/* ================= PAGE HERO (tiêu đề trang, dùng chung) ================= */
-
-.page-hero {
-    padding: 120px 0;
-
-    background: var(--gray-100);
-}
-
-.page-hero h1 {
-    font-size: 65px;
-
-    line-height: 1;
-
-    margin-bottom: 20px;
-}
-
-.page-hero p {
-    color: var(--gray-600);
-
-    max-width: 550px;
-}
-
-
 /* ================= THÔNG BÁO FORM (dùng chung) ================= */
 
 .form-error,
@@ -368,10 +345,6 @@ img {
 /* ================= RESPONSIVE ================= */
 
 @media (max-width: 700px) {
-
-    .page-hero h1 {
-        font-size: 45px;
-    }
 
     .section {
         padding: 70px 0;

@@ -29,6 +29,12 @@
 
     setupWeekCountdown();
 
+    setupProductsView();
+
+    setupActiveFilters();
+
+    setupBuyBar();
+
 
     function reducedMotion() {
 
@@ -554,6 +560,301 @@
         tick();
 
         setInterval(tick, 1000);
+
+    }
+
+
+    /* ---------- Trang Sản phẩm: lưới / danh sách ---------- */
+
+    const VIEW_STORAGE_KEY = "poy_products_view";
+
+    function setupProductsView() {
+
+        const grid = document.getElementById("productGrid");
+
+        const buttons = Array.from(document.querySelectorAll("[data-view]"));
+
+        if (!grid || buttons.length === 0) {
+            return;
+        }
+
+
+        function apply(view) {
+
+            grid.classList.toggle("is-list", view === "list");
+
+            buttons.forEach(function (button) {
+                button.setAttribute("aria-pressed", String(button.dataset.view === view));
+            });
+
+        }
+
+
+        let saved = "grid";
+
+        try {
+            saved = localStorage.getItem(VIEW_STORAGE_KEY) || "grid";
+        } catch (error) {
+            saved = "grid";
+        }
+
+        apply(saved);
+
+
+        buttons.forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                apply(button.dataset.view);
+
+                try {
+                    localStorage.setItem(VIEW_STORAGE_KEY, button.dataset.view);
+                } catch (error) {
+                    /* Trình duyệt chặn lưu trữ: chỉ không nhớ lựa chọn */
+                }
+
+            });
+
+        });
+
+    }
+
+
+    /* ---------- Trang Sản phẩm: chip bộ lọc đang áp dụng ---------- */
+
+    /*
+     * Đọc trạng thái từ chính các ô lọc của products.js; bấm × thì đặt lại ô đó
+     * và phát sự kiện "change" để products.js tải lại như khi người dùng chọn.
+     * Vẽ lại mỗi khi #resultCount đổi (products.js cập nhật sau mỗi lần tải).
+     */
+
+    function setupActiveFilters() {
+
+        const box = document.getElementById("activeFilters");
+
+        const sidebar = document.getElementById("productsSidebar");
+
+        const resultCount = document.getElementById("resultCount");
+
+        if (!box || !sidebar || !resultCount) {
+            return;
+        }
+
+        const minInput = document.getElementById("minPriceInput");
+
+        const maxInput = document.getElementById("maxPriceInput");
+
+        const priceError = document.getElementById("priceError");
+
+
+        function resetRadio(name) {
+
+            const radio = sidebar.querySelector('input[name="' + name + '"][value=""]');
+
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+
+        }
+
+        function labelOf(input) {
+            return input.parentElement ? input.parentElement.textContent.trim() : input.value;
+        }
+
+        function money(value) {
+            return typeof formatPrice === "function" ? formatPrice(Number(value)) : value;
+        }
+
+
+        function collect() {
+
+            const chips = [];
+
+            ["category", "brand"].forEach(function (name) {
+
+                const checked = sidebar.querySelector('input[name="' + name + '"]:checked');
+
+                if (checked && checked.value) {
+                    chips.push({ label: labelOf(checked), clear: function () { resetRadio(name); } });
+                }
+
+            });
+
+            if ((minInput.value || maxInput.value) && !priceError.textContent) {
+
+                const label = minInput.value && maxInput.value
+                    ? money(minInput.value) + " - " + money(maxInput.value)
+                    : minInput.value ? "Từ " + money(minInput.value) : "Đến " + money(maxInput.value);
+
+                chips.push({
+                    label: label,
+                    clear: function () {
+                        minInput.value = "";
+                        maxInput.value = "";
+                        minInput.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                });
+
+            }
+
+            const params = new URLSearchParams(window.location.search);
+
+            const search = params.get("search");
+
+            if (search) {
+
+                chips.push({
+                    label: "Từ khoá: " + search,
+                    clear: function () {
+                        params.delete("search");
+                        const query = params.toString();
+                        window.location.href = window.location.pathname + (query ? "?" + query : "");
+                    }
+                });
+
+            }
+
+            return chips;
+
+        }
+
+
+        function render() {
+
+            const chips = collect();
+
+            box.replaceChildren();
+
+            box.hidden = chips.length === 0;
+
+            chips.forEach(function (chip) {
+
+                const button = document.createElement("button");
+
+                button.type = "button";
+
+                button.className = "active-filter";
+
+                button.textContent = chip.label;
+
+                button.setAttribute("aria-label", "Bỏ lọc " + chip.label);
+
+                button.addEventListener("click", chip.clear);
+
+                box.appendChild(button);
+
+            });
+
+            if (chips.length > 1) {
+
+                const clearAll = document.createElement("button");
+
+                clearAll.type = "button";
+
+                clearAll.className = "active-filters-clear";
+
+                clearAll.textContent = "Xoá tất cả";
+
+                clearAll.addEventListener("click", function () {
+                    document.getElementById("clearFiltersBtn").click();
+                });
+
+                box.appendChild(clearAll);
+
+            }
+
+        }
+
+
+        new MutationObserver(render).observe(resultCount, { childList: true, characterData: true, subtree: true });
+
+        render();
+
+    }
+
+
+    /* ---------- Trang chi tiết: thanh mua hàng dính ---------- */
+
+    function setupBuyBar() {
+
+        const bar = document.getElementById("buyBar");
+
+        const actions = document.querySelector(".detail-actions");
+
+        const addButton = document.getElementById("addToCartBtn");
+
+        const buyButton = document.getElementById("buyNowBtn");
+
+        if (!bar || !actions || !addButton || !buyButton || typeof IntersectionObserver === "undefined") {
+            return;
+        }
+
+        const nameSource = document.getElementById("detailName");
+
+        const priceSource = document.getElementById("detailPrice");
+
+        const imageSource = document.getElementById("mainImage");
+
+        const barImage = bar.querySelector("[data-buy-bar-image]");
+
+        const barCart = bar.querySelector('[data-buy-bar="cart"]');
+
+        const barBuy = bar.querySelector('[data-buy-bar="buy"]');
+
+
+        function sync() {
+
+            bar.querySelector("[data-buy-bar-name]").textContent = nameSource.textContent;
+
+            bar.querySelector("[data-buy-bar-price]").textContent = priceSource.textContent;
+
+            if (imageSource.getAttribute("src")) {
+                barImage.src = imageSource.currentSrc || imageSource.src;
+            }
+
+            barCart.disabled = addButton.disabled;
+
+            barBuy.disabled = buyButton.disabled;
+
+        }
+
+
+        const observer = new MutationObserver(sync);
+
+        observer.observe(nameSource, { childList: true, characterData: true, subtree: true });
+
+        observer.observe(priceSource, { childList: true, characterData: true, subtree: true });
+
+        observer.observe(imageSource, { attributes: true, attributeFilter: ["src"] });
+
+        observer.observe(addButton, { attributes: true, attributeFilter: ["disabled"] });
+
+        observer.observe(buyButton, { attributes: true, attributeFilter: ["disabled"] });
+
+        sync();
+
+
+        new IntersectionObserver(function (entries) {
+
+            const entry = entries[0];
+
+            const show = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+
+            bar.classList.toggle("is-visible", show);
+
+            document.body.classList.toggle("buy-bar-open", show);
+
+        }).observe(actions);
+
+
+        barCart.addEventListener("click", function () {
+            addButton.click();
+        });
+
+        barBuy.addEventListener("click", function () {
+            buyButton.click();
+        });
 
     }
 

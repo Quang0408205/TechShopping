@@ -48,7 +48,7 @@
             <span id="breadcrumbCategorySep" hidden>/</span>
             <a id="breadcrumbCategory" href="products.html" hidden></a>
             <span>/</span>
-            <span id="breadcrumbCurrent">Đang tải...</span>
+            <span id="breadcrumbCurrent" aria-current="page">Đang tải...</span>
         </nav>
 
     </div>
@@ -82,7 +82,7 @@
         <div class="state-box empty-state">
             <h3>Không tìm thấy sản phẩm</h3>
             <p>Sản phẩm này có thể đã ngừng kinh doanh hoặc đường dẫn không đúng.</p>
-            <a href="products.html" class="btn btn-dark">XEM TẤT CẢ SẢN PHẨM</a>
+            <a href="products.html" class="btn btn-dark">Xem tất cả sản phẩm</a>
         </div>
 
     </section>
@@ -156,22 +156,23 @@
                 <div class="detail-actions">
 
                     <button type="button" id="addToCartBtn" class="btn btn-outline-dark">
-                        THÊM VÀO GIỎ
+                        Thêm vào giỏ
                     </button>
 
                     <button type="button" id="buyNowBtn" class="btn btn-dark">
-                        MUA NGAY
+                        Mua ngay
                     </button>
 
                 </div>
 
 
-                <!-- Bảo hành lấy từ warrantyMonths; 2 dòng còn lại khớp trang Dịch vụ -->
+                <!-- Bảo hành lấy từ warrantyMonths; các dòng còn lại khớp chính sách ở trang Dịch vụ -->
                 <ul class="detail-policies">
                     <li id="detailWarranty" hidden></li>
-                    <li>Hỗ trợ giao hàng đến địa chỉ của bạn</li>
-                    <li>Tư vấn chọn sản phẩm phù hợp nhu cầu</li>
-                    <li><a href="services.html">Xem các dịch vụ hỗ trợ →</a></li>
+                    <li>Giao tận nơi hoặc nhận tại cửa hàng</li>
+                    <li>Đổi trả trong 7 ngày theo chính sách</li>
+                    <li>Trả góp 0% cho đơn từ 3.000.000đ</li>
+                    <li class="detail-policies-link"><a href="services.html">Xem chính sách và dịch vụ hỗ trợ</a></li>
                 </ul>
 
             </div>
@@ -184,9 +185,9 @@
         <div class="detail-tabs">
 
             <div class="tab-buttons" role="tablist">
-                <button type="button" class="tab-btn active" data-tab="specs" role="tab">THÔNG SỐ KỸ THUẬT</button>
-                <button type="button" class="tab-btn" data-tab="description" role="tab">MÔ TẢ SẢN PHẨM</button>
-                <button type="button" class="tab-btn" data-tab="reviews" role="tab">ĐÁNH GIÁ (<span id="reviewsTabCount">0</span>)</button>
+                <button type="button" class="tab-btn active" data-tab="specs" role="tab">Thông số kỹ thuật</button>
+                <button type="button" class="tab-btn" data-tab="description" role="tab">Mô tả sản phẩm</button>
+                <button type="button" class="tab-btn" data-tab="reviews" role="tab">Đánh giá (<span id="reviewsTabCount">0</span>)</button>
             </div>
 
             <div class="tab-panel active" data-tab-panel="specs" role="tabpanel">
@@ -220,7 +221,7 @@
 
                 <div class="review-list" id="reviewList" aria-live="polite"></div>
 
-                <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>XEM THÊM ĐÁNH GIÁ</button>
+                <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>Xem thêm đánh giá</button>
 
             </div>
 
@@ -233,12 +234,33 @@
 
             <div class="section-heading">
                 <span class="section-label">CÓ THỂ BẠN QUAN TÂM</span>
-                <h2>SẢN PHẨM TƯƠNG TỰ</h2>
+                <h2>Sản phẩm tương tự</h2>
             </div>
 
             <div class="product-grid" id="relatedProductsGrid"></div>
 
         </section>
+
+
+        <!-- Thanh mua hàng dính khi đã cuộn qua nút mua: chỉ bấm hộ addToCartBtn / buyNowBtn (js/customer/ui-effects.js) -->
+        <div class="buy-bar" id="buyBar">
+
+            <div class="container buy-bar-inner">
+
+                <img class="buy-bar-image" data-buy-bar-image alt="" width="48" height="48">
+
+                <div class="buy-bar-text">
+                    <strong data-buy-bar-name></strong>
+                    <span data-buy-bar-price></span>
+                </div>
+
+                <button type="button" class="btn btn-outline-dark" data-buy-bar="cart">Thêm vào giỏ</button>
+
+                <button type="button" class="btn btn-dark" data-buy-bar="buy">Mua ngay</button>
+
+            </div>
+
+        </div>
 
     </section>
 

@@ -75,6 +75,50 @@ h4 {
 }
 
 
+/* ================= NÚT ================= */
+
+/* <button class="btn"> không còn nền / viền mặc định của trình duyệt */
+.btn {
+    min-height: 48px;
+    padding: 0 var(--space-3);
+
+    gap: var(--space-1);
+
+    border: 1px solid transparent;
+
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.btn-dark {
+    border-color: var(--color-ink);
+}
+
+.btn-light {
+    border-color: #fff;
+}
+
+.btn-outline-dark {
+    border-color: var(--color-ink);
+    background: #fff;
+}
+
+.btn-outline-dark:hover {
+    transform: none;
+}
+
+.btn-dark:hover,
+.btn-light:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.btn-light:hover {
+    background: var(--gray-100);
+}
+
+
 /* ================= TIÊU ĐỀ SECTION ================= */
 
 .section-heading {
@@ -116,6 +160,68 @@ h4 {
         font-size: 26px;
     }
 
+}
+
+
+/* ================= TIÊU ĐỀ TRANG (dùng chung 9 trang) ================= */
+
+.page-hero {
+    padding: var(--space-3) 0 var(--space-4);
+
+    background: var(--surface-warm);
+    border-bottom: 1px solid var(--surface-warm-strong);
+}
+
+.page-hero .section-label {
+    display: none;
+}
+
+.page-hero h1 {
+    margin-bottom: var(--space-1);
+
+    font-size: clamp(28px, 3.2vw, 40px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.page-hero p {
+    max-width: 620px;
+
+    color: var(--text-muted);
+
+    font-size: 15px;
+}
+
+.page-hero + .section {
+    padding-top: var(--space-6);
+}
+
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+
+    margin-bottom: var(--space-2);
+
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+.breadcrumb a {
+    color: var(--gray-700);
+}
+
+.breadcrumb a:hover {
+    color: var(--color-ink);
+    text-decoration: underline;
+}
+
+.breadcrumb [aria-current="page"] {
+    color: var(--color-ink);
+    font-weight: 500;
 }
 
 
