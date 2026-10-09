@@ -50,6 +50,7 @@ Desktop.ini
 
 ### Tooling ###
 .github/modernize/
+database/tai_khoan_thu_nghiem.txt
 
 # Tài liệu nội bộ / handoff, chỉ giữ trên máy (không push)
 docs/
