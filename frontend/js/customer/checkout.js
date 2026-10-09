@@ -634,14 +634,14 @@ document.addEventListener(
 
             button.disabled = true;
 
-            button.textContent = "ĐANG XỬ LÝ...";
+            button.textContent = "Đang xử lý...";
 
 
             function restoreButton() {
 
                 button.disabled = false;
 
-                button.textContent = "ĐẶT HÀNG";
+                button.textContent = "Đặt hàng";
 
             }
 
@@ -744,7 +744,7 @@ document.addEventListener(
 
                             showFormError(UNAVAILABLE_MESSAGE);
 
-                            button.textContent = "ĐẶT HÀNG";
+                            button.textContent = "Đặt hàng";
 
                             return;
 
@@ -752,7 +752,7 @@ document.addEventListener(
 
                         if (fresh.items.length === 0) {
 
-                            button.textContent = "ĐẶT HÀNG";
+                            button.textContent = "Đặt hàng";
 
                             return;
 

@@ -197,6 +197,109 @@ h4 {
     padding-top: var(--space-6);
 }
 
+/* Tiêu đề trang + stepper (Giỏ hàng / Thanh toán) */
+.page-hero-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.checkout-steps {
+    display: flex;
+    align-items: center;
+
+    list-style: none;
+
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.checkout-steps li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+
+    color: var(--text-muted);
+
+    white-space: nowrap;
+}
+
+.checkout-steps li + li::before {
+    content: "";
+
+    width: 40px;
+    height: 1px;
+
+    margin: 0 12px;
+
+    background: var(--gray-400);
+}
+
+.checkout-steps span {
+    width: 28px;
+    height: 28px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--gray-400);
+    border-radius: 50%;
+    background: #fff;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.checkout-steps .is-current {
+    color: var(--color-ink);
+    font-weight: 600;
+}
+
+.checkout-steps .is-current span {
+    border-color: var(--color-ink);
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.checkout-steps .is-done {
+    color: var(--color-ink);
+}
+
+.checkout-steps .is-done span {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+}
+
+@media (max-width: 760px) {
+
+    .page-hero-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .checkout-steps li + li::before {
+        width: 16px;
+        margin: 0 8px;
+    }
+
+}
+
+@media (max-width: 480px) {
+
+    /* Chỉ giữ chữ của bước hiện tại, các bước khác còn số */
+    .checkout-steps li:not(.is-current) {
+        font-size: 0;
+    }
+
+    .checkout-steps li:not(.is-current) span {
+        font-size: 13px;
+    }
+
+}
+
 .breadcrumb {
     display: flex;
     flex-wrap: wrap;
@@ -1420,71 +1523,6 @@ h4 {
 
         font-size: 11px;
         letter-spacing: 0;
-    }
-
-}
-
-
-/* ================= DỊCH VỤ (trang Dịch vụ; giữ nguyên tới bước làm lại trang này) ================= */
-
-.service-grid {
-    display: grid;
-
-    grid-template-columns: repeat(3, 1fr);
-
-    gap: 20px;
-}
-
-.service-card {
-    padding: 45px 35px;
-
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-lg);
-
-    transition:
-        background-color var(--duration-base) var(--ease-standard),
-        border-color var(--duration-base) var(--ease-standard),
-        transform var(--duration-base) var(--ease-standard),
-        box-shadow var(--duration-base) var(--ease-standard);
-}
-
-.service-card:hover {
-    background: var(--color-ink);
-    border-color: var(--color-ink);
-    color: #fff;
-
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md);
-}
-
-.service-number {
-    display: block;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    margin-bottom: 40px;
-}
-
-.service-card h3 {
-    font-size: 20px;
-
-    margin-bottom: 15px;
-}
-
-.service-card p {
-    color: #777;
-    font-size: 13px;
-}
-
-.service-card:hover p {
-    color: #aaa;
-}
-
-@media (max-width: 700px) {
-
-    .service-grid {
-        grid-template-columns: 1fr;
     }
 
 }

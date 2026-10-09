@@ -87,14 +87,14 @@ function renderLoginPrompt() {
     getCartContainer().innerHTML = `
         <div class="empty-cart">
             <h2>
-                VUI LÒNG ĐĂNG NHẬP
+                Vui lòng đăng nhập
             </h2>
             <p>
                 Giỏ hàng được lưu theo tài khoản của bạn.
             </p>
             <br>
             <button type="button" class="btn btn-dark" id="cartLoginBtn">
-                ĐĂNG NHẬP
+                Đăng nhập
             </button>
         </div>
     `;
@@ -117,7 +117,7 @@ function renderCart(summary) {
         container.innerHTML = `
             <div class="empty-cart">
                 <h2>
-                    GIỎ HÀNG ĐANG TRỐNG
+                    Giỏ hàng đang trống
                 </h2>
                 <p>
                     Hãy khám phá các sản phẩm
@@ -128,7 +128,7 @@ function renderCart(summary) {
                     href="${escapeHtml(siteUrl("customer/products.html"))}"
                     class="btn btn-dark"
                 >
-                    KHÁM PHÁ SẢN PHẨM
+                    Khám phá sản phẩm
                 </a>
             </div>
         `;
@@ -206,7 +206,7 @@ function renderCart(summary) {
                 Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng xóa các sản phẩm này trước khi thanh toán.
             </p>
             <button type="button" class="btn btn-dark" id="checkoutButton" disabled>
-                TIẾN HÀNH THANH TOÁN
+                Tiến hành thanh toán
             </button>
         `
         : `
@@ -215,7 +215,7 @@ function renderCart(summary) {
                 class="btn btn-dark"
                 id="checkoutButton"
             >
-                TIẾN HÀNH THANH TOÁN
+                Tiến hành thanh toán
             </a>
         `;
 
@@ -225,18 +225,18 @@ function renderCart(summary) {
             <thead>
                 <tr>
                     <th>
-                        SẢN PHẨM
+                        Sản phẩm
                     </th>
                     <th>
-                        SỐ LƯỢNG
+                        Số lượng
                     </th>
                     <th>
-                        ĐƠN GIÁ
+                        Đơn giá
                     </th>
                     <th>
-                        THÀNH TIỀN
+                        Thành tiền
                     </th>
-                    <th></th>
+                    <th><span class="visually-hidden">Xoá</span></th>
                 </tr>
             </thead>
             <tbody>
