@@ -109,18 +109,22 @@ docker compose up -d backend
 |---|---|---|
 | Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
 | Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
+| Khách hàng | **Đánh giá sản phẩm**: tab "ĐÁNH GIÁ" ở trang chi tiết (điểm trung bình + số đánh giá từng mức sao, toàn số thật), viết / sửa / xoá đánh giá của mình (1–5 sao, nhận xét, tối đa 5 ảnh), nhãn "Đã mua hàng", lọc theo sao / có ảnh, xem ảnh lớn; điểm Thế Giới Di Động hiện riêng để tham khảo; thẻ sản phẩm hiện sao (đánh giá thật, chưa có thì điểm TGDĐ) | **Thật** (API) |
 | Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
 | Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
+| Khách hàng | **Bảo hành / bảo trì / trả hàng** (Phase 6): ở chi tiết đơn đã giao xem hạn bảo hành từng sản phẩm, gửi bảo hành (còn hạn), bảo trì (mọi sản phẩm, có thể mất phí) hoặc trả hàng hoàn tiền trong 7 ngày (chọn sản phẩm + số lượng, xem số tiền hoàn dự kiến; đơn trả góp liên hệ cửa hàng), kèm tối đa 5 ảnh; trang **Yêu cầu dịch vụ** theo dõi trạng thái, ghi chú / lý do của cửa hàng, huỷ khi còn chờ; trang Dịch vụ có chính sách bảo hành / trả hàng | **Thật** (API) |
 | Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
 | Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
-| Quản trị | **Đơn hàng** (STAFF và ADMIN): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được, ADMIN chuyển đơn sang chi nhánh khác), hủy đơn đã xác nhận thì hoàn kho | **Thật** (API) |
-| Quản trị | **Trả góp** (STAFF và ADMIN): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
+| Quản trị | **Đơn hàng** (nhân viên xử lý, ADMIN chỉ xem): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy và xử lý đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được), hủy đơn đã xác nhận thì hoàn kho. ADMIN xem mọi đơn và chỉ điều phối: chuyển đơn đang chờ sang chi nhánh khác | **Thật** (API) |
+| Quản trị | **Trả góp** (nhân viên chi nhánh ghi nhận, ADMIN chỉ xem): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
 | Quản trị | **Khuyến mãi** (chỉ ADMIN): chương trình có thời gian bắt đầu / kết thúc, giảm theo % (có mức giảm tối đa) hoặc số tiền, chọn sản phẩm và đặt mức giảm riêng từng sản phẩm, tạm dừng / bật lại. Một sản phẩm chỉ thuộc một chương trình đang bật tại cùng thời điểm; giỏ hàng và thanh toán lấy giá thấp hơn giữa "Giá khuyến mãi" của sản phẩm và giá chương trình; đơn đã đặt giữ nguyên giá | **Thật** (API) |
 | Quản trị | **Chi nhánh** (chỉ ADMIN): thêm / sửa / tạm đóng / xoá (chỉ khi chưa dùng); quận / huyện + tỉnh / thành dùng để tự gán chi nhánh cho đơn giao tận nhà. **Nhân viên** (chỉ ADMIN): hồ sơ cho tài khoản có quyền Nhân viên, gán / chuyển / rút chi nhánh (giữ lịch sử), vị trí "Quản lý chi nhánh", đã nghỉ. Nhân viên thấy vai trò + chi nhánh của mình trên thanh trên cùng | **Thật** (API) |
 | Quản trị | **Tồn kho** (STAFF và ADMIN): tồn kho theo chi nhánh (nhân viên chỉ chi nhánh mình, ADMIN thêm chế độ "Tất cả chi nhánh" với tổng + số lượng từng chi nhánh), nhãn "Sắp hết" (≤ 5) / "Hết hàng", lọc hàng hết, **nhập kho** một bước (tìm sản phẩm → phiên bản → số lượng, nhà cung cấp, ghi chú), lịch sử nhập / xuất bán / hoàn kho của từng phiên bản | **Thật** (API) |
 | Quản trị | **Báo cáo → Hàng nhập kho theo chi nhánh** (chỉ ADMIN): tổng số lượng nhập, số lần nhập, số phiên bản, số nhà cung cấp, biểu đồ + bảng theo chi nhánh, lọc chi nhánh / khoảng ngày (tính theo số lượng, nhập kho không ghi giá nhập) | **Thật** (API) |
-| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), bảo hành / đổi trả, hỗ trợ khách hàng, báo cáo doanh thu, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
+| Quản trị | **Đánh giá** (chỉ ADMIN): mọi đánh giá của khách (kể cả đã ẩn), tìm theo sản phẩm / người viết / email / nội dung, lọc số sao / trạng thái / một sản phẩm, xem đủ nội dung + ảnh; **ẩn** (bắt buộc lý do: chọn nhanh + ghi thêm, người viết thấy lý do) / **hiện lại**, điểm sản phẩm tính lại ngay | **Thật** (API) |
+| Quản trị | **Bảo hành / Bảo trì / Đổi trả** (nhân viên chi nhánh của đơn xử lý, ADMIN chỉ xem mọi chi nhánh): danh sách gộp 3 loại, lọc loại / trạng thái / chi nhánh / ngày / từ khoá (mã BH / BT / DT, mã đơn, khách); bảo hành / bảo trì: tiếp nhận (ngày dự kiến, ghi chú, chi phí bảo trì) → đang xử lý → hoàn tất, từ chối có lý do; trả hàng: duyệt → nhận hàng (chọn món còn bán được để cộng lại tồn kho chi nhánh) → hoàn tiền (trừ tổng chi tiêu của khách) | **Thật** (API) |
+| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), hỗ trợ khách hàng, báo cáo doanh thu, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
 
 ---
 
@@ -158,6 +162,15 @@ docker compose up -d backend
 > # 7. Đánh giá sản phẩm
 > Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 8. Điểm đánh giá Thế Giới Di Động tách khỏi điểm đánh giá thật
+> Get-Content database\migrations\product_tgdd_rating.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\product_tgdd_rating.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 9. Bảo hành / bảo trì / đổi trả
+> Get-Content database\migrations\after_sales.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\after_sales.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 10. Báo cáo doanh thu / doanh số nhân viên
+> Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
@@ -166,7 +179,7 @@ docker compose up -d backend
 > python Raw_data/import_catalog.py --dry-run   # chạy thử rồi rollback, chỉ in số liệu
 > python Raw_data/import_catalog.py
 > ```
-> - Chạy được nhiều lần: mỗi sản phẩm nhận diện bằng mã `TGDD-<id nguồn>`, lần sau chỉ cập nhật (tên, giá, mô tả, thông số, điểm đánh giá, thêm ảnh mới).
+> - Chạy được nhiều lần: mỗi sản phẩm nhận diện bằng mã `TGDD-<id nguồn>`, lần sau chỉ cập nhật (tên, giá, mô tả, thông số, điểm đánh giá TGDĐ, thêm ảnh mới). Điểm TGDĐ ghi vào cột riêng (`tgdd_rating`, `tgdd_review_count`, cần migration số 8), không đụng tới điểm đánh giá thật của khách trên web.
 > - Sản phẩm mẫu cũ có cùng trang TGDĐ được **cập nhật tại chỗ** (giữ id, nên giỏ hàng / đơn hàng / khuyến mãi / tồn kho đang trỏ tới vẫn đúng); sản phẩm cũ không còn trong dữ liệu mới bị **ẩn** (không xoá). Thương hiệu bị tách ("iPhone (Apple)", "MacBook"…) được gộp về tên chuẩn.
 > - Muốn crawl lại từ đầu: `python -m pip install -r requirements.txt`, `python -m playwright install chromium`, rồi `python Raw_data/crawler.py` và `python Raw_data/clean_data.py` trước khi import.
 
@@ -223,6 +236,6 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 43 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test và nạp catalogue sản phẩm) |
+| `database/` | `techshopping.sql` (cấu trúc 44 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |

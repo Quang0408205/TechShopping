@@ -13,9 +13,11 @@
     <title>Liên hệ - POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/contact.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -27,23 +29,23 @@
 <div data-include="header" data-active="contact"></div>
 
 
-<main>
+<main class="contact-page">
 
     <section class="page-hero">
 
         <div class="container">
 
-            <span class="section-label">
-                POY
-            </span>
+            <nav class="breadcrumb" aria-label="Đường dẫn">
+                <a href="../index.html">Trang chủ</a>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Liên hệ</span>
+            </nav>
 
-            <h1>
-                LIÊN HỆ
-            </h1>
+            <h1>Liên hệ</h1>
 
             <p>
-                Hãy liên hệ với chúng tôi nếu bạn cần
-                hỗ trợ hoặc tư vấn.
+                Cần tư vấn chọn sản phẩm hay hỗ trợ đơn hàng?
+                Gửi tin nhắn hoặc gọi cho POY.
             </p>
 
         </div>
@@ -63,46 +65,44 @@
                 </span>
 
                 <h2>
-                    CHÚNG TÔI LUÔN SẴN SÀNG
-                    HỖ TRỢ BẠN
+                    Chúng tôi luôn sẵn sàng hỗ trợ bạn
                 </h2>
 
+                <a href="tel:19000000" class="contact-item">
+                    <span class="contact-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6.6 3.5h2.6l1.4 4-2 1.4a12 12 0 0 0 6.5 6.5l1.4-2 4 1.4v2.6a1.6 1.6 0 0 1-1.7 1.6A16.5 16.5 0 0 1 5 5.2a1.6 1.6 0 0 1 1.6-1.7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                        <strong>Hotline</strong>
+                        <span class="contact-value">1900 0000</span>
+                    </span>
+                </a>
+
+                <a href="mailto:support@poy.vn" class="contact-item">
+                    <span class="contact-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 7l8 6 8-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                        <strong>Email</strong>
+                        <span class="contact-value">support@poy.vn</span>
+                    </span>
+                </a>
+
                 <div class="contact-item">
-
-                    <strong>
-                        HOTLINE
-                    </strong>
-
-                    <p>
-                        1900 0000
-                    </p>
-
+                    <span class="contact-icon">
+                        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </span>
+                    <span>
+                        <strong>Thời gian hỗ trợ</strong>
+                        <span class="contact-value">08:00 - 22:00</span>
+                    </span>
                 </div>
 
-
-                <div class="contact-item">
-
-                    <strong>
-                        EMAIL
-                    </strong>
-
-                    <p>
-                        support@poy.vn
-                    </p>
-
-                </div>
-
-
-                <div class="contact-item">
-
-                    <strong>
-                        THỜI GIAN HỖ TRỢ
-                    </strong>
-
-                    <p>
-                        08:00 - 22:00
-                    </p>
-
+                <div class="contact-quick">
+                    <span>Hỗ trợ nhanh</span>
+                    <a href="orders.html">Tra cứu đơn hàng</a>
+                    <a href="service-requests.html">Yêu cầu bảo hành, đổi trả</a>
+                    <a href="services.html#chinh-sach">Chính sách</a>
                 </div>
 
             </div>
@@ -113,6 +113,8 @@
                 class="contact-form"
                 novalidate
             >
+
+                <h2 class="contact-form-title">Gửi tin nhắn</h2>
 
                 <p
                     id="contactSuccess"
@@ -128,35 +130,37 @@
                     hidden
                 ></p>
 
-                <label>
+                <label for="contactName">
                     Họ và tên
                 </label>
 
                 <input
                     type="text"
                     id="contactName"
+                    autocomplete="name"
                     required
                 >
 
 
-                <label>
+                <label for="contactEmail">
                     Email
                 </label>
 
                 <input
                     type="email"
                     id="contactEmail"
+                    autocomplete="email"
                     required
                 >
 
 
-                <label>
+                <label for="contactMessage">
                     Nội dung
                 </label>
 
                 <textarea
                     id="contactMessage"
-                    rows="7"
+                    rows="6"
                     required
                 ></textarea>
 
@@ -165,7 +169,7 @@
                     type="submit"
                     class="btn btn-dark"
                 >
-                    GỬI LIÊN HỆ
+                    Gửi liên hệ
                 </button>
 
             </form>
@@ -187,6 +191,7 @@
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/contact.js"></script>
 <script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
 
 </body>
 </html>

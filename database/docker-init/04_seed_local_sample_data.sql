@@ -294,6 +294,27 @@ FROM local_sample_orders o
 CROSS JOIN local_sample_store s
 WHERE o.order_no = 1;
 
+-- same backfill rule as migrations/after_sales.sql: warranty from delivery date + product.warranty_months
+INSERT INTO warranties (order_item_id, warranty_start_date, warranty_end_date, warranty_type)
+SELECT oi.order_item_id,
+       o.delivered_at::date,
+       (o.delivered_at::date + make_interval(months => p.warranty_months))::date,
+       'STANDARD'
+FROM local_sample_orders o
+JOIN order_items oi ON oi.order_id = o.order_id
+JOIN product_variants v ON v.variant_id = oi.variant_id
+JOIN products p ON p.product_id = v.product_id
+WHERE o.order_no = 1
+  AND coalesce(p.warranty_months, 0) > 0
+ON CONFLICT (order_item_id) DO NOTHING;
+
+-- app logic adds to total_spent only when an order reaches DELIVERED (no DB trigger)
+UPDATE customer_profiles cp
+SET total_spent = o.price
+FROM local_sample_orders o
+WHERE o.order_no = 1
+  AND cp.customer_id = o.user_id;
+
 INSERT INTO reviews (user_id, product_id, rating, comment, is_hidden, created_at)
 SELECT user_id,
        product_id,
@@ -303,6 +324,14 @@ SELECT user_id,
        delivered_at
 FROM local_sample_orders
 WHERE order_no = 1;
+
+-- rating / total_reviews are recomputed by Java on every write, not a DB trigger
+UPDATE products p
+SET rating = r.rating,
+    total_reviews = 1
+FROM reviews r
+WHERE p.product_id = r.product_id
+  AND r.comment LIKE 'ĐÁNH GIÁ MẪU%';
 
 INSERT INTO review_images (review_id, image_url, display_order)
 SELECT r.review_id,
@@ -345,9 +374,9 @@ INSERT INTO maintenance_requests (
 )
 SELECT o.user_id,
        oi.order_item_id,
-       'WARRANTY_CHECK',
+       'OTHER',
        'SAMPLE-DATA: request to inspect a delivered sample purchase.',
-       'pending',
+       'PENDING',
        'SAMPLE-DATA: local demonstration only; not a real customer service request.',
        o.delivered_at
 FROM local_sample_orders o

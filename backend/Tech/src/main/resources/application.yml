@@ -63,3 +63,6 @@ app:
       account-name: ${PAYMENT_BANK_ACCOUNT_NAME:CONG TY POY}
       # Shown to the customer as "pay before"; unpaid orders are not cancelled automatically
       deadline-hours: 24
+  sales:
+    # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
+    commission-rate: ${SALES_COMMISSION_RATE:0.01}

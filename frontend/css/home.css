@@ -1,322 +1,1021 @@
-/* ================= HERO ================= */
+/* ================= TRANG CHỦ ================= */
+
+/* Nhịp section: hero tối → lợi ích sáng → bento → thương hiệu → lưới sản phẩm
+   → banner đôi → khuyến nghị tối → đánh giá (nền kem) → dịch vụ */
+
+
+/* ---- Tiêu đề section dạng hàng (tiêu đề trái, thao tác phải) ---- */
+
+.section-heading--row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.link-arrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    flex-shrink: 0;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    border-bottom: 1px solid currentColor;
+}
+
+.link-arrow::after {
+    content: "→";
+
+    transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.link-arrow:hover::after {
+    transform: translateX(3px);
+}
+
+
+/* ================= 1. HERO ================= */
 
 .hero {
     position: relative;
-    min-height: 720px;
-    display: flex;
-    align-items: center;
+
+    background: var(--surface-ink);
+    color: var(--text-on-dark);
+
     overflow: hidden;
-    background: #ffffff;
 }
 
-.hero-content {
+.hero-track {
+    display: grid;
+}
+
+/* Mọi slide chồng lên cùng một ô lưới: chiều cao = slide cao nhất, không nhảy layout */
+.hero-slide {
+    grid-area: 1 / 1;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transition: opacity 600ms var(--ease-in-out), visibility 600ms;
+}
+
+.hero-slide.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.hero-slide-inner {
+    min-height: 520px;
+
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    align-items: center;
+    gap: var(--space-3);
+
+    padding: var(--space-8) 0 var(--space-10);
+}
+
+.hero-text {
+    grid-column: 1 / span 5;
+}
+
+.hero-label {
+    display: inline-block;
+
+    margin-bottom: var(--space-2);
+    padding-bottom: 6px;
+
+    border-bottom: 2px solid var(--color-accent);
+
+    color: #d7b88f;
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.hero h1,
+.hero h2 {
+    margin-bottom: var(--space-2);
+
+    font-size: clamp(36px, 4.4vw, 60px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+}
+
+.hero-text p {
+    max-width: 440px;
+
+    margin-bottom: var(--space-4);
+
+    color: var(--text-on-dark-muted);
+
+    font-size: 17px;
+}
+
+.hero .btn {
+    min-height: 52px;
+
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.hero-media {
+    grid-column: 7 / span 6;
+
+    height: 420px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hero-media img {
+    max-width: 100%;
+    max-height: 100%;
+
+    object-fit: contain;
+
+    transform: translateY(16px) scale(0.97);
+
+    transition: transform 900ms var(--ease-standard);
+}
+
+.hero-slide.is-active .hero-media img {
+    transform: none;
+}
+
+.hero-controls {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: var(--space-4);
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.hero-arrow {
+    width: 40px;
+    height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid #3a3c44;
+    border-radius: 50%;
+    background: transparent;
+    color: #fff;
+
+    cursor: pointer;
+
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.hero-arrow:hover {
+    background: #fff;
+    color: var(--color-ink);
+}
+
+.hero-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.hero-dots button {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+
+    border: none;
+    background: transparent;
+
+    cursor: pointer;
+}
+
+.hero-dots button::before {
+    content: "";
+
+    display: block;
+
+    width: 8px;
+    height: 8px;
+    margin: auto;
+
+    border-radius: var(--radius-full);
+    background: #5d5f68;
+
+    transition: width var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard);
+}
+
+.hero-dots button[aria-current="true"]::before {
+    width: 22px;
+
+    background: #fff;
+}
+
+.hero :focus-visible {
+    outline-color: #d7b88f;
+}
+
+
+/* ================= 2. LỢI ÍCH ================= */
+
+.benefits {
+    background: var(--surface-warm);
+    border-bottom: 1px solid var(--surface-warm-strong);
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.benefit {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+
+    padding: var(--space-3) var(--space-2);
+}
+
+.benefit + .benefit {
+    border-left: 1px solid var(--surface-warm-strong);
+}
+
+.benefit-icon {
+    width: 48px;
+    height: 48px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+    background: #fff;
+    color: var(--color-accent);
+}
+
+.benefit h3 {
+    margin-bottom: 2px;
+
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.benefit p {
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+
+/* ================= 3. DANH MỤC (bento) ================= */
+
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: 250px 250px;
+    gap: var(--space-2);
+}
+
+.category-card {
     position: relative;
-    z-index: 2;
+
+    grid-column: span 3;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    padding: var(--space-3);
+
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+
+    overflow: hidden;
+
+    transition: background-color var(--duration-base) var(--ease-standard);
+}
+
+.category-card:hover {
+    background: var(--surface-warm-strong);
+}
+
+.category-card--large {
+    grid-column: span 6;
+    grid-row: span 2;
+}
+
+.category-card--wide {
+    grid-column: span 6;
+}
+
+.category-text {
+    position: relative;
+    z-index: 1;
+}
+
+.category-card h3 {
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.category-card--large h3 {
+    font-size: 32px;
+}
+
+.category-card p {
+    max-width: 260px;
+
+    margin-top: 4px;
+
+    color: var(--text-muted);
+
+    font-size: 14px;
+}
+
+.category-more {
+    display: inline-block;
+
+    margin-top: var(--space-2);
+
+    font-size: 14px;
+    font-weight: 600;
+
+    border-bottom: 1px solid currentColor;
+}
+
+.category-card img {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-2);
+
+    width: 52%;
+    height: 72%;
+
+    object-fit: contain;
+    object-position: right bottom;
+
+    transition: transform var(--duration-slow) var(--ease-standard);
+}
+
+.category-card--large img {
+    right: var(--space-4);
+    bottom: var(--space-4);
+
+    width: 60%;
+    height: 74%;
+
+    object-position: center bottom;
+}
+
+.category-card--wide img {
+    width: 58%;
+}
+
+.category-card:hover img {
+    transform: scale(1.06);
+}
+
+
+/* ================= 4. THƯƠNG HIỆU ================= */
+
+.brands {
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.brands-row {
+    min-height: 88px;
+
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.brands-label {
+    flex-shrink: 0;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.brands-list {
+    flex: 1;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: var(--space-3);
 
-    gap: 60px;
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
-/* Nội dung bên trái */
-/* ================= HERO IMAGE ANIMATION ================= */
+.brands-list a {
+    flex-shrink: 0;
 
-.hero-image {
-    width: 50%; /* Hoặc kích thước phù hợp với layout của bạn */
+    padding: 8px 0;
+
+    color: var(--gray-600);
+
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+
+    transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.brands-list a:hover {
+    color: var(--color-ink);
+}
+
+
+/* ================= 5. LƯỚI SẢN PHẨM + TAB ================= */
+
+.home-tabs {
+    display: inline-flex;
+    gap: 4px;
+
+    padding: 4px;
+
+    border-radius: var(--radius-full);
+    background: var(--gray-100);
+}
+
+.home-tab {
+    min-height: 40px;
+    padding: 0 18px;
+
+    border: none;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: var(--gray-700);
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.home-tab:hover {
+    color: var(--color-ink);
+}
+
+.home-tab[aria-selected="true"] {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.view-all {
+    margin-top: var(--space-5);
+
+    text-align: center;
+}
+
+.view-all .btn {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+
+/* ================= 6. BANNER ĐÔI ================= */
+
+.promo-banners {
+    padding-bottom: var(--space-12);
+}
+
+.promo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.promo-card {
+    position: relative;
+
+    min-height: 360px;
+    padding: var(--space-5);
+
     display: flex;
-    justify-content: center;
+    align-items: flex-start;
+
+    border-radius: var(--radius-lg);
+
+    overflow: hidden;
+}
+
+.promo-card--warm {
+    background: var(--surface-warm);
+}
+
+.promo-card--dark {
+    background: var(--surface-ink-raised);
+    color: var(--text-on-dark);
+}
+
+.promo-text {
+    position: relative;
+    z-index: 1;
+
+    max-width: 50%;
+}
+
+.promo-label {
+    display: inline-block;
+
+    margin-bottom: var(--space-2);
+    padding: 4px 10px;
+
+    border-radius: var(--radius-full);
+    background: var(--color-promo);
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.promo-card--warm .promo-label {
+    background: var(--color-ink);
+}
+
+.promo-card h3 {
+    margin-bottom: var(--space-1);
+
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.promo-card p {
+    color: var(--text-muted);
+
+    font-size: 15px;
+}
+
+.promo-link {
+    display: inline-block;
+
+    margin-top: var(--space-3);
+
+    font-size: 14px;
+    font-weight: 600;
+
+    border-bottom: 1px solid currentColor;
+}
+
+.promo-card img {
+    position: absolute;
+    right: var(--space-3);
+    bottom: var(--space-3);
+
+    width: 44%;
+    max-height: 72%;
+
+    object-fit: contain;
+    object-position: right bottom;
+
+    transition: transform var(--duration-slow) var(--ease-standard);
+}
+
+.promo-card:hover img {
+    transform: scale(1.05);
+}
+
+.countdown {
+    display: flex;
+    gap: var(--space-1);
+
+    margin-top: var(--space-2);
+}
+
+.countdown span {
+    min-width: 56px;
+    padding: 8px 6px;
+
+    display: flex;
+    flex-direction: column;
     align-items: center;
 
-    /* Loại bỏ khoảng đệm và nền thừa */
-    background: transparent !important;
-    padding: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    overflow: hidden;
+    border-radius: var(--radius-md);
+    background: #2a2c33;
+    color: var(--text-on-dark-muted);
 
-    /* Gọi animation bung ra khi vừa tải trang */
-    animation: heroExpand 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    font-size: 11px;
 }
 
-.hero-image img {
-    width: 100%;
-    height: 100%;
-    
-    /* Ép ảnh lấp đầy và bung full mép viền */
-    object-fit: cover;
+.countdown b {
+    color: #fff;
+
+    font-size: 20px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+
+/* ================= 7. KHUYẾN NGHỊ (nền tối) ================= */
+
+.recommendation-preview {
+    background: var(--surface-ink);
+    color: var(--text-on-dark);
+}
+
+.recommendation-preview .section-heading p {
+    color: var(--text-on-dark-muted);
+}
+
+.recommendation-preview .section-label,
+.reviews .section-label {
+    color: #d7b88f;
+}
+
+.recommendation-preview .product-card {
+    border-color: transparent;
+}
+
+.recommendation-preview .state-box {
+    color: var(--color-ink);
+}
+
+.recommendation-preview :focus-visible {
+    outline-color: #d7b88f;
+}
+
+
+/* ================= 8. ĐÁNH GIÁ ================= */
+
+.reviews {
+    background: var(--surface-warm);
+}
+
+.reviews .section-label {
+    color: var(--color-accent);
+}
+
+.review-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.review-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    padding: var(--space-4);
+
+    border-radius: var(--radius-lg);
+    background: #fff;
+}
+
+.review-stars {
+    color: var(--color-accent);
+
+    font-size: 16px;
+    letter-spacing: 2px;
+}
+
+.review-stars span {
+    color: var(--gray-300);
+}
+
+.review-card blockquote {
+    flex: 1;
+
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.review-card figcaption {
+    display: flex;
+    flex-direction: column;
+
+    padding-top: var(--space-2);
+
+    border-top: 1px solid var(--gray-200);
+
+    font-size: 14px;
+}
+
+.review-card figcaption span {
+    color: var(--text-muted);
+
+    font-size: 13px;
+}
+
+
+/* ================= 9. DỊCH VỤ ================= */
+
+.services-layout {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--space-3);
+    align-items: start;
+}
+
+.services-layout .section-heading {
+    grid-column: 1 / span 4;
+
+    margin-bottom: 0;
+}
+
+.services-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+
+    margin-top: var(--space-3);
+}
+
+.services-actions .btn {
+    min-height: 48px;
+
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.services-preview .service-grid {
+    grid-column: 6 / span 7;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.services-preview .service-card {
     display: block;
 
-    /* Kết hợp hiệu ứng Zoom nhẹ cho tấm ảnh bên trong */
-    animation: imageZoom 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    padding: var(--space-3);
 
-    filter: drop-shadow(0 25px 40px rgba(0, 0, 0, 0.18));
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+
+    transition: border-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
 }
 
-/* Keyframes hiệu ứng bung mở khung ảnh */
-@keyframes heroExpand {
-    0% {
-        opacity: 0;
-        transform: scale(0.75) translateY(40px);
-        clip-path: inset(15% 15% 15% 15% round 20px); /* Xén gọn ban đầu */
-    }
-    100% {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-        clip-path: inset(0% 0% 0% 0% round 0px); /* Bung rộng full toàn bộ viền */
-    }
+.services-preview .service-card:hover {
+    border-color: var(--color-ink);
+
+    transform: translateY(-3px);
 }
 
-/* Keyframes hiệu ứng phóng to ảnh mượt mà */
-@keyframes imageZoom {
-    0% {
-        transform: scale(1.15);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-/* Label */
-.hero-label {
-    display: inline-block;
-    margin-bottom: 20px;
-}
+.service-icon {
+    width: 48px;
+    height: 48px;
 
-/* Tiêu đề */
-.hero h1 {
-    font-size: 64px;
-    line-height: 1.05;
-    margin-bottom: 25px;
-}
+    margin-bottom: var(--space-2);
 
-.hero h1 span {
-    display: inline-block;
-}
-
-/* Mô tả */
-.hero p {
-    max-width: 550px;
-    font-size: 18px;
-    line-height: 1.7;
-    margin-bottom: 35px;
-}
-
-/* Nút */
-.hero-buttons {
     display: flex;
-    gap: 15px;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: var(--radius-md);
+    background: var(--surface-warm);
+    color: var(--color-accent);
 }
 
-/* Responsive */
-@media (max-width: 900px) {
+.services-preview .service-card h3 {
+    margin-bottom: 4px;
 
-    .hero {
-        min-height: auto;
-        padding: 100px 0;
-    }
+    font-size: 17px;
+    font-weight: 600;
+}
 
-    .hero-content {
-        flex-direction: column;
-        text-align: center;
+.services-preview .service-card p {
+    color: var(--text-muted);
+
+    font-size: 14px;
+}
+
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+
+    .hero-slide-inner {
+        min-height: 0;
+
+        padding: var(--space-6) 0 var(--space-12);
     }
 
     .hero-text {
-        max-width: 100%;
+        grid-column: 1 / span 6;
     }
 
-    .hero p {
-        margin-left: auto;
-        margin-right: auto;
+    .hero-media {
+        grid-column: 7 / span 6;
+
+        height: 320px;
     }
 
-    .hero-buttons {
-        justify-content: center;
-        flex-wrap: wrap;
+    .benefits-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .hero-image {
-        width: 100%;
-        margin-top: 40px;
+    .benefit:nth-child(3) {
+        border-left: none;
     }
 
-    .hero-image img {
-        max-width: 350px;
+    .benefit:nth-child(n + 3) {
+        border-top: 1px solid var(--surface-warm-strong);
+    }
+
+    .category-grid {
+        grid-template-rows: 220px 220px;
+    }
+
+    .promo-card {
+        min-height: 320px;
+        padding: var(--space-4);
+    }
+
+    .review-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .services-layout {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .services-layout .section-heading,
+    .services-preview .service-grid {
+        grid-column: 1 / -1;
     }
 
 }
-
-@media (max-width: 600px) {
-
-    .hero h1 {
-        font-size: 42px;
-    }
-
-    .hero p {
-        font-size: 16px;
-    }
-
-    .hero-image img {
-        max-width: 280px;
-    }
-
-}
-
-/* ================= PHONE SECTION ================= */
-
-.phone-section {
-    min-height: 100vh;
-
-    display: flex;
-    align-items: center;
-
-    overflow: hidden;
-
-    background: #f4f4f4;
-}
-
-.phone-container {
-    min-height: 100vh;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 60px;
-}
-
-.phone-content {
-    width: 45%;
-
-    transform: translateX(-50px);
-
-    opacity: 0;
-
-    transition:
-        opacity 1s ease,
-        transform 1s ease;
-}
-
-.phone-content.show {
-    opacity: 1;
-
-    transform: translateX(0);
-}
-
-.phone-content h2 {
-    font-size: 55px;
-
-    line-height: 1.05;
-
-    margin-bottom: 25px;
-}
-
-.phone-content p {
-    max-width: 500px;
-
-    color: #777;
-
-    font-size: 14px;
-
-    margin-bottom: 35px;
-}
-
-
-/* ================= PHONE IMAGE ================= */
-
-.phone-image {
-    width: 42%;
-
-    display: flex;
-    justify-content: center;
-
-    /* Màu nền tối khớp với màu nền của ảnh */
-    background-color: #0c0d0f; 
-    
-    /* Mặc định bo tròn góc nhẹ và ẩn phần tràn */
-    border-radius: 16px;
-    overflow: hidden;
-
-    /* Trạng thái ban đầu trước khi cuộn tới */
-    opacity: 0;
-    transform: translateY(100px) scale(0.8);
-    clip-path: inset(15% 15% 15% 15% round 16px); /* Hiệu ứng xén khung ban đầu */
-
-    /* Thời gian chuyển động mượt mà */
-    transition:
-        opacity 1.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-        transform 1.2s cubic-bezier(0.2, 0.8, 0.2, 1),
-        clip-path 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-/* Khi cuộn tới (JS thêm class .show) */
-.phone-image.show {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-    clip-path: inset(0% 0% 0% 0% round 0px); /* Mở rộng tràn full viền hoàn toàn */
-}
-
-.phone-image img {
-    width: 100%;
-    height: 100%;
-    max-height: 650px;
-
-    /* Ép ảnh lấp đầy full khung viền */
-    object-fit: cover; 
-    display: block;
-
-    /* Hiệu ứng zoom nhẹ ảnh bên trong khi xuất hiện */
-    transform: scale(1.1);
-    transition: transform 1.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-
-    filter:
-        drop-shadow(
-            0 30px 50px
-            rgba(0, 0, 0, 0.25)
-        );
-}
-
-/* Zoom ảnh về kích thước chuẩn khi đã hiện full */
-.phone-image.show img {
-    transform: scale(1);
-}
-/* ================= MOBILE ================= */
 
 @media (max-width: 700px) {
 
-    .hero {
-        min-height: 600px;
-    }
-
-    .hero h1 {
-        font-size: 45px;
-    }
-
-    .hero-buttons {
+    .section-heading--row {
         flex-direction: column;
-
         align-items: flex-start;
+        gap: var(--space-2);
     }
 
-    .phone-container {
+    .hero-slide-inner {
+        display: flex;
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: var(--space-2);
+
+        padding: var(--space-4) 0 88px;
+    }
+
+    .hero-media {
+        height: 240px;
+    }
+
+    .hero-text p {
+        font-size: 15px;
+        margin-bottom: var(--space-3);
+    }
+
+    .hero-controls {
+        bottom: var(--space-3);
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .benefit,
+    .benefit + .benefit {
+        padding: var(--space-2) 0;
+
+        border-left: none;
+    }
+
+    .benefit + .benefit {
+        border-top: 1px solid var(--surface-warm-strong);
+    }
+
+    .category-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: 300px 180px 180px;
+        gap: 12px;
+    }
+
+    .category-card,
+    .category-card--wide {
+        grid-column: span 1;
+
+        padding: var(--space-2);
+    }
+
+    .category-card--large {
+        grid-column: 1 / -1;
+        grid-row: auto;
+    }
+
+    .category-card--wide {
+        grid-column: 1 / -1;
+    }
+
+    .category-card h3 {
+        font-size: 17px;
+    }
+
+    .category-card--large h3 {
+        font-size: 24px;
+    }
+
+    .category-card p {
+        display: none;
+    }
+
+    .category-card img,
+    .category-card--wide img {
+        right: 12px;
+        bottom: 12px;
+
+        width: 58%;
+        height: 46%;
+    }
+
+    .category-card--large img {
+        width: 52%;
+        height: 80%;
+    }
+
+    .brands-row {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
 
-        justify-content: center;
-
-        padding: 80px 0;
+        padding: var(--space-2) 0;
     }
 
-    .phone-content,
-    .phone-image {
+    .brands-list {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .brands-list a {
+        font-size: 17px;
+    }
+
+    .home-tabs {
         width: 100%;
     }
 
-    .phone-content h2 {
-        font-size: 40px;
+    .home-tab {
+        flex: 1;
+        padding: 0 8px;
     }
 
-    .phone-image img {
-        max-height: 500px;
+    .promo-banners {
+        padding-bottom: var(--space-8);
+    }
+
+    .promo-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .promo-card {
+        min-height: 340px;
+        padding: var(--space-3);
+    }
+
+    .promo-card h3 {
+        font-size: 23px;
+    }
+
+    .promo-text {
+        max-width: 100%;
+    }
+
+    .promo-card img,
+    .promo-card--warm img {
+        width: 52%;
+        max-height: 46%;
+    }
+
+    .review-card {
+        padding: var(--space-3);
+    }
+
+    .services-preview .service-grid {
+        grid-template-columns: 1fr;
     }
 
 }

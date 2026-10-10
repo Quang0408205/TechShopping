@@ -21,8 +21,8 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Stores uploaded images on the local disk ({@code app.upload.dir}/products). File names are random UUIDs,
- * never the client's name, so a request cannot choose or overwrite a path.
+ * Stores uploaded images on the local disk ({@code app.upload.dir}/products, /reviews and /service). File names are random
+ * UUIDs, never the client's name, so a request cannot choose or overwrite a path.
  */
 @Slf4j
 @Service
@@ -35,14 +35,48 @@ public class LocalImageStorageService implements ImageStorageService {
 
     private final Path productDirectory;
     private final String productUrlPrefix;
+    private final Path reviewDirectory;
+    private final String reviewUrlPrefix;
+    private final Path serviceDirectory;
+    private final String serviceUrlPrefix;
 
     public LocalImageStorageService(UploadProperties properties) {
         this.productDirectory = properties.rootDirectory().resolve("products");
         this.productUrlPrefix = properties.publicBaseUrl() + PRODUCT_IMAGE_PATH;
+        this.reviewDirectory = properties.rootDirectory().resolve("reviews");
+        this.reviewUrlPrefix = properties.publicBaseUrl() + REVIEW_IMAGE_PATH;
+        this.serviceDirectory = properties.rootDirectory().resolve("service");
+        this.serviceUrlPrefix = properties.publicBaseUrl() + SERVICE_IMAGE_PATH;
     }
 
     @Override
     public String storeProductImage(MultipartFile file) {
+        return store(file, productDirectory, productUrlPrefix, "product");
+    }
+
+    @Override
+    public String storeReviewImage(MultipartFile file) {
+        return store(file, reviewDirectory, reviewUrlPrefix, "review");
+    }
+
+    @Override
+    public boolean isStoredReviewImage(String url) {
+        Path file = storedFile(url, reviewDirectory, reviewUrlPrefix);
+        return file != null && Files.isRegularFile(file);
+    }
+
+    @Override
+    public String storeServiceImage(MultipartFile file) {
+        return store(file, serviceDirectory, serviceUrlPrefix, "service");
+    }
+
+    @Override
+    public boolean isStoredServiceImage(String url) {
+        Path file = storedFile(url, serviceDirectory, serviceUrlPrefix);
+        return file != null && Files.isRegularFile(file);
+    }
+
+    private String store(MultipartFile file, Path directory, String urlPrefix, String kind) {
         if (file == null || file.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_IMAGE_FILE, "Image file is empty");
         }
@@ -62,35 +96,47 @@ public class LocalImageStorageService implements ImageStorageService {
 
         String fileName = UUID.randomUUID() + "." + extension;
         try (InputStream in = file.getInputStream()) {
-            Files.createDirectories(productDirectory);
-            Files.copy(in, productDirectory.resolve(fileName));
+            Files.createDirectories(directory);
+            Files.copy(in, directory.resolve(fileName));
         } catch (IOException e) {
-            throw new UncheckedIOException("Could not store uploaded image in " + productDirectory, e);
+            throw new UncheckedIOException("Could not store uploaded image in " + directory, e);
         }
-        log.info("Stored uploaded product image {} ({} bytes)", fileName, file.getSize());
-        return productUrlPrefix + fileName;
+        log.info("Stored uploaded {} image {} ({} bytes)", kind, fileName, file.getSize());
+        return urlPrefix + fileName;
     }
 
     @Override
     public void deleteAfterCommit(String url) {
-        if (url == null || !url.startsWith(productUrlPrefix)) {
+        Path file = storedFile(url, productDirectory, productUrlPrefix);
+        if (file == null) {
+            file = storedFile(url, reviewDirectory, reviewUrlPrefix);
+        }
+        if (file == null) {
+            file = storedFile(url, serviceDirectory, serviceUrlPrefix);
+        }
+        if (file == null) {
             return;
         }
-        String fileName = url.substring(productUrlPrefix.length());
-        if (!STORED_FILE_NAME.matcher(fileName).matches()) {
-            return;
-        }
-        Path file = productDirectory.resolve(fileName);
+        Path target = file;
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
-                    deleteQuietly(file);
+                    deleteQuietly(target);
                 }
             });
         } else {
-            deleteQuietly(file);
+            deleteQuietly(target);
         }
+    }
+
+    /** The file behind one of our URLs (prefix + random name of ours), else null; existence is not checked. */
+    private static Path storedFile(String url, Path directory, String urlPrefix) {
+        if (url == null || !url.startsWith(urlPrefix)) {
+            return null;
+        }
+        String fileName = url.substring(urlPrefix.length());
+        return STORED_FILE_NAME.matcher(fileName).matches() ? directory.resolve(fileName) : null;
     }
 
     /** Recognises the file by its first bytes: JPEG, PNG or WebP; anything else gives null. */
@@ -114,7 +160,7 @@ public class LocalImageStorageService implements ImageStorageService {
     private void deleteQuietly(Path file) {
         try {
             if (Files.deleteIfExists(file)) {
-                log.info("Deleted uploaded product image {}", file.getFileName());
+                log.info("Deleted uploaded image {}", file);
             }
         } catch (IOException e) {
             log.warn("Could not delete uploaded image {}: {}", file, e.getMessage());

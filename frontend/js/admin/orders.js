@@ -372,6 +372,18 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
 
+        const waiting = waitingFor(order);
+
+        const waitingHtml = waiting ? `<span class="admin-subtext admin-waiting">${escapeHtml(waiting)}</span>` : "";
+
+
+        /* ADMIN chỉ xem: không có ô đổi trạng thái */
+
+        if (isAdmin) {
+            return `<span class="admin-badge admin-badge-neutral">${escapeHtml(label)}</span>` + waitingHtml;
+        }
+
+
         const labels = {};
 
         labels[order.status] = label;
@@ -380,10 +392,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             labels[status] = "→ " + STAFF_ORDER_STATUS_LABELS[status];
         });
 
-        const waiting = waitingFor(order);
-
-        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code)
-            + (waiting ? `<span class="admin-subtext admin-waiting">${escapeHtml(waiting)}</span>` : "");
+        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code) + waitingHtml;
 
     }
 
@@ -436,7 +445,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }).join("");
 
 
-        const canEditTracking = order.status === "SHIPPING";
+        const canEditTracking = !isAdmin && order.status === "SHIPPING";
 
         const trackingHtml = (order.trackingNumber ? escapeHtml(order.trackingNumber) : "—") +
             (canEditTracking
@@ -528,7 +537,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             }
 
-            if (plan.status === "PENDING_APPROVAL") {
+            if (!isAdmin && plan.status === "PENDING_APPROVAL") {
                 actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="approve" data-id="${id}">DUYỆT TRẢ GÓP</button>`);
                 actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn admin-action-danger" data-action="reject" data-id="${id}">TỪ CHỐI</button>`);
             }
@@ -552,11 +561,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 facts.push(["Hoàn tiền lúc", escapeHtml(formatDateTimeVi(payment.refundedAt))]);
             }
 
-            if (order.paymentMethod === "BANK_TRANSFER" && payment.status === "PENDING") {
+            if (!isAdmin && order.paymentMethod === "BANK_TRANSFER" && payment.status === "PENDING") {
                 actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="confirm-payment" data-id="${id}">ĐÃ NHẬN TIỀN</button>`);
             }
 
-            if (payment.status === "REFUND_PENDING") {
+            if (!isAdmin && payment.status === "REFUND_PENDING") {
                 actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="refund" data-id="${id}">ĐÃ HOÀN TIỀN</button>`);
             }
 
@@ -935,9 +944,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 if (error.code === "INVALID_ORDER_STATUS") {
                     text = "Đơn " + order.code + " vừa được cập nhật ở nơi khác (khách hủy hoặc nhân viên khác xử lý). Danh sách đã được tải lại.";
                 } else if (error.code === "INSUFFICIENT_STOCK" || error.code === "ORDER_STORE_MISSING") {
-                    text = message + (isAdmin
-                        ? ". Mở ▸ để đổi chi nhánh xử lý."
-                        : ". Hãy nhập thêm hàng hoặc báo ADMIN chuyển đơn sang chi nhánh khác.");
+                    text = message + ". Hãy nhập thêm hàng hoặc báo ADMIN chuyển đơn sang chi nhánh khác.";
                 }
 
                 showToast(text, "error");

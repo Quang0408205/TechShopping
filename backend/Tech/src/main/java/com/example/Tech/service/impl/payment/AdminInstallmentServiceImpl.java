@@ -74,7 +74,7 @@ public class AdminInstallmentServiceImpl implements AdminInstallmentService {
     @Override
     @Transactional
     public AdminInstallmentResponse payPeriod(Long staffId, Long installmentId, int number, PaymentConfirmRequest request) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Long orderId = installmentOrderRepository.findOrderIdById(installmentId).orElseThrow(() -> notFound(installmentId));
         // same lock as every order change: two staff members cannot record the same period twice. The plan is read
         // only after the lock (the scalar query above does not load it), so its status is current.

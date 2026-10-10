@@ -31,40 +31,60 @@
 
     <div data-include="admin-sidebar" data-active="service-requests"></div>
 
-
     <div class="admin-main">
 
         <div data-include="admin-topbar"></div>
 
-
         <main class="admin-content">
 
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/service-requests): yêu cầu khách gửi từ trang đơn hàng. Nhân viên chỉ thấy
+                và xử lý yêu cầu của đơn thuộc chi nhánh mình; ADMIN chỉ xem mọi chi nhánh. Trả hàng: khi nhận hàng, chọn món còn bán được để cộng lại tồn kho;
+                khi hoàn tiền, số tiền được trừ khỏi tổng chi tiêu của khách.
             </p>
 
-            <div class="admin-filter-bar">
+
+            <form class="admin-filter-bar" id="requestFilterForm" role="search">
+
+                <input type="search" id="requestKeyword" placeholder="Mã BH / BT / DT, mã đơn, tên / email / SĐT khách…" maxlength="255" aria-label="Từ khoá">
 
                 <select id="typeFilter" aria-label="Loại yêu cầu">
                     <option value="">Tất cả loại yêu cầu</option>
                     <option value="WARRANTY">Bảo hành</option>
                     <option value="MAINTENANCE">Bảo trì</option>
-                    <option value="RETURN">Đổi trả</option>
+                    <option value="RETURN">Trả hàng</option>
                 </select>
 
                 <select id="statusFilter" aria-label="Trạng thái">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="RECEIVED">Đã tiếp nhận</option>
+                    <option value="PENDING">Chờ tiếp nhận / chờ duyệt</option>
+                    <option value="APPROVED">Đã duyệt (trả hàng)</option>
+                    <option value="RECEIVED">Đã nhận máy / nhận hàng</option>
                     <option value="PROCESSING">Đang xử lý</option>
                     <option value="COMPLETED">Hoàn tất</option>
+                    <option value="REFUNDED">Đã hoàn tiền</option>
                     <option value="REJECTED">Từ chối</option>
+                    <option value="CANCELLED">Khách đã huỷ</option>
                 </select>
 
-                <!-- js/admin/service-requests.js dựng theo vai trò -->
+                <!-- js/admin/service-requests.js dựng theo vai trò (nhân viên: khoá ở chi nhánh mình) -->
                 <select id="storeFilter" aria-label="Chi nhánh"></select>
 
-            </div>
+                <label class="admin-date-filter">
+                    Từ
+                    <input type="date" id="requestFromDate" aria-label="Gửi từ ngày">
+                </label>
+
+                <label class="admin-date-filter">
+                    Đến
+                    <input type="date" id="requestToDate" aria-label="Gửi đến ngày">
+                </label>
+
+                <button type="submit" class="btn btn-dark">TÌM</button>
+
+            </form>
+
+            <p id="requestFilterError" class="form-error" role="alert" hidden></p>
 
 
             <section class="admin-panel">
@@ -75,22 +95,30 @@
                 </div>
 
                 <div class="admin-table-wrapper">
+
                     <table class="admin-table admin-table--wide">
+
                         <thead>
                             <tr>
-                                <th>Mã</th>
-                                <th>Loại</th>
-                                <th>Sản phẩm / Mô tả</th>
+                                <th></th>
+                                <th>Mã / Loại</th>
+                                <th>Sản phẩm</th>
                                 <th>Khách hàng</th>
                                 <th>Chi nhánh</th>
                                 <th>NV phụ trách</th>
-                                <th>Ngày tạo</th>
+                                <th>Ngày gửi</th>
                                 <th>Trạng thái</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
+
                         <tbody id="requestTableBody"></tbody>
+
                     </table>
+
                 </div>
+
+                <div class="admin-pagination" id="requestPagination"></div>
 
             </section>
 
@@ -104,6 +132,7 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
+<script src="../js/core/after-sales.js"></script>
 <script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>

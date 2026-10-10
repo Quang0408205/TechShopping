@@ -1,5 +1,6 @@
 package com.example.Tech.service.store;
 
+import com.example.Tech.entity.employee.EmployeeAssignment;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.RoleName;
@@ -137,6 +138,50 @@ class StoreAccessGuardTest {
         assertThatThrownBy(() -> guard.orderScope(2L))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT);
+    }
+
+    @Test
+    void processingScope_admin_isReadOnly_evenWithTheStaffRole() {
+        when(userRoleRepository.findRoleNamesByUserId(1L)).thenReturn(List.of("ADMIN", "STAFF"));
+
+        assertThatThrownBy(() -> guard.processingScope(1L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.ADMIN_READ_ONLY);
+    }
+
+    @Test
+    void processingScope_staff_getsTheirStore() {
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("STAFF"));
+        when(assignmentRepository.findActiveStoreIdByUserId(2L)).thenReturn(Optional.of(3));
+
+        assertThat(guard.processingScope(2L).storeId()).isEqualTo(3);
+    }
+
+    @Test
+    void reportScope_admin_everyStore_branchManager_ownStore_otherStaff_denied() {
+        when(userRoleRepository.findRoleNamesByUserId(1L)).thenReturn(List.of("ADMIN"));
+        assertThat(guard.reportScope(1L).admin()).isTrue();
+
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("STAFF"));
+        when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.of(assignment(3, "Quản lý chi nhánh")));
+        assertThat(guard.reportScope(2L).storeId()).isEqualTo(3);
+
+        when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.of(assignment(3, "Thu ngân")));
+        assertThatThrownBy(() -> guard.reportScope(2L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.ACCESS_DENIED);
+
+        when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.empty());
+        assertThatThrownBy(() -> guard.reportScope(2L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT);
+    }
+
+    private static EmployeeAssignment assignment(int storeId, String position) {
+        EmployeeAssignment assignment = new EmployeeAssignment();
+        assignment.setStore(store(storeId));
+        assignment.setPositionAtStore(position);
+        return assignment;
     }
 
     private static Order order(Store store) {

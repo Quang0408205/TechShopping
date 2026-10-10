@@ -123,6 +123,50 @@ class LocalImageStorageServiceTest {
     }
 
     @Test
+    void reviewImages_storedInTheirOwnFolder_andOnlyThoseCountAsStoredReviewImages() {
+        String review = storage.storeReviewImage(file("me.jpg", JPEG));
+        String product = storage.storeProductImage(file("p.jpg", JPEG));
+
+        assertThat(review).startsWith(BASE_URL + ImageStorageService.REVIEW_IMAGE_PATH).endsWith(".jpg");
+        assertThat(uploadRoot.resolve("reviews").resolve(review.substring(review.lastIndexOf('/') + 1))).exists();
+        assertThat(storage.isStoredReviewImage(review)).isTrue();
+        assertThat(storage.isStoredReviewImage(product)).isFalse();
+        assertThat(storage.isStoredReviewImage("https://cdn.tgdd.vn/Products/Images/42/1/a.jpg")).isFalse();
+        assertThat(storage.isStoredReviewImage(BASE_URL + "/uploads/reviews/../products/x.jpg")).isFalse();
+        assertThat(storage.isStoredReviewImage(BASE_URL + "/uploads/reviews/"
+                + "00000000-0000-0000-0000-000000000000.jpg")).isFalse();
+        assertThat(storage.isStoredReviewImage(null)).isFalse();
+
+        storage.deleteAfterCommit(review);
+
+        assertThat(storage.isStoredReviewImage(review)).isFalse();
+    }
+
+    @Test
+    void serviceImages_storedInTheirOwnFolder_reviewPhotosDoNotCount() {
+        String service = storage.storeServiceImage(file("loi.png", PNG));
+        String review = storage.storeReviewImage(file("me.jpg", JPEG));
+
+        assertThat(service).startsWith(BASE_URL + ImageStorageService.SERVICE_IMAGE_PATH).endsWith(".png");
+        assertThat(uploadRoot.resolve("service").resolve(service.substring(service.lastIndexOf('/') + 1))).exists();
+        assertThat(storage.isStoredServiceImage(service)).isTrue();
+        assertThat(storage.isStoredServiceImage(review)).isFalse();
+        assertThat(storage.isStoredServiceImage(BASE_URL + "/uploads/service/../reviews/x.jpg")).isFalse();
+
+        storage.deleteAfterCommit(service);
+
+        assertThat(storage.isStoredServiceImage(service)).isFalse();
+    }
+
+    @Test
+    void storeReviewImage_notAnImage_isRefused() {
+        assertThatThrownBy(() -> storage.storeReviewImage(file("x.jpg", "<svg onload=alert(1)>".getBytes())))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_IMAGE_FILE);
+        assertThat(uploadRoot.resolve("reviews")).doesNotExist();
+    }
+
+    @Test
     void detectExtension_recognisesOnlyTheThreeFormats() {
         assertThat(LocalImageStorageService.detectExtension(JPEG)).isEqualTo("jpg");
         assertThat(LocalImageStorageService.detectExtension(PNG)).isEqualTo("png");

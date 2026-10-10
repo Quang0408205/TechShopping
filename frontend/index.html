@@ -7,10 +7,12 @@
     <title>POY - Đỉnh Cao Công Nghệ</title>
 
     <link rel="stylesheet" href="css/style.css">
+
+    <link rel="stylesheet" href="css/customer-theme.css">
     <link rel="stylesheet" href="css/home.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 </head>
@@ -22,51 +24,171 @@
 <div data-include="header" data-active="home"></div>
 
 
-<!-- ================= 1. HERO ================= -->
+<main>
 
-<section class="hero">
+<!-- ================= 1. HERO (carousel: js/customer/ui-effects.js) ================= -->
 
-    <div class="hero-overlay"></div>
+<section class="hero" aria-roledescription="carousel" aria-label="Sản phẩm nổi bật">
 
-    <div class="container hero-content">
+    <div class="hero-track">
 
-        <div class="hero-text">
+        <article class="hero-slide is-active" aria-roledescription="slide" aria-label="1 / 3">
 
-            <span class="hero-label">
-                KHÁM PHÁ CÔNG NGHỆ MỚI
-            </span>
+            <div class="container hero-slide-inner">
 
-            <h1>
-                CÔNG NGHỆ<br>
-                <span>ĐỊNH HƯỚNG TƯƠNG LAI</span>
-            </h1>
+                <div class="hero-text">
 
-            <p>
-                Khám phá những thiết bị công nghệ hiện đại
-                và tìm kiếm sản phẩm phù hợp với nhu cầu của bạn.
-            </p>
+                    <span class="hero-label">Điện thoại</span>
 
-            <div class="hero-buttons">
+                    <h1>iPhone 17 Pro Max</h1>
 
-                <a href="customer/products.html" class="btn btn-dark">
-                    MUA NGAY
-                </a>
+                    <p>
+                        Bản 256GB màu cam đã có hàng tại POY.
+                        Trả góp 0% cho đơn từ 3.000.000đ.
+                    </p>
 
-                <a href="customer/recommendation.html" class="btn btn-outline">
-                    KHÁM PHÁ KHUYẾN NGHỊ
-                </a>
+                    <a href="customer/products.html?search=iPhone%2017%20Pro%20Max" class="btn btn-light">
+                        Xem iPhone 17 Pro Max
+                    </a>
+
+                </div>
+
+                <div class="hero-media">
+                    <img src="assets/images/hero-iphone-17-pro-max.webp" alt="iPhone 17 Pro Max màu cam" width="487" height="600" fetchpriority="high">
+                </div>
 
             </div>
 
+        </article>
+
+
+        <article class="hero-slide" aria-roledescription="slide" aria-label="2 / 3" aria-hidden="true">
+
+            <div class="container hero-slide-inner">
+
+                <div class="hero-text">
+
+                    <span class="hero-label">Laptop</span>
+
+                    <h2>MacBook Air M5</h2>
+
+                    <p>
+                        Mỏng nhẹ cho học tập và công việc,
+                        bản 13 inch và 15 inch với nhiều cấu hình.
+                    </p>
+
+                    <a href="customer/products.html?search=MacBook%20Air" class="btn btn-light" tabindex="-1">
+                        Xem MacBook Air
+                    </a>
+
+                </div>
+
+                <div class="hero-media">
+                    <img src="assets/images/hero-macbook-air.webp" alt="MacBook Air 15 inch màu xanh" width="598" height="373" loading="lazy">
+                </div>
+
+            </div>
+
+        </article>
+
+
+        <article class="hero-slide" aria-roledescription="slide" aria-label="3 / 3" aria-hidden="true">
+
+            <div class="container hero-slide-inner">
+
+                <div class="hero-text">
+
+                    <span class="hero-label">Phụ kiện</span>
+
+                    <h2>AirPods Max cổng USB-C</h2>
+
+                    <p>
+                        Tai nghe chụp tai cho người mê âm thanh.
+                        Đổi trả trong 7 ngày theo chính sách của POY.
+                    </p>
+
+                    <a href="customer/products.html?search=AirPods%20Max" class="btn btn-light" tabindex="-1">
+                        Xem AirPods Max
+                    </a>
+
+                </div>
+
+                <div class="hero-media">
+                    <img src="assets/images/hero-airpods-max.webp" alt="Tai nghe AirPods Max màu trắng ánh sao" width="438" height="479" loading="lazy">
+                </div>
+
+            </div>
+
+        </article>
+
+    </div>
+
+
+    <div class="container hero-controls">
+
+        <button type="button" class="hero-arrow" data-hero-prev aria-label="Slide trước">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <div class="hero-dots">
+            <button type="button" data-hero-dot="0" aria-label="Xem slide 1" aria-current="true"></button>
+            <button type="button" data-hero-dot="1" aria-label="Xem slide 2"></button>
+            <button type="button" data-hero-dot="2" aria-label="Xem slide 3"></button>
         </div>
 
-        <div class="hero-image">
+        <button type="button" class="hero-arrow" data-hero-next aria-label="Slide sau">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
 
-            <img
-                src="assets/images/iphoneduo.png"
-                alt="Thiết bị công nghệ"
-            >
+    </div>
 
+</section>
+
+
+<!-- ================= 2. LỢI ÍCH ================= -->
+
+<section class="benefits">
+
+    <div class="container benefits-grid">
+
+        <div class="benefit">
+            <span class="benefit-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 8.1-7 9.5-4-1.4-7-5.1-7-9.5V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+                <h3>Hàng chính hãng</h3>
+                <p>Nguồn gốc rõ ràng, đầy đủ hoá đơn</p>
+            </div>
+        </div>
+
+        <div class="benefit">
+            <span class="benefit-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M14.5 6.5a4 4 0 0 0-5.3 5.3L4 17l3 3 5.2-5.2a4 4 0 0 0 5.3-5.3l-2.4 2.4-2.6-.4-.4-2.6 2.4-2.4z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+                <h3>Bảo hành chính hãng</h3>
+                <p>Gửi yêu cầu bảo hành ngay trên đơn hàng</p>
+            </div>
+        </div>
+
+        <div class="benefit">
+            <span class="benefit-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <div>
+                <h3>Trả góp 0%</h3>
+                <p>Kỳ hạn 3 - 12 tháng, không trả trước</p>
+            </div>
+        </div>
+
+        <div class="benefit">
+            <span class="benefit-icon">
+                <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 6.5h11v9H3zM14 9.5h4l3 3v3h-7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="7" cy="17.5" r="1.8" fill="#fff" stroke="currentColor" stroke-width="1.6"/><circle cx="17" cy="17.5" r="1.8" fill="#fff" stroke="currentColor" stroke-width="1.6"/></svg>
+            </span>
+            <div>
+                <h3>Giao tận nơi</h3>
+                <p>Hoặc nhận hàng tại cửa hàng gần bạn</p>
+            </div>
         </div>
 
     </div>
@@ -74,108 +196,58 @@
 </section>
 
 
-<!-- ================= 2. DANH MỤC ================= -->
+<!-- ================= 3. DANH MỤC (bento) ================= -->
 
 <section class="categories section">
 
     <div class="container">
 
-        <div class="section-heading">
+        <div class="section-heading section-heading--row">
 
-            <span class="section-label">
-                DANH MỤC
-            </span>
+            <div>
+                <span class="section-label">DANH MỤC</span>
+                <h2>Mua sắm theo danh mục</h2>
+            </div>
 
-            <h2>
-                KHÁM PHÁ SẢN PHẨM
-            </h2>
-
-            <p>
-                Lựa chọn thiết bị công nghệ phù hợp với bạn.
-            </p>
+            <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
 
         </div>
 
 
         <div class="category-grid">
 
-            <a href="customer/products.html?category=laptop" class="category-card">
-
-                <img
-                    src="assets/images/laptop.png"
-                    alt="Laptop"
-                >
-
-                <div class="category-overlay">
-
-                    <span>01</span>
-
-                    <h3>Laptop</h3>
-
-                    <p>Khám phá ngay →</p>
-
-                </div>
-
-            </a>
-
-
-            <a href="customer/products.html?category=phone" class="category-card">
-
-                <img
-                    src="assets/images/samsungs25.png"
-                    alt="Điện thoại"
-                >
-
-                <div class="category-overlay">
-
-                    <span>02</span>
-
+            <a href="customer/products.html?category=phone" class="category-card category-card--large">
+                <div class="category-text">
                     <h3>Điện thoại</h3>
-
-                    <p>Khám phá ngay →</p>
-
+                    <p>iPhone, Samsung Galaxy, Xiaomi, OPPO</p>
+                    <span class="category-more">Khám phá</span>
                 </div>
-
+                <img src="assets/images/category-phone.webp" alt="" width="503" height="600" loading="lazy">
             </a>
 
+            <a href="customer/products.html?category=laptop" class="category-card category-card--wide">
+                <div class="category-text">
+                    <h3>Laptop</h3>
+                    <p>MacBook, Asus, Dell, Lenovo, HP</p>
+                    <span class="category-more">Khám phá</span>
+                </div>
+                <img src="assets/images/category-laptop.webp" alt="" width="600" height="378" loading="lazy">
+            </a>
 
             <a href="customer/products.html?category=tablet" class="category-card">
-
-                <img
-                    src="assets/images/tablet.png"
-                    alt="Tablet"
-                >
-
-                <div class="category-overlay">
-
-                    <span>03</span>
-
-                    <h3>Tablet</h3>
-
-                    <p>Khám phá ngay →</p>
-
+                <div class="category-text">
+                    <h3>Máy tính bảng</h3>
+                    <span class="category-more">Khám phá</span>
                 </div>
-
+                <img src="assets/images/category-tablet.webp" alt="" width="545" height="600" loading="lazy">
             </a>
 
-
             <a href="customer/products.html?category=accessory" class="category-card">
-
-                <img
-                    src="assets/images/banphim.png"
-                    alt="Phụ kiện"
-                >
-
-                <div class="category-overlay">
-
-                    <span>04</span>
-
+                <div class="category-text">
                     <h3>Phụ kiện</h3>
-
-                    <p>Khám phá ngay →</p>
-
+                    <span class="category-more">Khám phá</span>
                 </div>
-
+                <img src="assets/images/category-accessory.webp" alt="" width="329" height="474" loading="lazy">
             </a>
 
         </div>
@@ -185,28 +257,57 @@
 </section>
 
 
-<!-- ================= 3. SẢN PHẨM NỔI BẬT ================= -->
+<!-- ================= 4. THƯƠNG HIỆU ================= -->
+<!-- MOCK: chưa có API thương hiệu nổi bật; link tìm theo tên hãng -->
+
+<section class="brands" aria-label="Thương hiệu">
+
+    <div class="container brands-row">
+
+        <span class="brands-label">Thương hiệu</span>
+
+        <div class="brands-list">
+            <a href="customer/products.html?search=Apple">Apple</a>
+            <a href="customer/products.html?search=Samsung">Samsung</a>
+            <a href="customer/products.html?search=Xiaomi">Xiaomi</a>
+            <a href="customer/products.html?search=OPPO">OPPO</a>
+            <a href="customer/products.html?search=Asus">Asus</a>
+            <a href="customer/products.html?search=Dell">Dell</a>
+            <a href="customer/products.html?search=Lenovo">Lenovo</a>
+            <a href="customer/products.html?search=HP">HP</a>
+            <a href="customer/products.html?search=Acer">Acer</a>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 5. SẢN PHẨM NỔI BẬT (tab: js/home.js) ================= -->
 
 <section class="products-preview section">
 
     <div class="container">
 
-        <div class="section-heading">
+        <div class="section-heading section-heading--row">
 
-            <span class="section-label">
-                SẢN PHẨM NỔI BẬT
-            </span>
+            <div>
+                <span class="section-label">SẢN PHẨM</span>
+                <h2>Lựa chọn hàng đầu</h2>
+            </div>
 
-            <h2>
-                LỰA CHỌN HÀNG ĐẦU
-            </h2>
+            <div class="home-tabs" role="tablist" aria-label="Lọc sản phẩm">
+                <button type="button" role="tab" class="home-tab" data-home-sort="id,asc" aria-selected="true" aria-controls="featuredProductGrid">Nổi bật</button>
+                <button type="button" role="tab" class="home-tab" data-home-sort="id,desc" aria-selected="false" aria-controls="featuredProductGrid">Mới về</button>
+                <button type="button" role="tab" class="home-tab" data-home-sort="basePrice,asc" aria-selected="false" aria-controls="featuredProductGrid">Giá tốt</button>
+            </div>
 
         </div>
 
 
-        <div class="product-grid" id="featuredProductGrid">
+        <div class="product-grid" id="featuredProductGrid" role="tabpanel" aria-live="polite">
 
-            <!-- js/home.js: 4 sản phẩm đầu tiên từ GET /api/v1/products -->
+            <!-- js/home.js: 4 sản phẩm từ GET /api/v1/products theo tab đang chọn -->
 
         </div>
 
@@ -214,7 +315,7 @@
         <div class="view-all">
 
             <a href="customer/products.html" class="btn btn-dark">
-                XEM TẤT CẢ SẢN PHẨM
+                Xem tất cả sản phẩm
             </a>
 
         </div>
@@ -224,72 +325,64 @@
 </section>
 
 
-<!-- ================= 4. LỢI ÍCH ================= -->
+<!-- ================= 6. BANNER ĐÔI ================= -->
 
-<section class="benefits">
+<section class="promo-banners">
 
-    <div class="container benefits-grid">
+    <div class="container promo-grid">
 
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
+        <a href="customer/products.html?category=laptop" class="promo-card promo-card--warm">
 
-            <div>
-                <h3>Hàng chính hãng</h3>
-                <p>Sản phẩm có nguồn gốc rõ ràng</p>
+            <div class="promo-text">
+                <span class="promo-label">Trả góp 0%</span>
+                <h3>Lãi suất 0%, không cần trả trước</h3>
+                <p>Kỳ hạn 3, 6, 9 hoặc 12 tháng cho đơn từ 3.000.000đ.</p>
+                <span class="promo-link">Chọn laptop</span>
             </div>
-        </div>
 
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
+            <img src="assets/images/banner-macbook-pro.webp" alt="" width="600" height="383" loading="lazy">
 
-            <div>
-                <h3>Bảo hành chính hãng</h3>
-                <p>Đảm bảo quyền lợi khách hàng</p>
+        </a>
+
+        <!-- MOCK: chưa có API chương trình ưu đãi; đếm ngược tới cuối tuần (js/customer/ui-effects.js) -->
+        <a href="customer/products.html" class="promo-card promo-card--dark">
+
+            <div class="promo-text">
+                <span class="promo-label">Ưu đãi tuần này</span>
+                <h3>Giá tốt cập nhật mỗi tuần</h3>
+                <div class="countdown" data-countdown-week aria-label="Thời gian còn lại của tuần ưu đãi">
+                    <span><b data-unit="d">0</b>ngày</span>
+                    <span><b data-unit="h">00</b>giờ</span>
+                    <span><b data-unit="m">00</b>phút</span>
+                    <span><b data-unit="s">00</b>giây</span>
+                </div>
+                <span class="promo-link">Xem sản phẩm</span>
             </div>
-        </div>
 
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
+            <img src="assets/images/hero-airpods-max.webp" alt="" width="438" height="479" loading="lazy">
 
-            <div>
-                <h3>Thanh toán linh hoạt</h3>
-                <p>Nhiều phương thức thanh toán</p>
-            </div>
-        </div>
-
-        <div class="benefit">
-            <div class="benefit-icon">✓</div>
-
-            <div>
-                <h3>Giao hàng nhanh</h3>
-                <p>Giao hàng đến tận nơi</p>
-            </div>
-        </div>
+        </a>
 
     </div>
 
 </section>
 
 
-<!-- ================= 5. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
+<!-- ================= 7. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
 
 <section class="section recommendation-preview">
 
     <div class="container">
 
-        <div class="section-heading">
+        <div class="section-heading section-heading--row">
 
-            <span class="section-label">
-                DÀNH RIÊNG CHO BẠN
-            </span>
+            <div>
+                <span class="section-label">DÀNH RIÊNG CHO BẠN</span>
+                <h2>Gợi ý dành cho bạn</h2>
+                <p>Những sản phẩm mới nhất tại POY, được chọn cho bạn.</p>
+            </div>
 
-            <h2>
-                GỢI Ý DÀNH CHO BẠN
-            </h2>
-
-            <p>
-                Những sản phẩm mới nhất tại POY, được chọn cho bạn.
-            </p>
+            <a href="customer/recommendation.html" class="link-arrow">Xem tất cả gợi ý</a>
 
         </div>
 
@@ -300,133 +393,107 @@
 
         </div>
 
-
-        <div class="view-all">
-
-            <a href="customer/recommendation.html" class="btn btn-outline-dark">
-                XEM TẤT CẢ KHUYẾN NGHỊ
-            </a>
-
-        </div>
-
     </div>
 
 </section>
 
 
-<!-- ================= 6. CÂU CHUYỆN THƯƠNG HIỆU ================= -->
+<!-- ================= 8. ĐÁNH GIÁ ================= -->
+<!-- MOCK: chưa có API đánh giá cửa hàng; thay bằng dữ liệu thật trước khi đưa lên mạng -->
 
-<section class="phone-section">
-
-    <div class="container phone-container">
-
-        <div class="phone-content">
-
-            <span class="section-label">
-                CÔNG NGHỆ MỚI
-            </span>
-
-            <h2>
-                KHÁM PHÁ<br>
-                THẾ GIỚI CÔNG NGHỆ
-            </h2>
-
-            <p>
-                Những thiết bị công nghệ hiện đại không chỉ
-                giúp cuộc sống tiện lợi hơn mà còn mở ra
-                những trải nghiệm hoàn toàn mới.
-            </p>
-
-            <a href="customer/products.html" class="btn btn-dark">
-                KHÁM PHÁ SẢN PHẨM
-            </a>
-
-        </div>
-
-
-        <div class="phone-image">
-
-            <img
-                src="assets/images/phone.png"
-                alt="Điện thoại công nghệ"
-            >
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 7. DỊCH VỤ ================= -->
-
-<section class="services-preview section">
+<section class="reviews section">
 
     <div class="container">
 
         <div class="section-heading">
+            <span class="section-label">KHÁCH HÀNG NÓI GÌ</span>
+            <h2>Mua sắm yên tâm tại POY</h2>
+        </div>
 
-            <span class="section-label">
-                DỊCH VỤ
-            </span>
+        <div class="review-grid">
 
-            <h2>
-                ĐỒNG HÀNH CÙNG BẠN
-            </h2>
+            <figure class="review-card">
+                <div class="review-stars" role="img" aria-label="5 trên 5 sao">★★★★★</div>
+                <blockquote>Đặt trả góp MacBook, nhân viên gọi xác nhận trong ngày, nhận máy ở cửa hàng gần nhà rất tiện.</blockquote>
+                <figcaption><strong>Minh Anh</strong><span>TP. Hồ Chí Minh · MacBook Air</span></figcaption>
+            </figure>
+
+            <figure class="review-card">
+                <div class="review-stars" role="img" aria-label="5 trên 5 sao">★★★★★</div>
+                <blockquote>Tai nghe bị lỗi một bên, gửi yêu cầu bảo hành ngay trên đơn hàng và được xử lý nhanh.</blockquote>
+                <figcaption><strong>Quốc Bảo</strong><span>Hà Nội · Tai nghe</span></figcaption>
+            </figure>
+
+            <figure class="review-card">
+                <div class="review-stars" role="img" aria-label="4 trên 5 sao">★★★★<span aria-hidden="true">★</span></div>
+                <blockquote>Phần gợi ý sản phẩm giúp mình chọn được chiếc điện thoại vừa ngân sách, giao hàng đúng hẹn.</blockquote>
+                <figcaption><strong>Thu Hà</strong><span>Đà Nẵng · Điện thoại</span></figcaption>
+            </figure>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 9. DỊCH VỤ ================= -->
+
+<section class="services-preview section">
+
+    <div class="container services-layout">
+
+        <div class="section-heading">
+
+            <span class="section-label">DỊCH VỤ</span>
+
+            <h2>Đồng hành sau khi mua</h2>
+
+            <p>
+                Cần tư vấn chọn máy hoặc hỗ trợ sau bán hàng?
+                Gọi 1900 0000 hoặc nhắn cho POY.
+            </p>
+
+            <div class="services-actions">
+                <a href="customer/services.html" class="btn btn-dark">Xem dịch vụ</a>
+                <a href="customer/contact.html" class="btn btn-outline-dark">Liên hệ tư vấn</a>
+            </div>
 
         </div>
 
 
         <div class="service-grid">
 
-            <div class="service-card">
-
-                <span class="service-number">01</span>
-
+            <a href="customer/contact.html" class="service-card">
+                <span class="service-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 5.5h16v10H9l-5 4v-14z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 10h8M8 13h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                </span>
                 <h3>Tư vấn sản phẩm</h3>
+                <p>Chọn thiết bị hợp nhu cầu và ngân sách.</p>
+            </a>
 
-                <p>
-                    Hỗ trợ lựa chọn sản phẩm phù hợp
-                    với nhu cầu và ngân sách.
-                </p>
+            <a href="customer/recommendation.html" class="service-card">
+                <span class="service-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3.5l2.4 5 5.4.6-4 3.7 1.1 5.4L12 15.5l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6 2.4-5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                </span>
+                <h3>Gợi ý cho bạn</h3>
+                <p>Sản phẩm được đề xuất theo lựa chọn của bạn.</p>
+            </a>
 
-            </div>
+            <a href="customer/services.html#chinh-sach-bao-hanh" class="service-card">
+                <span class="service-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M12 3l7 3v5.5c0 4.4-3 8.1-7 9.5-4-1.4-7-5.1-7-9.5V6l7-3z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                </span>
+                <h3>Bảo hành, bảo trì</h3>
+                <p>Gửi yêu cầu và theo dõi tiến độ ngay trên đơn.</p>
+            </a>
 
-
-            <div class="service-card">
-
-                <span class="service-number">02</span>
-
-                <h3>Khuyến nghị AI</h3>
-
-                <p>
-                    Phân tích dữ liệu để đưa ra
-                    sản phẩm phù hợp.
-                </p>
-
-            </div>
-
-
-            <div class="service-card">
-
-                <span class="service-number">03</span>
-
-                <h3>Hỗ trợ mua hàng</h3>
-
-                <p>
-                    Đồng hành trong quá trình đặt hàng
-                    và thanh toán.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="view-all">
-
-            <a href="customer/services.html" class="btn btn-outline-dark">
-                XEM DỊCH VỤ
+            <a href="customer/services.html#chinh-sach-doi-tra" class="service-card">
+                <span class="service-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M4 9h12a4 4 0 0 1 0 8h-3M4 9l4-4M4 9l4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                <h3>Đổi trả 7 ngày</h3>
+                <p>Trả hàng theo chính sách, hoàn tiền rõ ràng.</p>
             </a>
 
         </div>
@@ -435,32 +502,10 @@
 
 </section>
 
-
-<!-- ================= 8. CTA ================= -->
-
-<section class="cta">
-
-    <div class="container">
-
-        <span class="section-label">
-            POY
-        </span>
-
-        <h2>
-            SẴN SÀNG KHÁM PHÁ<br>
-            CÔNG NGHỆ MỚI?
-        </h2>
-
-        <a href="customer/products.html" class="btn btn-light">
-            BẮT ĐẦU NGAY
-        </a>
-
-    </div>
-
-</section>
+</main>
 
 
-<!-- ================= 9. FOOTER ================= -->
+<!-- ================= FOOTER ================= -->
 
 <div data-include="footer"></div>
 
@@ -472,6 +517,7 @@
 <script src="js/core/main.js"></script>
 <script src="js/home.js"></script>
 <script src="js/customer/chatbot.js"></script>
+<script src="js/customer/ui-effects.js"></script>
 
 </body>
 </html>

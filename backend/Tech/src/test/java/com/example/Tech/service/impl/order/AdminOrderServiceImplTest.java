@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.order.OrderStatusUpdateRequest;
 import com.example.Tech.dto.request.order.OrderStoreRequest;
 import com.example.Tech.dto.request.payment.InstallmentRejectRequest;
 import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
+import com.example.Tech.service.impl.aftersales.WarrantyIssuer;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import org.mockito.InOrder;
 import com.example.Tech.dto.response.order.AdminOrderResponse;
@@ -85,6 +86,15 @@ class AdminOrderServiceImplTest {
     @Mock
     private StoreAccessGuard storeAccessGuard;
 
+    @Mock
+    private WarrantyIssuer warrantyIssuer;
+
+    @Mock
+    private OrderStatusRecorder statusRecorder;
+
+    @Mock
+    private SalesRecorder salesRecorder;
+
     private final User staff = new User();
 
     private AdminOrderServiceImpl adminOrderService;
@@ -94,7 +104,8 @@ class AdminOrderServiceImplTest {
     @BeforeEach
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
-                orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, CLOCK);
+                orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
+                statusRecorder, salesRecorder, CLOCK);
         customer = new User();
         customer.setId(CUSTOMER_ID);
         customer.setUsername("khach");
@@ -102,6 +113,7 @@ class AdminOrderServiceImplTest {
         customer.setEmail("khach@example.com");
         when(orderViewLoader.toStaffResponses(any())).thenReturn(List.of(mock(OrderResponse.class)));
         when(storeAccessGuard.orderScope(STAFF_ID)).thenReturn(new StoreAccessGuard.OrderScope(staff, STORE_ID));
+        when(storeAccessGuard.processingScope(STAFF_ID)).thenReturn(new StoreAccessGuard.OrderScope(staff, STORE_ID));
     }
 
     @Test
@@ -116,12 +128,15 @@ class AdminOrderServiceImplTest {
         assertThat(order.getCancelledAt()).isNull();
         verify(orderRepository).saveAndFlush(order);
         verify(customerProfileRepository, never()).addToTotalSpent(anyLong(), any());
-        verify(storeAccessGuard).orderScope(STAFF_ID);
+        verify(storeAccessGuard).processingScope(STAFF_ID);
         // payment rules first, then the stock is taken from the order's store, then the save
         InOrder inOrder = inOrder(orderPaymentLifecycle, orderStockLifecycle, orderRepository);
         inOrder.verify(orderPaymentLifecycle).checkCanConfirm(order);
         inOrder.verify(orderStockLifecycle).onOrderConfirmed(order, staff);
         inOrder.verify(orderRepository).saveAndFlush(order);
+        // the confirming staff member is kept: the sale is credited to them on delivery
+        verify(statusRecorder).record(order, OrderStatus.PENDING, OrderStatus.CONFIRMED, staff);
+        verify(salesRecorder, never()).recordFor(any(), any());
         assertThat(response.customer().username()).isEqualTo("khach");
         assertThat(response.customer().deleted()).isFalse();
     }
@@ -147,8 +162,11 @@ class AdminOrderServiceImplTest {
         assertThat(order.getDeliveredAt()).isEqualTo(NOW);
         verify(customerProfileRepository).addToTotalSpent(CUSTOMER_ID, new BigDecimal("31980000"));
         // payment changes happen before the flush that precedes addToTotalSpent (it clears the persistence context)
-        InOrder inOrder = inOrder(orderPaymentLifecycle, orderRepository, customerProfileRepository);
+        InOrder inOrder = inOrder(orderPaymentLifecycle, warrantyIssuer, salesRecorder, orderRepository,
+                customerProfileRepository);
         inOrder.verify(orderPaymentLifecycle).onOrderDelivered(order, staff, NOW);
+        inOrder.verify(warrantyIssuer).issueFor(order, NOW.toLocalDate());
+        inOrder.verify(salesRecorder).recordFor(order, NOW);
         inOrder.verify(orderRepository).saveAndFlush(order);
         inOrder.verify(customerProfileRepository).addToTotalSpent(anyLong(), any());
     }
@@ -165,6 +183,9 @@ class AdminOrderServiceImplTest {
         verify(orderPaymentLifecycle).onOrderCancelled(order);
         verify(orderStockLifecycle).onOrderCancelled(order, OrderStatus.CONFIRMED, staff);
         verify(orderPaymentLifecycle, never()).onOrderDelivered(any(), any(), any());
+        verify(warrantyIssuer, never()).issueFor(any(), any());
+        verify(salesRecorder, never()).recordFor(any(), any());
+        verify(statusRecorder).record(order, OrderStatus.CONFIRMED, OrderStatus.CANCELLED, staff);
     }
 
     @Test
@@ -208,16 +229,28 @@ class AdminOrderServiceImplTest {
     }
 
     @Test
-    void admin_reachesAnOrderWithoutAStore() {
-        User admin = new User();
-        when(storeAccessGuard.orderScope(ADMIN_ID)).thenReturn(new StoreAccessGuard.OrderScope(admin, null));
+    void admin_viewsAnOrderWithoutAStore_butCannotProcessAnyOrder() {
+        when(storeAccessGuard.orderScope(ADMIN_ID)).thenReturn(new StoreAccessGuard.OrderScope(new User(), null));
+        when(storeAccessGuard.processingScope(ADMIN_ID)).thenThrow(new BusinessException(ErrorCode.ADMIN_READ_ONLY));
         Order order = stored(OrderStatus.PENDING);
         order.setStore(null);
 
-        adminOrderService.updateStatus(ADMIN_ID, 5L, new OrderStatusUpdateRequest(OrderStatus.CANCELLED, null));
+        assertThat(adminOrderService.getById(ADMIN_ID, 5L)).isNotNull();
+        List<Runnable> actions = List.of(
+                () -> adminOrderService.updateStatus(ADMIN_ID, 5L, new OrderStatusUpdateRequest(OrderStatus.CANCELLED, null)),
+                () -> adminOrderService.confirmPayment(ADMIN_ID, 5L, null),
+                () -> adminOrderService.refundPayment(ADMIN_ID, 5L),
+                () -> adminOrderService.approveInstallment(ADMIN_ID, 5L),
+                () -> adminOrderService.rejectInstallment(ADMIN_ID, 5L, new InstallmentRejectRequest("Thiếu hồ sơ")));
+        for (Runnable action : actions) {
+            assertThatThrownBy(action::run)
+                    .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.ADMIN_READ_ONLY);
+        }
 
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        verify(orderStockLifecycle).onOrderCancelled(order, OrderStatus.PENDING, admin);
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        verify(orderRepository, never()).findByIdForUpdate(anyLong());
+        verify(orderRepository, never()).saveAndFlush(any());
     }
 
     @Test
@@ -291,6 +324,7 @@ class AdminOrderServiceImplTest {
         adminOrderService.rejectInstallment(STAFF_ID, 5L, new InstallmentRejectRequest("Sai CCCD"));
 
         verify(orderPaymentLifecycle).rejectInstallment(order, staff, "Sai CCCD", NOW);
+        verify(statusRecorder).record(order, OrderStatus.PENDING, OrderStatus.CANCELLED, staff);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
         verify(orderRepository).saveAndFlush(order);
@@ -327,6 +361,7 @@ class AdminOrderServiceImplTest {
     @Test
     void anyCall_byAUserWithoutStaffRole_isDeniedBeforeReadingOrders() {
         when(storeAccessGuard.orderScope(STAFF_ID)).thenThrow(new BusinessException(ErrorCode.ACCESS_DENIED));
+        when(storeAccessGuard.processingScope(STAFF_ID)).thenThrow(new BusinessException(ErrorCode.ACCESS_DENIED));
 
         assertThatThrownBy(() -> adminOrderService.updateStatus(STAFF_ID, 5L,
                 new OrderStatusUpdateRequest(OrderStatus.CONFIRMED, null)))

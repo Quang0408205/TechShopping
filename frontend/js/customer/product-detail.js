@@ -9,8 +9,8 @@
  *   GET /products/{id}/specifications  → thông số (nếu có)
  *   GET /products?categoryId=&brandId= → "Sản phẩm tương tự"
  *
- * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng bỏ phần đánh
- * giá (mọi sản phẩm đều có rating 0, không bịa phân bố sao), bỏ các vùng
+ * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng không bịa phân
+ * bố sao (dòng ★ = đánh giá thật, chưa có thì điểm Thế Giới Di Động), bỏ các vùng
  * gợi ý mua kèm / nâng cấp (Phase 8) và không dùng catalogue mock.
  * Giỏ hàng: snapshot {productId, variantId, ...} theo tài khoản (js/core/cart-store.js, F2).
  */
@@ -55,6 +55,17 @@ document.addEventListener(
 
 
         setupTabs();
+
+        /* Bấm dòng ★ → mở tab Đánh giá */
+        document.getElementById("detailRating").addEventListener("click", function () {
+
+            const tab = document.querySelector('.tab-btn[data-tab="reviews"]');
+
+            tab.click();
+
+            tab.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        });
 
         setupQuantityControls();
 
@@ -209,6 +220,17 @@ document.addEventListener(
 
             document.getElementById("detailMeta").textContent = buildMetaText();
 
+            renderRatingLink();
+
+            /* Tab "ĐÁNH GIÁ" (js/customer/product-reviews.js); viết / sửa / xoá đánh giá → cập nhật dòng ★ */
+            initProductReviews(product, {
+                onSummaryChange: function (summary) {
+                    product.rating = summary.averageRating;
+                    product.totalReviews = summary.totalReviews;
+                    renderRatingLink();
+                }
+            });
+
 
             renderImages(images, categorySlug);
 
@@ -265,7 +287,7 @@ document.addEventListener(
         }
 
 
-        /* Thương hiệu · Mã · (đánh giá chỉ khi đã có lượt đánh giá thật) */
+        /* Thương hiệu · Mã (điểm đánh giá là nút riêng #detailRating, bấm → tab Đánh giá) */
 
         function buildMetaText() {
 
@@ -279,14 +301,26 @@ document.addEventListener(
                 parts.push("Mã: " + product.sku);
             }
 
-            if (product.totalReviews > 0 && Number(product.rating) > 0) {
-                parts.push(
-                    "★ " + Number(product.rating).toFixed(1) +
-                    " (" + product.totalReviews + " đánh giá)"
-                );
-            }
-
             return parts.join(" · ");
+
+        }
+
+
+        /* Đánh giá thật trên web; chưa có thì điểm trên Thế Giới Di Động (ghi rõ nguồn); không có → ẩn */
+
+        function renderRatingLink() {
+
+            const link = document.getElementById("detailRating");
+
+            const rating = productRatingSummary(product);
+
+            link.hidden = !rating;
+
+            if (rating) {
+                link.textContent = "★ " + rating.rating.toFixed(1) +
+                    " (" + rating.count.toLocaleString("vi-VN") + " đánh giá" +
+                    (rating.source === "tgdd" ? " trên Thế Giới Di Động" : "") + ")";
+            }
 
         }
 
@@ -652,6 +686,7 @@ document.addEventListener(
 
                     buttons.forEach(function (b) {
                         b.classList.toggle("active", b === button);
+                        b.setAttribute("aria-selected", String(b === button));
                     });
 
                     document.querySelectorAll(".tab-panel").forEach(function (panel) {

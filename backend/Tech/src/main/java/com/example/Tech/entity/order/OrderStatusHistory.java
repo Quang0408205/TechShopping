@@ -20,10 +20,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * One row per status change of an order (v3 survey, 2026-10-05). Unlike techshopping_v3.sql, this is
- * written by application code when the order's status changes, not by a Postgres trigger: the project
- * does not use triggers in any other migration, and the existing OrderStatus flow already lives in
- * OrderServiceImpl / AdminOrderServiceImpl. Schema only for now; no caller writes this yet.
+ * One row per status change of an order, written by OrderStatusRecorder (not a Postgres trigger as in
+ * techshopping_v3.sql: the project uses no triggers). The CONFIRMED row tells who gets the sale (SalesRecorder).
  */
 @Entity
 @Table(name = "order_status_history")

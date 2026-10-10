@@ -13,11 +13,14 @@
     <title id="pageTitle">Chi tiết đơn hàng - POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/account.css">
     <link rel="stylesheet" href="../css/customer/orders.css">
+    <link rel="stylesheet" href="../css/customer/after-sales.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -101,6 +104,8 @@
                                 <p class="order-installment-reason" id="orderInstallmentReason" hidden></p>
                                 <div id="orderInstallmentSchedule"></div>
                             </div>
+                            <!-- Phase 6: bảo hành / bảo trì / trả hàng của đơn đã giao (js/customer/order-after-sales.js) -->
+                            <div class="after-sales-block" id="orderAfterSales" hidden></div>
 
                         </div>
 
@@ -188,8 +193,11 @@
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/account-sidebar.js"></script>
+<script src="../js/core/after-sales.js"></script>
+<script src="../js/customer/order-after-sales.js"></script>
 <script src="../js/customer/order-detail.js"></script>
 <script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
 
 </body>
 </html>

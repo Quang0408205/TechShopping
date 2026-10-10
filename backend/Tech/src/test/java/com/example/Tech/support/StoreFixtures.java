@@ -35,6 +35,10 @@ public final class StoreFixtures {
 
     /** Employee profile + current assignment of the account to the store. */
     public static void assign(EntityManager entityManager, Long userId, Store store) {
+        assign(entityManager, userId, store, "Nhân viên");
+    }
+
+    public static Employee assign(EntityManager entityManager, Long userId, Store store, String position) {
         Employee employee = new Employee();
         employee.setUser(entityManager.getReference(User.class, userId));
         employee.setEmployeeCode("TEST-" + userId);
@@ -43,9 +47,10 @@ public final class StoreFixtures {
         assignment.setEmployee(employee);
         assignment.setStore(store);
         assignment.setStartDate(LocalDate.now());
-        assignment.setPositionAtStore("Nhân viên");
+        assignment.setPositionAtStore(position);
         entityManager.persist(assignment);
         entityManager.flush();
+        return employee;
     }
 
     /** Works with detached Store / variant objects too (a checkout clears the persistence context). */

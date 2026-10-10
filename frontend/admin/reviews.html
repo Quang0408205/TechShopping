@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Đánh giá sản phẩm - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Đánh giá sản phẩm" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="reviews"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/reviews): đánh giá của khách hiện ngay trên trang sản phẩm khi gửi.
+                Ẩn một đánh giá → không còn hiện trên trang sản phẩm và không tính vào điểm; người viết vẫn thấy đánh giá
+                của mình kèm lý do ẩn. Hiện lại → điểm sản phẩm được tính lại ngay.
+            </p>
+
+
+            <form class="admin-filter-bar" id="reviewFilterForm" role="search">
+
+                <input type="search" id="reviewKeyword" placeholder="Tìm sản phẩm, người viết, email, nội dung…" maxlength="255" aria-label="Từ khoá">
+
+                <select id="reviewRatingFilter" aria-label="Số sao">
+                    <option value="">Mọi số sao</option>
+                    <option value="5">5 sao</option>
+                    <option value="4">4 sao</option>
+                    <option value="3">3 sao</option>
+                    <option value="2">2 sao</option>
+                    <option value="1">1 sao</option>
+                </select>
+
+                <select id="reviewHiddenFilter" aria-label="Trạng thái">
+                    <option value="">Mọi trạng thái</option>
+                    <option value="false">Đang hiện</option>
+                    <option value="true">Đã ẩn</option>
+                </select>
+
+                <button type="submit" class="btn btn-dark">TÌM</button>
+
+                <!-- Lọc theo một sản phẩm: bật bằng nút "Lọc SP này" trong bảng hoặc link admin/reviews.html?productId= -->
+                <span class="admin-filter-chip" id="reviewProductChip" hidden>
+                    <span id="reviewProductChipText"></span>
+                    <button type="button" id="reviewProductChipClear" aria-label="Bỏ lọc theo sản phẩm">×</button>
+                </span>
+
+            </form>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Đánh giá sản phẩm</h2>
+                    <span class="admin-row-count" id="reviewRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th></th>
+                                <th>Đánh giá</th>
+                                <th>Sản phẩm</th>
+                                <th>Người viết</th>
+                                <th>Ngày viết</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="reviewTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="reviewPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/mock-staff-data.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/reviews.js"></script>
+
+</body>
+</html>

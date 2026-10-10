@@ -1,0 +1,457 @@
+/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ phía khách — Phase 6.5 ================= */
+
+/* Khối "Bảo hành & đổi trả" ở chi tiết đơn đã giao */
+.after-sales-block {
+    margin-top: 24px;
+    padding: 20px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+}
+
+.after-sales-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.after-sales-head h4 {
+    margin: 0;
+}
+
+.after-sales-head a,
+.after-sales-open-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--color-accent);
+}
+
+.after-sales-return {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+
+    border-radius: var(--radius-sm);
+    background: var(--gray-100);
+
+    font-size: 13px;
+}
+
+.after-sales-return.is-unavailable {
+    color: var(--gray-600);
+}
+
+.after-sales-items {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.after-sales-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 0;
+
+    border-top: 1px solid var(--gray-200);
+}
+
+.after-sales-item-info {
+    min-width: 0;
+    flex: 1 1 240px;
+
+    font-size: 13px;
+}
+
+.after-sales-item-info strong {
+    display: block;
+    overflow-wrap: anywhere;
+}
+
+.after-sales-warranty {
+    display: block;
+    margin-top: 2px;
+
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.after-sales-warranty.is-valid {
+    color: var(--color-success);
+}
+
+.after-sales-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.after-sales-actions .btn,
+.after-sales-return .btn {
+    min-height: 34px;
+    padding: 0 14px;
+
+    font-size: 11px;
+}
+
+/* Hộp thoại gửi yêu cầu */
+.after-sales-modal {
+    max-width: 560px;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+}
+
+/* Form tự đủ style (trang đơn hàng không tải product-detail.css nơi có các class review-form) */
+.after-sales-modal .review-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.after-sales-modal .review-form label,
+.after-sales-modal .review-form-label {
+    margin-top: 8px;
+
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-ink);
+}
+
+.after-sales-modal textarea {
+    width: 100%;
+    padding: 12px;
+
+    border: 1px solid #ddd;
+    outline: none;
+
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.after-sales-modal textarea:focus,
+.after-sales-modal select:focus,
+.after-sales-modal input[type="number"]:focus {
+    border-color: var(--color-ink);
+    outline: none;
+}
+
+.after-sales-modal .review-form-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.after-sales-modal .review-counter {
+    margin-left: auto;
+
+    font-size: 11px;
+    color: var(--gray-500);
+    white-space: nowrap;
+}
+
+.after-sales-modal .review-counter.is-short {
+    color: var(--color-danger);
+}
+
+.after-sales-modal .review-form-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.after-sales-modal .review-form-photo {
+    position: relative;
+
+    width: 84px;
+    height: 84px;
+    margin: 0;
+
+    overflow: hidden;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+}
+
+.after-sales-modal .review-form-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.after-sales-modal .review-form-photo button {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+
+    width: 22px;
+    height: 22px;
+
+    border: none;
+    border-radius: 50%;
+    background: rgba(17, 19, 24, 0.75);
+
+    color: #fff;
+    line-height: 22px;
+
+    cursor: pointer;
+}
+
+.after-sales-modal .review-form-photo.is-uploading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--gray-100);
+
+    font-size: 10px;
+    color: var(--gray-600);
+    text-align: center;
+}
+
+.after-sales-modal .review-form-add {
+    width: 84px;
+    height: 84px;
+
+    border: 1px dashed var(--gray-400);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.after-sales-modal .modal-actions {
+    margin-top: 12px;
+}
+
+.after-sales-modal select,
+.after-sales-modal input[type="number"] {
+    padding: 10px 12px;
+
+    border: 1px solid #ddd;
+    background: var(--color-paper);
+
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.after-sales-product {
+    margin: -6px 0 6px;
+
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.after-sales-hint {
+    margin: 0;
+
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.after-sales-return-lines {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.after-sales-return-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+
+    font-size: 13px;
+}
+
+.after-sales-return-line label {
+    display: flex;
+    flex: 1 1 220px;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.after-sales-return-line input[type="number"] {
+    width: 80px;
+}
+
+.after-sales-refund {
+    font-size: 13px;
+}
+
+.after-sales-form-error {
+    margin: 4px 0 0;
+}
+
+/* Trang "Yêu cầu dịch vụ" */
+.service-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+}
+
+.service-filters select {
+    padding: 10px 12px;
+
+    border: 1px solid #ddd;
+    background: var(--color-paper);
+
+    font-family: inherit;
+    font-size: 13px;
+}
+
+.service-card {
+    margin-bottom: 16px;
+    padding: 18px 20px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--color-paper);
+}
+
+.service-card.is-focused {
+    border-color: var(--color-ink);
+    box-shadow: 0 0 0 2px var(--color-ink);
+}
+
+.service-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.service-card-head strong {
+    font-size: 15px;
+}
+
+.service-card-type {
+    margin-left: 8px;
+
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.service-badge {
+    padding: 4px 10px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.service-badge--warning { background: var(--color-warning-bg); color: var(--color-warning); }
+.service-badge--info { background: #eef2fb; color: #2f4f8f; }
+.service-badge--success { background: var(--color-success-bg); color: var(--color-success); }
+.service-badge--danger { background: var(--color-danger-bg); color: var(--color-danger); }
+.service-badge--neutral { background: var(--gray-100); color: var(--gray-600); }
+
+.service-card-product {
+    margin: 0 0 6px;
+
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.service-card-text {
+    margin: 8px 0;
+
+    font-size: 13px;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.service-card-facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 6px 18px;
+    margin: 10px 0 0;
+
+    font-size: 12px;
+}
+
+.service-card-facts dt {
+    color: var(--gray-500);
+}
+
+.service-card-facts dd {
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+}
+
+.service-card-note {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+
+    border-left: 3px solid var(--color-danger);
+    background: var(--color-danger-bg);
+
+    font-size: 13px;
+}
+
+.service-card-note.is-info {
+    border-left-color: var(--color-ink);
+    background: var(--gray-100);
+}
+
+.service-card-photos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.service-card-photos a {
+    display: block;
+    width: 64px;
+    height: 64px;
+
+    overflow: hidden;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+}
+
+.service-card-photos img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.service-card-items {
+    margin: 10px 0 0;
+    padding-left: 18px;
+
+    font-size: 13px;
+}
+
+.service-card-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+
