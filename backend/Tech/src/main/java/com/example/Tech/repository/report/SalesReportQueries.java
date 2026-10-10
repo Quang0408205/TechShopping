@@ -214,6 +214,13 @@ public class SalesReportQueries {
         return n == null ? 0 : n;
     }
 
+    /** Contact messages not resolved yet: one inbox for every store (kiemthu GĐ7). */
+    public long openContactRequests() {
+        Long n = jdbc.queryForObject("select count(*) from contact_requests where status <> 'RESOLVED'",
+                Map.of(), Long.class);
+        return n == null ? 0 : n;
+    }
+
     /** Stocked variants of products still on sale with 1..lowStockMax units, and with none. */
     public long[] lowAndOutOfStock(Integer storeId, int lowStockMax) {
         MapSqlParameterSource params = new MapSqlParameterSource("storeId", storeId).addValue("low", lowStockMax);

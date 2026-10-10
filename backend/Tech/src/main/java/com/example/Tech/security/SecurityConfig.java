@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)
@@ -87,7 +88,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**",
                                 "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**",
                                 "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
-                                "/api/v1/admin/dashboard/**")
+                                "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**")
                         .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/branch/**").hasRole(BRANCH_MANAGER)

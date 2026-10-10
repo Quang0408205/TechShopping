@@ -17,3 +17,7 @@ app:
   upload:
     # Keep test uploads out of the project folder
     dir: ${java.io.tmpdir}/techshopping-test-uploads
+  contact:
+    rate-limit:
+      # every test / E2E request comes from 127.0.0.1: only the per-email limit is exercised
+      per-ip: 1000

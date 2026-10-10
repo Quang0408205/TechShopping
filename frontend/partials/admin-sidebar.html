@@ -3,7 +3,7 @@
     Được js/core/layout.js chèn vào <div data-include="admin-sidebar" data-active="..."></div>.
     {{ROOT}} được thay bằng đường dẫn gốc của website; data-page khớp data-active để tô đậm mục đang xem.
     data-roles: vai trò được thấy mục này; js/admin/admin-layout.js ẩn các mục không khớp (nhóm trống ẩn theo).
-    "Hỗ trợ khách hàng" và "Lịch sử Chatbot" chưa có backend nên không nằm trong menu (trang vẫn giữ, có banner).
+    "Lịch sử Chatbot" chưa có backend nên không nằm trong menu (trang vẫn giữ, có banner).
 -->
 <aside class="admin-sidebar" id="adminSidebar">
 
@@ -26,6 +26,10 @@
         <a href="{{ROOT}}admin/service-requests.html" data-page="service-requests" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
             <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
             <span>Bảo hành / Bảo trì / Đổi trả</span>
+        </a>
+        <a href="{{ROOT}}admin/contact-requests.html" data-page="contact-requests" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 12h5"/></svg>
+            <span>Liên hệ khách hàng</span>
         </a>
 
         <a href="{{ROOT}}admin/orders.html" data-page="orders" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">

@@ -612,6 +612,46 @@ img {
     font-style: italic;
 }
 
+/* Trợ lý tra cứu (GĐ7): kết quả sản phẩm + link trong câu trả lời */
+.chatbot-products {
+    margin: 8px 0 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.chatbot-products li {
+    display: flex;
+    flex-direction: column;
+
+    padding: 6px 0;
+
+    border-top: 1px solid var(--gray-300);
+}
+
+.chatbot-products a,
+.chatbot-links a {
+    color: var(--color-ink);
+
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.chatbot-products span {
+    color: var(--color-accent);
+
+    font-weight: 600;
+}
+
+.chatbot-links {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    margin-top: 8px;
+}
+
 .chatbot-quick-replies {
     display: flex;
     flex-wrap: wrap;

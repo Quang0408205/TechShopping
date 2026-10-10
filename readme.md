@@ -77,6 +77,15 @@ Mở trình duyệt vào **http://localhost:5510**.
 
 50 tài khoản có username theo tên Việt không dấu, email dạng `username@example.test` và mật khẩu dùng chung `SampleOnly123!`. Một đơn mẫu đã giao để minh họa đánh giá/bảo trì; các đơn còn lại đang chờ xử lý. Tạo ADMIN riêng ở Bước 5 nếu cần.
 
+| Loại tài khoản | Có sẵn sau khi cài? | Cách có |
+|---|---|---|
+| Khách hàng (`CUSTOMER`) | Có: 50 tài khoản mẫu ở trên (chỉ database mới tạo) | Tự đăng ký trên web |
+| Quản trị viên (`ADMIN`) | Không | Điền `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` trong `.env` (Bước 5); chỉ tạo khi database chưa có ADMIN |
+| Quản lý chi nhánh (`BRANCH_MANAGER`) | Không | ADMIN tạo ít nhất 1 chi nhánh, rồi **Nhân viên → Tuyển nhân sự** chọn vai trò Quản lý + chi nhánh; mật khẩu tạm hiện **một lần** |
+| Nhân viên (`STAFF`) | Không | ADMIN tuyển (chọn chi nhánh) hoặc Quản lý chi nhánh tuyển (luôn vào chi nhánh của mình) |
+
+Tài khoản nội bộ đăng nhập ở http://localhost:5510/admin/login.html; trang đăng nhập khách từ chối tài khoản nội bộ.
+
 > Seed tự chạy **chỉ khi Docker khởi tạo một volume database mới, còn trống**. Nó không chạy lại trên volume hiện có khi restart hoặc pull code mới. Không xóa volume đang chứa dữ liệu để thử seed. Nếu cần bộ dữ liệu này trên DB khác, hãy tạo một database local riêng và khởi tạo mới; không chạy lại initializer trực tiếp trên DB đang có dữ liệu. Không dùng các tài khoản hay dữ liệu này trên production.
 
 ### Bước 5 (tuỳ chọn): Tạo tài khoản ADMIN đầu tiên
@@ -110,6 +119,23 @@ docker compose up -d backend
 
   Đổi vai trò / chuyển chi nhánh / cho nghỉ / khoá tài khoản đều thu hồi phiên đăng nhập của người đó.
 
+  **Mô hình phân quyền** (kiểm ở backend trên mọi request, đọc vai trò + phân công chi nhánh từ database chứ không tin token):
+
+  | Việc | Khách | Nhân viên | Quản lý chi nhánh | ADMIN |
+  |---|---|---|---|---|
+  | Mua hàng, giỏ hàng, đơn của tôi, bảo hành / trả hàng của mình, ảnh đại diện | ✅ | ✅* | ✅* | ✅* |
+  | Xem đơn / trả góp / hậu mãi / tồn kho | — | Chi nhánh mình | Chi nhánh mình | Mọi chi nhánh |
+  | **Xử lý** đơn, thanh toán, trả góp, hậu mãi, tin liên hệ | — | ✅ (chi nhánh mình; liên hệ: hộp thư chung) | ✅ (như nhân viên) | ❌ chỉ xem (`ADMIN_READ_ONLY`) |
+  | Đổi chi nhánh xử lý của đơn đang chờ | — | — | — | ✅ |
+  | Nhập kho | — | Chi nhánh mình | Chi nhánh mình | Mọi chi nhánh |
+  | Doanh thu (Tổng quan, Báo cáo, Excel) | — | ❌ | Chi nhánh mình | Mọi chi nhánh |
+  | Tuyển dụng | — | — | Chỉ nhân viên, vào chi nhánh mình | Nhân viên / quản lý, mọi chi nhánh |
+  | Sửa hồ sơ, cho nghỉ | — | — | Nhân viên chi nhánh mình (không tự sửa mình, không đụng quản lý khác) | Mọi người |
+  | Đổi STAFF ↔ BRANCH_MANAGER, khoá tài khoản | — | — | — | ✅ (tối đa 1 quản lý / chi nhánh; không đổi được tài khoản khách, không gán ADMIN) |
+  | Sản phẩm, khuyến mãi, chi nhánh, đánh giá, người dùng | — | — | — | ✅ |
+
+  \* Backend chưa chặn tài khoản nội bộ gọi API mua hàng; chỉ trang đăng nhập khách chặn họ.
+
 ---
 
 ## 3. Tính năng hiện có
@@ -123,7 +149,8 @@ docker compose up -d backend
 | Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
 | Khách hàng | **Bảo hành / bảo trì / trả hàng** (Phase 6): ở chi tiết đơn đã giao xem hạn bảo hành từng sản phẩm, gửi bảo hành (còn hạn), bảo trì (mọi sản phẩm, có thể mất phí) hoặc trả hàng hoàn tiền trong 7 ngày (chọn sản phẩm + số lượng, xem số tiền hoàn dự kiến; đơn trả góp liên hệ cửa hàng), kèm tối đa 5 ảnh; trang **Yêu cầu dịch vụ** theo dõi trạng thái, ghi chú / lý do của cửa hàng, huỷ khi còn chờ; trang Dịch vụ có chính sách bảo hành / trả hàng | **Thật** (API) |
-| Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
+| Khách hàng | **Liên hệ**: form gửi thật (họ tên, email, SĐT tuỳ chọn, chủ đề, nội dung; đã đăng nhập thì điền sẵn và gắn tài khoản; giới hạn số lần gửi theo IP / email), nhận mã tin nhắn | **Thật** (API) |
+| Khách hàng | **Trợ lý tra cứu nhanh** (nút nổi góc trang, không phải AI): trả lời chính sách giao hàng / trả hàng / bảo hành / thanh toán theo đúng quy tắc của hệ thống, link tra cứu đơn, tìm sản phẩm thật theo từ khoá | **Thật** (tra cứu API; chatbot AI ở Phase 9) |
 | Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
 | Quản trị | **Đơn hàng** (nhân viên xử lý, ADMIN chỉ xem): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy và xử lý đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được), hủy đơn đã xác nhận thì hoàn kho. ADMIN xem mọi đơn và chỉ điều phối: chuyển đơn đang chờ sang chi nhánh khác | **Thật** (API) |
 | Quản trị | **Trả góp** (nhân viên chi nhánh ghi nhận, ADMIN chỉ xem): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
@@ -135,7 +162,8 @@ docker compose up -d backend
 | Quản trị | **Bảo hành / Bảo trì / Đổi trả** (nhân viên chi nhánh của đơn xử lý, ADMIN chỉ xem mọi chi nhánh): danh sách gộp 3 loại, lọc loại / trạng thái / chi nhánh / ngày / từ khoá (mã BH / BT / DT, mã đơn, khách); bảo hành / bảo trì: tiếp nhận (ngày dự kiến, ghi chú, chi phí bảo trì) → đang xử lý → hoàn tất, từ chối có lý do; trả hàng: duyệt → nhận hàng (chọn món còn bán được để cộng lại tồn kho chi nhánh) → hoàn tiền (trừ tổng chi tiêu của khách) | **Thật** (API) |
 | Quản trị | **Tổng quan theo vai trò**: ADMIN "Toàn hệ thống" (doanh thu hôm nay / tháng so với cùng kỳ, đơn cần xử lý, yêu cầu dịch vụ, hàng sắp hết, chi nhánh, nhân viên, doanh thu 30 ngày, danh mục, so sánh chi nhánh, lối tắt); Quản lý "Chi nhánh …" (số của chi nhánh + đội ngũ); Nhân viên "Việc của tôi hôm nay" (không có doanh thu, danh sách việc có số đếm và link lọc sẵn) | **Thật** (API) |
 | Quản trị | **Báo cáo doanh thu** (ADMIN mọi chi nhánh, quản lý chi nhánh mình): lọc chi nhánh / ngày / nhóm theo ngày-tháng; thẻ tổng; cột theo thời gian; tròn theo danh mục + phương thức thanh toán; theo chi nhánh; doanh số + hoa hồng theo nhân viên; top 10 sản phẩm; **Xuất Excel** (.xlsx 7 sheet, `GET /api/v1/admin/reports/sales/export`) | **Thật** (API) |
-| Quản trị | Hỗ trợ khách hàng, lịch sử chatbot (ẩn khỏi menu, có banner "đang phát triển") | Dữ liệu mẫu (Phase 9) |
+| Quản trị | **Liên hệ khách hàng** (một hộp thư chung cho nhân viên và quản lý mọi chi nhánh, ADMIN chỉ xem): lọc trạng thái / chủ đề / từ khoá, nhận xử lý, đánh dấu đã xử lý (bắt buộc ghi chú nội bộ), mở lại; số tin chờ xử lý ở Tổng quan | **Thật** (API) |
+| Quản trị | Lịch sử chatbot (ẩn khỏi menu, có banner "đang phát triển") | Dữ liệu mẫu (Phase 9) |
 
 ---
 
@@ -185,6 +213,9 @@ docker compose up -d backend
 > # 11. Vai trò Quản lý chi nhánh (BRANCH_MANAGER) — đổi role dữ liệu thật, sao lưu DB trước
 > Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 12. Form Liên hệ lưu thật (contact_requests)
+> Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
@@ -250,6 +281,6 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 44 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `database/` | `techshopping.sql` (cấu trúc 45 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |

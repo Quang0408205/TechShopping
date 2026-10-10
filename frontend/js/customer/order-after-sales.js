@@ -69,7 +69,7 @@ function renderAfterSales(box, order, view) {
 
     box.innerHTML = `
         <div class="after-sales-head">
-            <h4>Bảo hành &amp; đổi trả</h4>
+            <h4>Bảo hành &amp; trả hàng</h4>
             <a href="${escapeHtml(siteUrl("customer/service-requests.html"))}">Yêu cầu dịch vụ của tôi →</a>
         </div>
         <div class="after-sales-return ${canReturn ? "" : "is-unavailable"}">

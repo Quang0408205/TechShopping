@@ -139,7 +139,12 @@ public enum ErrorCode {
     WARRANTY_NOT_VALID(HttpStatus.CONFLICT, "Sản phẩm không còn bảo hành; bạn có thể gửi yêu cầu bảo trì"),
     SERVICE_REQUEST_ALREADY_OPEN(HttpStatus.CONFLICT, "Sản phẩm này đang có một yêu cầu chưa xử lý xong"),
     RETURN_NOT_AVAILABLE(HttpStatus.CONFLICT, "Đơn hàng không trả hàng được"),
-    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này");
+    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này"),
+
+    // Contact form (kiemthu GĐ7)
+    CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn liên hệ"),
+    INVALID_CONTACT_STATUS(HttpStatus.CONFLICT, "Tin nhắn đã xử lý không quay lại trạng thái Mới được"),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau");
 
     private final HttpStatus status;
     private final String defaultMessage;

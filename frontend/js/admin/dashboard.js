@@ -139,6 +139,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                 sub: "Bảo hành / bảo trì / đổi trả"
             },
             {
+                label: "Liên hệ chờ xử lý",
+                value: String(s.openContactRequests || 0),
+                sub: "Tin nhắn từ trang Liên hệ (mọi chi nhánh)"
+            },
+            {
                 label: "Hàng sắp hết / hết hàng",
                 value: s.lowStockVariants + " / " + s.outOfStockVariants,
                 sub: "Phiên bản còn 1–5 cái / còn 0"
@@ -312,6 +317,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             { href: "orders.html?status=SHIPPING", label: "Đơn đang giao", hint: "Cập nhật khi khách đã nhận", count: s.shippingOrders },
             { href: "installments.html?status=PENDING_APPROVAL", label: "Trả góp chờ duyệt", hint: "Hồ sơ trả góp cần duyệt", count: installmentsWaiting },
             { href: "service-requests.html", label: "Bảo hành / đổi trả đang mở", hint: "Yêu cầu dịch vụ chưa xong", count: s.openServiceRequests },
+            { href: "contact-requests.html", label: "Liên hệ chờ xử lý", hint: "Tin nhắn khách gửi từ trang Liên hệ", count: s.openContactRequests },
             { href: "inventory.html", label: "Sản phẩm sắp hết", hint: s.outOfStockVariants + " phiên bản đã hết hàng", count: s.lowStockVariants }
         ];
 
