@@ -28,6 +28,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 public class EmployeeAssignment {
 
+    /** The one position (fixed list in the admin UI) treated as branch manager: may read the store's reports. */
+    public static final String BRANCH_MANAGER_POSITION = "Quản lý chi nhánh";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "assignment_id")

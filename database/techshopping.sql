@@ -629,6 +629,11 @@ create index idx_orders_status on orders(status);
 create index idx_orders_store on orders(store_id);
 create index idx_order_status_history_order on order_status_history(order_id, changed_at);
 create index idx_order_status_history_changed_by on order_status_history(changed_by);
+-- báo cáo (Phase 10): doanh thu theo ngày giao, tiền hoàn theo ngày hoàn, doanh số theo chi nhánh / nhân viên
+create index idx_orders_delivered_at on orders(delivered_at) where status = 'DELIVERED';
+create index idx_return_requests_refunded_at on return_requests(completed_at) where status = 'REFUNDED';
+create index idx_sales_records_store_recorded on sales_records(store_id, recorded_at);
+create index idx_sales_records_employee_recorded on sales_records(employee_id, recorded_at);
 
 -- payment indexes
 create index idx_payments_order_id on payments(order_id);
@@ -756,6 +761,8 @@ alter table return_requests add constraint chk_return_requests_reason_type
 alter table return_requests add constraint chk_return_requests_refund check (refund_amount is null or refund_amount >= 0);
 alter table return_items add constraint chk_return_items_quantity check (quantity > 0);
 alter table return_items add constraint uq_return_items_request_item unique (return_request_id, order_item_id);
+alter table sales_records add constraint chk_sales_records_amounts
+    check (sales_amount >= 0 and (commission is null or commission >= 0));
 
 -- =====================================================
 -- tạo các view hữu ích

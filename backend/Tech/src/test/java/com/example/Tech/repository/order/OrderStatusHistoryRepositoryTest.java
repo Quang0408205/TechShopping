@@ -110,7 +110,7 @@ class OrderStatusHistoryRepositoryTest {
         entityManager.flush();
         entityManager.clear();
 
-        List<OrderStatusHistory> history = historyRepository.findAllByOrder_IdOrderByChangedAtAsc(order.getId());
+        List<OrderStatusHistory> history = historyRepository.findAllByOrder_IdOrderByChangedAtAscIdAsc(order.getId());
 
         assertThat(history).extracting(OrderStatusHistory::getNewStatus)
                 .containsExactly(OrderStatus.PENDING, OrderStatus.CONFIRMED);

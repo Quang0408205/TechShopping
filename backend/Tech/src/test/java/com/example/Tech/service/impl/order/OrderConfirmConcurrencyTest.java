@@ -42,7 +42,7 @@ class OrderConfirmConcurrencyTest {
     @Autowired
     private JdbcTemplate jdbc;
 
-    private Long adminId;
+    private Long staffId;
     private Integer storeId;
     private Long variantId;
     private final List<Long> orderIds = new ArrayList<>();
@@ -50,12 +50,16 @@ class OrderConfirmConcurrencyTest {
     @BeforeEach
     void setUp() {
         cleanUp();
-        adminId = jdbc.queryForObject("insert into users (email, username, password_hash, fullname) "
+        staffId = jdbc.queryForObject("insert into users (email, username, password_hash, fullname) "
                 + "values (?, ?, '{test}hash', 'Confirm Concurrency') returning user_id", Long.class,
                 TAG + "@techshopping.vn", TAG);
-        jdbc.update("insert into user_roles (user_id, role_id) select ?, role_id from roles where name = 'ADMIN'", adminId);
+        jdbc.update("insert into user_roles (user_id, role_id) select ?, role_id from roles where name = 'STAFF'", staffId);
         storeId = jdbc.queryForObject("insert into stores (name, address, district, city) "
                 + "values (?, '1 Đường Test', 'Quận 1', 'Hồ Chí Minh') returning store_id", Integer.class, TAG);
+        Long employeeId = jdbc.queryForObject("insert into employees (user_id) values (?) returning employee_id",
+                Long.class, staffId);
+        jdbc.update("insert into employee_assignments (employee_id, store_id, start_date) values (?, ?, current_date)",
+                employeeId, storeId);
         Integer categoryId = jdbc.queryForObject("insert into categories (name, slug) values ('Điện thoại', ?) "
                 + "returning category_id", Integer.class, TAG);
         Long productId = jdbc.queryForObject("insert into products (name, slug, category_id, base_price) "
@@ -67,7 +71,7 @@ class OrderConfirmConcurrencyTest {
             Long orderId = jdbc.queryForObject("insert into orders (user_id, recipient_name, recipient_phone, "
                     + "shipping_address, total_amount, status, payment_method, store_id) "
                     + "values (?, 'Nguyễn Văn An', '0901234567', '1 Lê Lợi, Quận 1', 5000000, 'PENDING', 'COD', ?) "
-                    + "returning order_id", Long.class, adminId, storeId);
+                    + "returning order_id", Long.class, staffId, storeId);
             jdbc.update("insert into order_items (order_id, variant_id, quantity, unit_price, discount_amount, subtotal) "
                     + "values (?, ?, 1, 5000000, 0, 5000000)", orderId, variantId);
             orderIds.add(orderId);
@@ -90,7 +94,7 @@ class OrderConfirmConcurrencyTest {
                 futures.add(pool.submit(() -> {
                     start.await();
                     try {
-                        adminOrderService.updateStatus(adminId, orderId,
+                        adminOrderService.updateStatus(staffId, orderId,
                                 new OrderStatusUpdateRequest(OrderStatus.CONFIRMED, null));
                         results.add(OrderStatus.CONFIRMED);
                     } catch (BusinessException e) {
@@ -124,6 +128,8 @@ class OrderConfirmConcurrencyTest {
         jdbc.update("delete from order_items where order_id in (select order_id from orders where store_id in "
                 + storeIds + ")", TAG);
         jdbc.update("delete from orders where store_id in " + storeIds, TAG);
+        jdbc.update("delete from employee_assignments where store_id in " + storeIds, TAG);
+        jdbc.update("delete from employees where user_id in (select user_id from users where username = ?)", TAG);
         jdbc.update("delete from stores where name = ?", TAG);
         jdbc.update("delete from users where username = ?", TAG);                // cascades user_roles
         jdbc.update("delete from products where slug = ?", TAG);                 // cascades variants

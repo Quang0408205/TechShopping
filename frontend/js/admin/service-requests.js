@@ -256,7 +256,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function actionButtonsHtml(request) {
 
-        const actions = nextActions(request);
+        const actions = isAdmin ? [] : nextActions(request);
 
         if (actions.length === 0) {
             return '<span class="admin-subtext">—</span>';

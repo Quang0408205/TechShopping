@@ -21,7 +21,8 @@ import org.springframework.security.web.SecurityFilterChain;
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
  *     <li>GET /api/v1/stores (open stores for the checkout pickup picker) is public (Phase 7).</li>
  *     <li>/api/v1/admin/orders/** (Phase 4), /api/v1/admin/installments/** (Phase 5) and
- *         /api/v1/admin/stores/{id}/inventory/** (Phase 7, store-scoped in the service) require STAFF or ADMIN;
+ *         /api/v1/admin/stores/{id}/inventory/** (Phase 7, store-scoped in the service), service requests (Phase 6),
+ *         reports and the dashboard (Phase 10, scoped in the service) require STAFF or ADMIN;
  *         the rest of /api/v1/admin/** requires
  *         ADMIN; any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
@@ -82,7 +83,8 @@ public class SecurityConfig {
                         // shop staff manage orders and installments too (must come before the ADMIN-only admin rule)
                         .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**",
                                 "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**",
-                                "/api/v1/admin/service-requests/**")
+                                "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
+                                "/api/v1/admin/dashboard/**")
                         .hasAnyRole(STAFF, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/**").authenticated()

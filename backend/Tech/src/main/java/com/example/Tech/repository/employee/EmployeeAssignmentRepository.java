@@ -31,5 +31,12 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
             """)
     Optional<Integer> findActiveStoreIdByUserId(@Param("userId") Long userId);
 
+    @Query("""
+            select ea from EmployeeAssignment ea
+            join fetch ea.store
+            where ea.employee.user.id = :userId and ea.active = true and ea.endDate is null
+            """)
+    Optional<EmployeeAssignment> findActiveWithStoreByUserId(@Param("userId") Long userId);
+
     boolean existsByStoreId(Integer storeId);
 }

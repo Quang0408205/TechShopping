@@ -105,7 +105,7 @@ public class AdminServiceRequestServiceImpl implements AdminServiceRequestServic
     @Transactional
     public ServiceRequestResponse update(Long staffId, ServiceRequestType type, Long id,
                                          ServiceRequestUpdateRequest request) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         User staff = scope.user();
         LocalDateTime now = LocalDateTime.now(clock);
         switch (type) {

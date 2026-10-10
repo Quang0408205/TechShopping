@@ -9,12 +9,15 @@ import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.entity.user.UserRole;
+import com.example.Tech.entity.sales.SalesRecord;
+import com.example.Tech.repository.order.OrderStatusHistoryRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.repository.user.RoleRepository;
 import com.example.Tech.repository.user.UserRepository;
+import com.example.Tech.repository.sales.SalesRecordRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
@@ -107,11 +110,18 @@ class AdminOrderApiIntegrationTest {
     @Autowired
     private Clock clock;
 
+    @Autowired
+    private OrderStatusHistoryRepository historyRepository;
+
+    @Autowired
+    private SalesRecordRepository salesRecordRepository;
+
     private final List<Long> registeredUserIds = new ArrayList<>();
 
     private Long customerId;
     private String customerToken;
     private String staffToken;
+    private Long staffId;
     private String adminToken;
     private ProductVariant phone;
     private ProductVariant cover;
@@ -125,6 +135,7 @@ class AdminOrderApiIntegrationTest {
         customerId = customer.get("user").get("id").asLong();
         customerToken = customer.get("accessToken").asString();
         staffToken = registerWithRole("adm.order.staff", "STAFF");
+        staffId = registeredUserIds.getLast();
         adminToken = registerWithRole("adm.order.admin", "ADMIN");
 
         Category category = new Category();
@@ -239,6 +250,17 @@ class AdminOrderApiIntegrationTest {
             assertThat(warranty.getStartDate()).isEqualTo(today);
             assertThat(warranty.getEndDate()).isEqualTo(today.plusMonths(12));
         });
+        // Phase 10: every change is in the history; the sale goes to the confirming staff member, 1% commission
+        assertThat(historyRepository.findAllByOrder_IdOrderByChangedAtAscIdAsc(orderId)).extracting(
+                        h -> h.getOldStatus() + ">" + h.getNewStatus() + ">" + h.getChangedBy().getId())
+                .containsExactly("null>PENDING>" + customerId, "PENDING>CONFIRMED>" + staffId,
+                        "CONFIRMED>SHIPPING>" + staffId, "SHIPPING>DELIVERED>" + staffId);
+        SalesRecord sale = salesRecordRepository.findByOrder_Id(orderId).orElseThrow();
+        assertThat(sale.getEmployee().getUser().getId()).isEqualTo(staffId);
+        assertThat(sale.getStore().getId()).isEqualTo(storeA.getId());
+        assertThat(sale.getSalesAmount()).isEqualByComparingTo("15990000");
+        assertThat(sale.getCommission()).isEqualByComparingTo("159900");
+        assertThat(sale.getRecordedAt()).isNotNull();
         send(get("/api/v1/orders/" + orderId), customerToken, null)
                 .andExpect(jsonPath("$.data.status").value("DELIVERED"))
                 .andExpect(jsonPath("$.data.trackingNumber").value("GHN123456"));
@@ -317,7 +339,13 @@ class AdminOrderApiIntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
         patchStatus(orderId, "CONFIRMED", null)
                 .andExpect(status().isForbidden());
+        // the ADMIN only coordinates; store B's own staff confirms
         send(patch("/api/v1/admin/orders/" + orderId + "/status"), adminToken, Map.of("status", "CONFIRMED"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ADMIN_READ_ONLY"));
+        String staffB = registerWithRole("adm.order.staffb", "STAFF");
+        StoreFixtures.assign(entityManager, registeredUserIds.getLast(), storeB);
+        send(patch("/api/v1/admin/orders/" + orderId + "/status"), staffB, Map.of("status", "CONFIRMED"))
                 .andExpect(status().isOk());
         assertThat(StoreFixtures.quantity(entityManager, storeB, phone)).isEqualTo(18);
         assertThat(StoreFixtures.quantity(entityManager, storeA, phone)).isEqualTo(1);
@@ -328,7 +356,7 @@ class AdminOrderApiIntegrationTest {
     }
 
     @Test
-    void staff_onlySeeTheOrdersOfTheirStore_ordersWithoutAStoreAreAdminOnly() throws Exception {
+    void staff_onlySeeTheOrdersOfTheirStore_adminSeesEveryOrderButProcessesNone() throws Exception {
         long own = placeOrder(cover, 1, "Nguyễn Văn An", "0901234567");
         long noStore = placeOrder(cover, 1, "Trần Thị Bình", "0912345678");
         entityManager.createNativeQuery("update orders set store_id = null where order_id = :id")
@@ -348,9 +376,14 @@ class AdminOrderApiIntegrationTest {
         send(get("/api/v1/admin/orders/" + noStore), adminToken, null).andExpect(status().isOk());
         send(get("/api/v1/admin/orders").param("keyword", "adm.order.customer@"), adminToken, null)
                 .andExpect(jsonPath("$.data.totalElements").value(2));
-        send(patch("/api/v1/admin/orders/" + noStore + "/status"), adminToken, Map.of("status", "CONFIRMED"))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("ORDER_STORE_MISSING"));
+        send(patch("/api/v1/admin/orders/" + noStore + "/status"), adminToken, Map.of("status", "CANCELLED"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ADMIN_READ_ONLY"));
+        send(post("/api/v1/admin/orders/" + own + "/payment/confirm"), adminToken, Map.of())
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ADMIN_READ_ONLY"));
+        send(get("/api/v1/admin/orders/" + noStore), adminToken, null)
+                .andExpect(jsonPath("$.data.order.status").value("PENDING"));
 
         // a STAFF account with no current store reaches no order at all
         String unassigned = registerWithRole("adm.order.staff2", "STAFF");

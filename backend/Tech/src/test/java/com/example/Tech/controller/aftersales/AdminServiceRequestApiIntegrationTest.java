@@ -177,7 +177,9 @@ class AdminServiceRequestApiIntegrationTest {
         send(post("/api/v1/service-requests/WARRANTY/" + id + "/cancel"), customerToken, null)
                 .andExpect(status().isConflict());
 
-        send(patch(url("WARRANTY", id)), adminToken, Map.of("notes", "Thay pin mới.")).andExpect(status().isOk())
+        send(patch(url("WARRANTY", id)), adminToken, Map.of("notes", "Ghi chú của quản trị.")).andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ADMIN_READ_ONLY"));
+        send(patch(url("WARRANTY", id)), staffAToken, Map.of("notes", "Thay pin mới.")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("RECEIVED"))
                 .andExpect(jsonPath("$.data.handlerName").value("Nhân Viên A"));
         send(patch(url("WARRANTY", id)), staffAToken, Map.of("status", "PROCESSING")).andExpect(status().isOk());
@@ -254,14 +256,18 @@ class AdminServiceRequestApiIntegrationTest {
     }
 
     @Test
-    void returnRejected_byAdmin_freesTheQuantity() throws Exception {
+    void returnRejected_freesTheQuantity_theAdminOnlyViews() throws Exception {
         long id = data(send(post("/api/v1/return-requests"), customerToken, Map.of("orderId", orderA.getId(),
                 "reasonType", "CHANGED_MIND", "reason", "Không hợp màu, muốn trả lại.",
                 "items", List.of(Map.of("orderItemId", coverLineId, "quantity", 2))))).get("id").asLong();
-        send(patch(url("RETURN", id)), adminToken, Map.of("status", "APPROVED")).andExpect(status().isOk());
-        send(patch(url("RETURN", id)), adminToken, Map.of("status", "REJECTED",
+        send(patch(url("RETURN", id)), adminToken, Map.of("status", "APPROVED")).andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ADMIN_READ_ONLY"));
+        send(get(url("RETURN", id)), adminToken, null).andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("PENDING"));
+        send(patch(url("RETURN", id)), staffAToken, Map.of("status", "APPROVED")).andExpect(status().isOk());
+        send(patch(url("RETURN", id)), staffAToken, Map.of("status", "REJECTED",
                 "rejectionReason", "Hộp đã bị rách, không đủ điều kiện trả.")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.handlerName").value("Quản Trị"));
+                .andExpect(jsonPath("$.data.handlerName").value("Nhân Viên A"));
         JsonNode view = data(send(get("/api/v1/orders/" + orderA.getId() + "/after-sales"), customerToken, null));
         assertThat(view.get("items").get(1).get("returnableQuantity").asInt()).isEqualTo(2);
     }
