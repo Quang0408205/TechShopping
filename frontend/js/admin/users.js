@@ -4,17 +4,20 @@
  * API thật (chỉ ADMIN, backend kiểm tra lại quyền ở mọi request):
  *   GET    /admin/users?keyword=&role=&isActive=&page=&size=   tìm kiếm, phân trang
  *   PATCH  /admin/users/{id}/status  { active }                khoá / mở khoá
- *   PUT    /admin/users/{id}/roles   { roles: [...] }          phân quyền
+ *   PUT    /admin/users/{id}/roles   { roles: ["STAFF" | "BRANCH_MANAGER"] }   đổi vai trò nội bộ
  *   DELETE /admin/users/{id}                                   xoá mềm (204)
- * Lỗi 409 (tự sửa chính mình, quản trị viên cuối cùng, tài khoản đã xoá)
- * hiển thị bằng thông báo tiếng Việt của api.js.
+ * Hai tab: Khách hàng (role=CUSTOMER: chỉ khoá / mở khoá / xoá) và Nội bộ (role=INTERNAL hoặc
+ * STAFF / BRANCH_MANAGER / ADMIN: thêm "Đổi vai trò" cho nhân viên và quản lý; quản trị viên và chính mình
+ * không đổi được). Lỗi 409 (chi nhánh đã có quản lý, tài khoản khách, quản trị viên cuối cùng…) hiển thị bằng
+ * thông báo của máy chủ.
  */
 
 const USER_PAGE_SIZE = 20;
 
 const BACKEND_ROLE_LABELS = {
     CUSTOMER: "Khách hàng",
-    STAFF: "Nhân viên",
+    STAFF: "Nhân viên chi nhánh",
+    BRANCH_MANAGER: "Quản lý chi nhánh",
     ADMIN: "Quản trị viên"
 };
 
@@ -41,6 +44,10 @@ document.addEventListener("DOMContentLoaded", async function () {
     const roleError = document.getElementById("roleFormError");
 
 
+    const roleFilterSelect = document.getElementById("userRoleFilter");
+
+    let currentTab = "CUSTOMER";
+
     let currentPage = 0;
 
     let currentUsers = [];
@@ -60,9 +67,17 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     });
 
-    document.getElementById("userRoleFilter").addEventListener("change", function () {
+    roleFilterSelect.addEventListener("change", function () {
         currentPage = 0;
         loadUsers();
+    });
+
+    document.querySelectorAll("[data-user-tab]").forEach(function (tab) {
+
+        tab.addEventListener("click", function () {
+            selectTab(tab.dataset.userTab);
+        });
+
     });
 
     document.getElementById("userStatusFilter").addEventListener("change", function () {
@@ -122,6 +137,39 @@ document.addEventListener("DOMContentLoaded", async function () {
     loadUsers();
 
 
+    /* ================= TAB ================= */
+
+    function selectTab(tab) {
+
+        if (tab === currentTab) {
+            return;
+        }
+
+        currentTab = tab;
+
+        document.querySelectorAll("[data-user-tab]").forEach(function (button) {
+
+            const active = button.dataset.userTab === tab;
+
+            button.classList.toggle("is-active", active);
+
+            button.setAttribute("aria-selected", String(active));
+
+        });
+
+        roleFilterSelect.value = "";
+
+        roleFilterSelect.hidden = tab === "CUSTOMER";
+
+        closeRolePanel();
+
+        currentPage = 0;
+
+        loadUsers();
+
+    }
+
+
     /* ================= TẢI DANH SÁCH ================= */
 
     async function loadUsers() {
@@ -136,7 +184,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const keyword = document.getElementById("userKeyword").value.trim();
 
-        const role = document.getElementById("userRoleFilter").value;
+        const role = currentTab === "CUSTOMER" ? "CUSTOMER" : (roleFilterSelect.value || "INTERNAL");
 
         const status = document.getElementById("userStatusFilter").value;
 
@@ -199,8 +247,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const active = user.isActive !== false;
 
+        /* Chỉ nhân viên và quản lý đổi vai trò được; khách hàng, quản trị viên và chính mình thì không */
+        const canChangeRole = !isSelf && (user.roles || []).some(function (role) {
+            return role === "STAFF" || role === "BRANCH_MANAGER";
+        }) && (user.roles || []).indexOf("ADMIN") === -1;
+
         const roles = (user.roles || []).map(function (role) {
-            return `<span class="admin-badge ${role === "ADMIN" ? "admin-badge-warning" : role === "STAFF" ? "admin-badge-success" : "admin-badge-neutral"}">${escapeHtml(BACKEND_ROLE_LABELS[role] || role)}</span>`;
+            return `<span class="admin-badge ${role === "ADMIN" ? "admin-badge-warning" : (role === "STAFF" || role === "BRANCH_MANAGER") ? "admin-badge-success" : "admin-badge-neutral"}">${escapeHtml(BACKEND_ROLE_LABELS[role] || role)}</span>`;
         }).join(" ");
 
 
@@ -222,7 +275,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 <td>${user.createdAt ? escapeHtml(formatDateVi(user.createdAt)) : "—"}</td>
                 <td class="admin-actions-cell">
                     ${isSelf ? "" : `<button type="button" class="admin-link-btn" data-action="status" data-id="${escapeHtml(String(user.id))}">${active ? "Khoá" : "Mở khoá"}</button>`}
-                    <button type="button" class="admin-link-btn" data-action="roles" data-id="${escapeHtml(String(user.id))}">Phân quyền</button>
+                    ${canChangeRole ? `<button type="button" class="admin-link-btn" data-action="roles" data-id="${escapeHtml(String(user.id))}">Đổi vai trò</button>` : ""}
                     ${isSelf ? "" : `<button type="button" class="admin-link-btn admin-link-danger" data-action="delete" data-id="${escapeHtml(String(user.id))}">Xoá</button>`}
                 </td>
             </tr>
@@ -294,10 +347,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         editingUser = user;
 
-        document.getElementById("rolePanelTitle").textContent = "Phân quyền: " + user.email;
+        document.getElementById("rolePanelTitle").textContent = "Đổi vai trò: " + user.email;
 
-        roleForm.querySelectorAll('input[name="role"]').forEach(function (checkbox) {
-            checkbox.checked = (user.roles || []).indexOf(checkbox.value) !== -1;
+        roleForm.querySelectorAll('input[name="role"]').forEach(function (radio) {
+            radio.checked = (user.roles || []).indexOf(radio.value) !== -1;
         });
 
         roleError.hidden = true;
@@ -328,11 +381,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
         const roles = Array.from(roleForm.querySelectorAll('input[name="role"]:checked'))
-            .map(function (checkbox) { return checkbox.value; });
+            .map(function (radio) { return radio.value; });
 
         if (roles.length === 0) {
 
-            roleError.textContent = "Chọn ít nhất một vai trò.";
+            roleError.textContent = "Chọn một vai trò.";
 
             roleError.hidden = false;
 

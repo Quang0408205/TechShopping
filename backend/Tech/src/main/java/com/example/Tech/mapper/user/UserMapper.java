@@ -39,7 +39,8 @@ public class UserMapper {
                 user.getEmail(),
                 user.getUsername(),
                 user.getFullname(),
-                roles
+                roles,
+                user.getAvatarUrl()
         );
     }
 

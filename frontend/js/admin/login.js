@@ -2,7 +2,7 @@
 
 /*
  * POST /api/v1/auth/login thật (email hoặc tên đăng nhập). Chỉ tài khoản có
- * role STAFF hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
+ * role STAFF, BRANCH_MANAGER hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
  * khẩu vẫn bị từ chối, và refresh token vừa cấp được thu hồi ngay.
  * ?reason=… (staff-auth.js requireStaffLogin) giải thích vì sao bị đưa về đây.
  */
@@ -126,7 +126,7 @@ document.addEventListener(
 
             button.disabled = isLoading;
 
-            button.textContent = isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP";
+            button.textContent = isLoading ? "Đang đăng nhập..." : "Đăng nhập";
 
         }
 

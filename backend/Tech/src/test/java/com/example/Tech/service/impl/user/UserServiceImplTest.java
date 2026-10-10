@@ -15,6 +15,7 @@ import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.upload.ImageStorageService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
@@ -58,6 +59,9 @@ class UserServiceImplTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private ImageStorageService imageStorageService;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
 
     private UserServiceImpl userService;
@@ -68,7 +72,7 @@ class UserServiceImplTest {
     void setUp() {
         userService = new UserServiceImpl(userRepository, userRoleRepository, customerProfileRepository,
                 passwordEncoder, refreshTokenService, new UserMapper(), new CustomerProfileMapper(),
-                new CurrentUserLoader(userRepository, userRoleRepository));
+                new CurrentUserLoader(userRepository, userRoleRepository), imageStorageService);
         user = new User();
         user.setId(USER_ID);
         user.setEmail("an@example.com");
@@ -134,15 +138,45 @@ class UserServiceImplTest {
         when(userRepository.saveAndFlush(user)).thenReturn(user);
         when(userRoleRepository.findRoleNamesByUserId(USER_ID)).thenReturn(List.of("CUSTOMER"));
 
+        when(imageStorageService.isStoredAvatar("http://localhost:8080/uploads/avatars/a.png")).thenReturn(true);
+
         UserResponse response = userService.updateMe(USER_ID,
-                new UserUpdateRequest(" Trần Thị Bình ", " ", " https://img.example/a.png "));
+                new UserUpdateRequest(" Trần Thị Bình ", " ", " http://localhost:8080/uploads/avatars/a.png "));
 
         assertThat(user.getFullname()).isEqualTo("Trần Thị Bình");
         assertThat(user.getPhone()).isNull();
-        assertThat(user.getAvatarUrl()).isEqualTo("https://img.example/a.png");
+        assertThat(user.getAvatarUrl()).isEqualTo("http://localhost:8080/uploads/avatars/a.png");
         assertThat(user.getEmail()).isEqualTo("an@example.com");
         assertThat(user.getUsername()).isEqualTo("an.nguyen");
         assertThat(response.fullname()).isEqualTo("Trần Thị Bình");
+    }
+
+    @Test
+    void updateMe_avatarFromAnotherSite_isRefusedOnAvatarUrl() {
+        stubUser();
+        when(imageStorageService.isStoredAvatar("https://evil.example/x.png")).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.updateMe(USER_ID, new UserUpdateRequest("An", null, "https://evil.example/x.png")))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> assertThat(ex.getDetails()).containsKey("avatarUrl"));
+        verify(userRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void updateMe_keepingAnOldAvatar_isAllowed_andReplacingOneDeletesTheOldFile() {
+        stubUser();
+        user.setAvatarUrl("https://old.example/legacy.png");
+        when(userRepository.saveAndFlush(user)).thenReturn(user);
+
+        userService.updateMe(USER_ID, new UserUpdateRequest("An", null, "https://old.example/legacy.png"));
+        verify(imageStorageService, never()).deleteAfterCommit(any());
+
+        when(imageStorageService.isStoredAvatar("http://localhost:8080/uploads/avatars/new.png")).thenReturn(true);
+        userService.updateMe(USER_ID, new UserUpdateRequest("An", null, "http://localhost:8080/uploads/avatars/new.png"));
+        verify(imageStorageService).deleteAfterCommit("https://old.example/legacy.png");
+
+        userService.updateMe(USER_ID, new UserUpdateRequest("An", null, " "));
+        assertThat(user.getAvatarUrl()).isNull();
+        verify(imageStorageService).deleteAfterCommit("http://localhost:8080/uploads/avatars/new.png");
     }
 
     // ---------- change password ----------

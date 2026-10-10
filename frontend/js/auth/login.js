@@ -86,6 +86,36 @@ document.addEventListener(
                     );
 
 
+                    /*
+                     * Tài khoản nội bộ (nhân viên, quản lý chi nhánh, quản trị viên) không mua hàng ở
+                     * trang khách: không lưu phiên, thu hồi refresh token vừa cấp và chỉ đường sang
+                     * trang quản trị.
+                     */
+
+                    if ((auth.user.roles || []).indexOf("CUSTOMER") === -1) {
+
+                        try {
+
+                            await apiRequest(
+                                "/auth/logout",
+                                { method: "POST", body: { refreshToken: auth.refreshToken } }
+                            );
+
+                        } catch (logoutError) {
+
+                            /* không thu hồi được thì phiên vẫn không được lưu ở trình duyệt này */
+
+                        }
+
+                        showInternalAccountNotice();
+
+                        setLoading(false);
+
+                        return;
+
+                    }
+
+
                     saveAuth(auth);
 
                     window.location.href =
@@ -108,6 +138,25 @@ document.addEventListener(
         function showError(message) {
 
             errorBox.textContent = message;
+
+            errorBox.hidden = false;
+
+        }
+
+
+        function showInternalAccountNotice() {
+
+            errorBox.textContent = "Tài khoản nội bộ vui lòng đăng nhập tại trang quản trị. ";
+
+            const link = document.createElement("a");
+
+            link.href = siteUrl("admin/login.html");
+
+            link.id = "internalLoginLink";
+
+            link.textContent = "Mở trang đăng nhập quản trị";
+
+            errorBox.appendChild(link);
 
             errorBox.hidden = false;
 

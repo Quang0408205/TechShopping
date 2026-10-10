@@ -21,7 +21,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * Stores uploaded images on the local disk ({@code app.upload.dir}/products, /reviews and /service). File names are random
+ * Stores uploaded images on the local disk ({@code app.upload.dir}/products, /reviews, /service and /avatars). File names are random
  * UUIDs, never the client's name, so a request cannot choose or overwrite a path.
  */
 @Slf4j
@@ -39,6 +39,8 @@ public class LocalImageStorageService implements ImageStorageService {
     private final String reviewUrlPrefix;
     private final Path serviceDirectory;
     private final String serviceUrlPrefix;
+    private final Path avatarDirectory;
+    private final String avatarUrlPrefix;
 
     public LocalImageStorageService(UploadProperties properties) {
         this.productDirectory = properties.rootDirectory().resolve("products");
@@ -47,6 +49,8 @@ public class LocalImageStorageService implements ImageStorageService {
         this.reviewUrlPrefix = properties.publicBaseUrl() + REVIEW_IMAGE_PATH;
         this.serviceDirectory = properties.rootDirectory().resolve("service");
         this.serviceUrlPrefix = properties.publicBaseUrl() + SERVICE_IMAGE_PATH;
+        this.avatarDirectory = properties.rootDirectory().resolve("avatars");
+        this.avatarUrlPrefix = properties.publicBaseUrl() + AVATAR_IMAGE_PATH;
     }
 
     @Override
@@ -73,6 +77,20 @@ public class LocalImageStorageService implements ImageStorageService {
     @Override
     public boolean isStoredServiceImage(String url) {
         Path file = storedFile(url, serviceDirectory, serviceUrlPrefix);
+        return file != null && Files.isRegularFile(file);
+    }
+
+    @Override
+    public String storeAvatar(MultipartFile file) {
+        if (file != null && file.getSize() > MAX_AVATAR_BYTES) {
+            throw new BusinessException(ErrorCode.IMAGE_TOO_LARGE, "Ảnh đại diện tối đa 2 MB");
+        }
+        return store(file, avatarDirectory, avatarUrlPrefix, "avatar");
+    }
+
+    @Override
+    public boolean isStoredAvatar(String url) {
+        Path file = storedFile(url, avatarDirectory, avatarUrlPrefix);
         return file != null && Files.isRegularFile(file);
     }
 
@@ -113,6 +131,9 @@ public class LocalImageStorageService implements ImageStorageService {
         }
         if (file == null) {
             file = storedFile(url, serviceDirectory, serviceUrlPrefix);
+        }
+        if (file == null) {
+            file = storedFile(url, avatarDirectory, avatarUrlPrefix);
         }
         if (file == null) {
             return;

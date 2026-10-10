@@ -98,8 +98,17 @@ docker compose up -d backend
 - ADMIN chỉ được tạo **một lần**, khi database chưa có ADMIN nào (database đã có ADMIN thì 3 dòng này bị bỏ qua). Sau đó có thể xoá 3 dòng này khỏi `.env`.
 - Tài khoản khách hàng thì tự đăng ký trên web (nút **Đăng nhập** → **Đăng ký**).
 - **Khu quản trị nội bộ:** http://localhost:5510/admin/login.html, đăng nhập bằng email hoặc tên đăng nhập của ADMIN.
-  - Chỉ tài khoản có quyền **STAFF** hoặc **ADMIN** vào được.
-  - ADMIN cấp quyền cho người khác ở trang **Người dùng & phân quyền**: người đó tự đăng ký trên web trước, sau đó ADMIN tick **Nhân viên** cho tài khoản đó.
+  - Chỉ tài khoản nội bộ (**STAFF**, **BRANCH_MANAGER** hoặc **ADMIN**) vào được. Tài khoản nội bộ có **đúng một** vai trò và không bao giờ là khách hàng.
+  - **Tuyển nhân sự = tạo tài khoản mới** (không chuyển tài khoản khách): ADMIN gọi `POST /api/v1/admin/employees/hire` (STAFF hoặc BRANCH_MANAGER, vào chi nhánh bất kỳ); Quản lý chi nhánh gọi `POST /api/v1/branch/employees/hire` (chỉ STAFF, luôn vào chi nhánh của mình). Mật khẩu tạm (tự sinh 12 ký tự nếu để trống) chỉ trả **một lần**. Giao diện tuyển dụng làm ở giai đoạn 3 của `docs/kiemthu.md`.
+
+| Vai trò | Sinh ra bằng | Làm được |
+|---|---|---|
+| `CUSTOMER` | Chỉ `POST /auth/register` | Mua hàng |
+| `STAFF` | Admin hoặc Quản lý chi nhánh tuyển | Xử lý đơn / trả góp / hậu mãi / tồn kho của chi nhánh được gán (không xem doanh thu) |
+| `BRANCH_MANAGER` | Chỉ Admin tuyển hoặc nâng từ STAFF (`PUT /admin/users/{id}/roles`, cần đang có phân công; tối đa 1 quản lý / chi nhánh) | Như STAFF, cộng báo cáo / doanh thu và quản lý nhân viên chi nhánh mình (`/api/v1/branch/**`: xem, tuyển STAFF, sửa hồ sơ, cho nghỉ) |
+| `ADMIN` | Chỉ tài khoản bootstrap (`.env`) | Toàn hệ thống, chỉ xem đơn (không xử lý); đổi STAFF ↔ BRANCH_MANAGER, chuyển chi nhánh, khoá tài khoản |
+
+  Đổi vai trò / chuyển chi nhánh / cho nghỉ / khoá tài khoản đều thu hồi phiên đăng nhập của người đó.
 
 ---
 
@@ -107,9 +116,9 @@ docker compose up -d backend
 
 | Khu vực | Tính năng | Dữ liệu |
 |---|---|---|
-| Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
-| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
-| Khách hàng | **Đánh giá sản phẩm**: tab "ĐÁNH GIÁ" ở trang chi tiết (điểm trung bình + số đánh giá từng mức sao, toàn số thật), viết / sửa / xoá đánh giá của mình (1–5 sao, nhận xét, tối đa 5 ảnh), nhãn "Đã mua hàng", lọc theo sao / có ảnh, xem ảnh lớn; điểm Thế Giới Di Động hiện riêng để tham khảo; thẻ sản phẩm hiện sao (đánh giá thật, chưa có thì điểm TGDĐ) | **Thật** (API) |
+| Khách hàng | Đăng ký, đăng nhập (tài khoản nội bộ bị từ chối ở trang khách), trang tài khoản 3 khung #profile / #security / #address (hồ sơ + **ảnh đại diện tải lên** JPG/PNG/WebP ≤ 2 MB, đổi mật khẩu, địa chỉ), menu ảnh đại diện trên header | **Thật** (API) |
+| Khách hàng | Trang chủ, danh sách sản phẩm (tab danh mục, lọc thương hiệu có tìm kiếm, giá chọn nhanh, ngăn kéo bộ lọc trên điện thoại, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
+| Khách hàng | **Đánh giá sản phẩm**: tab "ĐÁNH GIÁ" ở trang chi tiết (điểm trung bình + số đánh giá từng mức sao, toàn số thật), viết / sửa / xoá đánh giá của mình (1–5 sao, nhận xét, tối đa 5 ảnh), nhãn "Đã mua hàng", lọc theo sao / có ảnh, xem ảnh lớn; điểm Thế Giới Di Động hiện riêng để tham khảo; thẻ sản phẩm hiện sao (đánh giá thật, chưa có thì điểm TGDĐ ghi rõ "đánh giá tham khảo") | **Thật** (API) |
 | Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
 | Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
@@ -124,7 +133,9 @@ docker compose up -d backend
 | Quản trị | **Báo cáo → Hàng nhập kho theo chi nhánh** (chỉ ADMIN): tổng số lượng nhập, số lần nhập, số phiên bản, số nhà cung cấp, biểu đồ + bảng theo chi nhánh, lọc chi nhánh / khoảng ngày (tính theo số lượng, nhập kho không ghi giá nhập) | **Thật** (API) |
 | Quản trị | **Đánh giá** (chỉ ADMIN): mọi đánh giá của khách (kể cả đã ẩn), tìm theo sản phẩm / người viết / email / nội dung, lọc số sao / trạng thái / một sản phẩm, xem đủ nội dung + ảnh; **ẩn** (bắt buộc lý do: chọn nhanh + ghi thêm, người viết thấy lý do) / **hiện lại**, điểm sản phẩm tính lại ngay | **Thật** (API) |
 | Quản trị | **Bảo hành / Bảo trì / Đổi trả** (nhân viên chi nhánh của đơn xử lý, ADMIN chỉ xem mọi chi nhánh): danh sách gộp 3 loại, lọc loại / trạng thái / chi nhánh / ngày / từ khoá (mã BH / BT / DT, mã đơn, khách); bảo hành / bảo trì: tiếp nhận (ngày dự kiến, ghi chú, chi phí bảo trì) → đang xử lý → hoàn tất, từ chối có lý do; trả hàng: duyệt → nhận hàng (chọn món còn bán được để cộng lại tồn kho chi nhánh) → hoàn tiền (trừ tổng chi tiêu của khách) | **Thật** (API) |
-| Quản trị | Tổng quan (trừ số chi nhánh / nhân viên), hỗ trợ khách hàng, báo cáo doanh thu, lịch sử chatbot | Dữ liệu mẫu (Phase 6, 9, 10) |
+| Quản trị | **Tổng quan theo vai trò**: ADMIN "Toàn hệ thống" (doanh thu hôm nay / tháng so với cùng kỳ, đơn cần xử lý, yêu cầu dịch vụ, hàng sắp hết, chi nhánh, nhân viên, doanh thu 30 ngày, danh mục, so sánh chi nhánh, lối tắt); Quản lý "Chi nhánh …" (số của chi nhánh + đội ngũ); Nhân viên "Việc của tôi hôm nay" (không có doanh thu, danh sách việc có số đếm và link lọc sẵn) | **Thật** (API) |
+| Quản trị | **Báo cáo doanh thu** (ADMIN mọi chi nhánh, quản lý chi nhánh mình): lọc chi nhánh / ngày / nhóm theo ngày-tháng; thẻ tổng; cột theo thời gian; tròn theo danh mục + phương thức thanh toán; theo chi nhánh; doanh số + hoa hồng theo nhân viên; top 10 sản phẩm; **Xuất Excel** (.xlsx 7 sheet, `GET /api/v1/admin/reports/sales/export`) | **Thật** (API) |
+| Quản trị | Hỗ trợ khách hàng, lịch sử chatbot (ẩn khỏi menu, có banner "đang phát triển") | Dữ liệu mẫu (Phase 9) |
 
 ---
 
@@ -171,6 +182,9 @@ docker compose up -d backend
 > # 10. Báo cáo doanh thu / doanh số nhân viên
 > Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 11. Vai trò Quản lý chi nhánh (BRANCH_MANAGER) — đổi role dữ liệu thật, sao lưu DB trước
+> Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
@@ -196,7 +210,7 @@ docker compose up -d backend
 | `port is already allocated` với cổng **5510** | Cổng bị chương trình khác dùng: trong `.env` đổi `FRONTEND_PORT=5520` (cổng khác bất kỳ), rồi `docker compose up -d` và mở http://localhost:5520 |
 | `port is already allocated` với cổng **8080**, **5432** hoặc **6379** | Tắt chương trình đang dùng cổng đó (ví dụ PostgreSQL / Redis cài sẵn trên máy, hoặc backend đang chạy bằng `mvnw`) |
 | Bấm "Thêm vào giỏ" thì bị chuyển sang trang đăng nhập | Đúng thiết kế: phải đăng nhập mới thêm được vào giỏ; đăng nhập xong sẽ quay lại đúng trang |
-| Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: ADMIN cấp quyền **Nhân viên** ở trang Người dùng & phân quyền, hoặc tạo ADMIN đầu tiên ở **Bước 5** |
+| Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: tài khoản nội bộ phải được **tuyển mới** (ADMIN / Quản lý chi nhánh), hoặc tạo ADMIN đầu tiên ở **Bước 5** |
 | Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
 | Log backend có `Schema-validation: missing column` (ví dụ `recipient_name`, `citizen_id`, `confirmed_by`) hoặc `missing table [promotions]` | Database tạo từ schema cũ: chạy các file trong `database/migrations/` (mục **4. Dùng hằng ngày**), rồi `docker compose restart backend` |
 | Backend cứ khởi động lại, log có `UnknownHostException: postgres` | Container backend bị rơi khỏi mạng Docker: `docker compose up -d --force-recreate --no-deps backend` |

@@ -15,9 +15,11 @@ import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 /**
- * Store-scoped access for staff (Phase 7): an ADMIN may act on any store; a STAFF member only on the store of
- * their current open assignment (employee_assignments). Roles and the assignment are read from the database on
+ * Store-scoped access for staff (Phase 7): an ADMIN may act on any store; a STAFF or BRANCH_MANAGER member only on
+ * the store of their current open assignment (employee_assignments). Roles and the assignment are read from the database on
  * every call, so a token issued before a role change or a move to another store cannot reach the old store.
  */
 @Component
@@ -31,7 +33,7 @@ public class StoreAccessGuard {
 
     /** The caller and the store they may act on; 404 STORE_NOT_FOUND, 403 NO_ACTIVE_STORE_ASSIGNMENT / ACCESS_DENIED. */
     public Access require(Long userId, Integer storeId) {
-        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
+        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.BRANCH_MANAGER, RoleName.ADMIN);
         Store store = storeRepository.findById(storeId).orElseThrow(() -> new BusinessException(
                 ErrorCode.STORE_NOT_FOUND, "Không tìm thấy chi nhánh id %d".formatted(storeId)));
         if (userRoleRepository.findRoleNamesByUserId(userId).contains(RoleName.ADMIN.name())) {
@@ -50,7 +52,7 @@ public class StoreAccessGuard {
      * current store (403 NO_ACTIVE_STORE_ASSIGNMENT without one). Changes go through {@link #processingScope}.
      */
     public OrderScope orderScope(Long userId) {
-        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
+        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.BRANCH_MANAGER, RoleName.ADMIN);
         if (userRoleRepository.findRoleNamesByUserId(userId).contains(RoleName.ADMIN.name())) {
             return new OrderScope(user, null);
         }
@@ -72,20 +74,28 @@ public class StoreAccessGuard {
     }
 
     /**
-     * Who may read sales reports: an ADMIN for every store (storeId null), or a STAFF member whose current position
-     * is branch manager, for their store only (403 NO_ACTIVE_STORE_ASSIGNMENT / ACCESS_DENIED otherwise).
+     * Who may read sales reports: an ADMIN for every store (storeId null), or a BRANCH_MANAGER for their current
+     * store only. The role is what counts, not the position label (403 ACCESS_DENIED for plain STAFF,
+     * NO_ACTIVE_STORE_ASSIGNMENT for a manager without a store).
      */
     public OrderScope reportScope(Long userId) {
-        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
-        if (userRoleRepository.findRoleNamesByUserId(userId).contains(RoleName.ADMIN.name())) {
+        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.BRANCH_MANAGER, RoleName.ADMIN);
+        List<String> roles = userRoleRepository.findRoleNamesByUserId(userId);
+        if (roles.contains(RoleName.ADMIN.name())) {
             return new OrderScope(user, null);
+        }
+        if (!roles.contains(RoleName.BRANCH_MANAGER.name())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "Chỉ quản lý chi nhánh và quản trị viên xem được báo cáo");
         }
         EmployeeAssignment assignment = assignmentRepository.findActiveWithStoreByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT));
-        if (!EmployeeAssignment.BRANCH_MANAGER_POSITION.equals(assignment.getPositionAtStore())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED, "Chỉ quản lý chi nhánh và quản trị viên xem được báo cáo");
-        }
         return new OrderScope(user, assignment.getStore().getId());
+    }
+
+    /** Revenue figures (dashboard) are for ADMIN and BRANCH_MANAGER; plain STAFF only get work counters. */
+    public boolean canViewRevenue(Long userId) {
+        List<String> roles = userRoleRepository.findRoleNamesByUserId(userId);
+        return roles.contains(RoleName.ADMIN.name()) || roles.contains(RoleName.BRANCH_MANAGER.name());
     }
 
     public record Access(User user, Store store) {

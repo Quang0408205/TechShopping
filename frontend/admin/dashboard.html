@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -43,78 +44,90 @@
                 Bạn không có quyền truy cập trang vừa chọn.
             </p>
 
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
-            </p>
+            <!-- js/admin/dashboard.js dựng 1 trong 3 bố cục theo vai trò: Toàn hệ thống / Chi nhánh / Việc của tôi -->
+            <div class="admin-dashboard-head">
+                <div>
+                    <h2 id="dashboardTitle"></h2>
+                    <p class="admin-greeting" id="dashboardGreeting"></p>
+                </div>
+                <nav class="admin-shortcuts" id="dashboardShortcuts" aria-label="Lối tắt"></nav>
+            </div>
 
-            <p class="admin-greeting" id="dashboardGreeting"></p>
+            <!-- Nhân viên chưa được gán chi nhánh -->
+            <section class="admin-waiting" id="dashboardWaiting" hidden>
+                <h2>Bạn chưa được phân công chi nhánh</h2>
+                <p>Liên hệ quản trị viên để được gán vào một chi nhánh. Khi đó bạn sẽ thấy đơn hàng, trả góp và tồn kho của chi nhánh.</p>
+            </section>
+
+            <p id="dashboardError" class="form-error admin-notice" role="alert" hidden></p>
 
             <div class="admin-stat-grid" id="statGrid"></div>
 
+            <!-- Nhân viên: việc cần làm (không có doanh thu) -->
+            <section class="admin-panel" id="taskPanel" hidden>
+                <div class="admin-panel-header">
+                    <h2>Việc cần làm</h2>
+                    <span class="admin-row-count" id="taskTotal"></span>
+                </div>
+                <ul class="admin-task-list" id="taskList"></ul>
+            </section>
 
-            <div class="admin-panel-grid">
+            <!-- ADMIN + quản lý chi nhánh -->
+            <div class="admin-panel-grid" id="chartGrid" hidden>
 
                 <section class="admin-panel">
-
                     <div class="admin-panel-header">
-                        <h2>Doanh thu theo tháng</h2>
+                        <h2>Doanh thu thuần 30 ngày gần nhất</h2>
+                        <span class="admin-row-count" id="revenuePeriod"></span>
                     </div>
-
                     <div class="admin-chart-wrapper" id="revenueChart"></div>
-
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table" id="revenueByMonthTable">
-                            <thead>
-                                <tr><th>Tháng</th><th>Lượt bán</th><th>Doanh thu</th></tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-
                 </section>
 
-
-                <section class="admin-panel">
-
+                <section class="admin-panel" id="categoryPanel">
                     <div class="admin-panel-header">
-                        <h2>Sản phẩm bán chạy nhất</h2>
+                        <h2>Doanh thu theo danh mục</h2>
                     </div>
-
-                    <div class="admin-chart-wrapper" id="topProductsChart"></div>
-
-                    <div class="admin-table-wrapper">
-                        <table class="admin-table" id="topProductsTable">
-                            <thead>
-                                <tr><th>Sản phẩm</th><th>Số lượng</th><th>Doanh thu</th></tr>
-                            </thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-
+                    <div class="admin-chart-wrapper" id="categoryChart"></div>
                 </section>
 
             </div>
 
-
             <!-- Chỉ ADMIN -->
             <section class="admin-panel" id="storeBreakdownPanel" hidden>
-
                 <div class="admin-panel-header">
-                    <h2>Doanh thu theo chi nhánh</h2>
+                    <h2>So sánh chi nhánh (30 ngày)</h2>
                 </div>
-
-                <div class="admin-chart-wrapper" id="storeBreakdownChart"></div>
-
                 <div class="admin-table-wrapper">
                     <table class="admin-table" id="storeBreakdownTable">
                         <thead>
-                            <tr><th>Chi nhánh</th><th>Lượt bán</th><th>Doanh thu</th></tr>
+                            <tr><th>Chi nhánh</th><th class="admin-number">Đơn đã giao</th><th class="admin-number">Doanh thu gộp</th><th class="admin-number">Tiền hoàn</th><th class="admin-number">Doanh thu thuần</th></tr>
                         </thead>
                         <tbody></tbody>
                     </table>
                 </div>
+            </section>
 
+            <!-- Chỉ quản lý chi nhánh -->
+            <section class="admin-panel" id="teamPanel" hidden>
+                <div class="admin-panel-header">
+                    <h2>Đội ngũ chi nhánh</h2>
+                    <a href="employees.html" class="admin-row-count" id="teamCount"></a>
+                </div>
+                <ul class="admin-team-list" id="teamList"></ul>
+            </section>
+
+            <section class="admin-panel" id="topProductsPanel" hidden>
+                <div class="admin-panel-header">
+                    <h2>Sản phẩm bán chạy (30 ngày)</h2>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="topProductsTable">
+                        <thead>
+                            <tr><th>Sản phẩm</th><th class="admin-number">Số lượng</th><th class="admin-number">Doanh thu</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </section>
 
         </main>
@@ -127,7 +140,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-charts.js"></script>
 <script src="../js/admin/admin-layout.js"></script>

@@ -34,6 +34,7 @@ public class AuthDataInitializer implements ApplicationRunner {
     private static final Map<RoleName, String> ROLE_DESCRIPTIONS = Map.of(
             RoleName.CUSTOMER, "Customer account",
             RoleName.STAFF, "Store staff",
+            RoleName.BRANCH_MANAGER, "Branch manager",
             RoleName.ADMIN, "System administrator"
     );
 

@@ -18,7 +18,8 @@ public record UserUpdateRequest(
         @Size(max = 20, message = "Phone must be at most 20 characters")
         String phone,
 
-        @Schema(example = "https://example.com/avatar.png")
+        @Schema(description = "null / empty = no avatar; otherwise a URL returned by POST /api/v1/uploads/avatar "
+                + "(links to other sites are refused)", example = "http://localhost:8080/uploads/avatars/3f2c….png")
         @Size(max = 2048, message = "Avatar URL must be at most 2048 characters")
         String avatarUrl
 ) {

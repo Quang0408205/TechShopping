@@ -14,110 +14,81 @@
 
     <link rel="stylesheet" href="../css/style.css">
 
-    <link rel="stylesheet" href="../css/auth/login.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
 </head>
 
-<body class="login-page admin-login-page">
+<body class="admin-body admin-ready admin-login-page">
+
+<!-- Giữ nguyên id cho js/admin/login.js: staffLoginForm, staffLoginError, staffEmail, staffPassword, staffLoginButton -->
+<aside class="admin-login-aside">
+
+    <a href="../index.html" class="admin-login-brand">
+        <span class="logo-main">POY</span>
+        <span class="logo-sub">Khu nội bộ</span>
+    </a>
+
+    <div>
+        <h2>Một tài khoản, đúng một vai trò.</h2>
+        <ul>
+            <li><strong>Nhân viên chi nhánh</strong>Xử lý đơn hàng, trả góp, bảo hành và tồn kho của chi nhánh được gán.</li>
+            <li><strong>Quản lý chi nhánh</strong>Thêm báo cáo doanh thu và quản lý nhân viên của chi nhánh mình.</li>
+            <li><strong>Quản trị viên</strong>Toàn hệ thống: chi nhánh, sản phẩm, khuyến mãi, phân quyền.</li>
+        </ul>
+    </div>
+
+    <a href="../index.html" class="admin-back-to-store">← Về trang khách hàng</a>
+
+</aside>
 
 
-<div class="login-wrapper">
+<main class="admin-login-main">
 
-    <div class="login-box">
+    <div class="admin-login-card">
 
-        <a href="../index.html" class="logo login-logo">
-            <span class="logo-main">POY</span>
-            <span class="logo-sub">QUẢN TRỊ NỘI BỘ</span>
-        </a>
-
-
-        <span class="section-label">
-            NHÂN VIÊN
-        </span>
-
-        <h1>
-            ĐĂNG NHẬP
-        </h1>
+        <h1>Đăng nhập nội bộ</h1>
 
         <p class="login-intro">
-            Dành cho nhân viên, quản lý chi nhánh và quản trị viên.
+            Dành cho nhân viên, quản lý chi nhánh và quản trị viên. Khách hàng đăng nhập ở
+            <a href="../auth/login.html">trang mua hàng</a>.
         </p>
 
 
         <form id="staffLoginForm" novalidate>
 
-            <p
-                id="staffLoginError"
-                class="form-error"
-                role="alert"
-                hidden
-            ></p>
+            <p id="staffLoginError" class="form-error" role="alert" hidden></p>
 
+            <label for="staffEmail">Email hoặc tên đăng nhập</label>
 
-            <label for="staffEmail">
-                Email hoặc tên đăng nhập
-            </label>
+            <input type="text" id="staffEmail" placeholder="Nhập email hoặc tên đăng nhập" autocomplete="username" required>
 
-            <input
-                type="text"
-                id="staffEmail"
-                placeholder="Nhập email hoặc tên đăng nhập"
-                autocomplete="username"
-                required
-            >
+            <label for="staffPassword">Mật khẩu</label>
 
+            <input type="password" id="staffPassword" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
 
-            <label for="staffPassword">
-                Mật khẩu
-            </label>
-
-            <input
-                type="password"
-                id="staffPassword"
-                placeholder="Nhập mật khẩu"
-                autocomplete="current-password"
-                required
-            >
-
-
-            <button
-                type="submit"
-                id="staffLoginButton"
-                class="btn btn-dark"
-            >
-                ĐĂNG NHẬP
-            </button>
+            <button type="submit" id="staffLoginButton" class="btn btn-dark">Đăng nhập</button>
 
         </form>
 
 
-        <!-- B2: đăng nhập bằng tài khoản thật (POST /api/v1/auth/login) -->
         <div class="admin-demo-accounts">
-            <strong>TÀI KHOẢN NỘI BỘ</strong>
-            Dùng tài khoản có quyền Nhân viên (STAFF) hoặc Quản trị viên (ADMIN).
-            Tài khoản ADMIN đầu tiên được tạo từ file .env (xem readme.md).
+            Tài khoản nội bộ do quản trị viên hoặc quản lý chi nhánh tạo khi tuyển dụng; mật khẩu tạm được gửi cho bạn
+            một lần. Tài khoản quản trị viên đầu tiên được tạo từ file .env (xem readme.md).
         </div>
-
-
-        <a href="../index.html" class="back-home">
-            ← Quay lại trang khách hàng
-        </a>
 
     </div>
 
-</div>
+</main>
 
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/login.js"></script>
 

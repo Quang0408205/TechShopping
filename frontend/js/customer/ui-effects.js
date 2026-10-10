@@ -9,6 +9,16 @@
 
     const MOBILE_NAV_QUERY = window.matchMedia("(max-width: 1024px)");
 
+    /* Khai báo trước các lời gọi setup bên dưới (const chưa khởi tạo → ReferenceError) */
+
+    const VIEW_STORAGE_KEY = "poy_products_view";
+
+    const BRAND_VISIBLE_COUNT = 6;
+
+    const BRAND_SEARCH_MIN = 8;
+
+    const FILTER_DRAWER_QUERY = window.matchMedia("(max-width: 899px)");
+
     const ready = typeof layoutReady !== "undefined" ? layoutReady : Promise.resolve();
 
     ready.then(function () {
@@ -23,6 +33,8 @@
 
         setupBackToTop();
 
+        trackStickyHeader();
+
     });
 
     setupHeroCarousel();
@@ -32,6 +44,8 @@
     setupProductsView();
 
     setupActiveFilters();
+
+    setupFilterSidebar();
 
     setupBuyBar();
 
@@ -568,8 +582,6 @@
 
     /* ---------- Trang Sản phẩm: lưới / danh sách ---------- */
 
-    const VIEW_STORAGE_KEY = "poy_products_view";
-
     function setupProductsView() {
 
         const grid = document.getElementById("productGrid");
@@ -634,11 +646,12 @@
 
         const box = document.getElementById("activeFilters");
 
-        const sidebar = document.getElementById("productsSidebar");
+        /* Radio danh mục nằm ở thanh tab, radio thương hiệu ở sidebar */
+        const scope = document.querySelector(".products-layout");
 
         const resultCount = document.getElementById("resultCount");
 
-        if (!box || !sidebar || !resultCount) {
+        if (!box || !scope || !resultCount) {
             return;
         }
 
@@ -651,7 +664,7 @@
 
         function resetRadio(name) {
 
-            const radio = sidebar.querySelector('input[name="' + name + '"][value=""]');
+            const radio = scope.querySelector('input[name="' + name + '"][value=""]');
 
             if (radio) {
                 radio.checked = true;
@@ -675,7 +688,7 @@
 
             ["category", "brand"].forEach(function (name) {
 
-                const checked = sidebar.querySelector('input[name="' + name + '"]:checked');
+                const checked = scope.querySelector('input[name="' + name + '"]:checked');
 
                 if (checked && checked.value) {
                     chips.push({ label: labelOf(checked), clear: function () { resetRadio(name); } });
@@ -748,7 +761,7 @@
 
             });
 
-            if (chips.length > 1) {
+            if (chips.length > 0) {
 
                 const clearAll = document.createElement("button");
 
@@ -772,6 +785,457 @@
         new MutationObserver(render).observe(resultCount, { childList: true, characterData: true, subtree: true });
 
         render();
+
+    }
+
+
+    /* ---------- Trang Sản phẩm: chiều cao header còn dính khi cuộn ---------- */
+
+    /* Header dính với top âm (thanh thông báo cuộn mất) → phần còn thấy = cao header + top */
+
+    function trackStickyHeader() {
+
+        const header = document.querySelector(".header");
+
+        if (!header || !document.querySelector(".products-page")) {
+            return;
+        }
+
+
+        function update() {
+
+            const top = parseFloat(getComputedStyle(header).top) || 0;
+
+            const visible = Math.max(0, Math.round(header.offsetHeight + Math.min(top, 0)));
+
+            document.documentElement.style.setProperty("--header-sticky-h", visible + "px");
+
+        }
+
+        update();
+
+        if (typeof ResizeObserver !== "undefined") {
+            new ResizeObserver(update).observe(header);
+        }
+
+    }
+
+
+    /* ---------- Trang Sản phẩm: sidebar bộ lọc ---------- */
+
+    /*
+     * Chỉ đổi cách hiển thị các ô lọc gốc của products.js (thu gọn / tìm hãng,
+     * mức giá chọn nhanh, ngăn kéo mobile); mọi thay đổi bộ lọc vẫn đi qua sự
+     * kiện "change" hoặc nút toggleFiltersBtn mà products.js đang nghe.
+     */
+
+    function setupFilterSidebar() {
+
+        const sidebar = document.getElementById("productsSidebar");
+
+        const brandList = document.getElementById("brandOptionsList");
+
+        if (!sidebar || !brandList) {
+            return;
+        }
+
+        setupBrandList(sidebar, brandList);
+
+        setupPricePresets(sidebar);
+
+        setupFilterDrawer(sidebar);
+
+    }
+
+
+    function setupBrandList(sidebar, list) {
+
+        const search = sidebar.querySelector(".brand-search");
+
+        const more = sidebar.querySelector(".brand-more");
+
+        if (!search || !more) {
+            return;
+        }
+
+        const empty = document.createElement("p");
+
+        empty.className = "filter-hint";
+
+        empty.textContent = "Không có thương hiệu phù hợp.";
+
+        empty.hidden = true;
+
+        list.after(empty);
+
+
+        let expanded = false;
+
+
+        /* Bỏ dòng "Tất cả" (value rỗng): luôn hiện */
+
+        function brandLabels() {
+
+            return Array.from(list.querySelectorAll("label")).filter(function (label) {
+
+                const input = label.querySelector('input[name="brand"]');
+
+                return input && input.value;
+
+            });
+
+        }
+
+
+        function apply() {
+
+            const labels = brandLabels();
+
+            search.hidden = labels.length <= BRAND_SEARCH_MIN;
+
+            const query = search.hidden ? "" : normalize(search.value);
+
+            let collapsed = 0;
+
+            let matches = 0;
+
+
+            labels.forEach(function (label, index) {
+
+                const checked = label.querySelector("input").checked;
+
+                const show = query
+                    ? normalize(label.textContent).includes(query)
+                    : expanded || checked || index < BRAND_VISIBLE_COUNT;
+
+                label.classList.toggle("is-collapsed", !show);
+
+                if (show) {
+                    matches++;
+                } else if (!query) {
+                    collapsed++;
+                }
+
+            });
+
+
+            empty.hidden = !query || matches > 0;
+
+            more.hidden = Boolean(query) || labels.length <= BRAND_VISIBLE_COUNT;
+
+            more.textContent = expanded ? "Thu gọn" : "Xem thêm (" + collapsed + ")";
+
+            more.setAttribute("aria-expanded", String(expanded));
+
+        }
+
+
+        /* products.js dựng lại danh sách khi đổi danh mục → về trạng thái thu gọn */
+
+        new MutationObserver(function () {
+
+            expanded = false;
+
+            search.value = "";
+
+            apply();
+
+        }).observe(list, { childList: true });
+
+
+        more.addEventListener("click", function () {
+
+            expanded = !expanded;
+
+            apply();
+
+        });
+
+        search.addEventListener("input", apply);
+
+        list.addEventListener("change", apply);
+
+        apply();
+
+    }
+
+
+    function setupPricePresets(sidebar) {
+
+        const minInput = document.getElementById("minPriceInput");
+
+        const maxInput = document.getElementById("maxPriceInput");
+
+        const applyButton = sidebar.querySelector(".price-apply");
+
+        const presets = Array.from(sidebar.querySelectorAll("[data-price-min]"));
+
+        if (!minInput || !maxInput || !applyButton) {
+            return;
+        }
+
+
+        /* Giá trị products.js đã nhận lần cuối: "Áp dụng" không gửi lại khi không đổi */
+
+        let applied = { min: minInput.value, max: maxInput.value };
+
+
+        function markPresets() {
+
+            presets.forEach(function (button) {
+
+                const active = button.dataset.priceMin === minInput.value &&
+                    button.dataset.priceMax === maxInput.value;
+
+                button.setAttribute("aria-pressed", String(active));
+
+            });
+
+        }
+
+
+        function submit() {
+
+            minInput.dispatchEvent(new Event("change", { bubbles: true }));
+
+        }
+
+
+        [minInput, maxInput].forEach(function (input) {
+
+            input.addEventListener("change", function () {
+
+                applied = { min: minInput.value, max: maxInput.value };
+
+                markPresets();
+
+            });
+
+            input.addEventListener("input", markPresets);
+
+            input.addEventListener("keydown", function (event) {
+
+                if (event.key === "Enter") {
+                    applyButton.click();
+                }
+
+            });
+
+        });
+
+
+        presets.forEach(function (button) {
+
+            button.addEventListener("click", function () {
+
+                /* Bấm lại mức đang chọn = bỏ lọc giá */
+                const active = button.getAttribute("aria-pressed") === "true";
+
+                minInput.value = active ? "" : button.dataset.priceMin;
+
+                maxInput.value = active ? "" : button.dataset.priceMax;
+
+                submit();
+
+            });
+
+        });
+
+
+        applyButton.addEventListener("click", function () {
+
+            if (minInput.value !== applied.min || maxInput.value !== applied.max) {
+                submit();
+            }
+
+        });
+
+
+        /* "Xoá bộ lọc" của products.js đặt lại 2 ô mà không phát sự kiện; listener này chạy trước nó */
+
+        const clearButton = document.getElementById("clearFiltersBtn");
+
+        if (clearButton) {
+
+            clearButton.addEventListener("click", function () {
+
+                setTimeout(function () {
+
+                    applied = { min: minInput.value, max: maxInput.value };
+
+                    markPresets();
+
+                }, 0);
+
+            });
+
+        }
+
+        markPresets();
+
+    }
+
+
+    /*
+     * Dưới 900px: products.js bật / tắt class "open" của sidebar khi bấm
+     * toggleFiltersBtn; ở đây thêm nền mờ, khoá cuộn, Esc, giữ focus trong
+     * ngăn kéo và nút "Xem N kết quả". Đóng = bấm lại toggleFiltersBtn để
+     * products.js cập nhật aria-expanded.
+     */
+
+    function setupFilterDrawer(sidebar) {
+
+        const toggle = document.getElementById("toggleFiltersBtn");
+
+        const backdrop = document.querySelector(".filters-backdrop");
+
+        const closeButton = sidebar.querySelector(".filters-close");
+
+        const showButton = sidebar.querySelector(".filters-show-results");
+
+        const resultCount = document.getElementById("resultCount");
+
+        if (!toggle || !backdrop || !closeButton || !showButton || !resultCount) {
+            return;
+        }
+
+
+        function isOpen() {
+            return sidebar.classList.contains("open") && FILTER_DRAWER_QUERY.matches;
+        }
+
+        function close() {
+
+            if (sidebar.classList.contains("open")) {
+                toggle.click();
+            }
+
+        }
+
+        function sync() {
+
+            const open = isOpen();
+
+            backdrop.hidden = !open;
+
+            document.body.classList.toggle("filters-open", open);
+
+            if (open) {
+                sidebar.setAttribute("role", "dialog");
+                sidebar.setAttribute("aria-modal", "true");
+            } else {
+                sidebar.removeAttribute("role");
+                sidebar.removeAttribute("aria-modal");
+            }
+
+        }
+
+
+        let wasOpen = false;
+
+        new MutationObserver(function () {
+
+            const open = isOpen();
+
+            sync();
+
+            if (open !== wasOpen) {
+                (open ? closeButton : toggle).focus();
+            }
+
+            wasOpen = open;
+
+        }).observe(sidebar, { attributes: true, attributeFilter: ["class"] });
+
+        FILTER_DRAWER_QUERY.addEventListener("change", function () {
+
+            sync();
+
+            wasOpen = isOpen();
+
+        });
+
+
+        closeButton.addEventListener("click", close);
+
+        backdrop.addEventListener("click", close);
+
+        showButton.addEventListener("click", function () {
+
+            close();
+
+            const main = document.querySelector(".products-main");
+
+            if (main && main.getBoundingClientRect().top < 0) {
+                main.scrollIntoView({ behavior: reducedMotion() ? "auto" : "smooth" });
+            }
+
+        });
+
+
+        document.addEventListener("keydown", function (event) {
+
+            if (!isOpen()) {
+                return;
+            }
+
+            if (event.key === "Escape") {
+
+                close();
+
+                return;
+
+            }
+
+            if (event.key !== "Tab") {
+                return;
+            }
+
+            const focusable = Array.from(
+                sidebar.querySelectorAll("button, input, select, summary")
+            ).filter(function (element) {
+                return !element.disabled && element.getClientRects().length > 0;
+            });
+
+            const first = focusable[0];
+
+            const last = focusable[focusable.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+
+                event.preventDefault();
+
+                last.focus();
+
+            } else if (!event.shiftKey && document.activeElement === last) {
+
+                event.preventDefault();
+
+                first.focus();
+
+            }
+
+        });
+
+
+        /* "Xem N kết quả": số lấy từ #resultCount mà products.js cập nhật sau mỗi lần tải */
+
+        function updateShowLabel() {
+
+            const text = resultCount.textContent;
+
+            const match = text.match(/Tìm thấy ([\d.]+) sản phẩm/);
+
+            showButton.textContent = text.indexOf("Đang tải") === 0
+                ? "Đang tải..."
+                : match ? "Xem " + match[1] + " kết quả" : "Xem kết quả";
+
+        }
+
+        new MutationObserver(updateShowLabel)
+            .observe(resultCount, { childList: true, characterData: true, subtree: true });
+
+        updateShowLabel();
 
     }
 

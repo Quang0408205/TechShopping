@@ -1,13 +1,17 @@
 package com.example.Tech.controller.user;
 
+import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.Role;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.entity.user.UserRole;
+import com.example.Tech.repository.employee.EmployeeAssignmentRepository;
 import com.example.Tech.repository.user.RoleRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.support.StoreFixtures;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,6 +81,12 @@ class AdminUserApiIntegrationTest {
     @Autowired
     private UserRoleRepository userRoleRepository;
 
+    @Autowired
+    private EmployeeAssignmentRepository assignmentRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
     private final List<Long> createdUserIds = new ArrayList<>();
 
     private User admin;
@@ -136,6 +146,19 @@ class AdminUserApiIntegrationTest {
         return jsonMapper.readTree(result.andReturn().getResponse().getContentAsString()).get("data");
     }
 
+    /** An internal account: STAFF only (never CUSTOMER), optionally assigned to a store. Returns [userId, refreshToken]. */
+    private Object[] staffAt(String username, Store store) throws Exception {
+        JsonNode data = register(username, "Nhân viên " + username);
+        Long id = data.get("user").get("id").asLong();
+        userRoleRepository.deleteAll(userRoleRepository.findAllByIdUserId(id));
+        userRoleRepository.save(new UserRole(userRepository.getReferenceById(id), roleRepository.findByName("STAFF").orElseThrow()));
+        entityManager.flush();
+        if (store != null) {
+            StoreFixtures.assign(entityManager, id, store, "Nhân viên bán hàng");
+        }
+        return new Object[]{id, data.get("refreshToken").asString()};
+    }
+
     private ResultActions login(String username) throws Exception {
         return send(post("/api/v1/auth/login"), null, Map.of("identifier", username, "password", PASSWORD));
     }
@@ -189,6 +212,18 @@ class AdminUserApiIntegrationTest {
     }
 
     @Test
+    void search_internalFilter_listsEveryInternalAccountButNoCustomer() throws Exception {
+        Object[] staff = staffAt("ur.internal", null);
+        send(get(BASE).param("keyword", ".api.test").param("role", "internal"), adminToken, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[*].username", hasItem("admin.api.test")))
+                .andExpect(jsonPath("$.data.content[*].username", not(hasItem("cust.api.test"))));
+        send(get(BASE).param("keyword", "ur.internal").param("role", "INTERNAL"), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].id").value(staff[0]));
+    }
+
+    @Test
     void getById_returnsUser_or404() throws Exception {
         send(get(BASE + "/" + customerId), adminToken, null)
                 .andExpect(status().isOk())
@@ -234,27 +269,90 @@ class AdminUserApiIntegrationTest {
     // ---------- roles ----------
 
     @Test
-    void updateRoles_appliesToTheNextLoginToken() throws Exception {
-        send(put(BASE + "/" + customerId + "/roles"), adminToken, Map.of("roles", List.of("staff", "CUSTOMER")))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.roles[0]").value("CUSTOMER"))
-                .andExpect(jsonPath("$.data.roles[1]").value("STAFF"));
+    void updateRoles_promoteAndDemote_syncTheLabel_revokeSessions_andShowInTheNextToken() throws Exception {
+        Store store = StoreFixtures.store(entityManager, "ZZ UR Chi nhánh A", "Quận 1");
+        Object[] staff = staffAt("ur.staff", store);
+        Long staffId = (Long) staff[0];
 
-        JsonNode loggedIn = data(login("cust.api.test").andExpect(status().isOk()));
+        send(put(BASE + "/" + staffId + "/roles"), adminToken, Map.of("roles", List.of(" branch_manager ")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roles.length()").value(1))
+                .andExpect(jsonPath("$.data.roles[0]").value("BRANCH_MANAGER"));
+        assertThat(assignmentRepository.findActiveWithStoreByUserId(staffId).orElseThrow().getPositionAtStore())
+                .isEqualTo("Quản lý chi nhánh");
+        send(post("/api/v1/auth/refresh"), null, Map.of("refreshToken", staff[1]))
+                .andExpect(status().isUnauthorized());
+        JsonNode loggedIn = data(login("ur.staff").andExpect(status().isOk()));
         assertThat(jwtDecoder.decode(loggedIn.get("accessToken").asString()).getClaimAsStringList("roles"))
-                .containsExactly("CUSTOMER", "STAFF");
+                .containsExactly("BRANCH_MANAGER");
+
+        send(put(BASE + "/" + staffId + "/roles"), adminToken, Map.of("roles", List.of("STAFF")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roles[0]").value("STAFF"));
+        assertThat(assignmentRepository.findActiveWithStoreByUserId(staffId).orElseThrow().getPositionAtStore())
+                .isEqualTo("Nhân viên bán hàng");
     }
 
     @Test
-    void updateRoles_errors() throws Exception {
+    void updateRoles_oneManagerPerStore_andTheManagerNeedsAnAssignment() throws Exception {
+        Store store = StoreFixtures.store(entityManager, "ZZ UR Chi nhánh B", "Quận 3");
+        Long first = (Long) staffAt("ur.first", store)[0];
+        Long second = (Long) staffAt("ur.second", store)[0];
+        Long homeless = (Long) staffAt("ur.homeless", null)[0];
+
+        send(put(BASE + "/" + first + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isOk());
+        send(put(BASE + "/" + second + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("STORE_ALREADY_HAS_MANAGER"));
+        send(put(BASE + "/" + homeless + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("MANAGER_REQUIRES_ASSIGNMENT"));
+        assertThat(userRoleRepository.findRoleNamesByUserId(second)).containsExactly("STAFF");
+
+        // free seat again once the manager is demoted
+        send(put(BASE + "/" + first + "/roles"), adminToken, Map.of("roles", List.of("STAFF"))).andExpect(status().isOk());
+        send(put(BASE + "/" + second + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void lockingAManager_endsTheirAssignment_andSendsThemBackToStaff() throws Exception {
+        Store store = StoreFixtures.store(entityManager, "ZZ UR Chi nhánh C", "Quận 4");
+        Long managerId = (Long) staffAt("ur.locked", store)[0];
+        send(put(BASE + "/" + managerId + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isOk());
+
+        send(patch(BASE + "/" + managerId + "/status"), adminToken, Map.of("active", false))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.roles[0]").value("STAFF"));
+        assertThat(assignmentRepository.findActiveWithStoreByUserId(managerId)).isEmpty();
+    }
+
+    @Test
+    void updateRoles_rejectsCustomerAdminAndUnknownRoles_andCustomerAccounts() throws Exception {
         send(put(BASE + "/" + customerId + "/roles"), adminToken, Map.of("roles", List.of()))
                 .andExpect(status().isBadRequest());
-        send(put(BASE + "/" + customerId + "/roles"), adminToken, Map.of("roles", List.of("SUPERUSER")))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("ROLE_NOT_FOUND"));
-        send(put(BASE + "/" + admin.getId() + "/roles"), adminToken, Map.of("roles", List.of("CUSTOMER")))
+        for (List<String> roles : List.of(List.of("SUPERUSER"), List.of("CUSTOMER"), List.of("ADMIN"),
+                List.of("STAFF", "BRANCH_MANAGER"), List.of("STAFF", "CUSTOMER"))) {
+            send(put(BASE + "/" + customerId + "/roles"), adminToken, Map.of("roles", roles))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error.code").value("ROLE_NOT_ASSIGNABLE"));
+        }
+        // a customer account can never become an internal one
+        send(put(BASE + "/" + customerId + "/roles"), adminToken, Map.of("roles", List.of("STAFF")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("CUSTOMER_ACCOUNT_NOT_ELIGIBLE"));
+        assertThat(userRoleRepository.findRoleNamesByUserId(customerId)).containsExactly("CUSTOMER");
+
+        // administrators are not changed through the API, nor is one's own account
+        send(put(BASE + "/" + admin.getId() + "/roles"), adminToken, Map.of("roles", List.of("STAFF")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("CANNOT_MODIFY_OWN_ACCOUNT"));
+        User otherAdmin = saveAdmin("admin.api.other");
+        send(put(BASE + "/" + otherAdmin.getId() + "/roles"), adminToken, Map.of("roles", List.of("STAFF")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
     }
 
     // ---------- delete ----------

@@ -2,7 +2,7 @@
 
 /*
  * Đăng nhập nội bộ dùng tài khoản THẬT: POST /api/v1/auth/login, chỉ nhận
- * tài khoản có role STAFF hoặc ADMIN. Phiên lưu ở "poy_staff_auth"
+ * tài khoản có role STAFF, BRANCH_MANAGER hoặc ADMIN. Phiên lưu ở "poy_staff_auth"
  * (api.js tự chọn khoá này trên các trang admin/), tách khỏi phiên khách
  * "poy_auth", nên một trình duyệt vẫn đăng nhập song song được cả hai.
  *
@@ -11,17 +11,18 @@
  *     staff: { id, fullname, email, role, roleLabel, storeId, storeName }
  *   }
  *
- * staff.role là mã hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN:
- *   - role ADMIN của backend → ADMIN (toàn hệ thống);
- *   - role STAFF → hồ sơ nhân viên thật (GET /employees/me, Phase 7): đang được
- *     gán chi nhánh với vị trí "Quản lý chi nhánh" → BRANCH_MANAGER, vị trí khác →
- *     EMPLOYEE; chưa có hồ sơ / chưa được gán → Nhân viên, "Chưa gán chi nhánh"
+ * staff.role là mã hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN, lấy từ ROLE của
+ * backend (không còn suy ra từ chức danh tại chi nhánh):
+ *   - ADMIN → ADMIN (toàn hệ thống);
+ *   - BRANCH_MANAGER → BRANCH_MANAGER; STAFF → EMPLOYEE;
+ *   - chi nhánh = phân công đang hiệu lực trong hồ sơ nhân viên thật
+ *     (GET /employees/me); chưa có hồ sơ / chưa được gán → "Chưa gán chi nhánh"
  *     (backend từ chối mọi thao tác theo chi nhánh của tài khoản này).
  *
  * Nạp sau js/core/api.js.
  */
 
-const STAFF_BACKEND_ROLES = ["STAFF", "ADMIN"];
+const STAFF_BACKEND_ROLES = ["STAFF", "BRANCH_MANAGER", "ADMIN"];
 
 
 const STAFF_ROLE_LABELS = {
@@ -39,13 +40,13 @@ function getStaffRoleLabel(role) {
 
 
 /*
- * Vị trí tại chi nhánh (employee_assignments.position_at_store) chọn từ danh sách
- * cố định ở trang Nhân viên; chỉ vị trí này được coi là Quản lý chi nhánh.
+ * Chức danh tại chi nhánh (employee_assignments.position_at_store) chỉ để HIỂN THỊ.
+ * "Quản lý chi nhánh" gắn với role BRANCH_MANAGER nên không có trong danh sách chọn.
  */
 
 const BRANCH_MANAGER_POSITION = "Quản lý chi nhánh";
 
-const STORE_POSITIONS = ["Nhân viên bán hàng", "Nhân viên kỹ thuật", "Thu ngân", BRANCH_MANAGER_POSITION];
+const STORE_POSITIONS = ["Nhân viên bán hàng", "Nhân viên kỹ thuật", "Thu ngân"];
 
 
 /* Tài khoản (user của AuthResponse / UserResponse) có quyền vào khu nội bộ */
@@ -74,7 +75,7 @@ function buildStaffProfile(user, employee) {
 
     const role = isAdmin
         ? "ADMIN"
-        : (assignment && assignment.positionAtStore === BRANCH_MANAGER_POSITION ? "BRANCH_MANAGER" : "EMPLOYEE");
+        : ((user.roles || []).indexOf("BRANCH_MANAGER") !== -1 ? "BRANCH_MANAGER" : "EMPLOYEE");
 
 
     return {
