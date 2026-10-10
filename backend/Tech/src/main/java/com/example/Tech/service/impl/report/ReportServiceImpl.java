@@ -3,6 +3,7 @@ package com.example.Tech.service.impl.report;
 import com.example.Tech.dto.request.report.ReportGroupBy;
 import com.example.Tech.dto.request.report.SalesReportRequest;
 import com.example.Tech.dto.response.report.DashboardSummaryResponse;
+import com.example.Tech.dto.response.report.ReportFile;
 import com.example.Tech.dto.response.report.SalesReportResponse;
 import com.example.Tech.entity.employee.Employee;
 import com.example.Tech.entity.store.Store;
@@ -48,6 +49,8 @@ public class ReportServiceImpl implements ReportService {
     static final int DEFAULT_DAYS = 30;
     static final int TOP_PRODUCTS = 10;
     static final int LOW_STOCK_MAX = 5;
+    static final int MAX_EXPORT_ORDERS = 20000;
+    static final String XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private final StoreAccessGuard storeAccessGuard;
     private final SalesReportQueries queries;
@@ -116,6 +119,21 @@ public class ReportServiceImpl implements ReportService {
     }
 
     @Override
+    public ReportFile exportSales(Long userId, SalesReportRequest filter) {
+        // sales() applies the access rules and the date checks, so the file always matches the page
+        SalesReportResponse report = sales(userId, filter);
+        LocalDateTime from = report.fromDate().atStartOfDay();
+        LocalDateTime to = report.toDate().plusDays(1).atStartOfDay();
+        List<SalesReportQueries.DeliveredOrder> orders =
+                queries.deliveredOrders(from, to, report.storeId(), MAX_EXPORT_ORDERS + 1);
+        boolean cut = orders.size() > MAX_EXPORT_ORDERS;
+        byte[] content = SalesReportExcelWriter.write(report, cut ? orders.subList(0, MAX_EXPORT_ORDERS) : orders,
+                report.storeId() == null, cut);
+        String filename = "TechShopping_BaoCao_%s_%s.xlsx".formatted(report.fromDate(), report.toDate());
+        return new ReportFile(filename, XLSX, content);
+    }
+
+    @Override
     public DashboardSummaryResponse dashboard(Long userId) {
         StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(userId);
         Integer storeId = scope.storeId();
@@ -130,13 +148,14 @@ public class ReportServiceImpl implements ReportService {
         Map<String, Long> statuses = queries.orderCountsByStatus(List.of("PENDING", "CONFIRMED", "SHIPPING"), storeId);
         long[] stock = queries.lowAndOutOfStock(storeId, LOW_STOCK_MAX);
 
+        boolean revenue = storeAccessGuard.canViewRevenue(userId);
         return new DashboardSummaryResponse(storeId, storeId == null ? null : findStore(storeId).getName(), today,
-                net(deliveredToday, today, today, storeId), deliveredToday.orders(),
-                net(deliveredMonth, monthStart, today, storeId), deliveredMonth.orders(),
-                net(delivered(previousStart, previousEnd, storeId), previousStart, previousEnd, storeId),
+                revenue ? net(deliveredToday, today, today, storeId) : null, deliveredToday.orders(),
+                revenue ? net(deliveredMonth, monthStart, today, storeId) : null, deliveredMonth.orders(),
+                revenue ? net(delivered(previousStart, previousEnd, storeId), previousStart, previousEnd, storeId) : null,
                 statuses.getOrDefault("PENDING", 0L), statuses.getOrDefault("CONFIRMED", 0L),
                 statuses.getOrDefault("SHIPPING", 0L),
-                queries.openServiceRequests(storeId), stock[0], stock[1],
+                queries.openServiceRequests(storeId), queries.openContactRequests(), stock[0], stock[1],
                 scope.admin() ? queries.openStores() : null,
                 scope.admin() ? queries.activeEmployees() : null);
     }

@@ -1,16 +1,24 @@
 /* ================= NHÂN VIÊN (admin/employees.html) ================= */
 
 /*
- * Chỉ ADMIN, dữ liệu thật (Phase 7):
+ * Dữ liệu thật. Hai vai trò dùng cùng một trang, khác API:
+ *
+ * ADMIN (mọi chi nhánh):
  *   GET    /admin/employees?keyword&storeId&active&page&size   danh sách (mới nhất trước)
- *   POST   /admin/employees                                   tạo hồ sơ cho tài khoản đã có quyền STAFF (201),
- *                                                             có thể gán chi nhánh ngay
- *   PUT    /admin/employees/{id}                              sửa toàn bộ; active=false = đã nghỉ (kết thúc phân công)
- *   POST   /admin/employees/{id}/assignment                   gán / chuyển chi nhánh (giữ lịch sử)
- *   DELETE /admin/employees/{id}/assignment                   rút khỏi chi nhánh
- * Tài khoản chọn được khi thêm: GET /admin/users?role=STAFF, trừ tài khoản đã có hồ sơ.
- * Vị trí tại chi nhánh chọn từ STORE_POSITIONS (staff-auth.js); "Quản lý chi nhánh"
- * là vai trò Quản lý chi nhánh ở giao diện.
+ *   POST   /admin/employees/hire                               TUYỂN: tạo tài khoản mới + hồ sơ + chi nhánh (201),
+ *                                                              vai trò STAFF hoặc BRANCH_MANAGER; trả mật khẩu tạm một lần
+ *   PUT    /admin/employees/{id}                               sửa toàn bộ; active=false = đã nghỉ (kết thúc phân công)
+ *   POST   /admin/employees/{id}/assignment                    gán / chuyển chi nhánh (giữ lịch sử)
+ *   DELETE /admin/employees/{id}/assignment                    rút khỏi chi nhánh
+ *
+ * BRANCH_MANAGER (chỉ chi nhánh của mình, không có ô / cột chi nhánh):
+ *   GET    /branch/employees?keyword&active&page&size          nhân viên đang làm và đã nghỉ của chi nhánh
+ *   POST   /branch/employees/hire                              tuyển STAFF vào chi nhánh của mình
+ *   PUT    /branch/employees/{id}                              sửa hồ sơ + chức danh
+ *   POST   /branch/employees/{id}/deactivate                   cho nghỉ (khoá tài khoản)
+ *
+ * Tuyển nhân sự luôn tạo tài khoản MỚI, không chọn tài khoản khách có sẵn. Chức danh tại chi nhánh
+ * (STORE_POSITIONS, staff-auth.js) chỉ để hiển thị; "Quản lý chi nhánh" gắn với vai trò BRANCH_MANAGER.
  */
 
 const EMPLOYEE_PAGE_SIZE = 20;
@@ -23,6 +31,11 @@ document.addEventListener("DOMContentLoaded", async function () {
     if (!staff) {
         return;
     }
+
+
+    const isAdmin = staff.role === "ADMIN";
+
+    const API = isAdmin ? "/admin/employees" : "/branch/employees";
 
 
     const filterForm = document.getElementById("employeeFilterForm");
@@ -41,9 +54,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const saveButton = document.getElementById("employeeSaveBtn");
 
-    const userSelect = document.getElementById("empUserId");
-
-    const userHint = document.getElementById("empUserHint");
+    const roleSelect = document.getElementById("empRole");
 
     const createStoreSelect = document.getElementById("empStoreId");
 
@@ -75,6 +86,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     let requestCounter = 0;
 
 
+    /* Quản lý chi nhánh: không có lọc / cột / ô chi nhánh, không có vai trò để chọn */
+    if (!isAdmin) {
+
+        storeFilter.hidden = true;
+
+        document.querySelectorAll("[data-admin-only]").forEach(function (element) {
+            element.hidden = true;
+        });
+
+        document.getElementById("employeeStoreHeader").textContent = "Chức danh tại chi nhánh";
+
+    }
+
+
     [createPositionSelect, document.getElementById("assignPosition")].forEach(function (select) {
         select.innerHTML = STORE_POSITIONS.map(function (position) {
             return `<option value="${escapeHtml(position)}">${escapeHtml(position)}</option>`;
@@ -82,19 +107,23 @@ document.addEventListener("DOMContentLoaded", async function () {
     });
 
 
-    try {
+    if (isAdmin) {
 
-        stores = await loadAllStores();
+        try {
 
-    } catch (error) {
+            stores = await loadAllStores();
 
-        handleError(error, function (message) {
-            showToast("Không tải được danh sách chi nhánh: " + message, "error");
-        });
+        } catch (error) {
+
+            handleError(error, function (message) {
+                showToast("Không tải được danh sách chi nhánh: " + message, "error");
+            });
+
+        }
+
+        fillStoreOptions(storeFilter, [{ value: "", label: "Tất cả chi nhánh" }], stores);
 
     }
-
-    fillStoreOptions(storeFilter, [{ value: "", label: "Tất cả chi nhánh" }], stores);
 
 
     filterForm.addEventListener("submit", function (event) {
@@ -114,7 +143,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     form.addEventListener("submit", saveEmployee);
 
-    createStoreSelect.addEventListener("change", syncCreatePosition);
+    roleSelect.addEventListener("change", syncCreatePosition);
 
     document.getElementById("assignCancelBtn").addEventListener("click", closeAssign);
 
@@ -137,6 +166,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             openAssign(employee);
         } else if (button.dataset.action === "unassign") {
             confirmUnassign(employee);
+        } else if (button.dataset.action === "deactivate") {
+            confirmDeactivate(employee);
         }
 
     });
@@ -158,6 +189,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     loadEmployees();
+
+    /* ?hire=1 (lối tắt "Tuyển nhân sự" ở trang Tổng quan) mở ngay form tuyển */
+    if (new URLSearchParams(window.location.search).get("hire") === "1") {
+        openForm(null);
+    }
 
 
     /* ================= DANH SÁCH ================= */
@@ -183,7 +219,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             params.set("keyword", keyword);
         }
 
-        if (storeFilter.value) {
+        if (isAdmin && storeFilter.value) {
             params.set("storeId", storeFilter.value);
         }
 
@@ -197,7 +233,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         try {
 
-            const page = await apiRequest("/admin/employees?" + params.toString(), { auth: true });
+            const page = await apiRequest(API + "?" + params.toString(), { auth: true });
 
             if (requestId !== requestCounter) {
                 return;
@@ -243,31 +279,37 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const manager = assignment && assignment.positionAtStore === BRANCH_MANAGER_POSITION;
 
-        const storeCell = assignment
-            ? `
-                ${escapeHtml(assignment.storeName)}
-                <span class="admin-subtext">
-                    ${escapeHtml(assignment.positionAtStore || "—")} · từ ${escapeHtml(formatDateVi(assignment.startDate))}
-                </span>
-                ${manager ? '<span class="admin-badge admin-badge-info">Quản lý chi nhánh</span>' : ""}
-            `
-            : '<span class="admin-subtext">Chưa gán chi nhánh</span>';
+        const isSelf = employee.userId === staff.id;
 
-        const actions = [`<button type="button" class="admin-link-btn" data-action="edit" data-id="${id}">Sửa</button>`];
+        const storeCell = isAdmin ? adminStoreCell(assignment, manager) : branchPositionCell(employee, assignment, manager);
 
-        if (employee.active) {
-            actions.push(`<button type="button" class="admin-link-btn" data-action="assign" data-id="${id}">${assignment ? "Chuyển chi nhánh" : "Gán chi nhánh"}</button>`);
-        }
+        const actions = [];
 
-        if (assignment) {
-            actions.push(`<button type="button" class="admin-link-btn admin-link-danger" data-action="unassign" data-id="${id}">Rút khỏi chi nhánh</button>`);
+        if (isAdmin) {
+
+            actions.push(`<button type="button" class="admin-link-btn" data-action="edit" data-id="${id}">Sửa</button>`);
+
+            if (employee.active) {
+                actions.push(`<button type="button" class="admin-link-btn" data-action="assign" data-id="${id}">${assignment ? "Chuyển chi nhánh" : "Gán chi nhánh"}</button>`);
+            }
+
+            if (assignment) {
+                actions.push(`<button type="button" class="admin-link-btn admin-link-danger" data-action="unassign" data-id="${id}">Rút khỏi chi nhánh</button>`);
+            }
+
+        } else if (employee.active && !isSelf && !manager) {
+
+            actions.push(`<button type="button" class="admin-link-btn" data-action="edit" data-id="${id}">Sửa</button>`);
+
+            actions.push(`<button type="button" class="admin-link-btn admin-link-danger" data-action="deactivate" data-id="${id}">Cho nghỉ</button>`);
+
         }
 
 
         return `
             <tr data-employee-id="${id}">
                 <td>
-                    <strong>${escapeHtml(employee.fullname)}</strong>
+                    <strong>${escapeHtml(employee.fullname)}</strong>${isSelf ? ' <span class="admin-subtext">(bạn)</span>' : ""}
                     <span class="admin-subtext">
                         @${escapeHtml(employee.username)}${employee.employeeCode ? " · " + escapeHtml(employee.employeeCode) : ""}
                     </span>
@@ -287,8 +329,39 @@ document.addEventListener("DOMContentLoaded", async function () {
                         ${employee.active ? "Đang làm việc" : "Đã nghỉ"}
                     </span>
                 </td>
-                <td class="admin-actions-cell">${actions.join("")}</td>
+                <td class="admin-actions-cell">${actions.join("") || "—"}</td>
             </tr>
+        `;
+
+    }
+
+
+    function adminStoreCell(assignment, manager) {
+
+        return assignment
+            ? `
+                ${escapeHtml(assignment.storeName)}
+                <span class="admin-subtext">
+                    ${escapeHtml(assignment.positionAtStore || "—")} · từ ${escapeHtml(formatDateVi(assignment.startDate))}
+                </span>
+                ${manager ? '<span class="admin-badge admin-badge-info">Quản lý chi nhánh</span>' : ""}
+            `
+            : '<span class="admin-subtext">Chưa gán chi nhánh</span>';
+
+    }
+
+
+    /* Quản lý chi nhánh chỉ thấy chi nhánh mình, nên cột này chỉ ghi chức danh */
+    function branchPositionCell(employee, assignment, manager) {
+
+        if (!assignment) {
+            return '<span class="admin-subtext">' + (employee.active ? "Chưa gán chi nhánh" : "Đã rời chi nhánh") + "</span>";
+        }
+
+        return `
+            ${escapeHtml(assignment.positionAtStore || "—")}
+            <span class="admin-subtext">từ ${escapeHtml(formatDateVi(assignment.startDate))}</span>
+            ${manager ? '<span class="admin-badge admin-badge-info">Quản lý chi nhánh</span>' : ""}
         `;
 
     }
@@ -313,7 +386,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    /* ================= THÊM / SỬA HỒ SƠ ================= */
+    /* ================= TUYỂN / SỬA HỒ SƠ ================= */
 
     function field(id) {
 
@@ -331,7 +404,7 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    async function openForm(employee) {
+    function openForm(employee) {
 
         closeAssign();
 
@@ -339,18 +412,26 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const creating = !employee;
 
-        field("employeeFormTitle").textContent = creating ? "Thêm nhân viên" : "Sửa hồ sơ " + employee.fullname;
+        field("employeeFormTitle").textContent = creating ? "Tuyển nhân sự" : "Sửa hồ sơ " + employee.fullname;
 
-        field("empUserField").hidden = !creating;
+        /* Ô của tài khoản mới chỉ có khi tuyển; ô chỉ ADMIN thì quản lý chi nhánh không bao giờ thấy */
+        document.querySelectorAll("[data-hire-only]").forEach(function (element) {
+            element.hidden = !creating || (!isAdmin && element.hasAttribute("data-admin-only"));
+        });
 
         field("empAccountField").hidden = creating;
 
-        field("empStoreField").hidden = !creating;
+        field("empStoreField").hidden = !creating || !isAdmin;
 
-        field("empStorePositionField").hidden = !creating;
+        field("empActiveField").hidden = creating || !isAdmin;
 
-        field("empActiveField").hidden = creating;
+        /* Chức danh: ADMIN chỉnh bằng form "Gán chi nhánh"; quản lý chi nhánh chỉnh ngay ở đây */
+        field("empStorePositionField").hidden = creating ? false : isAdmin;
 
+
+        ["empFullname", "empEmail", "empUsername", "empPhone", "empPassword"].forEach(function (id) {
+            field(id).value = "";
+        });
 
         field("empCode").value = employee ? employee.employeeCode || "" : "";
 
@@ -364,6 +445,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         field("empActive").checked = employee ? employee.active : true;
 
+        roleSelect.value = "STAFF";
+
         formError.hidden = true;
 
         formPanel.hidden = false;
@@ -373,6 +456,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             field("empAccountText").value = employee.fullname + " (@" + employee.username + " · " + employee.email + ")";
 
+            const label = employee.assignment ? employee.assignment.positionAtStore : null;
+
+            createPositionSelect.value = STORE_POSITIONS.indexOf(label) !== -1 ? label : STORE_POSITIONS[0];
+
             field("empCode").focus();
 
             return;
@@ -380,87 +467,31 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
 
-        createStoreSelect.innerHTML = '<option value="">Chưa gán chi nhánh</option>' +
-            openStores().map(function (store) {
-                return `<option value="${escapeHtml(store.id)}">${escapeHtml(store.name)}</option>`;
-            }).join("");
+        if (isAdmin) {
 
-        syncCreatePosition();
-
-        await loadSelectableAccounts();
-
-    }
-
-
-    /* Tài khoản STAFF đang hoạt động chưa có hồ sơ nhân viên */
-
-    async function loadSelectableAccounts() {
-
-        userSelect.innerHTML = '<option value="">Đang tải…</option>';
-
-        userSelect.disabled = true;
-
-        saveButton.disabled = true;
-
-        userHint.textContent = "";
-
-
-        try {
-
-            const results = await Promise.all([
-                fetchAllPages("/admin/users?role=STAFF&isActive=true&sort=fullname"),
-                fetchAllPages("/admin/employees")
-            ]);
-
-            const taken = new Set(results[1].map(function (employee) {
-                return employee.userId;
-            }));
-
-            const accounts = results[0].filter(function (user) {
-                return !taken.has(user.id);
-            });
-
-
-            if (accounts.length === 0) {
-
-                userSelect.innerHTML = '<option value="">Không có tài khoản phù hợp</option>';
-
-                userHint.textContent = "Mọi tài khoản có quyền Nhân viên đều đã có hồ sơ. Cấp quyền Nhân viên cho tài khoản mới ở trang Người dùng trước.";
-
-                return;
-
-            }
-
-
-            userSelect.innerHTML = accounts.map(function (user) {
-                return `<option value="${escapeHtml(user.id)}">${escapeHtml(user.fullname + " (@" + user.username + " · " + user.email + ")")}</option>`;
-            }).join("");
-
-            userSelect.disabled = false;
-
-            saveButton.disabled = false;
-
-            userHint.textContent = "Chỉ hiện tài khoản đang hoạt động, có quyền Nhân viên và chưa có hồ sơ.";
-
-            userSelect.focus();
-
-        } catch (error) {
-
-            handleError(error, function (message) {
-                userSelect.innerHTML = '<option value="">Không tải được danh sách tài khoản</option>';
-                userHint.textContent = message;
-            });
+            createStoreSelect.innerHTML = '<option value="">Chọn chi nhánh…</option>' +
+                openStores().map(function (store) {
+                    return `<option value="${escapeHtml(store.id)}">${escapeHtml(store.name)}</option>`;
+                }).join("");
 
         }
 
+        syncCreatePosition();
+
+        field("empFullname").focus();
+
     }
 
 
-    /* Vị trí tại chi nhánh chỉ có nghĩa khi chọn chi nhánh (backend báo lỗi nếu gửi riêng) */
+    /* Quản lý chi nhánh có chức danh cố định, nên không chọn chức danh khi tuyển quản lý */
 
     function syncCreatePosition() {
 
-        createPositionSelect.disabled = !createStoreSelect.value;
+        if (editingEmployee) {
+            return;
+        }
+
+        field("empStorePositionField").hidden = isAdmin && roleSelect.value === "BRANCH_MANAGER";
 
     }
 
@@ -510,22 +541,59 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (editingEmployee) {
 
-            body.active = field("empActive").checked;
+            if (isAdmin) {
+                body.active = field("empActive").checked;
+            } else {
+                body.positionAtStore = createPositionSelect.value;
+            }
 
             return { body: body };
 
         }
 
 
-        if (!userSelect.value) {
-            return { error: "Vui lòng chọn tài khoản nhân viên." };
+        if (!field("empFullname").value.trim()) {
+            return { error: "Vui lòng nhập họ tên." };
         }
 
-        body.userId = Number(userSelect.value);
+        if (!field("empEmail").value.trim()) {
+            return { error: "Vui lòng nhập email." };
+        }
 
-        body.storeId = createStoreSelect.value ? Number(createStoreSelect.value) : null;
+        if (!field("empUsername").value.trim()) {
+            return { error: "Vui lòng nhập tên đăng nhập." };
+        }
 
-        body.positionAtStore = body.storeId ? createPositionSelect.value : null;
+        const password = field("empPassword").value;
+
+        if (password !== "" && password.length < 8) {
+            return { error: "Mật khẩu tạm tối thiểu 8 ký tự (hoặc để trống để hệ thống tự sinh)." };
+        }
+
+        if (isAdmin && !createStoreSelect.value) {
+            return { error: "Vui lòng chọn chi nhánh." };
+        }
+
+
+        body.fullname = field("empFullname").value.trim();
+
+        body.email = field("empEmail").value.trim();
+
+        body.username = field("empUsername").value.trim();
+
+        body.phone = textOrNull("empPhone");
+
+        body.temporaryPassword = password === "" ? null : password;
+
+        if (isAdmin) {
+
+            body.role = roleSelect.value;
+
+            body.storeId = Number(createStoreSelect.value);
+
+        }
+
+        body.positionAtStore = field("empStorePositionField").hidden ? null : createPositionSelect.value;
 
         return { body: body };
 
@@ -552,26 +620,39 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const wasEditing = editingEmployee;
 
-        const endsAssignment = wasEditing && wasEditing.active && !result.body.active && wasEditing.assignment;
+        const endsAssignment = wasEditing && isAdmin && wasEditing.active && !result.body.active && wasEditing.assignment;
 
         saveButton.disabled = true;
 
 
         try {
 
-            const saved = wasEditing
-                ? await apiRequest("/admin/employees/" + wasEditing.id, { method: "PUT", body: result.body, auth: true })
-                : await apiRequest("/admin/employees", { method: "POST", body: result.body, auth: true });
+            if (wasEditing) {
 
-            showToast(
-                (wasEditing ? "Đã lưu hồ sơ " : "Đã thêm nhân viên ") + saved.fullname +
-                (endsAssignment ? " (đã kết thúc phân công tại " + wasEditing.assignment.storeName + ")" : "") + ".",
-                "success"
-            );
+                const saved = await apiRequest(API + "/" + wasEditing.id, { method: "PUT", body: result.body, auth: true });
+
+                showToast(
+                    "Đã lưu hồ sơ " + saved.fullname +
+                    (endsAssignment ? " (đã kết thúc phân công tại " + wasEditing.assignment.storeName + ")" : "") + ".",
+                    "success"
+                );
+
+                closeForm();
+
+                loadEmployees();
+
+                return;
+
+            }
+
+
+            const hired = await apiRequest(API + "/hire", { method: "POST", body: result.body, auth: true });
 
             closeForm();
 
             loadEmployees();
+
+            showHiredPassword(hired);
 
         } catch (error) {
 
@@ -589,7 +670,57 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    /* ================= GÁN / CHUYỂN / RÚT CHI NHÁNH ================= */
+    /* Mật khẩu tạm chỉ hiện đúng một lần, kèm nút sao chép */
+
+    function showHiredPassword(hired) {
+
+        const employee = hired.employee;
+
+        openSecretModal({
+            title: "Đã tuyển " + employee.fullname,
+            message: "Tài khoản @" + employee.username + " (" + (hired.role === "BRANCH_MANAGER" ? "Quản lý chi nhánh" : "Nhân viên chi nhánh") +
+                (employee.assignment ? ", " + employee.assignment.storeName : "") + ") đã được tạo. Gửi mật khẩu tạm cho người đó và nhắc đổi mật khẩu sau khi đăng nhập.",
+            label: "Mật khẩu tạm",
+            secret: hired.temporaryPassword
+        });
+
+    }
+
+
+    /* ================= CHO NGHỈ (quản lý chi nhánh) ================= */
+
+    function confirmDeactivate(employee) {
+
+        openConfirmModal({
+            title: "Cho " + employee.fullname + " nghỉ?",
+            message: "Phân công kết thúc hôm nay, tài khoản bị khoá và đăng xuất khỏi mọi thiết bị. Hồ sơ vẫn nằm trong danh sách \"Đã nghỉ\".",
+            confirmLabel: "CHO NGHỈ",
+            cancelLabel: "Quay lại",
+            onConfirm: async function () {
+
+                try {
+
+                    await apiRequest(API + "/" + employee.id + "/deactivate", { method: "POST", auth: true });
+
+                    showToast("Đã cho " + employee.fullname + " nghỉ.", "success");
+
+                } catch (error) {
+
+                    handleError(error, function (message) {
+                        showToast(message, "error");
+                    });
+
+                }
+
+                loadEmployees();
+
+            }
+        });
+
+    }
+
+
+    /* ================= GÁN / CHUYỂN / RÚT CHI NHÁNH (ADMIN) ================= */
 
     function openAssign(employee) {
 
@@ -599,12 +730,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const current = employee.assignment;
 
+        const isManager = Boolean(current) && current.positionAtStore === BRANCH_MANAGER_POSITION;
+
         field("assignTitle").textContent = (current ? "Chuyển chi nhánh: " : "Gán chi nhánh: ") + employee.fullname;
 
         field("assignHint").textContent = current
             ? "Đang ở " + current.storeName + " (" + (current.positionAtStore || "—") + "). Chọn chi nhánh khác thì phân công cũ " +
-              "kết thúc hôm nay và lịch sử được giữ lại; chọn đúng chi nhánh hiện tại thì chỉ đổi vị trí."
+              "kết thúc hôm nay và lịch sử được giữ lại; chọn đúng chi nhánh hiện tại thì chỉ đổi chức danh."
             : "Nhân viên chỉ thấy đơn hàng, trả góp và tồn kho của chi nhánh được gán.";
+
+        if (isManager) {
+            field("assignHint").textContent += " Quản lý luôn mang chức danh Quản lý chi nhánh, và mỗi chi nhánh chỉ có một quản lý.";
+        }
 
 
         assignStoreSelect.innerHTML = openStores().map(function (store) {
@@ -614,6 +751,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (current) {
             assignStoreSelect.value = String(current.storeId);
         }
+
+        field("assignPosition").disabled = isManager;
 
         field("assignPosition").value = current && STORE_POSITIONS.indexOf(current.positionAtStore) !== -1
             ? current.positionAtStore
@@ -635,6 +774,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         assigningEmployee = null;
 
         assignForm.reset();
+
+        field("assignPosition").disabled = false;
 
         assignError.hidden = true;
 
@@ -705,9 +846,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function confirmUnassign(employee) {
 
+        const wasManager = employee.assignment.positionAtStore === BRANCH_MANAGER_POSITION;
+
         openConfirmModal({
             title: "Rút " + employee.fullname + " khỏi " + employee.assignment.storeName + "?",
-            message: "Phân công kết thúc hôm nay (lịch sử được giữ). Nhân viên sẽ không thấy đơn hàng, trả góp hay tồn kho nào cho tới khi được gán chi nhánh khác.",
+            message: "Phân công kết thúc hôm nay (lịch sử được giữ). Người đó sẽ không thấy đơn hàng, trả góp hay tồn kho nào cho tới khi được gán chi nhánh khác" +
+                (wasManager ? "; một quản lý rút khỏi chi nhánh sẽ trở lại là nhân viên." : "."),
             confirmLabel: "RÚT KHỎI CHI NHÁNH",
             cancelLabel: "Quay lại",
             onConfirm: async function () {

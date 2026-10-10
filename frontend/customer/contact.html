@@ -101,13 +101,14 @@
                 <div class="contact-quick">
                     <span>Hỗ trợ nhanh</span>
                     <a href="orders.html">Tra cứu đơn hàng</a>
-                    <a href="service-requests.html">Yêu cầu bảo hành, đổi trả</a>
+                    <a href="service-requests.html">Yêu cầu bảo hành, trả hàng</a>
                     <a href="services.html#chinh-sach">Chính sách</a>
                 </div>
 
             </div>
 
 
+            <!-- POST /api/v1/contact-requests (js/customer/contact.js); chỉ báo thành công khi API trả 201 -->
             <form
                 id="contactForm"
                 class="contact-form"
@@ -138,20 +139,68 @@
                     type="text"
                     id="contactName"
                     autocomplete="name"
+                    maxlength="100"
                     required
                 >
 
+                <small class="field-error" data-field="fullName"></small>
 
-                <label for="contactEmail">
-                    Email
+
+                <div class="contact-form-row">
+
+                    <div>
+
+                        <label for="contactEmail">
+                            Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="contactEmail"
+                            autocomplete="email"
+                            maxlength="255"
+                            required
+                        >
+
+                        <small class="field-error" data-field="email"></small>
+
+                    </div>
+
+                    <div>
+
+                        <label for="contactPhone">
+                            Số điện thoại <span class="optional">(không bắt buộc)</span>
+                        </label>
+
+                        <input
+                            type="tel"
+                            id="contactPhone"
+                            autocomplete="tel"
+                            inputmode="tel"
+                            maxlength="20"
+                        >
+
+                        <small class="field-error" data-field="phone"></small>
+
+                    </div>
+
+                </div>
+
+
+                <label for="contactTopic">
+                    Chủ đề
                 </label>
 
-                <input
-                    type="email"
-                    id="contactEmail"
-                    autocomplete="email"
-                    required
-                >
+                <select id="contactTopic" required>
+                    <option value="">Chọn chủ đề</option>
+                    <option value="ORDER">Đơn hàng</option>
+                    <option value="PRODUCT">Sản phẩm</option>
+                    <option value="AFTER_SALES">Bảo hành / trả hàng</option>
+                    <option value="PAYMENT">Thanh toán / trả góp</option>
+                    <option value="OTHER">Khác</option>
+                </select>
+
+                <small class="field-error" data-field="topic"></small>
 
 
                 <label for="contactMessage">
@@ -161,8 +210,14 @@
                 <textarea
                     id="contactMessage"
                     rows="6"
+                    maxlength="2000"
+                    aria-describedby="contactMessageCount"
                     required
                 ></textarea>
+
+                <small class="contact-counter" id="contactMessageCount">0 / 2000</small>
+
+                <small class="field-error" data-field="message"></small>
 
 
                 <button

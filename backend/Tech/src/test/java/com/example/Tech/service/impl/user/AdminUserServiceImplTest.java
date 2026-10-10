@@ -5,22 +5,23 @@ import com.example.Tech.dto.request.user.UserSearchRequest;
 import com.example.Tech.dto.request.user.UserStatusUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.user.UserResponse;
-import com.example.Tech.entity.user.Role;
+import com.example.Tech.entity.employee.EmployeeAssignment;
+import com.example.Tech.entity.store.Store;
+import com.example.Tech.entity.user.RoleName;
 import com.example.Tech.entity.user.User;
-import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.mapper.user.UserMapper;
-import com.example.Tech.repository.user.RoleRepository;
+import com.example.Tech.repository.employee.EmployeeAssignmentRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleName;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.employee.StaffRoles;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -40,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -55,7 +57,10 @@ class AdminUserServiceImplTest {
     private UserRepository userRepository;
 
     @Mock
-    private RoleRepository roleRepository;
+    private EmployeeAssignmentRepository assignmentRepository;
+
+    @Mock
+    private StaffRoles staffRoles;
 
     @Mock
     private UserRoleRepository userRoleRepository;
@@ -70,7 +75,7 @@ class AdminUserServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new AdminUserServiceImpl(userRepository, roleRepository, userRoleRepository,
+        service = new AdminUserServiceImpl(userRepository, assignmentRepository, staffRoles, userRoleRepository,
                 refreshTokenService, new UserMapper(), CLOCK);
         admin = user(ADMIN_ID, "admin");
         target = user(USER_ID, "an.nguyen");
@@ -85,10 +90,13 @@ class AdminUserServiceImplTest {
         return user;
     }
 
-    private static Role role(Integer id, String name) {
-        Role role = new Role(name, null);
-        role.setId(id);
-        return role;
+    private static EmployeeAssignment assignment(int storeId, String position) {
+        Store store = new Store();
+        store.setId(storeId);
+        EmployeeAssignment assignment = new EmployeeAssignment();
+        assignment.setStore(store);
+        assignment.setPositionAtStore(position);
+        return assignment;
     }
 
     /** The caller exists, is enabled and has ADMIN in the database. */
@@ -183,6 +191,7 @@ class AdminUserServiceImplTest {
 
         assertThat(response.isActive()).isFalse();
         verify(refreshTokenService).revokeAll(USER_ID);
+        verify(staffRoles).endAssignment(target);
     }
 
     @Test
@@ -228,86 +237,117 @@ class AdminUserServiceImplTest {
     // ---------- roles ----------
 
     @Test
-    void updateRoles_replacesTheSet_normalizingNames() {
+    void updateRoles_customerAdminOrSeveralRoles_areNotAssignable() {
         stubActingAdmin();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(target));
-        Role customer = role(1, "CUSTOMER");
-        Role staff = role(2, "STAFF");
-        when(roleRepository.findByName("CUSTOMER")).thenReturn(Optional.of(customer));
-        when(roleRepository.findByName("STAFF")).thenReturn(Optional.of(staff));
-        UserRole oldCustomer = new UserRole(target, customer);
-        when(userRoleRepository.findAllByIdUserId(USER_ID)).thenReturn(List.of(oldCustomer));
 
-        UserResponse response = service.updateRoles(ADMIN_ID, USER_ID,
-                new UserRolesUpdateRequest(List.of(" staff ", "CUSTOMER", "Staff")));
+        for (List<String> roles : List.of(List.of("CUSTOMER"), List.of("ADMIN"), List.of("STAFF", "BRANCH_MANAGER"),
+                List.of("STAFF", "CUSTOMER"), List.of("superuser"))) {
+            assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(roles)),
+                    ErrorCode.ROLE_NOT_ASSIGNABLE);
+        }
+        verify(staffRoles, never()).setRole(any(), any());
+    }
 
-        assertThat(response.roles()).containsExactly("CUSTOMER", "STAFF");
-        ArgumentCaptor<UserRole> added = ArgumentCaptor.forClass(UserRole.class);
-        verify(userRoleRepository).save(added.capture());
-        assertThat(added.getValue().getRole()).isSameAs(staff);
-        verify(userRoleRepository).deleteAll(List.of());
+    @Test
+    void updateRoles_customerAccount_isNotEligible() {
+        stubActingAdmin();
+        stubTarget("CUSTOMER");
+
+        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("STAFF"))),
+                ErrorCode.CUSTOMER_ACCOUNT_NOT_ELIGIBLE);
+        verify(staffRoles, never()).setRole(any(), any());
+    }
+
+    @Test
+    void updateRoles_adminAccounts_areUntouchable() {
+        stubActingAdmin();
+        stubTarget("ADMIN");
+        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("STAFF"))),
+                ErrorCode.ACCESS_DENIED);
+
+        assertError(() -> service.updateRoles(ADMIN_ID, ADMIN_ID, new UserRolesUpdateRequest(List.of("STAFF"))),
+                ErrorCode.CANNOT_MODIFY_OWN_ACCOUNT);
+        verify(staffRoles, never()).setRole(any(), any());
+    }
+
+    @Test
+    void updateRoles_promoteToManager_needsAFreeSeatInTheirStore_thenRevokesSessions() {
+        stubActingAdmin();
+        stubTarget("STAFF");
+        EmployeeAssignment assignment = assignment(3, "Nhân viên bán hàng");
+        when(assignmentRepository.findActiveWithStoreByUserId(USER_ID)).thenReturn(Optional.of(assignment));
+
+        UserResponse response = service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of(" branch_manager ")));
+
+        assertThat(response.roles()).containsExactly("BRANCH_MANAGER");
+        assertThat(assignment.getPositionAtStore()).isEqualTo(EmployeeAssignment.BRANCH_MANAGER_POSITION);
+        verify(staffRoles).requireFreeManagerSeat(3, USER_ID);
+        verify(staffRoles).setRole(target, RoleName.BRANCH_MANAGER);
+        verify(refreshTokenService).revokeAll(USER_ID);
+    }
+
+    @Test
+    void updateRoles_promoteWithoutAssignment_isRefused() {
+        stubActingAdmin();
+        stubTarget("STAFF");
+        when(assignmentRepository.findActiveWithStoreByUserId(USER_ID)).thenReturn(Optional.empty());
+
+        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("BRANCH_MANAGER"))),
+                ErrorCode.MANAGER_REQUIRES_ASSIGNMENT);
+        verify(staffRoles, never()).setRole(any(), any());
         verify(refreshTokenService, never()).revokeAll(anyLong());
     }
 
     @Test
-    void updateRoles_removingARole_deletesIt() {
+    void updateRoles_promoteIntoAStoreThatHasAManager_isAConflict() {
         stubActingAdmin();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(target));
-        Role customer = role(1, "CUSTOMER");
-        Role staff = role(2, "STAFF");
-        when(roleRepository.findByName("CUSTOMER")).thenReturn(Optional.of(customer));
-        UserRole oldCustomer = new UserRole(target, customer);
-        UserRole oldStaff = new UserRole(target, staff);
-        when(userRoleRepository.findAllByIdUserId(USER_ID)).thenReturn(List.of(oldCustomer, oldStaff));
+        stubTarget("STAFF");
+        EmployeeAssignment assignment = assignment(3, "Thu ngân");
+        when(assignmentRepository.findActiveWithStoreByUserId(USER_ID)).thenReturn(Optional.of(assignment));
+        doThrow(new BusinessException(ErrorCode.STORE_ALREADY_HAS_MANAGER)).when(staffRoles).requireFreeManagerSeat(3, USER_ID);
 
-        service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("CUSTOMER")));
-
-        verify(userRoleRepository).deleteAll(List.of(oldStaff));
-        verify(userRoleRepository, never()).save(any());
+        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("BRANCH_MANAGER"))),
+                ErrorCode.STORE_ALREADY_HAS_MANAGER);
+        assertThat(assignment.getPositionAtStore()).isEqualTo("Thu ngân");
+        verify(staffRoles, never()).setRole(any(), any());
+        verify(refreshTokenService, never()).revokeAll(anyLong());
     }
 
     @Test
-    void updateRoles_unknownRole_throwsRoleNotFound() {
+    void updateRoles_demoteManager_resetsTheLabel_andRevokesSessions() {
         stubActingAdmin();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(target));
-        when(roleRepository.findByName("SUPERUSER")).thenReturn(Optional.empty());
+        stubTarget("BRANCH_MANAGER");
+        EmployeeAssignment assignment = assignment(3, EmployeeAssignment.BRANCH_MANAGER_POSITION);
+        when(assignmentRepository.findActiveWithStoreByUserId(USER_ID)).thenReturn(Optional.of(assignment));
 
-        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("superuser"))),
-                ErrorCode.ROLE_NOT_FOUND);
+        UserResponse response = service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("STAFF")));
+
+        assertThat(response.roles()).containsExactly("STAFF");
+        assertThat(assignment.getPositionAtStore()).isEqualTo(StaffRoles.DEFAULT_POSITION);
+        verify(staffRoles).setRole(target, RoleName.STAFF);
+        verify(refreshTokenService).revokeAll(USER_ID);
     }
 
     @Test
-    void updateRoles_removingOwnAdmin_isRefused() {
+    void updateRoles_sameRole_changesNothing() {
         stubActingAdmin();
-        when(roleRepository.findByName("CUSTOMER")).thenReturn(Optional.of(role(1, "CUSTOMER")));
-        when(userRoleRepository.findAllByIdUserId(ADMIN_ID)).thenReturn(List.of(new UserRole(admin, role(3, "ADMIN"))));
+        stubTarget("STAFF");
 
-        assertError(() -> service.updateRoles(ADMIN_ID, ADMIN_ID, new UserRolesUpdateRequest(List.of("CUSTOMER"))),
-                ErrorCode.CANNOT_MODIFY_OWN_ACCOUNT);
+        assertThat(service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of(" staff "))).roles())
+                .containsExactly("STAFF");
+        verify(staffRoles, never()).setRole(any(), any());
+        verify(refreshTokenService, never()).revokeAll(anyLong());
     }
 
     @Test
-    void updateRoles_keepingOwnAdmin_isAllowed() {
+    void updateRoles_legacyStaffWithCustomer_isNormalisedToOneRole() {
         stubActingAdmin();
-        Role adminRole = role(3, "ADMIN");
-        when(roleRepository.findByName("ADMIN")).thenReturn(Optional.of(adminRole));
-        when(roleRepository.findByName("STAFF")).thenReturn(Optional.of(role(2, "STAFF")));
-        when(userRoleRepository.findAllByIdUserId(ADMIN_ID)).thenReturn(List.of(new UserRole(admin, adminRole)));
+        stubTarget("CUSTOMER", "STAFF");
+        when(assignmentRepository.findActiveWithStoreByUserId(USER_ID)).thenReturn(Optional.empty());
 
-        assertThat(service.updateRoles(ADMIN_ID, ADMIN_ID, new UserRolesUpdateRequest(List.of("ADMIN", "STAFF"))).roles())
-                .containsExactly("ADMIN", "STAFF");
-    }
+        service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("STAFF")));
 
-    @Test
-    void updateRoles_demotingLastEnabledAdmin_isRefused() {
-        stubActingAdmin();
-        when(userRepository.findById(USER_ID)).thenReturn(Optional.of(target));
-        when(roleRepository.findByName("CUSTOMER")).thenReturn(Optional.of(role(1, "CUSTOMER")));
-        when(userRoleRepository.findAllByIdUserId(USER_ID)).thenReturn(List.of(new UserRole(target, role(3, "ADMIN"))));
-        when(userRoleRepository.countEnabledUsersWithRole("ADMIN")).thenReturn(1L);
-
-        assertError(() -> service.updateRoles(ADMIN_ID, USER_ID, new UserRolesUpdateRequest(List.of("CUSTOMER"))),
-                ErrorCode.LAST_ADMIN);
+        verify(staffRoles).setRole(target, RoleName.STAFF);
     }
 
     // ---------- delete ----------
@@ -323,6 +363,7 @@ class AdminUserServiceImplTest {
         assertThat(target.getActive()).isFalse();
         verify(userRepository).saveAndFlush(target);
         verify(refreshTokenService).revokeAll(USER_ID);
+        verify(staffRoles).endAssignment(target);
     }
 
     @Test

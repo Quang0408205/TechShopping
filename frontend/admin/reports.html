@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -38,6 +39,130 @@
 
 
         <main class="admin-content">
+
+            <p class="admin-mock-note admin-live-note">
+                Dữ liệu thật (GET /api/v1/admin/reports/sales). Doanh thu = đơn <strong>đã giao</strong> theo ngày giao
+                (gồm phí giao hàng); tiền hoàn = trả hàng đã hoàn tiền, tính vào ngày hoàn. Doanh thu theo danh mục /
+                sản phẩm dùng thành tiền từng dòng đơn (không gồm phí giao hàng). Bỏ trống ngày = 30 ngày gần nhất;
+                xem theo ngày tối đa 62 ngày, mỗi lần tối đa 366 ngày.
+            </p>
+
+            <div class="admin-filter-bar admin-report-filters">
+
+                <label>
+                    Chi nhánh
+                    <!-- js/admin/reports.js: ADMIN chọn mọi chi nhánh thật; quản lý chi nhánh bị khoá vào chi nhánh mình -->
+                    <select id="storeFilter" aria-label="Chi nhánh"></select>
+                </label>
+
+                <label>
+                    Từ ngày
+                    <input type="date" id="fromDateFilter" aria-label="Từ ngày">
+                </label>
+
+                <label>
+                    Đến ngày
+                    <input type="date" id="toDateFilter" aria-label="Đến ngày">
+                </label>
+
+                <label>
+                    Nhóm theo
+                    <select id="groupByFilter" aria-label="Nhóm theo">
+                        <option value="">Tự động</option>
+                        <option value="DAY">Ngày</option>
+                        <option value="MONTH">Tháng</option>
+                    </select>
+                </label>
+
+                <button type="button" class="btn btn-outline-dark" id="clearReportFiltersBtn">Xoá lọc</button>
+
+                <button type="button" class="btn btn-dark admin-export-btn" id="exportExcelBtn">Xuất Excel</button>
+
+            </div>
+
+            <p id="reportDateError" class="form-error admin-notice" role="alert" hidden></p>
+
+            <p id="reportEmpty" class="admin-mock-note" hidden>Chưa có đơn đã giao trong khoảng này.</p>
+
+            <div class="admin-stat-grid" id="reportStatGrid"></div>
+
+
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Doanh thu thuần theo thời gian</h2>
+                    <span class="admin-row-count" id="reportPeriodLabel"></span>
+                </div>
+                <div class="admin-chart-wrapper" id="reportRevenueChart"></div>
+            </section>
+
+
+            <div class="admin-panel-grid">
+
+                <section class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Theo danh mục</h2>
+                    </div>
+                    <div class="admin-chart-wrapper" id="reportCategoryChart"></div>
+                </section>
+
+                <section class="admin-panel">
+                    <div class="admin-panel-header">
+                        <h2>Theo phương thức thanh toán</h2>
+                    </div>
+                    <div class="admin-chart-wrapper" id="reportPaymentChart"></div>
+                </section>
+
+            </div>
+
+
+            <!-- Chỉ ADMIN, khi đang xem tất cả chi nhánh -->
+            <section class="admin-panel" id="reportStoreChartPanel" hidden>
+                <div class="admin-panel-header">
+                    <h2>So sánh chi nhánh (doanh thu thuần)</h2>
+                </div>
+                <div class="admin-chart-wrapper" id="reportStoreChart"></div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="reportStoreTable">
+                        <thead>
+                            <tr><th>Chi nhánh</th><th class="admin-number">Đơn đã giao</th><th class="admin-number">Doanh thu gộp</th><th class="admin-number">Tiền hoàn</th><th class="admin-number">Doanh thu thuần</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Doanh số theo nhân viên</h2>
+                    <span class="admin-row-count">Tính cho nhân viên xác nhận đơn</span>
+                </div>
+                <div class="admin-chart-wrapper" id="reportEmployeeChart"></div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide" id="reportEmployeeTable">
+                        <thead>
+                            <tr><th>Nhân viên</th><th>Chi nhánh</th><th class="admin-number">Đơn</th><th class="admin-number">Doanh số</th><th class="admin-number">Hoa hồng</th><th class="admin-number">Đã hoàn tiền</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
+
+            <section class="admin-panel">
+                <div class="admin-panel-header">
+                    <h2>Top 10 sản phẩm theo doanh thu</h2>
+                </div>
+                <div class="admin-table-wrapper">
+                    <table class="admin-table" id="reportTopProductsTable">
+                        <thead>
+                            <tr><th>#</th><th>Sản phẩm</th><th>Danh mục</th><th class="admin-number">Số lượng</th><th class="admin-number">Doanh thu</th></tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </section>
+
 
             <!-- Phase 7.10: hàng nhập kho theo chi nhánh, dữ liệu THẬT, chỉ ADMIN (js/admin/reports.js bỏ hidden) -->
             <section class="admin-panel" id="stockInPanel" hidden>
@@ -96,96 +221,6 @@
 
             </section>
 
-
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: phần doanh thu dưới đây chưa nối backend (làm ở Phase 10, dùng 3 chi nhánh mẫu
-                CN01–CN03). Thay đổi chỉ lưu trên trình duyệt này.
-            </p>
-
-            <div class="admin-filter-bar">
-
-                <!-- js/admin/reports.js dựng theo vai trò -->
-                <select id="storeFilter" aria-label="Chi nhánh"></select>
-
-                <input type="date" id="fromDateFilter" aria-label="Từ ngày">
-
-                <input type="date" id="toDateFilter" aria-label="Đến ngày">
-
-                <button type="button" class="btn btn-outline-dark" id="clearReportFiltersBtn">
-                    XÓA LỌC
-                </button>
-
-            </div>
-
-            <p id="reportDateError" class="form-error admin-notice" role="alert" hidden></p>
-
-
-            <div class="admin-stat-grid" id="reportStatGrid"></div>
-
-
-            <div class="admin-panel-grid">
-
-                <section class="admin-panel">
-
-                    <div class="admin-panel-header">
-                        <h2>Xu hướng doanh thu theo tháng</h2>
-                    </div>
-
-                    <div class="admin-chart-wrapper" id="reportRevenueChart"></div>
-
-                </section>
-
-
-                <section class="admin-panel">
-
-                    <div class="admin-panel-header">
-                        <h2>Top sản phẩm theo doanh thu</h2>
-                    </div>
-
-                    <div class="admin-chart-wrapper" id="reportTopProductsChart"></div>
-
-                </section>
-
-            </div>
-
-
-            <!-- Chỉ ADMIN, khi đang xem tất cả chi nhánh -->
-            <section class="admin-panel" id="reportStoreChartPanel" hidden>
-
-                <div class="admin-panel-header">
-                    <h2>So sánh doanh thu theo chi nhánh</h2>
-                </div>
-
-                <div class="admin-chart-wrapper" id="reportStoreChart"></div>
-
-            </section>
-
-
-            <section class="admin-panel">
-
-                <div class="admin-panel-header">
-                    <h2>Chi tiết bán hàng</h2>
-                    <span class="admin-row-count" id="reportRowCount"></span>
-                </div>
-
-                <div class="admin-table-wrapper">
-                    <table class="admin-table admin-table--wide" id="salesDetailTable">
-                        <thead>
-                            <tr>
-                                <th>Ngày bán</th>
-                                <th>Chi nhánh</th>
-                                <th>Nhân viên</th>
-                                <th>Sản phẩm</th>
-                                <th>Số lượng</th>
-                                <th>Doanh thu</th>
-                            </tr>
-                        </thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-
-            </section>
-
         </main>
 
     </div>
@@ -196,7 +231,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-charts.js"></script>
 <script src="../js/admin/admin-layout.js"></script>

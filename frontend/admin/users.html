@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -37,19 +38,29 @@
         <main class="admin-content">
 
             <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (GET /api/v1/admin/users): khoá / mở khoá, phân quyền và xoá có hiệu lực ngay trên hệ thống.
-                Vai trò hiển thị Nhân viên / Quản lý chi nhánh và chi nhánh phụ trách vẫn lấy từ trang Nhân viên (dữ liệu mẫu) tới Phase 7.
+                Dữ liệu thật (GET /api/v1/admin/users): khoá / mở khoá và xoá có hiệu lực ngay trên hệ thống.
+                Tài khoản <strong>khách hàng</strong> tự đăng ký và không thể chuyển thành tài khoản nội bộ.
+                Tài khoản <strong>nội bộ</strong> chỉ được tạo bằng cách <strong>tuyển</strong> ở trang Nhân viên;
+                ở đây chỉ đổi vai trò giữa Nhân viên chi nhánh và Quản lý chi nhánh (mỗi chi nhánh tối đa một quản lý,
+                người đó phải đang được gán chi nhánh). Đổi vai trò, khoá hay xoá đều đăng xuất người đó khỏi mọi thiết bị.
             </p>
+
+
+            <div class="admin-tabs" role="tablist" aria-label="Loại tài khoản">
+                <button type="button" role="tab" class="admin-tab is-active" id="userTabCustomer" data-user-tab="CUSTOMER" aria-selected="true">Khách hàng</button>
+                <button type="button" role="tab" class="admin-tab" id="userTabInternal" data-user-tab="INTERNAL" aria-selected="false">Nội bộ</button>
+            </div>
 
 
             <form class="admin-filter-bar" id="userFilterForm" role="search">
 
                 <input type="search" id="userKeyword" placeholder="Tìm email, tên đăng nhập, họ tên…" maxlength="255" aria-label="Từ khoá">
 
-                <select id="userRoleFilter" aria-label="Vai trò">
-                    <option value="">Mọi vai trò</option>
-                    <option value="CUSTOMER">Khách hàng</option>
-                    <option value="STAFF">Nhân viên (STAFF)</option>
+                <!-- Chỉ hiện ở tab Nội bộ; tab Khách hàng luôn lọc role=CUSTOMER -->
+                <select id="userRoleFilter" aria-label="Vai trò" hidden>
+                    <option value="">Mọi vai trò nội bộ</option>
+                    <option value="STAFF">Nhân viên chi nhánh (STAFF)</option>
+                    <option value="BRANCH_MANAGER">Quản lý chi nhánh (BRANCH_MANAGER)</option>
                     <option value="ADMIN">Quản trị viên (ADMIN)</option>
                 </select>
 
@@ -68,7 +79,7 @@
             <section class="admin-panel" id="rolePanel" hidden>
 
                 <div class="admin-panel-header">
-                    <h2 id="rolePanelTitle">Phân quyền</h2>
+                    <h2 id="rolePanelTitle">Đổi vai trò</h2>
                 </div>
 
                 <form id="roleForm" novalidate>
@@ -78,18 +89,13 @@
                     <div class="admin-role-options">
 
                         <label>
-                            <input type="checkbox" name="role" value="CUSTOMER">
-                            <span><strong>Khách hàng</strong> mua hàng trên website</span>
+                            <input type="radio" name="role" value="STAFF">
+                            <span><strong>Nhân viên chi nhánh</strong> xử lý đơn, trả góp, hậu mãi, tồn kho của chi nhánh được gán</span>
                         </label>
 
                         <label>
-                            <input type="checkbox" name="role" value="STAFF">
-                            <span><strong>Nhân viên</strong> vào được khu nội bộ</span>
-                        </label>
-
-                        <label>
-                            <input type="checkbox" name="role" value="ADMIN">
-                            <span><strong>Quản trị viên</strong> toàn quyền, kể cả trang này</span>
+                            <input type="radio" name="role" value="BRANCH_MANAGER">
+                            <span><strong>Quản lý chi nhánh</strong> như nhân viên, thêm báo cáo và tuyển / quản lý nhân viên chi nhánh mình</span>
                         </label>
 
                     </div>
@@ -148,7 +154,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
 <script src="../js/admin/users.js"></script>

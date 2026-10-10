@@ -882,6 +882,148 @@ h4 {
 }
 
 
+/* ---- Menu tài khoản trên header khi đã đăng nhập (main.js renderAuthState, kế hoạch v2 GĐ5) ---- */
+.user-menu {
+    position: relative;
+}
+
+.user-menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 44px;
+    height: 44px;
+    padding: 0;
+
+    border: 1px solid var(--gray-200);
+    border-radius: 50%;
+    background: #fff;
+
+    cursor: pointer;
+}
+
+.user-menu-toggle:hover,
+.user-menu-toggle[aria-expanded="true"] {
+    border-color: var(--color-ink);
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+}
+
+.user-avatar--initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    background: var(--color-accent);
+    color: #fff;
+
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.user-menu-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 300;
+
+    min-width: 260px;
+    padding: 8px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(17, 19, 24, 0.14);
+}
+
+.user-menu-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 10px 12px;
+    margin-bottom: 4px;
+
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.user-menu-head > span {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.user-menu-name {
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-menu-email {
+    font-size: 12px;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-menu-panel a,
+.user-menu-panel .logout-btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+
+    border: 0;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--color-ink);
+
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.user-menu-panel a:hover,
+.user-menu-panel .logout-btn:hover {
+    background: var(--surface-warm);
+}
+
+.user-menu-panel .logout-btn {
+    margin-top: 4px;
+    border-top: 1px solid var(--gray-200);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    color: var(--color-promo);
+}
+
+@media (max-width: 700px) {
+
+    .user-menu-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+    .user-menu-panel {
+        position: fixed;
+        top: 68px;
+        right: 12px;
+        left: 12px;
+        min-width: 0;
+    }
+
+}
+
 @media (max-width: 1200px) {
 
     .nav {
@@ -1060,77 +1202,6 @@ h4 {
     color: var(--text-on-dark);
 }
 
-.footer-newsletter {
-    padding: var(--space-6) 0;
-
-    border-bottom: 1px solid #2a2c33;
-}
-
-.footer-newsletter-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: var(--space-3);
-}
-
-.footer-newsletter h3 {
-    margin-bottom: 4px;
-
-    font-size: 22px;
-    font-weight: 600;
-}
-
-.footer-newsletter p {
-    color: var(--text-on-dark-muted);
-
-    font-size: 14px;
-}
-
-.newsletter-form {
-    display: flex;
-    gap: var(--space-1);
-
-    flex: 0 1 460px;
-}
-
-.newsletter-form input {
-    flex: 1;
-    min-width: 0;
-    height: 48px;
-    padding: 0 var(--space-2);
-
-    border: 1px solid #3a3c44;
-    border-radius: var(--radius-md);
-    background: var(--surface-ink-raised);
-    color: #fff;
-
-    font-size: 14px;
-}
-
-.newsletter-form input::placeholder {
-    color: #8d8d96;
-}
-
-.newsletter-form input:focus {
-    outline: none;
-    border-color: #fff;
-}
-
-.newsletter-form input[aria-invalid="true"] {
-    border-color: #ff8a80;
-}
-
-.newsletter-form .btn {
-    min-height: 48px;
-    padding: 0 var(--space-3);
-
-    border: 1px solid #fff;
-
-    letter-spacing: 0;
-    font-size: 14px;
-    font-weight: 600;
-}
-
 .footer-grid {
     display: grid;
     grid-template-columns: 1.6fr repeat(3, minmax(0, 1fr)) 1.4fr;
@@ -1263,15 +1334,6 @@ h4 {
 }
 
 @media (max-width: 700px) {
-
-    .footer-newsletter-inner {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .newsletter-form {
-        flex-basis: auto;
-    }
 
     .footer-bottom-inner {
         flex-wrap: wrap;

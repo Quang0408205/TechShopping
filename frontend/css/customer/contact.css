@@ -218,9 +218,54 @@
 }
 
 .contact-page .contact-form input:focus,
-.contact-page .contact-form textarea:focus {
+.contact-page .contact-form textarea:focus,
+.contact-page .contact-form select:focus {
     border-color: var(--color-ink);
     box-shadow: 0 0 0 3px var(--gray-200);
+}
+
+.contact-page .contact-form select {
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+
+    border: 1px solid var(--gray-300);
+    background: #fff;
+    outline: none;
+
+    font: inherit;
+    font-size: 15px;
+}
+
+.contact-page .contact-form [aria-invalid="true"] {
+    border-color: var(--color-danger, #c0392b);
+}
+
+/* Email + SĐT cùng hàng */
+.contact-form-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-2);
+}
+
+.contact-form-row > div {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-form .optional {
+    color: var(--text-muted);
+
+    font-weight: 400;
+}
+
+.contact-counter {
+    align-self: flex-end;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
 }
 
 .contact-page .contact-form .btn {
@@ -248,6 +293,11 @@
 
     .contact-page .contact-form {
         padding: var(--space-2);
+    }
+
+    .contact-form-row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
     }
 
 }

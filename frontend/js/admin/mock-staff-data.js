@@ -338,54 +338,6 @@ function updateServiceRequestStatus(id, status) {
 }
 
 
-/* ================= HỖ TRỢ KHÁCH HÀNG (support_tickets) ================= */
-
-const TICKET_STATUS_LABELS = {
-    OPEN: "Mới",
-    IN_PROGRESS: "Đang xử lý",
-    RESOLVED: "Đã giải quyết"
-};
-
-
-const TICKET_PRIORITY_LABELS = {
-    LOW: "Thấp",
-    MEDIUM: "Trung bình",
-    HIGH: "Cao"
-};
-
-
-const MOCK_SUPPORT_TICKETS = [
-    { id: "TK-0001", subject: "Hỏi về chính sách đổi trả", customerName: "Vũ Thị Ngọc", customerPhone: "0921 111 222", storeId: "CN01", assignedEmployeeId: "nv-staff-01", status: "RESOLVED", priority: "LOW", createdAt: "2026-09-10" },
-    { id: "TK-0002", subject: "Đơn hàng DH000118 giao chậm hơn dự kiến", customerName: "Hoàng Văn Sơn", customerPhone: "0922 222 333", storeId: "CN01", assignedEmployeeId: "nv-staff-02", status: "IN_PROGRESS", priority: "HIGH", createdAt: "2026-09-19" },
-    { id: "TK-0003", subject: "Yêu cầu xuất hoá đơn công ty", customerName: "Công ty TNHH ABC", customerPhone: "0923 333 444", storeId: "CN02", assignedEmployeeId: null, status: "OPEN", priority: "MEDIUM", createdAt: "2026-09-23" }
-];
-
-
-/* filter: { storeId, status } */
-
-function getSupportTickets(filter) {
-
-    const f = filter || {};
-
-    return MOCK_SUPPORT_TICKETS
-        .map(applyOverride)
-        .filter(function (ticket) {
-            return (!f.storeId || ticket.storeId === f.storeId) &&
-                (!f.status || ticket.status === f.status);
-        });
-
-}
-
-
-/* Mô phỏng PATCH /support-tickets/{id}/status */
-
-function updateSupportTicketStatus(id, status) {
-
-    setStaffOverride(id, { status: status });
-
-}
-
-
 /* ================= LỊCH SỬ CHATBOT (chat_sessions / chat_messages) ================= */
 
 /* Chỉ để ADMIN xem lại, không điều khiển chatbot */

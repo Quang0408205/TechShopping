@@ -22,6 +22,8 @@ import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
 import com.example.Tech.support.StoreFixtures;
 import jakarta.persistence.EntityManager;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,12 +34,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
+import java.io.ByteArrayInputStream;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -49,6 +53,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -100,7 +105,7 @@ class AdminReportApiIntegrationTest {
         JsonNode customer = register("rpt.khach", "Khách Báo Cáo");
         customerId = customer.get("user").get("id").asLong();
         customerToken = customer.get("accessToken").asString();
-        managerAToken = registerWithRole("rpt.qla", "Quản Lý A", "STAFF");
+        managerAToken = registerWithRole("rpt.qla", "Quản Lý A", "BRANCH_MANAGER");
         Long managerAId = registeredUserIds.getLast();
         staffAToken = registerWithRole("rpt.nva", "Nhân Viên A", "STAFF");
         Long staffAId = registeredUserIds.getLast();
@@ -193,6 +198,63 @@ class AdminReportApiIntegrationTest {
     }
 
     @Test
+    void export_admin_everySheet_matchesTheReport() throws Exception {
+        MvcResult result = send(get(SALES + "/export" + PERIOD + "&groupBy=MONTH"), adminToken)
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .andExpect(header().string("Content-Disposition",
+                        "attachment; filename=\"TechShopping_BaoCao_2031-03-01_2031-04-30.xlsx\""))
+                .andExpect(header().string("Cache-Control", "no-store"))
+                .andReturn();
+
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(result.getResponse().getContentAsByteArray()))) {
+            List<String> sheets = new ArrayList<>();
+            workbook.forEach(sheet -> sheets.add(sheet.getSheetName()));
+            assertThat(sheets).containsExactly("Tổng hợp", "Theo thời gian", "Theo chi nhánh", "Theo nhân viên",
+                    "Theo danh mục", "Top sản phẩm", "Danh sách đơn");
+
+            Sheet summary = workbook.getSheet("Tổng hợp");
+            assertThat(summary.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Tất cả chi nhánh");
+            assertThat(summary.getRow(6).getCell(0).getStringCellValue()).startsWith("Doanh thu gộp");
+            assertThat(summary.getRow(6).getCell(1).getNumericCellValue()).isEqualTo(30660000d);
+            assertThat(summary.getRow(8).getCell(1).getNumericCellValue()).isEqualTo(19660000d);
+            assertThat(summary.getRow(6).getCell(1).getCellStyle().getDataFormatString()).isEqualTo("#,##0 \"đ\"");
+
+            Sheet series = workbook.getSheet("Theo thời gian");
+            assertThat(series.getRow(0).getCell(0).getStringCellValue()).isEqualTo("Tháng");
+            assertThat(workbook.getFontAt(series.getRow(0).getCell(0).getCellStyle().getFontIndex()).getBold()).isTrue();
+            assertThat(series.getPaneInformation().getHorizontalSplitPosition()).isEqualTo((short) 1);
+            assertThat(series.getRow(1).getCell(0).getStringCellValue()).isEqualTo("03/2031");
+            assertThat(series.getRow(1).getCell(2).getNumericCellValue()).isEqualTo(20660000d);
+
+            // 4 delivered orders of the period, oldest first, with the confirming employee and the refunds
+            Sheet orders = workbook.getSheet("Danh sách đơn");
+            assertThat(orders.getLastRowNum()).isEqualTo(4);
+            assertThat(orders.getRow(1).getCell(0).getStringCellValue()).isEqualTo("DH%08d".formatted(order1.getId()));
+            assertThat(orders.getRow(1).getCell(4).getStringCellValue()).isEqualTo("Nhân Viên A");
+            assertThat(orders.getRow(1).getCell(5).getStringCellValue()).isEqualTo("Thanh toán khi nhận hàng");
+            assertThat(orders.getRow(1).getCell(6).getNumericCellValue()).isEqualTo(20000000d);
+            assertThat(orders.getRow(1).getCell(7).getNumericCellValue()).isEqualTo(10000000d);
+        }
+    }
+
+    @Test
+    void export_followsTheReportAccessRules() throws Exception {
+        MvcResult own = send(get(SALES + "/export" + PERIOD), managerAToken).andExpect(status().isOk()).andReturn();
+        try (XSSFWorkbook workbook = new XSSFWorkbook(new ByteArrayInputStream(own.getResponse().getContentAsByteArray()))) {
+            assertThat(workbook.getSheet("Theo chi nhánh")).isNull();
+            assertThat(workbook.getSheet("Tổng hợp").getRow(1).getCell(1).getStringCellValue()).isEqualTo("ZZ CN Báo Cáo A");
+            assertThat(workbook.getSheet("Danh sách đơn").getLastRowNum()).isEqualTo(3);
+        }
+        send(get(SALES + "/export" + PERIOD + "&storeId=" + storeB.getId()), managerAToken).andExpect(status().isForbidden());
+        send(get(SALES + "/export" + PERIOD), staffAToken).andExpect(status().isForbidden());
+        send(get(SALES + "/export" + PERIOD), customerToken).andExpect(status().isForbidden());
+        send(get(SALES + "/export?fromDate=2031-05-01&toDate=2031-04-01"), adminToken)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.fromDate").exists());
+    }
+
+    @Test
     void branchManager_onlyTheirStore_defaultDailySeries() throws Exception {
         JsonNode report = data(send(get(SALES + PERIOD), managerAToken).andExpect(status().isOk()));
 
@@ -267,10 +329,17 @@ class AdminReportApiIntegrationTest {
         for (String token : List.of(staffAToken, managerAToken)) {
             JsonNode cards = data(send(get("/api/v1/admin/dashboard/summary"), token).andExpect(status().isOk()));
             assertThat(cards.get("storeId").asInt()).isEqualTo(storeA.getId());
-            assertMoney(cards.get("revenueToday"), "1000000");
             assertThat(cards.get("deliveredToday").asLong()).isEqualTo(1);
-            assertMoney(cards.get("revenueThisMonth"), "1000000");
-            assertMoney(cards.get("revenuePreviousMonthSamePeriod"), "0");
+            if (token.equals(staffAToken)) {
+                // plain STAFF: work counters only, no revenue
+                assertThat(cards.get("revenueToday").isNull()).isTrue();
+                assertThat(cards.get("revenueThisMonth").isNull()).isTrue();
+                assertThat(cards.get("revenuePreviousMonthSamePeriod").isNull()).isTrue();
+            } else {
+                assertMoney(cards.get("revenueToday"), "1000000");
+                assertMoney(cards.get("revenueThisMonth"), "1000000");
+                assertMoney(cards.get("revenuePreviousMonthSamePeriod"), "0");
+            }
             assertThat(cards.get("pendingOrders").asLong()).isEqualTo(1);
             assertThat(cards.get("openServiceRequests").asLong()).isEqualTo(1);
             assertThat(cards.get("lowStockVariants").asLong()).isEqualTo(1);

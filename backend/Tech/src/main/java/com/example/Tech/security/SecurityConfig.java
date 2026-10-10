@@ -22,9 +22,10 @@ import org.springframework.security.web.SecurityFilterChain;
  *     <li>GET /api/v1/stores (open stores for the checkout pickup picker) is public (Phase 7).</li>
  *     <li>/api/v1/admin/orders/** (Phase 4), /api/v1/admin/installments/** (Phase 5) and
  *         /api/v1/admin/stores/{id}/inventory/** (Phase 7, store-scoped in the service), service requests (Phase 6),
- *         reports and the dashboard (Phase 10, scoped in the service) require STAFF or ADMIN;
+ *         reports and the dashboard (Phase 10, scoped in the service) require STAFF, BRANCH_MANAGER or ADMIN;
  *         the rest of /api/v1/admin/** requires
- *         ADMIN; any other /api/v1/** requires a valid access token.</li>
+ *         ADMIN; /api/v1/branch/** (own-branch management, Phase v2 GĐ2) requires BRANCH_MANAGER;
+ *         any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
  * </ul>
  * A request that sends an invalid bearer token is rejected with 401 even on public endpoints.
@@ -37,6 +38,8 @@ public class SecurityConfig {
     static final String ADMIN = "ADMIN";
 
     static final String STAFF = "STAFF";
+
+    static final String BRANCH_MANAGER = "BRANCH_MANAGER";
 
     /** Product catalogue resources: public reads, ADMIN-only writes (decision D4). */
     static final String[] CATALOG_PATHS = {
@@ -76,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)
@@ -84,9 +88,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**",
                                 "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**",
                                 "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
-                                "/api/v1/admin/dashboard/**")
-                        .hasAnyRole(STAFF, ADMIN)
+                                "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**")
+                        .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
+                        .requestMatchers("/api/v1/branch/**").hasRole(BRANCH_MANAGER)
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()
                 );

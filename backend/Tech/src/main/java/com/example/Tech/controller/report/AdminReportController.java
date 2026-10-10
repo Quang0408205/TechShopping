@@ -3,6 +3,7 @@ package com.example.Tech.controller.report;
 import com.example.Tech.dto.request.report.SalesReportRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.report.DashboardSummaryResponse;
+import com.example.Tech.dto.response.report.ReportFile;
 import com.example.Tech.dto.response.report.SalesReportResponse;
 import com.example.Tech.service.report.ReportService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,7 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+@PreAuthorize("hasAnyRole('STAFF', 'BRANCH_MANAGER', 'ADMIN')")
 @Tag(name = "Admin - Reports", description = "Sales report and dashboard (ADMIN, branch managers, staff)")
 @ApiResponses({
         @ApiResponse(responseCode = "401", description = "UNAUTHORIZED, INVALID_TOKEN"),
@@ -46,6 +51,24 @@ public class AdminReportController {
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
             @ParameterObject SalesReportRequest filter) {
         return ResponseEntity.ok(ApiResult.ok(reportService.sales(Long.valueOf(jwt.getSubject()), filter)));
+    }
+
+    @GetMapping("/reports/sales/export")
+    @Operation(summary = "The sales report as an Excel file (.xlsx)",
+            description = "Same filter and access rules as /reports/sales. Sheets: Tổng hợp, Theo thời gian, Theo chi "
+                    + "nhánh (ADMIN, every store), Theo nhân viên, Theo danh mục, Top sản phẩm, Danh sách đơn.")
+    @ApiResponse(responseCode = "200", description = "TechShopping_BaoCao_<from>_<to>.xlsx")
+    @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (details.fromDate / toDate / groupBy)")
+    @ApiResponse(responseCode = "404", description = "STORE_NOT_FOUND")
+    public ResponseEntity<byte[]> exportSales(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                              @ParameterObject SalesReportRequest filter) {
+        ReportFile file = reportService.exportSales(Long.valueOf(jwt.getSubject()), filter);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename(file.filename()).build().toString())
+                .cacheControl(CacheControl.noStore())
+                .body(file.content());
     }
 
     @GetMapping("/dashboard/summary")

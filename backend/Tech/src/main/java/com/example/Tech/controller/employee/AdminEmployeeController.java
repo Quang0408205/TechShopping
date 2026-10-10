@@ -4,9 +4,12 @@ import com.example.Tech.dto.request.employee.AssignmentRequest;
 import com.example.Tech.dto.request.employee.EmployeeCreateRequest;
 import com.example.Tech.dto.request.employee.EmployeeSearchRequest;
 import com.example.Tech.dto.request.employee.EmployeeUpdateRequest;
+import com.example.Tech.dto.request.employee.HireRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.employee.EmployeeResponse;
+import com.example.Tech.dto.response.employee.HireResponse;
+import com.example.Tech.service.employee.EmployeeHiringService;
 import com.example.Tech.service.employee.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -19,6 +22,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -50,6 +54,8 @@ public class AdminEmployeeController {
 
     private final EmployeeService employeeService;
 
+    private final EmployeeHiringService hiringService;
+
     @GetMapping
     @Operation(summary = "Search employees, newest first by default")
     @ApiResponses({
@@ -74,14 +80,35 @@ public class AdminEmployeeController {
         return ResponseEntity.ok(ApiResult.ok(employeeService.getById(adminId(jwt), id)));
     }
 
+    @PostMapping("/hire")
+    @Operation(summary = "Hire a new employee: creates the account (STAFF or BRANCH_MANAGER), the profile and the "
+            + "assignment; the temporary password is returned once")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Hired; the response carries the temporary password"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR, ROLE_NOT_ASSIGNABLE (only STAFF / "
+                    + "BRANCH_MANAGER), closed store"),
+            @ApiResponse(responseCode = "404", description = "STORE_NOT_FOUND"),
+            @ApiResponse(responseCode = "409", description = "DUPLICATE_EMAIL, DUPLICATE_USERNAME, "
+                    + "DUPLICATE_EMPLOYEE_CODE, STORE_ALREADY_HAS_MANAGER")
+    })
+    public ResponseEntity<ApiResult<HireResponse>> hire(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                        @Valid @RequestBody HireRequest request) {
+        // the response holds a password: never cache it
+        return ResponseEntity.status(HttpStatus.CREATED).cacheControl(CacheControl.noStore())
+                .body(ApiResult.ok(hiringService.hireAsAdmin(adminId(jwt), request)));
+    }
+
     @PostMapping
-    @Operation(summary = "Create the employee profile of a STAFF account, optionally assigned to a store")
+    @Deprecated
+    @Operation(deprecated = true, summary = "Deprecated, use /hire. Create the employee profile of an existing "
+            + "STAFF account (accounts that also have CUSTOMER are refused), optionally assigned to a store")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Employee created"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (unknown / locked / non-STAFF account, "
                     + "closed store)"),
             @ApiResponse(responseCode = "404", description = "STORE_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "EMPLOYEE_ALREADY_EXISTS, DUPLICATE_EMPLOYEE_CODE")
+            @ApiResponse(responseCode = "409", description = "EMPLOYEE_ALREADY_EXISTS, DUPLICATE_EMPLOYEE_CODE, "
+                    + "CUSTOMER_ACCOUNT_NOT_ELIGIBLE")
     })
     public ResponseEntity<ApiResult<EmployeeResponse>> create(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                               @Valid @RequestBody EmployeeCreateRequest request) {

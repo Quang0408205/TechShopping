@@ -20,7 +20,7 @@
  * "admin-ready", nên người không đủ quyền không thấy nội dung trang.
  *
  * Thứ tự nạp: js/core/api.js → js/core/ui.js → js/core/layout.js →
- * js/admin/mock-staff-data.js → js/admin/staff-auth.js →
+ * (js/admin/mock-staff-data.js: chỉ 2 trang chưa có backend) → js/admin/staff-auth.js →
  * (js/admin/admin-charts.js) → js/admin/admin-layout.js → script của trang.
  * Script của trang: DOMContentLoaded → const staff = await adminLayoutReady.
  */
@@ -118,6 +118,12 @@ function fillTopbarUser(staff) {
 
     const nameEl = document.getElementById("adminUserName");
 
+    const avatarEl = document.getElementById("adminUserAvatar");
+
+    if (avatarEl) {
+        avatarEl.textContent = initialsOf(staff.fullname);
+    }
+
     const metaEl = document.getElementById("adminUserMeta");
 
     if (nameEl) {
@@ -156,13 +162,62 @@ function setupSidebarToggle() {
     }
 
 
+    /* Nền mờ phía sau menu khi menu trượt ra (màn hình dưới 1024px) */
+    const backdrop = document.createElement("div");
+
+    backdrop.className = "admin-sidebar-backdrop";
+
+    backdrop.hidden = true;
+
+    document.body.appendChild(backdrop);
+
+
+    function setOpen(open) {
+
+        sidebar.classList.toggle("open", open);
+
+        backdrop.hidden = !open;
+
+        toggle.setAttribute("aria-expanded", String(open));
+
+    }
+
+
     toggle.addEventListener("click", function () {
+        setOpen(!sidebar.classList.contains("open"));
+    });
 
-        const isOpen = sidebar.classList.toggle("open");
+    backdrop.addEventListener("click", function () {
+        setOpen(false);
+    });
 
-        toggle.setAttribute("aria-expanded", String(isOpen));
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape" && sidebar.classList.contains("open")) {
+            setOpen(false);
+            toggle.focus();
+        }
 
     });
+
+}
+
+
+/* "Nguyễn Thị Lan" → "NL" (chữ cái đầu của họ và tên) */
+
+function initialsOf(fullname) {
+
+    const words = String(fullname || "").trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+        return "?";
+    }
+
+    const first = words[0].charAt(0);
+
+    const last = words.length > 1 ? words[words.length - 1].charAt(0) : "";
+
+    return (first + last).toUpperCase();
 
 }
 
@@ -274,9 +329,8 @@ function fillStoreOptions(select, leadingOptions, stores, extraOptions) {
 
 
 /*
- * Bộ lọc chi nhánh của các trang còn dùng DỮ LIỆU MẪU (Tổng quan, Báo cáo, Bảo
- * hành, Hỗ trợ): dùng 3 chi nhánh mẫu CN01–CN03 của mock-staff-data.js cho tới phase
- * thay các trang đó. Nhân viên thật có chi nhánh thật nên không khớp dữ liệu mẫu nào.
+ * Bộ lọc chi nhánh của trang còn dùng DỮ LIỆU MẪU (chỉ còn "Hỗ trợ khách hàng", chưa có
+ * backend): 3 chi nhánh mẫu CN01–CN03 của mock-staff-data.js (chỉ trang đó nạp file này).
  */
 
 function setupMockStoreFilter(select, staff, extraOptions) {
@@ -364,6 +418,19 @@ function bindStatusSelects(container, onChange) {
         });
 
     });
+
+}
+
+
+/* Dòng đang tải dạng khung xương cho bảng */
+
+function adminSkeletonRow(colspan) {
+
+    return `
+        <tr>
+            <td colspan="${colspan}"><span class="admin-skeleton"></span><span class="admin-skeleton"></span></td>
+        </tr>
+    `;
 
 }
 

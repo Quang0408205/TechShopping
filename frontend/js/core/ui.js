@@ -338,7 +338,10 @@ function getDisplayPrice(product) {
  * thay thế (bindProductImageFallbacks).
  */
 
-/* "★ 4.5 (12)" từ đánh giá thật; chưa có thì "★ 4.6 (1.234 trên TGDĐ)"; không có cả hai → rỗng */
+/*
+ * "★ 4.5 (12)" từ đánh giá thật; chưa có thì điểm crawl ghi rõ là tham khảo
+ * "★ 4.6 · 1.234 đánh giá tham khảo" (kiemthu GĐ6); không có cả hai → rỗng
+ */
 
 function productCardRatingHtml(product) {
 
@@ -348,16 +351,24 @@ function productCardRatingHtml(product) {
         return "";
     }
 
-    const tgdd = rating.source === "tgdd";
+    const score = escapeHtml(rating.rating.toFixed(1));
 
-    const title = tgdd
-        ? "Đánh giá trên Thế Giới Di Động"
-        : rating.count + " đánh giá trên POY";
+    const count = escapeHtml(rating.count.toLocaleString("vi-VN"));
+
+    if (rating.source === "tgdd") {
+
+        return `
+            <p class="product-rating product-rating--tgdd" title="Nguồn: dữ liệu tham khảo bên ngoài">
+                ★ ${score} · ${count} đánh giá tham khảo
+            </p>
+        `;
+
+    }
 
     return `
-        <p class="product-rating${tgdd ? " product-rating--tgdd" : ""}" title="${escapeHtml(title)}">
-            ★ ${escapeHtml(rating.rating.toFixed(1))}
-            <span>(${escapeHtml(rating.count.toLocaleString("vi-VN"))}${tgdd ? " trên TGDĐ" : ""})</span>
+        <p class="product-rating" title="${escapeHtml(rating.count + " đánh giá trên POY")}">
+            ★ ${score}
+            <span>(${count})</span>
         </p>
     `;
 
@@ -683,6 +694,90 @@ function closeModal() {
         modalOverlayElement = null;
 
     }
+
+}
+
+
+/*
+ * Hộp thoại hiện MỘT LẦN một giá trị bí mật (mật khẩu tạm của nhân viên mới), có nút sao chép.
+ * Cố ý không đóng khi bấm ra ngoài: đóng rồi thì không xem lại được.
+ * options: { title, message, label, secret, doneLabel, onClose }
+ */
+
+function openSecretModal(options) {
+
+    closeModal();
+
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "modal-overlay";
+
+    overlay.innerHTML = `
+        <div class="modal-box modal-secret" role="dialog" aria-modal="true">
+            <h3>${escapeHtml(options.title || "Thông tin quan trọng")}</h3>
+            <p>${escapeHtml(options.message || "")}</p>
+            <div class="modal-secret-row">
+                <span class="modal-secret-label">${escapeHtml(options.label || "")}</span>
+                <code class="modal-secret-value" id="secretValue">${escapeHtml(options.secret || "")}</code>
+                <button type="button" class="btn btn-outline-dark" id="secretCopyBtn">SAO CHÉP</button>
+            </div>
+            <p class="modal-secret-warning">Mật khẩu này chỉ hiện một lần. Đóng hộp thoại là không xem lại được.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-dark" id="secretDoneBtn">${escapeHtml(options.doneLabel || "Đã ghi lại")}</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    modalOverlayElement = overlay;
+
+
+    const copyButton = overlay.querySelector("#secretCopyBtn");
+
+    copyButton.addEventListener("click", async function () {
+
+        try {
+
+            await navigator.clipboard.writeText(options.secret || "");
+
+            copyButton.textContent = "ĐÃ SAO CHÉP";
+
+        } catch (error) {
+
+            /* Không có quyền clipboard: chọn sẵn chữ để người dùng tự Ctrl+C */
+            const range = document.createRange();
+
+            range.selectNodeContents(overlay.querySelector("#secretValue"));
+
+            const selection = window.getSelection();
+
+            selection.removeAllRanges();
+
+            selection.addRange(range);
+
+            copyButton.textContent = "ĐÃ CHỌN, NHẤN CTRL+C";
+
+        }
+
+    });
+
+    overlay.querySelector("#secretDoneBtn").addEventListener("click", function () {
+
+        closeModal();
+
+        if (typeof options.onClose === "function") {
+            options.onClose();
+        }
+
+    });
+
+    overlay.querySelector("#secretDoneBtn").focus();
+
+    requestAnimationFrame(function () {
+        overlay.classList.add("show");
+    });
 
 }
 

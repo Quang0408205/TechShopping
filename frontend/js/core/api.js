@@ -376,6 +376,34 @@ async function apiRequest(path, options) {
 }
 
 
+/*
+ * Tải một file (vd. báo cáo Excel) bằng GET có token, làm mới token 1 lần nếu hết hạn.
+ * Thành công → Blob; lỗi (JSON ApiResult của backend) → ném ApiError như apiRequest.
+ */
+
+async function apiDownload(path) {
+
+    let response = await sendRequest(path, "GET", undefined, true);
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshTokens();
+
+        if (refreshed) {
+            response = await sendRequest(path, "GET", undefined, true);
+        }
+
+    }
+
+    if (!response.ok) {
+        return readApiResult(response);
+    }
+
+    return response.blob();
+
+}
+
+
 async function sendRequest(path, method, body, useAuth) {
 
     const headers = {};

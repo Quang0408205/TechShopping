@@ -132,13 +132,13 @@ class AdminEmployeeApiIntegrationTest {
     void create_assign_move_unassign_andTheStaffSeesTheirStore() throws Exception {
         JsonNode created = data(send(post(URL), adminToken, Map.of(
                 "userId", staffId, "employeeCode", " ZZNV01 ", "position", "Bán hàng",
-                "storeId", storeA.getId(), "positionAtStore", "Quản lý chi nhánh"))
+                "storeId", storeA.getId(), "positionAtStore", "Thu ngân"))
                 .andExpect(status().isCreated()));
         long id = created.get("id").asLong();
         assertThat(created.get("username").asString()).isEqualTo("nv.staff");
         assertThat(created.get("employeeCode").asString()).isEqualTo("ZZNV01");
         assertThat(created.get("assignment").get("storeId").asInt()).isEqualTo(storeA.getId());
-        assertThat(created.get("assignment").get("positionAtStore").asString()).isEqualTo("Quản lý chi nhánh");
+        assertThat(created.get("assignment").get("positionAtStore").asString()).isEqualTo("Thu ngân");
 
         JsonNode mine = data(send(get(ME_URL), staffToken, null).andExpect(status().isOk()));
         assertThat(mine.get("id").asLong()).isEqualTo(id);
@@ -189,8 +189,8 @@ class AdminEmployeeApiIntegrationTest {
     @Test
     void invalidRequests() throws Exception {
         send(post(URL), adminToken, Map.of("userId", customerId))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error.details.userId").exists());
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("CUSTOMER_ACCOUNT_NOT_ELIGIBLE"));
         send(post(URL), adminToken, Map.of("userId", -1))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.details.userId").exists());
@@ -220,6 +220,38 @@ class AdminEmployeeApiIntegrationTest {
         send(get(URL + "/-1"), adminToken, null)
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error.code").value("EMPLOYEE_NOT_FOUND"));
+    }
+
+    @Test
+    void managerRole_isTheSourceOfTruth_forTheLabel_theMove_andTheUnassign() throws Exception {
+        long id = createEmployee(staffId, storeA);
+        // the label alone never makes a manager
+        send(post(URL + "/" + id + "/assignment"), adminToken,
+                Map.of("storeId", storeA.getId(), "positionAtStore", "Quản lý chi nhánh"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.positionAtStore").exists());
+
+        send(put("/api/v1/admin/users/" + staffId + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isOk());
+        // a manager keeps the manager label wherever they are moved
+        JsonNode moved = data(send(post(URL + "/" + id + "/assignment"), adminToken,
+                Map.of("storeId", storeB.getId(), "positionAtStore", "Thu ngân")).andExpect(status().isOk()));
+        assertThat(moved.get("assignment").get("positionAtStore").asString()).isEqualTo("Quản lý chi nhánh");
+
+        // one manager per store: a second manager cannot be moved into storeB
+        String otherToken = registerWithRole("nv.manager2", "STAFF");
+        assertThat(otherToken).isNotBlank();
+        Long otherId = userRepository.findByUsername("nv.manager2").orElseThrow().getId();
+        long otherEmployee = createEmployee(otherId, storeA);
+        send(put("/api/v1/admin/users/" + otherId + "/roles"), adminToken, Map.of("roles", List.of("BRANCH_MANAGER")))
+                .andExpect(status().isOk());
+        send(post(URL + "/" + otherEmployee + "/assignment"), adminToken, Map.of("storeId", storeB.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("STORE_ALREADY_HAS_MANAGER"));
+
+        // without a store a manager is staff again
+        send(delete(URL + "/" + id + "/assignment"), adminToken, null).andExpect(status().isOk());
+        assertThat(userRoleRepository.findRoleNamesByUserId(staffId)).containsExactly("STAFF");
     }
 
     private long createEmployee(Long userId, Store store) throws Exception {
@@ -264,6 +296,8 @@ class AdminEmployeeApiIntegrationTest {
     /** Registers, adds the role in the DB, then logs in again so the access token carries it. */
     private String registerWithRole(String username, String role) throws Exception {
         Long id = register(username).get("user").get("id").asLong();
+        // internal accounts hold one role only (never CUSTOMER)
+        userRoleRepository.deleteAll(userRoleRepository.findAllByIdUserId(id));
         userRoleRepository.save(new UserRole(userRepository.getReferenceById(id),
                 roleRepository.findByName(role).orElseThrow()));
         entityManager.flush();

@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/admin/installments")
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('STAFF', 'ADMIN')")
+@PreAuthorize("hasAnyRole('STAFF', 'BRANCH_MANAGER', 'ADMIN')")
 @Tag(name = "Admin - Installments", description = "Installment plans and their periods (STAFF and ADMIN)")
 @ApiResponses({
         @ApiResponse(responseCode = "401", description = "UNAUTHORIZED, INVALID_TOKEN"),

@@ -115,6 +115,13 @@ public enum ErrorCode {
     EMPLOYEE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản này đã có hồ sơ nhân viên"),
     DUPLICATE_EMPLOYEE_CODE(HttpStatus.CONFLICT, "Mã nhân viên đã được dùng"),
     NO_ACTIVE_STORE_ASSIGNMENT(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được gán vào chi nhánh nào"),
+    ROLE_NOT_ASSIGNABLE(HttpStatus.BAD_REQUEST,
+            "Chỉ được phân quyền Nhân viên chi nhánh hoặc Quản lý chi nhánh"),
+    CUSTOMER_ACCOUNT_NOT_ELIGIBLE(HttpStatus.CONFLICT,
+            "Tài khoản khách hàng không thể chuyển thành tài khoản nội bộ – hãy tuyển nhân viên mới"),
+    STORE_ALREADY_HAS_MANAGER(HttpStatus.CONFLICT, "Chi nhánh này đã có quản lý"),
+    MANAGER_REQUIRES_ASSIGNMENT(HttpStatus.BAD_REQUEST,
+            "Quản lý chi nhánh phải đang được gán vào một chi nhánh"),
     ADMIN_READ_ONLY(HttpStatus.FORBIDDEN,
             "Quản trị viên chỉ xem và điều phối; việc xử lý do nhân viên của chi nhánh thực hiện"),
 
@@ -132,7 +139,12 @@ public enum ErrorCode {
     WARRANTY_NOT_VALID(HttpStatus.CONFLICT, "Sản phẩm không còn bảo hành; bạn có thể gửi yêu cầu bảo trì"),
     SERVICE_REQUEST_ALREADY_OPEN(HttpStatus.CONFLICT, "Sản phẩm này đang có một yêu cầu chưa xử lý xong"),
     RETURN_NOT_AVAILABLE(HttpStatus.CONFLICT, "Đơn hàng không trả hàng được"),
-    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này");
+    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này"),
+
+    // Contact form (kiemthu GĐ7)
+    CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn liên hệ"),
+    INVALID_CONTACT_STATUS(HttpStatus.CONFLICT, "Tin nhắn đã xử lý không quay lại trạng thái Mới được"),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau");
 
     private final HttpStatus status;
     private final String defaultMessage;

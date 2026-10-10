@@ -66,3 +66,9 @@ app:
   sales:
     # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
     commission-rate: ${SALES_COMMISSION_RATE:0.01}
+  contact:
+    # Contact form: at most per-ip sends per client IP and per-email per email address in each window (Redis)
+    rate-limit:
+      per-ip: ${CONTACT_LIMIT_PER_IP:10}
+      per-email: ${CONTACT_LIMIT_PER_EMAIL:3}
+      window: 1h

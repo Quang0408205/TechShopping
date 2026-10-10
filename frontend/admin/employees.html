@@ -15,16 +15,17 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
-<body class="admin-body" data-page-title="Nhân viên" data-roles="ADMIN">
+<body class="admin-body" data-page-title="Nhân viên" data-roles="BRANCH_MANAGER,ADMIN">
 
 
 <div class="admin-shell">
@@ -39,11 +40,10 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (/api/v1/admin/employees). Hồ sơ nhân viên gắn với một tài khoản đã có quyền
-                <strong>Nhân viên (STAFF)</strong>: cấp quyền ở trang Người dùng trước. Nhân viên chỉ thấy đơn hàng,
-                trả góp và tồn kho của chi nhánh đang được gán; vị trí "Quản lý chi nhánh" được xem thêm trang Báo cáo.
-                Chuyển chi nhánh giữ lại lịch sử; đánh dấu "Đã nghỉ" tự kết thúc phân công.
+            <p class="admin-mock-note admin-live-note" id="employeeNote">
+                Dữ liệu thật. <strong>Tuyển nhân sự</strong> tạo một tài khoản mới (không chuyển tài khoản khách hàng):
+                hệ thống đặt mật khẩu tạm và chỉ hiện nó một lần. Nhân viên chỉ thấy đơn hàng, trả góp và tồn kho của
+                chi nhánh đang được gán; Quản lý chi nhánh được xem thêm Báo cáo.
             </p>
 
 
@@ -53,7 +53,7 @@
 
                     <input type="search" id="employeeKeyword" placeholder="Tên, email, tên đăng nhập, SĐT, mã NV…" maxlength="255" aria-label="Từ khoá">
 
-                    <!-- js/admin/employees.js nạp danh sách chi nhánh thật -->
+                    <!-- js/admin/employees.js nạp danh sách chi nhánh thật (chỉ ADMIN; quản lý chi nhánh chỉ có chi nhánh mình) -->
                     <select id="storeFilter" aria-label="Chi nhánh"></select>
 
                     <select id="employeeStatusFilter" aria-label="Trạng thái">
@@ -67,7 +67,7 @@
                 </form>
 
                 <button type="button" class="btn btn-dark" id="newEmployeeBtn">
-                    + THÊM NHÂN VIÊN
+                    + TUYỂN NHÂN SỰ
                 </button>
 
             </div>
@@ -77,7 +77,7 @@
             <section class="admin-panel" id="employeeFormPanel" hidden>
 
                 <div class="admin-panel-header">
-                    <h2 id="employeeFormTitle">Thêm nhân viên</h2>
+                    <h2 id="employeeFormTitle">Tuyển nhân sự</h2>
                 </div>
 
                 <form id="employeeForm" novalidate>
@@ -86,11 +86,39 @@
 
                     <div class="admin-form-grid">
 
-                        <!-- Chỉ khi thêm: tài khoản STAFF chưa có hồ sơ -->
-                        <div class="admin-field admin-field-wide" id="empUserField">
-                            <label for="empUserId">Tài khoản nhân viên *</label>
-                            <select id="empUserId"></select>
-                            <p class="admin-field-hint" id="empUserHint"></p>
+                        <!-- Chỉ khi tuyển: tài khoản mới (data-hire-only) -->
+                        <div class="admin-field" data-hire-only>
+                            <label for="empFullname">Họ tên *</label>
+                            <input type="text" id="empFullname" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empEmail">Email *</label>
+                            <input type="email" id="empEmail" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empUsername">Tên đăng nhập *</label>
+                            <input type="text" id="empUsername" minlength="3" maxlength="50" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empPhone">Số điện thoại</label>
+                            <input type="tel" id="empPhone" maxlength="20" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empPassword">Mật khẩu tạm</label>
+                            <input type="text" id="empPassword" maxlength="72" autocomplete="off" placeholder="Để trống = hệ thống tự sinh">
+                        </div>
+
+                        <!-- Chỉ ADMIN khi tuyển: vai trò -->
+                        <div class="admin-field" data-hire-only data-admin-only>
+                            <label for="empRole">Vai trò *</label>
+                            <select id="empRole">
+                                <option value="STAFF">Nhân viên chi nhánh</option>
+                                <option value="BRANCH_MANAGER">Quản lý chi nhánh</option>
+                            </select>
                         </div>
 
                         <!-- Chỉ khi sửa -->
@@ -124,14 +152,15 @@
                             <input type="date" id="empHiringDate">
                         </div>
 
-                        <!-- Chỉ khi thêm: gán chi nhánh ngay (tuỳ chọn) -->
-                        <div class="admin-field" id="empStoreField">
-                            <label for="empStoreId">Chi nhánh</label>
+                        <!-- Chỉ ADMIN khi tuyển: chi nhánh (quản lý chi nhánh luôn tuyển vào chi nhánh của mình) -->
+                        <div class="admin-field" id="empStoreField" data-admin-only>
+                            <label for="empStoreId">Chi nhánh *</label>
                             <select id="empStoreId"></select>
                         </div>
 
+                        <!-- Chức danh hiển thị tại chi nhánh (quản lý luôn là "Quản lý chi nhánh") -->
                         <div class="admin-field" id="empStorePositionField">
-                            <label for="empStorePosition">Vị trí tại chi nhánh</label>
+                            <label for="empStorePosition">Chức danh tại chi nhánh</label>
                             <select id="empStorePosition"></select>
                         </div>
 
@@ -208,7 +237,7 @@
                             <tr>
                                 <th>Nhân viên</th>
                                 <th>Liên hệ</th>
-                                <th>Chi nhánh</th>
+                                <th id="employeeStoreHeader">Chi nhánh</th>
                                 <th>Chức danh</th>
                                 <th>Ngày vào làm</th>
                                 <th>Trạng thái</th>
@@ -233,7 +262,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
 <script src="../js/admin/employees.js"></script>

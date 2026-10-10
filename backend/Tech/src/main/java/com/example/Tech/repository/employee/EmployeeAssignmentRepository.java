@@ -39,4 +39,24 @@ public interface EmployeeAssignmentRepository extends JpaRepository<EmployeeAssi
     Optional<EmployeeAssignment> findActiveWithStoreByUserId(@Param("userId") Long userId);
 
     boolean existsByStoreId(Integer storeId);
+
+    /** Employees currently working at the store (open assignment, profile not marked as left). */
+    @Query("""
+            select count(ea) from EmployeeAssignment ea
+            where ea.store.id = :storeId and ea.active = true and ea.endDate is null
+              and (ea.employee.active is null or ea.employee.active = true)
+            """)
+    long countWorkingEmployees(@Param("storeId") Integer storeId);
+
+    /** Enabled accounts holding BRANCH_MANAGER with a current assignment at the store (normally 0 or 1). */
+    @Query("""
+            select ea.employee.user.id from EmployeeAssignment ea
+            where ea.store.id = :storeId and ea.active = true and ea.endDate is null
+              and (ea.employee.active is null or ea.employee.active = true)
+              and ea.employee.user.deletedAt is null
+              and (ea.employee.user.active is null or ea.employee.user.active = true)
+              and exists (select 1 from UserRole ur where ur.id.userId = ea.employee.user.id
+                          and ur.role.name = 'BRANCH_MANAGER')
+            """)
+    List<Long> findActiveManagerUserIds(@Param("storeId") Integer storeId);
 }

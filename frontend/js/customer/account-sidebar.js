@@ -2,7 +2,8 @@
 
 /*
  * Lấy từ bản frontend mới. Trang đánh dấu mục đang mở bằng
- * <body data-account-page="profile|address|orders|wishlist|viewed">.
+ * <body data-account-page="profile|security|address|orders|service-requests"> (trang Tài khoản đổi giá trị theo
+ * hash #profile / #security / #address, xem account.js). "Yêu thích" / "Đã xem" bỏ khỏi menu tới khi có API.
  * Tên / email lấy từ phiên đăng nhập (poy_auth) nên phải escape.
  * Mục "Đơn hàng" trỏ tới customer/orders.html (F2).
  */
@@ -61,14 +62,21 @@ function renderAccountSidebar() {
         <aside class="account-sidebar">
 
             <div class="account-sidebar-user">
-                <strong>${escapeHtml(user.fullname || user.username || "Tài khoản")}</strong>
-                <span>${escapeHtml(user.email || "")}</span>
+                ${userAvatarHtml(user, "user-avatar")}
+                <span class="account-sidebar-text">
+                    <strong>${escapeHtml(user.fullname || user.username || "Tài khoản")}</strong>
+                    <span>${escapeHtml(user.email || "")}</span>
+                </span>
             </div>
 
             <nav class="account-nav">
 
-                <a href="${escapeHtml(siteUrl("customer/account.html"))}" data-account-page="profile">
-                    Thông tin cá nhân
+                <a href="${escapeHtml(siteUrl("customer/account.html#profile"))}" data-account-page="profile">
+                    Hồ sơ
+                </a>
+
+                <a href="${escapeHtml(siteUrl("customer/account.html#security"))}" data-account-page="security">
+                    Bảo mật
                 </a>
 
                 <a href="${escapeHtml(siteUrl("customer/account.html#address"))}" data-account-page="address">
@@ -81,14 +89,6 @@ function renderAccountSidebar() {
 
                 <a href="${escapeHtml(siteUrl("customer/service-requests.html"))}" data-account-page="service-requests">
                     Yêu cầu dịch vụ
-                </a>
-
-                <a href="${escapeHtml(siteUrl("customer/account.html#wishlist"))}" data-account-page="wishlist">
-                    Yêu thích
-                </a>
-
-                <a href="${escapeHtml(siteUrl("customer/account.html#viewed"))}" data-account-page="viewed">
-                    Đã xem
                 </a>
 
                 <a href="#" id="sidebarLogoutBtn" data-account-page="logout" class="account-nav-logout">

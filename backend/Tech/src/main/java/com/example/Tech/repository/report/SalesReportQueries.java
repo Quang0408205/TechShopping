@@ -56,6 +56,11 @@ public class SalesReportQueries {
                                 BigDecimal revenue) {
     }
 
+    /** One delivered order for the export; refunded = every refunded return of the order (any date). */
+    public record DeliveredOrder(Long orderId, LocalDateTime deliveredAt, String storeName, String customer,
+                                 String confirmedBy, String paymentMethod, BigDecimal total, BigDecimal refunded) {
+    }
+
     public Totals delivered(LocalDateTime from, LocalDateTime to, Integer storeId) {
         return jdbc.queryForObject("select count(*) n, coalesce(sum(o.total_amount), 0) revenue, "
                         + "coalesce(sum(o.shipping_cost), 0) shipping from orders o where" + DELIVERED + store(storeId),
@@ -177,6 +182,22 @@ public class SalesReportQueries {
                         rs.getString("category_name"), rs.getLong("units"), rs.getBigDecimal("revenue")));
     }
 
+    /** Delivered orders of the period, oldest first, at most {@code limit} rows. */
+    public List<DeliveredOrder> deliveredOrders(LocalDateTime from, LocalDateTime to, Integer storeId, int limit) {
+        MapSqlParameterSource params = params(from, to, storeId).addValue("limit", limit);
+        return jdbc.query("select o.order_id, o.delivered_at, s.name store_name, coalesce(u.fullname, o.recipient_name) customer, "
+                        + "eu.fullname confirmed_by, o.payment_method, o.total_amount, "
+                        + "coalesce((select sum(rr.refund_amount) from return_requests rr "
+                        + "where rr.order_id = o.order_id and rr.status = 'REFUNDED'), 0) refunded "
+                        + "from orders o left join stores s on s.store_id = o.store_id left join users u on u.user_id = o.user_id "
+                        + "left join sales_records sr on sr.order_id = o.order_id "
+                        + "left join employees e on e.employee_id = sr.employee_id left join users eu on eu.user_id = e.user_id "
+                        + "where" + DELIVERED + store(storeId) + " order by o.delivered_at, o.order_id limit :limit",
+                params, (rs, i) -> new DeliveredOrder(rs.getLong("order_id"), rs.getObject("delivered_at", LocalDateTime.class),
+                        rs.getString("store_name"), rs.getString("customer"), rs.getString("confirmed_by"),
+                        rs.getString("payment_method"), rs.getBigDecimal("total_amount"), rs.getBigDecimal("refunded")));
+    }
+
     /** Orders per status, for the given statuses (store null = every order). */
     public Map<String, Long> orderCountsByStatus(List<String> statuses, Integer storeId) {
         MapSqlParameterSource params = new MapSqlParameterSource("statuses", statuses).addValue("storeId", storeId);
@@ -190,6 +211,13 @@ public class SalesReportQueries {
         Long n = jdbc.queryForObject("select count(*) from service_requests_view o "
                         + "where o.status not in ('COMPLETED', 'REFUNDED', 'REJECTED', 'CANCELLED')" + store(storeId),
                 new MapSqlParameterSource("storeId", storeId), Long.class);
+        return n == null ? 0 : n;
+    }
+
+    /** Contact messages not resolved yet: one inbox for every store (kiemthu GĐ7). */
+    public long openContactRequests() {
+        Long n = jdbc.queryForObject("select count(*) from contact_requests where status <> 'RESOLVED'",
+                Map.of(), Long.class);
         return n == null ? 0 : n;
     }
 

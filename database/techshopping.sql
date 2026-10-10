@@ -545,6 +545,23 @@ create table support_tickets (
     updated_at timestamp default current_timestamp
 );
 
+-- bảng contact_requests: tin nhắn form Liên hệ (khách có thể chưa đăng nhập); nhân viên / quản lý chi nhánh xử lý
+create table contact_requests (
+    contact_request_id bigserial primary key,
+    user_id bigint references users(user_id),
+    full_name varchar(100) not null,
+    email varchar(255) not null,
+    phone varchar(20),
+    topic varchar(30) not null,
+    message text not null,
+    status varchar(20) not null default 'NEW',
+    staff_note text,
+    handled_by bigint references users(user_id),
+    handled_at timestamp,
+    created_at timestamp default current_timestamp,
+    updated_at timestamp default current_timestamp
+);
+
 -- =====================================================
 -- nhóm 9: khuyến mãi
 -- =====================================================
@@ -674,6 +691,8 @@ create unique index uq_service_request_images_return
 create index idx_chat_sessions_user_id on chat_sessions(user_id);
 create index idx_chat_sessions_status on chat_sessions(status);
 create index idx_chat_messages_session_id on chat_messages(session_id);
+create index idx_contact_requests_status_created on contact_requests(status, created_at);
+create index idx_contact_requests_user on contact_requests(user_id);
 
 -- employee indexes
 create index idx_employee_assignments_employee_id on employee_assignments(employee_id);
@@ -763,6 +782,13 @@ alter table return_items add constraint chk_return_items_quantity check (quantit
 alter table return_items add constraint uq_return_items_request_item unique (return_request_id, order_item_id);
 alter table sales_records add constraint chk_sales_records_amounts
     check (sales_amount >= 0 and (commission is null or commission >= 0));
+alter table contact_requests add constraint chk_contact_requests_topic
+    check (topic in ('ORDER', 'PRODUCT', 'AFTER_SALES', 'PAYMENT', 'OTHER'));
+alter table contact_requests add constraint chk_contact_requests_status check (status in ('NEW', 'IN_PROGRESS', 'RESOLVED'));
+alter table contact_requests add constraint chk_contact_requests_message_length
+    check (char_length(message) between 10 and 2000);
+alter table contact_requests add constraint chk_contact_requests_resolved_note
+    check (status <> 'RESOLVED' or staff_note is not null);
 
 -- =====================================================
 -- tạo các view hữu ích

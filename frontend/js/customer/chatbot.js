@@ -1,15 +1,12 @@
 /*
- * WIDGET CHATBOT NỔI (FLOATING WIDGET) — HOÀN TOÀN TÁCH BIỆT VỚI TRANG KHUYẾN NGHỊ.
+ * "TRỢ LÝ TRA CỨU NHANH" NỔI Ở GÓC TRANG — KHÔNG PHẢI AI (kiemthu GĐ7).
  *
- * Đây là một widget hỗ trợ khách hàng dạng câu hỏi thường gặp (FAQ), KHÔNG PHẢI
- * hệ thống khuyến nghị sản phẩm và không dùng chung dữ liệu/giao diện với
- * customer/recommendation.html. Widget này tự chèn HTML của nó vào <body> và
- * hoạt động trên MỌI TRANG (được nạp cuối, sau js/core/main.js).
- *
- * Câu trả lời hiện là các câu trả lời dựng sẵn (canned response) theo từ khóa,
- * hiển thị rõ ràng là trợ lý tự động — KHÔNG giả vờ là con người hay AI thật.
- * CHỜ BACKEND: khi có dịch vụ chatbot thật, thay hàm getBotReply() bằng
- * apiRequest("/chatbot/messages", { method: "POST", body: { message } }).
+ * Tách biệt với trang khuyến nghị; tự chèn HTML vào <body> trên mọi trang khách (nạp cuối, sau main.js).
+ * Trả lời theo từ khoá:
+ *   - chính sách: viết theo đúng backend (ShippingPolicy, AfterSalesServiceImpl 7 ngày, InstallmentPolicy);
+ *   - đơn hàng: link "Đơn hàng của tôi" (chưa đăng nhập → đăng nhập rồi quay lại);
+ *   - còn lại: tìm sản phẩm thật GET /products?isActive=true&keyword=…&size=3.
+ * Chatbot AI thật làm ở Phase 9 (AI_Service).
  */
 
 document.addEventListener(
@@ -26,58 +23,101 @@ document.addEventListener(
 );
 
 
-const CHATBOT_FAQ = [
+const CHATBOT_SEARCH_SIZE = 3;
+
+const CHATBOT_KEYWORD_MAX = 100;
+
+
+/* Từ khoá so khớp sau khi bỏ dấu + chữ thường (chatbotNormalize) */
+
+const CHATBOT_TOPICS = [
     {
-        keywords: ["giao hàng", "ship", "vận chuyển", "bao lâu"],
-        reply: "Đơn hàng thường được giao trong 2-4 ngày làm việc. Miễn phí vận chuyển cho đơn từ 10.000.000đ."
+        keywords: ["giao hang", "ship", "van chuyen", "phi giao", "nhan tai cua hang"],
+        reply: function () {
+            return {
+                text: "Giao tận nhà: phí 30.000đ, miễn phí cho đơn từ 10.000.000đ. " +
+                    "Nhận tại cửa hàng: miễn phí, chọn cửa hàng ở bước thanh toán.",
+                links: [["Xem cửa hàng ở trang Dịch vụ", "customer/services.html"]]
+            };
+        }
     },
     {
-        keywords: ["đổi trả", "hoàn tiền", "trả hàng"],
-        reply: "Bạn có thể đổi trả sản phẩm trong vòng 7 ngày kể từ khi nhận hàng, với điều kiện sản phẩm còn nguyên vẹn."
+        keywords: ["tra hang", "doi tra", "hoan tien", "doi hang", "doi san pham"],
+        reply: function () {
+            return {
+                text: "POY nhận trả hàng hoàn tiền trong 7 ngày kể từ khi nhận hàng, với mọi lý do; " +
+                    "hoàn theo giá bạn đã trả, không gồm phí giao hàng. Muốn đổi sản phẩm khác: trả hàng rồi đặt đơn mới. " +
+                    "Đơn trả góp vui lòng liên hệ cửa hàng. Gửi yêu cầu ở trang chi tiết đơn đã giao.",
+                links: [["Chính sách trả hàng", "customer/services.html#chinh-sach-doi-tra"]]
+            };
+        }
     },
     {
-        keywords: ["bảo hành"],
-        reply: "Sản phẩm được bảo hành chính hãng từ 12-24 tháng tùy loại. Bạn có thể xem chi tiết ở trang Dịch vụ."
+        keywords: ["bao hanh", "bao tri", "sua chua", "loi may"],
+        reply: function () {
+            return {
+                text: "Thời hạn bảo hành ghi ở trang chi tiết từng sản phẩm. Còn hạn: gửi yêu cầu bảo hành ở chi tiết đơn đã giao, " +
+                    "sửa miễn phí tại chi nhánh bán hàng. Hết hạn vẫn gửi được yêu cầu bảo trì (có thể mất phí).",
+                links: [["Yêu cầu dịch vụ của tôi", "customer/service-requests.html"]]
+            };
+        }
     },
     {
-        keywords: ["thanh toán", "trả góp", "cod"],
-        reply: "POY hỗ trợ thanh toán khi nhận hàng (COD), chuyển khoản ngân hàng và trả góp qua thẻ tín dụng."
+        keywords: ["tra gop", "thanh toan", "cod", "chuyen khoan", "the tin dung", "qr"],
+        reply: function () {
+            return {
+                text: "POY nhận thanh toán khi nhận hàng (COD), chuyển khoản (mã QR hiện ở trang đơn hàng) và trả góp 0% " +
+                    "kỳ hạn 3, 6, 9 hoặc 12 tháng cho đơn từ 3.000.000đ (nhập CCCD và ngân hàng phát hành thẻ, cửa hàng duyệt hồ sơ).",
+                links: [["Hỏi đáp thanh toán", "customer/services.html"]]
+            };
+        }
     },
     {
-        keywords: ["giờ", "hotline", "liên hệ", "hỗ trợ"],
-        reply: "Tổng đài 1900 0000 hỗ trợ từ 08:00 - 22:00 mỗi ngày. Bạn cũng có thể gửi yêu cầu ở trang Liên hệ."
+        keywords: ["don hang", "don cua toi", "tinh trang", "theo doi", "tra cuu don", "huy don"],
+        reply: function () {
+            const loggedIn = typeof isLoggedIn === "function" && isLoggedIn();
+            return loggedIn
+                ? { text: "Xem tình trạng, huỷ đơn chờ xác nhận hoặc gửi bảo hành / trả hàng ở Đơn hàng của tôi.", links: [["Đơn hàng của tôi", "customer/orders.html"]] }
+                : { text: "Bạn đăng nhập để xem đơn hàng của mình nhé.", links: [["Đăng nhập", "auth/login.html?redirect=" + encodeURIComponent("customer/orders.html")]] };
+        }
     },
     {
-        keywords: ["đơn hàng", "tình trạng", "theo dõi"],
-        reply: "Bạn có thể theo dõi tình trạng đơn hàng tại mục \"Đơn hàng\" trong trang Tài khoản."
+        keywords: ["lien he", "hotline", "nhan vien", "tu van", "ho tro", "khieu nai"],
+        reply: function () {
+            return {
+                text: "Bạn gửi câu hỏi ở trang Liên hệ, nhân viên POY sẽ trả lời qua email hoặc điện thoại bạn để lại.",
+                links: [["Gửi tin nhắn cho POY", "customer/contact.html"]]
+            };
+        }
     }
 ];
 
 
-function getBotReply(message) {
+const CHATBOT_QUICK_REPLIES = [
+    "Phí giao hàng?",
+    "Trả hàng thế nào?",
+    "Mua trả góp?",
+    "Tra cứu đơn hàng"
+];
 
-    const text = message.toLowerCase();
 
-    const match = CHATBOT_FAQ.find(function (entry) {
-        return entry.keywords.some(function (keyword) { return text.includes(keyword); });
-    });
+function chatbotNormalize(text) {
 
-    if (match) {
-        return match.reply;
-    }
-
-    return "Cảm ơn bạn đã nhắn tin. Đây là trợ lý hỗ trợ tự động với câu trả lời dựng sẵn — " +
-        "với câu hỏi này, đội ngũ chăm sóc khách hàng sẽ cần hỗ trợ trực tiếp qua " +
-        "trang Liên hệ hoặc hotline 1900 0000.";
+    return text.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
+        .toLowerCase().replace(/\s+/g, " ").trim();
 
 }
 
 
-const CHATBOT_QUICK_REPLIES = [
-    "Thời gian giao hàng?",
-    "Chính sách đổi trả?",
-    "Phương thức thanh toán?"
-];
+function findChatbotTopic(message) {
+
+    const text = chatbotNormalize(message);
+
+    return CHATBOT_TOPICS.find(function (topic) {
+        return topic.keywords.some(function (keyword) { return text.includes(keyword); });
+    }) || null;
+
+}
 
 
 function injectChatbotWidget() {
@@ -93,21 +133,21 @@ function injectChatbotWidget() {
 
     widget.innerHTML = `
 
-        <button type="button" class="chatbot-launcher" id="chatbotLauncher" aria-label="Mở hỗ trợ trực tuyến">
+        <button type="button" class="chatbot-launcher" id="chatbotLauncher" aria-label="Mở trợ lý tra cứu nhanh">
             💬
         </button>
 
-        <div class="chatbot-panel" id="chatbotPanel" hidden>
+        <div class="chatbot-panel" id="chatbotPanel" role="dialog" aria-label="Trợ lý tra cứu nhanh" hidden>
 
             <div class="chatbot-header">
                 <div>
-                    <strong>Hỗ trợ trực tuyến</strong>
-                    <span>Trợ lý tự động - phản hồi tức thì</span>
+                    <strong>Trợ lý tra cứu nhanh</strong>
+                    <span>Tra cứu theo từ khoá · không phải AI</span>
                 </div>
                 <button type="button" class="chatbot-close" id="chatbotClose" aria-label="Đóng">✕</button>
             </div>
 
-            <div class="chatbot-messages" id="chatbotMessages"></div>
+            <div class="chatbot-messages" id="chatbotMessages" aria-live="polite"></div>
 
             <div class="chatbot-quick-replies" id="chatbotQuickReplies"></div>
 
@@ -115,7 +155,8 @@ function injectChatbotWidget() {
                 <input
                     type="text"
                     id="chatbotInput"
-                    placeholder="Nhập câu hỏi của bạn..."
+                    placeholder="Hỏi chính sách hoặc gõ tên sản phẩm..."
+                    aria-label="Câu hỏi hoặc tên sản phẩm"
                     maxlength="300"
                     autocomplete="off"
                 >
@@ -136,9 +177,9 @@ function injectChatbotWidget() {
     const input = document.getElementById("chatbotInput");
     const messages = document.getElementById("chatbotMessages");
 
-
     addMessage(
-        "Xin chào! Mình là trợ lý hỗ trợ tự động của POY. Bạn cần giúp gì hôm nay?",
+        "Xin chào! Đây là trợ lý tra cứu nhanh của POY, trả lời theo từ khoá (không phải AI). " +
+        "Bạn có thể hỏi về giao hàng, trả hàng, bảo hành, trả góp, đơn hàng, hoặc gõ tên sản phẩm để tìm.",
         "bot"
     );
 
@@ -162,6 +203,7 @@ function injectChatbotWidget() {
 
         panel.hidden = true;
         launcher.classList.remove("active");
+        launcher.focus();
 
     });
 
@@ -186,49 +228,166 @@ function injectChatbotWidget() {
 
         const container = document.getElementById("chatbotQuickReplies");
 
-        container.innerHTML = CHATBOT_QUICK_REPLIES.map(function (text) {
+        CHATBOT_QUICK_REPLIES.forEach(function (text) {
 
-            return `<button type="button" class="chatbot-chip">${text}</button>`;
+            const chip = document.createElement("button");
 
-        }).join("");
-
-        container.querySelectorAll(".chatbot-chip").forEach(function (chip) {
+            chip.type = "button";
+            chip.className = "chatbot-chip";
+            chip.textContent = text;
 
             chip.addEventListener("click", function () {
-
-                sendUserMessage(chip.textContent);
-
+                sendUserMessage(text);
             });
+
+            container.appendChild(chip);
 
         });
 
     }
 
 
-    function sendUserMessage(text) {
+    async function sendUserMessage(text) {
 
         addMessage(text, "user");
 
-        const typingEl = addMessage("Đang trả lời...", "bot", true);
+        const topic = findChatbotTopic(text);
 
+        if (topic) {
 
-        setTimeout(function () {
+            const answer = topic.reply();
+
+            addMessage(answer.text, "bot", { links: answer.links });
+
+            return;
+
+        }
+
+        const typingEl = addMessage("Đang tìm sản phẩm...", "bot", { typing: true });
+
+        const keyword = text.slice(0, CHATBOT_KEYWORD_MAX);
+
+        try {
+
+            const page = await apiRequest("/products?" + new URLSearchParams({
+                isActive: "true", keyword: keyword, size: String(CHATBOT_SEARCH_SIZE), page: "0"
+            }).toString());
 
             typingEl.remove();
 
-            addMessage(getBotReply(text), "bot");
+            const products = page.content || [];
 
-        }, 500);
+            if (products.length === 0) {
+
+                addMessage(
+                    "Không tìm thấy sản phẩm khớp \"" + keyword + "\". Bạn thử từ khoá khác (ví dụ \"iPhone 16\", \"laptop Dell\"), " +
+                    "hoặc gửi câu hỏi cho nhân viên.",
+                    "bot",
+                    { links: [["Gửi tin nhắn cho POY", "customer/contact.html"]] }
+                );
+
+                return;
+
+            }
+
+            addMessage(
+                "Tìm thấy " + page.totalElements.toLocaleString("vi-VN") + " sản phẩm khớp \"" + keyword + "\"" +
+                (page.totalElements > products.length ? ", đây là " + products.length + " sản phẩm đầu:" : ":"),
+                "bot",
+                {
+                    products: products,
+                    links: page.totalElements > products.length
+                        ? [["Xem tất cả kết quả", "customer/products.html?search=" + encodeURIComponent(keyword)]]
+                        : []
+                }
+            );
+
+        } catch (error) {
+
+            typingEl.remove();
+
+            addMessage("Không tra cứu được lúc này. Bạn thử lại sau, hoặc tìm ở trang Sản phẩm.", "bot",
+                { links: [["Trang Sản phẩm", "customer/products.html"]] });
+
+        }
 
     }
 
 
-    function addMessage(text, sender, isTyping) {
+    /* Mọi nội dung đưa vào bằng textContent / thuộc tính, không dùng innerHTML với dữ liệu */
+
+    function addMessage(text, sender, extra) {
+
+        const options = extra || {};
 
         const bubble = document.createElement("div");
 
-        bubble.className = "chatbot-message chatbot-message-" + sender + (isTyping ? " chatbot-typing" : "");
-        bubble.textContent = text;
+        bubble.className = "chatbot-message chatbot-message-" + sender + (options.typing ? " chatbot-typing" : "");
+
+        const paragraph = document.createElement("p");
+
+        paragraph.textContent = text;
+
+        bubble.appendChild(paragraph);
+
+
+        if (options.products && options.products.length) {
+
+            const list = document.createElement("ul");
+
+            list.className = "chatbot-products";
+
+            options.products.forEach(function (product) {
+
+                const item = document.createElement("li");
+
+                const link = document.createElement("a");
+
+                link.href = getProductDetailUrl(product.id);
+
+                link.textContent = product.name;
+
+                const price = document.createElement("span");
+
+                const value = getDisplayPrice(product);
+
+                price.textContent = value > 0 ? formatPrice(value) : "Liên hệ";
+
+                item.appendChild(link);
+
+                item.appendChild(price);
+
+                list.appendChild(item);
+
+            });
+
+            bubble.appendChild(list);
+
+        }
+
+
+        if (options.links && options.links.length) {
+
+            const links = document.createElement("p");
+
+            links.className = "chatbot-links";
+
+            options.links.forEach(function (pair) {
+
+                const link = document.createElement("a");
+
+                link.href = siteUrl(pair[1]);
+
+                link.textContent = pair[0] + " →";
+
+                links.appendChild(link);
+
+            });
+
+            bubble.appendChild(links);
+
+        }
+
 
         messages.appendChild(bubble);
 

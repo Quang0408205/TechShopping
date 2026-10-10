@@ -5,20 +5,20 @@ import com.example.Tech.dto.request.user.UserSearchRequest;
 import com.example.Tech.dto.request.user.UserStatusUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.user.UserResponse;
-import com.example.Tech.entity.user.Role;
+import com.example.Tech.entity.employee.EmployeeAssignment;
 import com.example.Tech.entity.user.RoleName;
 import com.example.Tech.entity.user.User;
-import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.user.UserMapper;
-import com.example.Tech.repository.user.RoleRepository;
+import com.example.Tech.repository.employee.EmployeeAssignmentRepository;
 import com.example.Tech.repository.user.UserFilterSpecifications;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleName;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.employee.StaffRoles;
 import com.example.Tech.service.user.AdminUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,13 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -46,8 +43,13 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     private static final String ADMIN = RoleName.ADMIN.name();
 
+    private static final String STAFF = RoleName.STAFF.name();
+
+    private static final String MANAGER = RoleName.BRANCH_MANAGER.name();
+
     private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
+    private final EmployeeAssignmentRepository assignmentRepository;
+    private final StaffRoles staffRoles;
     private final UserRoleRepository userRoleRepository;
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
@@ -93,6 +95,10 @@ public class AdminUserServiceImpl implements AdminUserService {
         User saved = userRepository.saveAndFlush(user);
         if (!activate) {
             refreshTokenService.revokeAll(userId);
+            // a locked employee leaves their store; a manager goes back to STAFF
+            if (staffRoles.endAssignment(saved)) {
+                roles = userRoleRepository.findRoleNamesByUserId(userId);
+            }
         }
         log.info("Admin id={} set user id={} active={}", adminId, userId, activate);
         return userMapper.toResponse(saved, roles);
@@ -102,47 +108,36 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public UserResponse updateRoles(Long adminId, Long userId, UserRolesUpdateRequest request) {
         ensureActingAdmin(adminId);
+        RoleName target = assignableRole(request.roles());
         User user = findUser(userId);
         ensureNotDeleted(user);
 
-        Set<String> requested = request.roles().stream()
-                .map(name -> name.trim().toUpperCase(Locale.ROOT))
-                .collect(Collectors.toCollection(TreeSet::new));
-        Map<String, Role> newRoles = new LinkedHashMap<>();
-        for (String name : requested) {
-            Role role = roleRepository.findByName(name)
-                    .orElseThrow(() -> new BusinessException(ErrorCode.ROLE_NOT_FOUND,
-                            "Role '%s' does not exist".formatted(name)));
-            newRoles.put(name, role);
+        List<String> currentNames = userRoleRepository.findRoleNamesByUserId(userId);
+        if (currentNames.contains(ADMIN)) {
+            throw userId.equals(adminId) ? new BusinessException(ErrorCode.CANNOT_MODIFY_OWN_ACCOUNT)
+                    : new BusinessException(ErrorCode.ACCESS_DENIED, "Không đổi vai trò của tài khoản quản trị viên");
+        }
+        if (!currentNames.contains(STAFF) && !currentNames.contains(MANAGER)) {
+            throw new BusinessException(ErrorCode.CUSTOMER_ACCOUNT_NOT_ELIGIBLE);
+        }
+        if (currentNames.equals(List.of(target.name()))) {
+            return userMapper.toResponse(user, currentNames);
         }
 
-        List<UserRole> current = userRoleRepository.findAllByIdUserId(userId);
-        List<String> currentNames = current.stream().map(userRole -> userRole.getRole().getName()).toList();
-        boolean removesAdmin = currentNames.contains(ADMIN) && !newRoles.containsKey(ADMIN);
-        if (removesAdmin) {
-            if (userId.equals(adminId)) {
-                throw new BusinessException(ErrorCode.CANNOT_MODIFY_OWN_ACCOUNT);
+        EmployeeAssignment assignment = assignmentRepository.findActiveWithStoreByUserId(userId).orElse(null);
+        if (target == RoleName.BRANCH_MANAGER) {
+            if (assignment == null) {
+                throw new BusinessException(ErrorCode.MANAGER_REQUIRES_ASSIGNMENT);
             }
-            ensureNotLastAdmin(user, currentNames);
+            staffRoles.requireFreeManagerSeat(assignment.getStore().getId(), userId);
+            assignment.setPositionAtStore(EmployeeAssignment.BRANCH_MANAGER_POSITION);
+        } else if (assignment != null && StaffRoles.isManagerPosition(assignment.getPositionAtStore())) {
+            assignment.setPositionAtStore(StaffRoles.DEFAULT_POSITION);
         }
-
-        List<UserRole> toRemove = new ArrayList<>();
-        for (UserRole userRole : current) {
-            if (!newRoles.containsKey(userRole.getRole().getName())) {
-                toRemove.add(userRole);
-            }
-        }
-        userRoleRepository.deleteAll(toRemove);
-        for (Role role : newRoles.values()) {
-            if (!currentNames.contains(role.getName())) {
-                userRoleRepository.save(new UserRole(user, role));
-            }
-        }
-        userRoleRepository.flush();
-
-        // No token revocation: /auth/refresh re-reads the roles, so they apply within one access-token lifetime
-        log.info("Admin id={} set roles of user id={} to {}", adminId, userId, newRoles.keySet());
-        return userMapper.toResponse(user, List.copyOf(newRoles.keySet()));
+        staffRoles.setRole(user, target);
+        refreshTokenService.revokeAll(userId);
+        log.info("Admin id={} set the role of user id={} to {}", adminId, userId, target);
+        return userMapper.toResponse(user, List.of(target.name()));
     }
 
     @Override
@@ -160,6 +155,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         user.setActive(false);
         userRepository.saveAndFlush(user);
         refreshTokenService.revokeAll(userId);
+        staffRoles.endAssignment(user);
         log.info("Admin id={} soft-deleted user id={}", adminId, userId);
     }
 
@@ -175,6 +171,17 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (!userRoleRepository.findRoleNamesByUserId(adminId).contains(ADMIN)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
+    }
+
+    /** The request must name exactly one of STAFF / BRANCH_MANAGER: customers and admins are never assigned here. */
+    private static RoleName assignableRole(List<String> requested) {
+        if (requested.size() == 1) {
+            String name = requested.get(0).trim().toUpperCase(Locale.ROOT);
+            if (name.equals(STAFF) || name.equals(MANAGER)) {
+                return RoleName.valueOf(name);
+            }
+        }
+        throw new BusinessException(ErrorCode.ROLE_NOT_ASSIGNABLE);
     }
 
     private static void ensureNotSelf(Long adminId, Long userId) {

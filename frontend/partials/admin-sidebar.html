@@ -2,14 +2,14 @@
     SIDEBAR KHU QUẢN TRỊ NỘI BỘ (admin/)
     Được js/core/layout.js chèn vào <div data-include="admin-sidebar" data-active="..."></div>.
     {{ROOT}} được thay bằng đường dẫn gốc của website; data-page khớp data-active để tô đậm mục đang xem.
-    data-roles: vai trò được thấy mục này; js/admin/admin-layout.js ẩn các mục không khớp.
-    "Người dùng", "Sản phẩm" (B2), "Đơn hàng" (Phase 4), "Trả góp" (Phase 5), "Khuyến mãi", "Chi nhánh", "Nhân viên", "Tồn kho" (Phase 7), "Đánh giá" và "Bảo hành / Bảo trì / Đổi trả" (Phase 6) dùng API thật; các mục còn lại chạy dữ liệu mẫu tới Phase 9–10.
+    data-roles: vai trò được thấy mục này; js/admin/admin-layout.js ẩn các mục không khớp (nhóm trống ẩn theo).
+    "Lịch sử Chatbot" chưa có backend nên không nằm trong menu (trang vẫn giữ, có banner).
 -->
 <aside class="admin-sidebar" id="adminSidebar">
 
     <a href="{{ROOT}}admin/dashboard.html" class="admin-logo">
         <span class="logo-main">POY</span>
-        <span class="logo-sub">QUẢN TRỊ NỘI BỘ</span>
+        <span class="logo-sub">Khu nội bộ</span>
     </a>
 
     <nav class="admin-nav" aria-label="Menu quản trị">
@@ -17,65 +17,73 @@
         <span class="admin-nav-label">Chung</span>
 
         <a href="{{ROOT}}admin/dashboard.html" data-page="dashboard" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Tổng quan
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+            <span>Tổng quan</span>
         </a>
 
-        <span class="admin-nav-label">Nghiệp vụ</span>
+        <span class="admin-nav-label">Nghiệp vụ chi nhánh</span>
 
         <a href="{{ROOT}}admin/service-requests.html" data-page="service-requests" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Bảo hành / Bảo trì / Đổi trả
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>
+            <span>Bảo hành / Bảo trì / Đổi trả</span>
         </a>
-
-        <a href="{{ROOT}}admin/support-tickets.html" data-page="support-tickets" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Hỗ trợ khách hàng
+        <a href="{{ROOT}}admin/contact-requests.html" data-page="contact-requests" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4zM8 9h8M8 12h5"/></svg>
+            <span>Liên hệ khách hàng</span>
         </a>
 
         <a href="{{ROOT}}admin/orders.html" data-page="orders" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Đơn hàng
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12l2 5v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7zM4 7h16M9 11h6"/></svg>
+            <span>Đơn hàng</span>
         </a>
 
         <a href="{{ROOT}}admin/installments.html" data-page="installments" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Trả góp
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v12H3zM3 10h18M7 15h4"/></svg>
+            <span>Trả góp</span>
         </a>
 
         <a href="{{ROOT}}admin/inventory.html" data-page="inventory" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
-            Tồn kho
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l9 5v10l-9 5-9-5V7zM3 7l9 5 9-5M12 12v10"/></svg>
+            <span>Tồn kho</span>
         </a>
 
         <span class="admin-nav-label">Quản lý chi nhánh</span>
 
         <a href="{{ROOT}}admin/reports.html" data-page="reports" data-roles="BRANCH_MANAGER,ADMIN">
-            Báo cáo doanh thu
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+            <span>Báo cáo doanh thu</span>
         </a>
 
-        <a href="{{ROOT}}admin/employees.html" data-page="employees" data-roles="ADMIN">
-            Nhân viên
+        <a href="{{ROOT}}admin/employees.html" data-page="employees" data-roles="BRANCH_MANAGER,ADMIN">
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21a7 7 0 0 1 14 0M17 11a3 3 0 1 0 0-6M22 21a6 6 0 0 0-4-5.7"/></svg>
+            <span>Nhân viên</span>
         </a>
 
         <span class="admin-nav-label">Quản trị hệ thống</span>
 
         <a href="{{ROOT}}admin/users.html" data-page="users" data-roles="ADMIN">
-            Người dùng & phân quyền
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4"/></svg>
+            <span>Người dùng &amp; phân quyền</span>
         </a>
 
         <a href="{{ROOT}}admin/products.html" data-page="products" data-roles="ADMIN">
-            Sản phẩm
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2"/></svg>
+            <span>Sản phẩm</span>
         </a>
 
         <a href="{{ROOT}}admin/reviews.html" data-page="reviews" data-roles="ADMIN">
-            Đánh giá
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>
+            <span>Đánh giá</span>
         </a>
 
         <a href="{{ROOT}}admin/promotions.html" data-page="promotions" data-roles="ADMIN">
-            Khuyến mãi
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12l-8 8-9-9V3h8zM7.5 7.5h.01"/></svg>
+            <span>Khuyến mãi</span>
         </a>
 
         <a href="{{ROOT}}admin/stores.html" data-page="stores" data-roles="ADMIN">
-            Chi nhánh
-        </a>
-
-        <a href="{{ROOT}}admin/chat-history.html" data-page="chat-history" data-roles="ADMIN">
-            Lịch sử Chatbot
+            <svg class="admin-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9l1.5-5h15L21 9M3 9v11h18V9M3 9h18M9 20v-6h6v6"/></svg>
+            <span>Chi nhánh</span>
         </a>
 
     </nav>
@@ -85,3 +93,4 @@
     </a>
 
 </aside>
+

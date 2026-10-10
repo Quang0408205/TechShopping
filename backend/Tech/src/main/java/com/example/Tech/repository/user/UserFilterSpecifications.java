@@ -19,6 +19,11 @@ public final class UserFilterSpecifications {
 
     private static final char LIKE_ESCAPE = '\\';
 
+    /** Filter value for "any internal account": STAFF, BRANCH_MANAGER or ADMIN (not a real role name). */
+    public static final String INTERNAL = "INTERNAL";
+
+    private static final java.util.List<String> INTERNAL_ROLES = java.util.List.of("STAFF", "BRANCH_MANAGER", "ADMIN");
+
     private UserFilterSpecifications() {
     }
 
@@ -46,7 +51,9 @@ public final class UserFilterSpecifications {
                 Root<UserRole> userRole = withRole.from(UserRole.class);
                 withRole.select(userRole.get("id").get("userId")).where(
                         cb.equal(userRole.get("id").get("userId"), root.get("id")),
-                        cb.equal(userRole.get("role").get("name"), filter.role().trim().toUpperCase(Locale.ROOT)));
+                        INTERNAL.equals(filter.role().trim().toUpperCase(Locale.ROOT))
+                                ? userRole.get("role").get("name").in(INTERNAL_ROLES)
+                                : cb.equal(userRole.get("role").get("name"), filter.role().trim().toUpperCase(Locale.ROOT)));
                 predicates.add(cb.exists(withRole));
             }
             return cb.and(predicates.toArray(Predicate[]::new));
