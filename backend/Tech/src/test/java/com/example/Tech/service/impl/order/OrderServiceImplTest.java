@@ -89,6 +89,9 @@ class OrderServiceImplTest {
     @Mock
     private OrderStockLifecycle orderStockLifecycle;
 
+    @Mock
+    private OrderStatusRecorder statusRecorder;
+
     private OrderServiceImpl orderService;
 
     private User user;
@@ -101,7 +104,7 @@ class OrderServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), CLOCK);
         orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, cartMapper,
-                currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, CLOCK);
+                currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, statusRecorder, CLOCK);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);
@@ -127,6 +130,7 @@ class OrderServiceImplTest {
 
         assertThat(response).isSameAs(expected);
         Order order = savedOrder();
+        verify(statusRecorder).record(order, null, OrderStatus.PENDING, user);
         assertThat(order.getUser()).isSameAs(user);
         assertThat(order.getRecipientName()).isEqualTo("Nguyễn Văn An");
         assertThat(order.getRecipientPhone()).isEqualTo("0901 234 567");
@@ -324,6 +328,7 @@ class OrderServiceImplTest {
     @Test
     void cancelMyOrder_pending_becomesCancelledWithATimestamp() {
         Order order = order(5L, user, OrderStatus.PENDING);
+        when(currentUserLoader.load(USER_ID)).thenReturn(user);
         when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order));
         when(orderRepository.saveAndFlush(order)).thenReturn(order);
 
@@ -332,6 +337,7 @@ class OrderServiceImplTest {
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
         verify(orderPaymentLifecycle).onOrderCancelled(order);
+        verify(statusRecorder).record(order, OrderStatus.PENDING, OrderStatus.CANCELLED, user);
         verify(orderViewLoader).toResponse(order);
     }
 

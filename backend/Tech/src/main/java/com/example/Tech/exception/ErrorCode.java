@@ -115,6 +115,8 @@ public enum ErrorCode {
     EMPLOYEE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản này đã có hồ sơ nhân viên"),
     DUPLICATE_EMPLOYEE_CODE(HttpStatus.CONFLICT, "Mã nhân viên đã được dùng"),
     NO_ACTIVE_STORE_ASSIGNMENT(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được gán vào chi nhánh nào"),
+    ADMIN_READ_ONLY(HttpStatus.FORBIDDEN,
+            "Quản trị viên chỉ xem và điều phối; việc xử lý do nhân viên của chi nhánh thực hiện"),
 
     // Inventory
     INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),

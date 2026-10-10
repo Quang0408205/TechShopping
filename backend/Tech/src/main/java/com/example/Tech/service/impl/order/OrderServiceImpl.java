@@ -47,6 +47,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderViewLoader orderViewLoader;
     private final OrderPaymentLifecycle orderPaymentLifecycle;
     private final OrderStockLifecycle orderStockLifecycle;
+    private final OrderStatusRecorder statusRecorder;
     private final Clock clock;
 
     @Override
@@ -98,6 +99,7 @@ public class OrderServiceImpl implements OrderService {
         orderPaymentLifecycle.checkEligible(request.paymentMethod(), order.getTotalAmount());
 
         Order saved = orderRepository.save(order);
+        statusRecorder.record(saved, null, OrderStatus.PENDING, user);
         orderPaymentLifecycle.onOrderPlaced(saved, request.installment());
         int removed = cartItemRepository.deleteAllByCartId(cart.getId());
         cartRepository.touch(cart.getId());
@@ -122,7 +124,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional
     public OrderResponse cancelMyOrder(Long userId, Long orderId) {
-        currentUserLoader.load(userId);
+        User user = currentUserLoader.load(userId);
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .filter(found -> found.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, orderId));
@@ -130,6 +132,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS,
                     "Only a pending order can be cancelled (order %d is %s)".formatted(orderId, order.getStatus()));
         }
+        statusRecorder.record(order, order.getStatus(), OrderStatus.CANCELLED, user);
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(LocalDateTime.now(clock));
         orderPaymentLifecycle.onOrderCancelled(order);

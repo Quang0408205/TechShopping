@@ -29,6 +29,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    const isAdmin = staff.role === "ADMIN";
+
     const form = document.getElementById("installmentFilterForm");
 
     const keywordInput = document.getElementById("installmentKeyword");
@@ -225,7 +227,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                ${next.overdue ? '<span class="admin-badge admin-badge-danger">Quá hạn</span>' : ""}`
             : "—";
 
-        const payButton = plan.status === "ACTIVE" && next
+        const payButton = !isAdmin && plan.status === "ACTIVE" && next
             ? `<div class="admin-pay-cell"><button type="button" class="btn btn-dark admin-action-btn" data-action="pay" data-id="${id}">GHI NHẬN KỲ ${escapeHtml(String(next.number))}</button></div>`
             : "";
 

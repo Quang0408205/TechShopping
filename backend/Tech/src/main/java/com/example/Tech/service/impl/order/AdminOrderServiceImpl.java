@@ -52,6 +52,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final OrderStockLifecycle orderStockLifecycle;
     private final StoreAccessGuard storeAccessGuard;
     private final WarrantyIssuer warrantyIssuer;
+    private final OrderStatusRecorder statusRecorder;
+    private final SalesRecorder salesRecorder;
     private final Clock clock;
 
     @Override
@@ -81,7 +83,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse updateStatus(Long staffId, Long orderId, OrderStatusUpdateRequest request) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         User staff = scope.user();
         Order order = lock(orderId, scope);
         OrderStatus from = order.getStatus();
@@ -101,10 +103,12 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         }
         if (from != to) {
             order.setStatus(to);
+            statusRecorder.record(order, from, to, staff);
             if (to == OrderStatus.DELIVERED) {
                 order.setDeliveredAt(now);
                 orderPaymentLifecycle.onOrderDelivered(order, staff, now);
                 warrantyIssuer.issueFor(order, now.toLocalDate());
+                salesRecorder.recordFor(order, now);
             } else if (to == OrderStatus.CANCELLED) {
                 order.setCancelledAt(now);
                 orderPaymentLifecycle.onOrderCancelled(order);
@@ -129,7 +133,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse confirmPayment(Long staffId, Long orderId, PaymentConfirmRequest request) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Order order = lock(orderId, scope);
         orderPaymentLifecycle.confirmTransfer(order, scope.user(), request != null ? request.transactionId() : null,
                 LocalDateTime.now(clock));
@@ -140,7 +144,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse refundPayment(Long staffId, Long orderId) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Order order = lock(orderId, scope);
         orderPaymentLifecycle.confirmRefund(order, scope.user(), LocalDateTime.now(clock));
         log.info("Staff id={} refunded order id={}", staffId, orderId);
@@ -150,7 +154,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse approveInstallment(Long staffId, Long orderId) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Order order = lock(orderId, scope);
         orderPaymentLifecycle.approveInstallment(order, scope.user(), LocalDateTime.now(clock));
         log.info("Staff id={} approved the installment plan of order id={}", staffId, orderId);
@@ -160,10 +164,11 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse rejectInstallment(Long staffId, Long orderId, InstallmentRejectRequest request) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(staffId);
+        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Order order = lock(orderId, scope);
         LocalDateTime now = LocalDateTime.now(clock);
         orderPaymentLifecycle.rejectInstallment(order, scope.user(), request.reason(), now);
+        statusRecorder.record(order, order.getStatus(), OrderStatus.CANCELLED, scope.user());
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(now);
         orderRepository.saveAndFlush(order);

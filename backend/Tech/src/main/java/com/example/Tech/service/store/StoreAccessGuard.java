@@ -1,5 +1,6 @@
 package com.example.Tech.service.store;
 
+import com.example.Tech.entity.employee.EmployeeAssignment;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.user.RoleName;
@@ -45,8 +46,8 @@ public class StoreAccessGuard {
     }
 
     /**
-     * Which orders the caller may see and act on: every order for an ADMIN, otherwise only the orders of the STAFF
-     * member's current store (403 NO_ACTIVE_STORE_ASSIGNMENT without one). Orders without a store are ADMIN only.
+     * Which orders the caller may see: every order for an ADMIN, otherwise only the orders of the STAFF member's
+     * current store (403 NO_ACTIVE_STORE_ASSIGNMENT without one). Changes go through {@link #processingScope}.
      */
     public OrderScope orderScope(Long userId) {
         User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
@@ -56,6 +57,35 @@ public class StoreAccessGuard {
         Integer ownStoreId = assignmentRepository.findActiveStoreIdByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT));
         return new OrderScope(user, ownStoreId);
+    }
+
+    /**
+     * Scope for changing an order, its payment / installment plan or an after-sales request: only STAFF of the
+     * order's store. An ADMIN (even one who also has STAFF) only views and reassigns stores: 403 ADMIN_READ_ONLY.
+     */
+    public OrderScope processingScope(Long userId) {
+        OrderScope scope = orderScope(userId);
+        if (scope.admin()) {
+            throw new BusinessException(ErrorCode.ADMIN_READ_ONLY);
+        }
+        return scope;
+    }
+
+    /**
+     * Who may read sales reports: an ADMIN for every store (storeId null), or a STAFF member whose current position
+     * is branch manager, for their store only (403 NO_ACTIVE_STORE_ASSIGNMENT / ACCESS_DENIED otherwise).
+     */
+    public OrderScope reportScope(Long userId) {
+        User user = currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
+        if (userRoleRepository.findRoleNamesByUserId(userId).contains(RoleName.ADMIN.name())) {
+            return new OrderScope(user, null);
+        }
+        EmployeeAssignment assignment = assignmentRepository.findActiveWithStoreByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT));
+        if (!EmployeeAssignment.BRANCH_MANAGER_POSITION.equals(assignment.getPositionAtStore())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED, "Chỉ quản lý chi nhánh và quản trị viên xem được báo cáo");
+        }
+        return new OrderScope(user, assignment.getStore().getId());
     }
 
     public record Access(User user, Store store) {
