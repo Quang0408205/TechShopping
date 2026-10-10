@@ -16,6 +16,8 @@ import com.example.Tech.repository.employee.EmployeeRepository;
 import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
+import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.employee.StaffRoles;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -66,13 +69,19 @@ class EmployeeServiceImplTest {
     @Mock
     private CurrentUserLoader currentUserLoader;
 
+    @Mock
+    private StaffRoles staffRoles;
+
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     private EmployeeServiceImpl service;
 
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(Instant.parse("2026-10-03T03:00:00Z"), ZoneId.of("Asia/Ho_Chi_Minh"));
         service = new EmployeeServiceImpl(employeeRepository, assignmentRepository, storeRepository, userRepository,
-                userRoleRepository, currentUserLoader, clock);
+                userRoleRepository, currentUserLoader, staffRoles, refreshTokenService, clock);
         lenient().when(currentUserLoader.loadWithAnyRole(ADMIN_ID, RoleName.ADMIN)).thenReturn(new User());
         lenient().when(employeeRepository.save(any(Employee.class))).thenAnswer(invocation -> {
             Employee employee = invocation.getArgument(0);
@@ -86,13 +95,24 @@ class EmployeeServiceImplTest {
     @Test
     void create_accountWithoutStaffRole_isRejectedOnUserId() {
         when(userRepository.findById(10L)).thenReturn(Optional.of(user(10L)));
-        when(userRoleRepository.findRoleNamesByUserId(10L)).thenReturn(List.of("CUSTOMER"));
+        when(userRoleRepository.findRoleNamesByUserId(10L)).thenReturn(List.of("BRANCH_MANAGER"));
 
         assertThatThrownBy(() -> service.create(ADMIN_ID, createRequest(10L, null, null, null)))
                 .isInstanceOfSatisfying(BusinessException.class, ex -> {
                     assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.VALIDATION_ERROR);
                     assertThat(ex.getDetails()).containsKey("userId");
                 });
+        verify(employeeRepository, never()).save(any());
+    }
+
+    @Test
+    void create_accountThatIsAlsoACustomer_isNotEligible() {
+        when(userRepository.findById(10L)).thenReturn(Optional.of(user(10L)));
+        when(userRoleRepository.findRoleNamesByUserId(10L)).thenReturn(List.of("CUSTOMER", "STAFF"));
+
+        assertThatThrownBy(() -> service.create(ADMIN_ID, createRequest(10L, null, null, null)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.CUSTOMER_ACCOUNT_NOT_ELIGIBLE);
         verify(employeeRepository, never()).save(any());
     }
 
@@ -121,13 +141,23 @@ class EmployeeServiceImplTest {
         staffAccount(10L);
         when(storeRepository.findById(3)).thenReturn(Optional.of(store(3, true)));
 
-        EmployeeResponse response = service.create(ADMIN_ID, createRequest(10L, "NV001", 3, " Quản lý chi nhánh "));
+        EmployeeResponse response = service.create(ADMIN_ID, createRequest(10L, "NV001", 3, " Thu ngân "));
 
         assertThat(response.id()).isEqualTo(50L);
         assertThat(response.employeeCode()).isEqualTo("NV001");
         assertThat(response.assignment().storeId()).isEqualTo(3);
-        assertThat(response.assignment().positionAtStore()).isEqualTo("Quản lý chi nhánh");
+        assertThat(response.assignment().positionAtStore()).isEqualTo("Thu ngân");
         assertThat(response.assignment().startDate()).isEqualTo(TODAY);
+    }
+
+    @Test
+    void create_managerLabelWithoutTheManagerRole_isRejectedOnPosition() {
+        staffAccount(10L);
+
+        assertThatThrownBy(() -> service.create(ADMIN_ID, createRequest(10L, null, 3, "Quản lý chi nhánh")))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getDetails()).containsKey("positionAtStore"));
+        verify(employeeRepository, never()).save(any());
     }
 
     @Test
@@ -159,6 +189,7 @@ class EmployeeServiceImplTest {
         order.verify(assignmentRepository, times(2)).saveAndFlush(saved.capture());
         assertThat(saved.getAllValues().get(0)).isSameAs(current);
         assertThat(saved.getAllValues().get(1).getStore().getId()).isEqualTo(4);
+        verify(refreshTokenService).revokeAll(10L);
     }
 
     @Test
@@ -170,11 +201,70 @@ class EmployeeServiceImplTest {
         when(assignmentRepository.findByEmployeeIdAndActiveTrueAndEndDateIsNull(50L)).thenReturn(Optional.of(current));
         when(assignmentRepository.save(current)).thenReturn(current);
 
-        service.assign(ADMIN_ID, 50L, new AssignmentRequest(3, "Quản lý chi nhánh", null));
+        service.assign(ADMIN_ID, 50L, new AssignmentRequest(3, "Thu ngân", null));
 
         assertThat(current.getActive()).isTrue();
-        assertThat(current.getPositionAtStore()).isEqualTo("Quản lý chi nhánh");
+        assertThat(current.getPositionAtStore()).isEqualTo("Thu ngân");
         verify(assignmentRepository, never()).saveAndFlush(any());
+        verify(refreshTokenService, never()).revokeAll(any());
+    }
+
+
+    @Test
+    void assign_managerLabelToAPlainStaff_isRejected() {
+        Employee employee = employee(50L, true);
+        when(employeeRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(employee));
+        when(storeRepository.findById(3)).thenReturn(Optional.of(store(3, true)));
+
+        assertThatThrownBy(() -> service.assign(ADMIN_ID, 50L, new AssignmentRequest(3, "Quản lý chi nhánh", null)))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getDetails()).containsKey("positionAtStore"));
+        verify(assignmentRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void assign_manager_keepsTheManagerLabel_andNeedsAFreeSeat() {
+        Employee employee = employee(50L, true);
+        EmployeeAssignment current = assignment(employee, store(3, true));
+        when(employeeRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(employee));
+        when(storeRepository.findById(4)).thenReturn(Optional.of(store(4, true)));
+        when(staffRoles.isManager(10L)).thenReturn(true);
+        when(assignmentRepository.findByEmployeeIdAndActiveTrueAndEndDateIsNull(50L)).thenReturn(Optional.of(current));
+
+        EmployeeResponse response = service.assign(ADMIN_ID, 50L, new AssignmentRequest(4, "Thu ngân", null));
+
+        assertThat(response.assignment().positionAtStore()).isEqualTo("Quản lý chi nhánh");
+        verify(staffRoles).requireFreeManagerSeat(4, 10L);
+        verify(refreshTokenService).revokeAll(10L);
+    }
+
+    @Test
+    void assign_managerIntoAStoreThatHasAManager_isAConflict() {
+        Employee employee = employee(50L, true);
+        when(employeeRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(employee));
+        when(storeRepository.findById(4)).thenReturn(Optional.of(store(4, true)));
+        when(staffRoles.isManager(10L)).thenReturn(true);
+        doThrow(new BusinessException(ErrorCode.STORE_ALREADY_HAS_MANAGER)).when(staffRoles).requireFreeManagerSeat(4, 10L);
+
+        assertThatThrownBy(() -> service.assign(ADMIN_ID, 50L, new AssignmentRequest(4, null, null)))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.STORE_ALREADY_HAS_MANAGER);
+        verify(assignmentRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void unassign_aManager_sendsThemBackToStaff_andRevokesSessions() {
+        Employee employee = employee(50L, true);
+        EmployeeAssignment current = assignment(employee, store(3, true));
+        when(employeeRepository.findByIdForUpdate(50L)).thenReturn(Optional.of(employee));
+        when(assignmentRepository.findByEmployeeIdAndActiveTrueAndEndDateIsNull(50L)).thenReturn(Optional.of(current));
+        when(staffRoles.endAssignment(employee.getUser())).thenReturn(true);
+
+        EmployeeResponse response = service.unassign(ADMIN_ID, 50L);
+
+        assertThat(response.assignment()).isNull();
+        assertThat(current.getActive()).isFalse();
+        verify(refreshTokenService).revokeAll(10L);
     }
 
     @Test
@@ -201,11 +291,13 @@ class EmployeeServiceImplTest {
         assertThat(response.assignment()).isNull();
         assertThat(current.getActive()).isFalse();
         assertThat(current.getEndDate()).isEqualTo(TODAY);
+        verify(staffRoles).endAssignment(employee.getUser());
+        verify(refreshTokenService).revokeAll(10L);
     }
 
     @Test
     void getMine_withoutAProfile_isNotFound() {
-        when(currentUserLoader.loadWithAnyRole(7L, RoleName.STAFF, RoleName.ADMIN)).thenReturn(user(7L));
+        when(currentUserLoader.loadWithAnyRole(7L, RoleName.STAFF, RoleName.BRANCH_MANAGER, RoleName.ADMIN)).thenReturn(user(7L));
         when(employeeRepository.findByUserId(7L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.getMine(7L))
@@ -215,7 +307,7 @@ class EmployeeServiceImplTest {
 
     private void staffAccount(Long userId) {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user(userId)));
-        when(userRoleRepository.findRoleNamesByUserId(userId)).thenReturn(List.of("CUSTOMER", "STAFF"));
+        when(userRoleRepository.findRoleNamesByUserId(userId)).thenReturn(List.of("STAFF"));
     }
 
     private static EmployeeCreateRequest createRequest(Long userId, String code, Integer storeId, String positionAtStore) {

@@ -13,13 +13,16 @@ import com.example.Tech.entity.user.RoleName;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
+import com.example.Tech.mapper.employee.EmployeeMapper;
 import com.example.Tech.repository.employee.EmployeeAssignmentRepository;
 import com.example.Tech.repository.employee.EmployeeFilterSpecifications;
 import com.example.Tech.repository.employee.EmployeeRepository;
 import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
+import com.example.Tech.security.RefreshTokenService;
 import com.example.Tech.service.employee.EmployeeService;
+import com.example.Tech.service.employee.StaffRoles;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +51,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final CurrentUserLoader currentUserLoader;
+    private final StaffRoles staffRoles;
+    private final RefreshTokenService refreshTokenService;
     private final Clock clock;
 
     @Override
@@ -74,7 +79,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (!user.isEnabled()) {
             throw BusinessException.invalidField("userId", "Tài khoản đang bị khoá");
         }
-        if (!userRoleRepository.findRoleNamesByUserId(user.getId()).contains(RoleName.STAFF.name())) {
+        List<String> roles = userRoleRepository.findRoleNamesByUserId(user.getId());
+        if (roles.contains(RoleName.CUSTOMER.name())) {
+            throw new BusinessException(ErrorCode.CUSTOMER_ACCOUNT_NOT_ELIGIBLE);
+        }
+        if (!roles.contains(RoleName.STAFF.name())) {
             throw BusinessException.invalidField("userId",
                     "Tài khoản chưa có quyền Nhân viên: cấp quyền ở trang Người dùng & phân quyền trước");
         }
@@ -88,6 +97,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (request.storeId() == null && trimToNull(request.positionAtStore()) != null) {
             throw BusinessException.invalidField("storeId", "Chọn chi nhánh khi nhập vị trí tại chi nhánh");
         }
+        rejectManagerLabel(user.getId(), request.positionAtStore());
         Store store = request.storeId() == null ? null : openStore(request.storeId());
 
         Employee employee = new Employee();
@@ -123,11 +133,19 @@ public class EmployeeServiceImpl implements EmployeeService {
         boolean active = !Boolean.FALSE.equals(request.active());
         employee.setActive(active);
         EmployeeAssignment current = findCurrent(employeeId).orElse(null);
-        if (!active && current != null) {
-            close(current);
-            current = null;
+        boolean left = false;
+        if (!active) {
+            if (current != null) {
+                close(current);
+                current = null;
+                left = true;
+            }
+            left |= staffRoles.endAssignment(employee.getUser());
         }
         employeeRepository.saveAndFlush(employee);
+        if (left) {
+            refreshTokenService.revokeAll(employee.getUser().getId());
+        }
         log.info("Admin id={} updated employee id={} (active={})", adminId, employeeId, active);
         return toResponse(employee, current);
     }
@@ -141,17 +159,28 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "Nhân viên đã nghỉ, không gán chi nhánh được");
         }
         Store store = openStore(request.storeId());
+        Long userId = employee.getUser().getId();
+        boolean manager = staffRoles.isManager(userId);
+        // the role decides: a manager is always labelled as one, and nobody becomes a manager through the label
+        String position = manager ? EmployeeAssignment.BRANCH_MANAGER_POSITION : request.positionAtStore();
+        rejectManagerLabel(userId, position);
+        if (manager) {
+            staffRoles.requireFreeManagerSeat(store.getId(), userId);
+        }
         EmployeeAssignment current = findCurrent(employeeId).orElse(null);
         EmployeeAssignment result;
         if (current != null && current.getStore().getId().equals(store.getId())) {
-            current.setPositionAtStore(trimToNull(request.positionAtStore()));
+            current.setPositionAtStore(trimToNull(position));
             result = assignmentRepository.save(current);
         } else {
             if (current != null) {
                 close(current);
             }
             LocalDate start = request.startDate() == null ? today() : request.startDate();
-            result = startAssignment(employee, store, request.positionAtStore(), start);
+            result = startAssignment(employee, store, position, start);
+            if (current != null) {
+                refreshTokenService.revokeAll(userId);
+            }
         }
         log.info("Admin id={} assigned employee id={} to store id={}", adminId, employeeId, store.getId());
         return toResponse(employee, result);
@@ -162,19 +191,32 @@ public class EmployeeServiceImpl implements EmployeeService {
     public EmployeeResponse unassign(Long adminId, Long employeeId) {
         ensureAdmin(adminId);
         Employee employee = lock(employeeId);
-        findCurrent(employeeId).ifPresent(current -> {
+        EmployeeAssignment current = findCurrent(employeeId).orElse(null);
+        if (current != null) {
             close(current);
             log.info("Admin id={} ended the assignment of employee id={} at store id={}",
                     adminId, employeeId, current.getStore().getId());
-        });
+        }
+        // a manager must have a store: without one they are STAFF again
+        if (staffRoles.endAssignment(employee.getUser()) || current != null) {
+            refreshTokenService.revokeAll(employee.getUser().getId());
+        }
         return toResponse(employee, null);
     }
 
     @Override
     public EmployeeResponse getMine(Long userId) {
-        currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.ADMIN);
+        currentUserLoader.loadWithAnyRole(userId, RoleName.STAFF, RoleName.BRANCH_MANAGER, RoleName.ADMIN);
         return toResponse(employeeRepository.findByUserId(userId).orElseThrow(() ->
                 new BusinessException(ErrorCode.EMPLOYEE_NOT_FOUND, "Tài khoản này chưa có hồ sơ nhân viên")));
+    }
+
+    /** 400 when the manager label is used by an account that does not hold BRANCH_MANAGER. */
+    private void rejectManagerLabel(Long userId, String position) {
+        if (StaffRoles.isManagerPosition(position) && !staffRoles.isManager(userId)) {
+            throw BusinessException.invalidField("positionAtStore",
+                    "Muốn làm Quản lý chi nhánh, hãy nâng vai trò ở trang Người dùng & phân quyền");
+        }
     }
 
     private void ensureAdmin(Long adminId) {
@@ -235,26 +277,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     private static EmployeeResponse toResponse(Employee employee, EmployeeAssignment assignment) {
-        User user = employee.getUser();
-        EmployeeResponse.CurrentAssignment current = assignment == null ? null
-                : new EmployeeResponse.CurrentAssignment(assignment.getId(), assignment.getStore().getId(),
-                assignment.getStore().getName(), assignment.getPositionAtStore(), assignment.getStartDate());
-        return new EmployeeResponse(
-                employee.getId(),
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getFullname(),
-                user.getPhone(),
-                employee.getEmployeeCode(),
-                employee.getDepartment(),
-                employee.getPosition(),
-                employee.getSalary(),
-                employee.getHiringDate(),
-                !Boolean.FALSE.equals(employee.getActive()),
-                current,
-                employee.getCreatedAt(),
-                employee.getUpdatedAt());
+        return EmployeeMapper.toResponse(employee, assignment);
     }
 
     private static BusinessException notFound(Long employeeId) {

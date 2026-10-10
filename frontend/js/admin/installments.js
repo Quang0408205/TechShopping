@@ -55,6 +55,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     keywordInput.value = new URLSearchParams(window.location.search).get("keyword") || "";
 
+    /* ?status=PENDING_APPROVAL (lối tắt ở trang Tổng quan); giá trị lạ thì bỏ qua */
+    const initialStatus = new URLSearchParams(window.location.search).get("status");
+
+    if (initialStatus && Array.from(statusFilter.options).some(function (o) { return o.value === initialStatus; })) {
+        statusFilter.value = initialStatus;
+    }
+
 
     form.addEventListener("submit", function (event) {
 

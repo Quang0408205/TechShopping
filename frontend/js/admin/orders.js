@@ -88,6 +88,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     /* admin/orders.html?keyword=DH00000042 (vd. link mã đơn ở lịch sử Tồn kho) */
     keywordInput.value = new URLSearchParams(window.location.search).get("keyword") || "";
 
+    /* ?status=PENDING (lối tắt "Việc của tôi" ở trang Tổng quan); giá trị lạ thì bỏ qua */
+    const initialStatus = new URLSearchParams(window.location.search).get("status");
+
+    if (initialStatus && Array.from(statusFilter.options).some(function (o) { return o.value === initialStatus; })) {
+        statusFilter.value = initialStatus;
+    }
+
 
     form.addEventListener("submit", function (event) {
 

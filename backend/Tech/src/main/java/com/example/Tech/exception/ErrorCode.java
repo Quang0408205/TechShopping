@@ -115,6 +115,13 @@ public enum ErrorCode {
     EMPLOYEE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản này đã có hồ sơ nhân viên"),
     DUPLICATE_EMPLOYEE_CODE(HttpStatus.CONFLICT, "Mã nhân viên đã được dùng"),
     NO_ACTIVE_STORE_ASSIGNMENT(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được gán vào chi nhánh nào"),
+    ROLE_NOT_ASSIGNABLE(HttpStatus.BAD_REQUEST,
+            "Chỉ được phân quyền Nhân viên chi nhánh hoặc Quản lý chi nhánh"),
+    CUSTOMER_ACCOUNT_NOT_ELIGIBLE(HttpStatus.CONFLICT,
+            "Tài khoản khách hàng không thể chuyển thành tài khoản nội bộ – hãy tuyển nhân viên mới"),
+    STORE_ALREADY_HAS_MANAGER(HttpStatus.CONFLICT, "Chi nhánh này đã có quản lý"),
+    MANAGER_REQUIRES_ASSIGNMENT(HttpStatus.BAD_REQUEST,
+            "Quản lý chi nhánh phải đang được gán vào một chi nhánh"),
     ADMIN_READ_ONLY(HttpStatus.FORBIDDEN,
             "Quản trị viên chỉ xem và điều phối; việc xử lý do nhân viên của chi nhánh thực hiện"),
 

@@ -50,6 +50,7 @@ class StoreAccessGuardTest {
     @BeforeEach
     void setUp() {
         lenient().when(currentUserLoader.loadWithAnyRole(anyLong(), org.mockito.ArgumentMatchers.eq(RoleName.STAFF),
+                org.mockito.ArgumentMatchers.eq(RoleName.BRANCH_MANAGER),
                 org.mockito.ArgumentMatchers.eq(RoleName.ADMIN))).thenReturn(new User());
         lenient().when(storeRepository.findById(3)).thenReturn(Optional.of(store(3)));
         lenient().when(storeRepository.findById(4)).thenReturn(Optional.of(store(4)));
@@ -158,23 +159,46 @@ class StoreAccessGuardTest {
     }
 
     @Test
-    void reportScope_admin_everyStore_branchManager_ownStore_otherStaff_denied() {
+    void reportScope_admin_everyStore_branchManager_ownStore() {
         when(userRoleRepository.findRoleNamesByUserId(1L)).thenReturn(List.of("ADMIN"));
         assertThat(guard.reportScope(1L).admin()).isTrue();
 
-        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("STAFF"));
-        when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.of(assignment(3, "Quản lý chi nhánh")));
-        assertThat(guard.reportScope(2L).storeId()).isEqualTo(3);
-
+        // the role counts, not the label: a manager whose label says something else still reads their store
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("BRANCH_MANAGER"));
         when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.of(assignment(3, "Thu ngân")));
+        assertThat(guard.reportScope(2L).storeId()).isEqualTo(3);
+    }
+
+    @Test
+    void reportScope_plainStaff_evenLabelledAsManager_isDenied() {
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("STAFF"));
+        lenient().when(assignmentRepository.findActiveWithStoreByUserId(2L))
+                .thenReturn(Optional.of(assignment(3, "Quản lý chi nhánh")));
+
         assertThatThrownBy(() -> guard.reportScope(2L))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.ACCESS_DENIED);
+    }
 
+    @Test
+    void reportScope_managerWithoutAssignment_hasNoStore() {
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("BRANCH_MANAGER"));
         when(assignmentRepository.findActiveWithStoreByUserId(2L)).thenReturn(Optional.empty());
+
         assertThatThrownBy(() -> guard.reportScope(2L))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.NO_ACTIVE_STORE_ASSIGNMENT);
+    }
+
+    @Test
+    void canViewRevenue_onlyAdminAndBranchManager() {
+        when(userRoleRepository.findRoleNamesByUserId(1L)).thenReturn(List.of("ADMIN"));
+        when(userRoleRepository.findRoleNamesByUserId(2L)).thenReturn(List.of("BRANCH_MANAGER"));
+        when(userRoleRepository.findRoleNamesByUserId(3L)).thenReturn(List.of("STAFF"));
+
+        assertThat(guard.canViewRevenue(1L)).isTrue();
+        assertThat(guard.canViewRevenue(2L)).isTrue();
+        assertThat(guard.canViewRevenue(3L)).isFalse();
     }
 
     private static EmployeeAssignment assignment(int storeId, String position) {

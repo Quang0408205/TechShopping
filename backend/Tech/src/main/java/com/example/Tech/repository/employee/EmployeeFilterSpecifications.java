@@ -57,6 +57,28 @@ public final class EmployeeFilterSpecifications {
         };
     }
 
+    /**
+     * Employees whose most recent assignment is at the store: still working there (open assignment) or gone
+     * (profile marked as left). Someone moved to another store, or unassigned but still active, is not included.
+     */
+    public static Specification<Employee> latestAssignmentAt(Integer storeId) {
+        return (root, query, cb) -> {
+            Subquery<Long> latest = query.subquery(Long.class);
+            Root<EmployeeAssignment> other = latest.from(EmployeeAssignment.class);
+            latest.select(cb.max(other.<Long>get("id"))).where(cb.equal(other.get("employee"), root));
+
+            Subquery<Long> found = query.subquery(Long.class);
+            Root<EmployeeAssignment> assignment = found.from(EmployeeAssignment.class);
+            found.select(assignment.<Long>get("id")).where(
+                    cb.equal(assignment.get("employee"), root),
+                    cb.equal(assignment.get("store").get("id"), storeId),
+                    cb.equal(assignment.<Long>get("id"), latest),
+                    cb.or(cb.and(cb.isTrue(assignment.get("active")), cb.isNull(assignment.get("endDate"))),
+                            cb.isFalse(root.get("active"))));
+            return cb.exists(found);
+        };
+    }
+
     private static String contains(String text) {
         String escaped = text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
         return "%" + escaped + "%";

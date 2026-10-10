@@ -8,11 +8,12 @@ import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
- * The complete new role set of a user (replaces the current roles).
+ * The new role of an internal account: exactly one of STAFF / BRANCH_MANAGER (the list form is kept for the
+ * existing API). CUSTOMER and ADMIN are never assigned through the API.
  */
 public record UserRolesUpdateRequest(
 
-        @ArraySchema(schema = @Schema(example = "STAFF"))
+        @ArraySchema(schema = @Schema(example = "BRANCH_MANAGER"))
         @NotEmpty(message = "At least one role is required")
         List<@NotBlank(message = "Role name must not be blank") String> roles
 ) {

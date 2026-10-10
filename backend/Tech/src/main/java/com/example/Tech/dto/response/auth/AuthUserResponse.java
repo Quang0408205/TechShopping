@@ -7,6 +7,8 @@ public record AuthUserResponse(
         String email,
         String username,
         String fullname,
-        List<String> roles
+        List<String> roles,
+        /* kế hoạch v2 GĐ5: the header shows the avatar right after login / refresh */
+        String avatarUrl
 ) {
 }

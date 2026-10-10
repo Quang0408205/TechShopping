@@ -13,6 +13,12 @@ public interface ImageStorageService {
     /** Public path prefix of photos attached to product reviews. */
     String REVIEW_IMAGE_PATH = "/uploads/reviews/";
 
+    /** Avatars are smaller than the other images (kế hoạch v2 GĐ5). */
+    long MAX_AVATAR_BYTES = 2L * 1024 * 1024;
+
+    /** Public path prefix of account avatars. */
+    String AVATAR_IMAGE_PATH = "/uploads/avatars/";
+
     /** Public path prefix of photos attached to warranty / maintenance / return requests. */
     String SERVICE_IMAGE_PATH = "/uploads/service/";
 
@@ -36,6 +42,12 @@ public interface ImageStorageService {
 
     /** Same rule as isStoredReviewImage, for the after-sales photo folder. */
     boolean isStoredServiceImage(String url);
+
+    /** JPEG, PNG or WebP of at most MAX_AVATAR_BYTES, stored under the avatar folder. */
+    String storeAvatar(MultipartFile file);
+
+    /** Same rule as isStoredReviewImage, for the avatar folder: accounts may only point at avatars we stored. */
+    boolean isStoredAvatar(String url);
 
     /**
      * Deletes the stored file behind {@code url} when it is one of our uploads; any other URL is ignored.

@@ -7,5 +7,6 @@ package com.example.Tech.entity.user;
 public enum RoleName {
     CUSTOMER,
     STAFF,
+    BRANCH_MANAGER,
     ADMIN
 }

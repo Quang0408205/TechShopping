@@ -112,112 +112,122 @@
             </div>
 
 
-            <div
-                id="accountContent"
-                class="contact-grid account-grid"
-                hidden
-            >
+            <!-- 3 khung theo hash: #profile (mặc định), #security, #address; js/customer/account.js chỉ hiện khung đang chọn -->
+            <div id="accountContent" class="account-panels" hidden>
 
 
-                <div class="account-column">
+                <section class="account-panel" id="panel-profile" data-account-panel="profile" aria-labelledby="profilePanelTitle">
 
+                    <h2 class="account-panel-title" id="profilePanelTitle">Hồ sơ</h2>
 
-                    <!-- ================= THÔNG TIN TÀI KHOẢN ================= -->
+                    <div class="account-profile-grid">
 
-                    <form
-                        id="accountForm"
-                        class="contact-form account-form"
-                        novalidate
-                    >
+                        <aside class="account-avatar-card" aria-label="Ảnh đại diện">
 
-                        <span class="section-label">
-                            THÔNG TIN TÀI KHOẢN
-                        </span>
+                            <div class="account-avatar" id="accountAvatar" aria-hidden="true"></div>
 
-                        <p class="form-error" data-role="error" role="alert" hidden></p>
-                        <p class="form-success" data-role="success" role="status" hidden></p>
+                            <strong class="account-avatar-name" id="avatarName"></strong>
 
+                            <input type="file" id="avatarFile" accept="image/jpeg,image/png,image/webp" hidden>
 
-                        <label for="email">
-                            Email
-                        </label>
+                            <div class="account-avatar-actions">
+                                <button type="button" id="avatarChangeBtn" class="btn btn-dark">Đổi ảnh</button>
+                                <button type="button" id="avatarRemoveBtn" class="btn btn-outline-dark" hidden>Xoá ảnh</button>
+                            </div>
 
-                        <input
-                            type="email"
-                            id="email"
-                            readonly
+                            <small class="account-hint">JPG, PNG hoặc WebP, tối đa 2 MB.</small>
+
+                            <p class="form-error" id="avatarError" role="alert" hidden></p>
+                            <p class="form-success" id="avatarSuccess" role="status" hidden></p>
+
+                        </aside>
+
+                        <form
+                            id="accountForm"
+                            class="contact-form account-form"
+                            novalidate
                         >
 
+                            <span class="section-label">
+                                THÔNG TIN TÀI KHOẢN
+                            </span>
 
-                        <label for="username">
-                            Tên đăng nhập
-                        </label>
-
-                        <input
-                            type="text"
-                            id="username"
-                            readonly
-                        >
-
-                        <small class="account-hint">
-                            Email và tên đăng nhập không thể thay đổi.
-                        </small>
+                            <p class="form-error" data-role="error" role="alert" hidden></p>
+                            <p class="form-success" data-role="success" role="status" hidden></p>
 
 
-                        <label for="fullname">
-                            Họ và tên
-                        </label>
+                            <label for="email">
+                                Email
+                            </label>
 
-                        <input
-                            type="text"
-                            id="fullname"
-                            maxlength="120"
-                            autocomplete="name"
-                            required
-                        >
-
-                        <small class="field-error" data-field="fullname"></small>
+                            <input
+                                type="email"
+                                id="email"
+                                readonly
+                            >
 
 
-                        <label for="phone">
-                            Số điện thoại
-                        </label>
+                            <label for="username">
+                                Tên đăng nhập
+                            </label>
 
-                        <input
-                            type="tel"
-                            id="phone"
-                            maxlength="20"
-                            autocomplete="tel"
-                        >
+                            <input
+                                type="text"
+                                id="username"
+                                readonly
+                            >
 
-                        <small class="field-error" data-field="phone"></small>
-
-
-                        <label for="avatarUrl">
-                            Ảnh đại diện (URL)
-                        </label>
-
-                        <input
-                            type="url"
-                            id="avatarUrl"
-                            maxlength="2048"
-                            placeholder="https://..."
-                        >
-
-                        <small class="field-error" data-field="avatarUrl"></small>
+                            <small class="account-hint">
+                                Email và tên đăng nhập không thể thay đổi.
+                            </small>
 
 
-                        <button
-                            type="submit"
-                            class="btn btn-dark"
-                        >
-                            LƯU THÔNG TIN
-                        </button>
+                            <label for="fullname">
+                                Họ và tên
+                            </label>
 
-                    </form>
+                            <input
+                                type="text"
+                                id="fullname"
+                                maxlength="120"
+                                autocomplete="name"
+                                required
+                            >
+
+                            <small class="field-error" data-field="fullname"></small>
 
 
-                    <!-- ================= ĐỔI MẬT KHẨU ================= -->
+                            <label for="phone">
+                                Số điện thoại
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                maxlength="20"
+                                autocomplete="tel"
+                            >
+
+                            <small class="field-error" data-field="phone"></small>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-dark"
+                            >
+                                LƯU THÔNG TIN
+                            </button>
+
+                        </form>
+
+                    </div>
+
+                </section>
+
+
+                <section class="account-panel" id="panel-security" data-account-panel="security" aria-labelledby="securityPanelTitle" hidden>
+
+                    <h2 class="account-panel-title" id="securityPanelTitle">Bảo mật</h2>
 
                     <form
                         id="passwordForm"
@@ -292,190 +302,153 @@
 
                     </form>
 
-
-                </div>
-
-
-                <!-- ================= HỒ SƠ KHÁCH HÀNG (bao gồm địa chỉ) ================= -->
-
-                <a id="address"></a>
-
-                <form
-                    id="profileForm"
-                    class="contact-form account-form"
-                    novalidate
-                >
-
-                    <span class="section-label">
-                        HỒ SƠ KHÁCH HÀNG
-                    </span>
-
-                    <p class="form-error" data-role="error" role="alert" hidden></p>
-                    <p class="form-success" data-role="success" role="status" hidden></p>
-
-                    <small
-                        id="profileEmptyHint"
-                        class="account-hint"
-                        hidden
-                    >
-                        Bạn chưa có hồ sơ khách hàng. Điền thông tin bên dưới để tạo mới.
-                    </small>
+                </section>
 
 
-                    <label for="dateOfBirth">
-                        Ngày sinh
-                    </label>
+                <section class="account-panel" id="panel-address" data-account-panel="address" aria-labelledby="addressPanelTitle" hidden>
 
-                    <input
-                        type="date"
-                        id="dateOfBirth"
+                    <h2 class="account-panel-title" id="addressPanelTitle">Địa chỉ &amp; hồ sơ giao hàng</h2>
+
+                    <form
+                        id="profileForm"
+                        class="contact-form account-form"
+                        novalidate
                     >
 
-                    <small class="field-error" data-field="dateOfBirth"></small>
+                        <span class="section-label">
+                            HỒ SƠ KHÁCH HÀNG
+                        </span>
+
+                        <p class="form-error" data-role="error" role="alert" hidden></p>
+                        <p class="form-success" data-role="success" role="status" hidden></p>
+
+                        <small
+                            id="profileEmptyHint"
+                            class="account-hint"
+                            hidden
+                        >
+                            Bạn chưa có hồ sơ khách hàng. Điền thông tin bên dưới để tạo mới.
+                        </small>
 
 
-                    <label for="gender">
-                        Giới tính
-                    </label>
+                        <label for="dateOfBirth">
+                            Ngày sinh
+                        </label>
 
-                    <select id="gender">
-                        <option value="">-- Chọn giới tính --</option>
-                        <option value="MALE">Nam</option>
-                        <option value="FEMALE">Nữ</option>
-                        <option value="OTHER">Khác</option>
-                    </select>
+                        <input
+                            type="date"
+                            id="dateOfBirth"
+                        >
 
-                    <small class="field-error" data-field="gender"></small>
+                        <small class="field-error" data-field="dateOfBirth"></small>
 
 
-                    <label for="address">
-                        Địa chỉ
-                    </label>
+                        <label for="gender">
+                            Giới tính
+                        </label>
 
-                    <input
-                        type="text"
-                        id="address"
-                        maxlength="255"
-                        placeholder="Số nhà, tên đường"
-                        autocomplete="street-address"
-                    >
+                        <select id="gender">
+                            <option value="">-- Chọn giới tính --</option>
+                            <option value="MALE">Nam</option>
+                            <option value="FEMALE">Nữ</option>
+                            <option value="OTHER">Khác</option>
+                        </select>
 
-                    <small class="field-error" data-field="address"></small>
-
-
-                    <label for="ward">
-                        Phường / Xã
-                    </label>
-
-                    <input
-                        type="text"
-                        id="ward"
-                        maxlength="100"
-                    >
-
-                    <small class="field-error" data-field="ward"></small>
+                        <small class="field-error" data-field="gender"></small>
 
 
-                    <label for="district">
-                        Quận / Huyện
-                    </label>
+                        <label for="address">
+                            Địa chỉ
+                        </label>
 
-                    <input
-                        type="text"
-                        id="district"
-                        maxlength="100"
-                    >
+                        <input
+                            type="text"
+                            id="address"
+                            maxlength="255"
+                            placeholder="Số nhà, tên đường"
+                            autocomplete="street-address"
+                        >
 
-                    <small class="field-error" data-field="district"></small>
-
-
-                    <label for="city">
-                        Tỉnh / Thành phố
-                    </label>
-
-                    <input
-                        type="text"
-                        id="city"
-                        maxlength="100"
-                    >
-
-                    <small class="field-error" data-field="city"></small>
+                        <small class="field-error" data-field="address"></small>
 
 
-                    <label for="postalCode">
-                        Mã bưu chính
-                    </label>
+                        <label for="ward">
+                            Phường / Xã
+                        </label>
 
-                    <input
-                        type="text"
-                        id="postalCode"
-                        maxlength="20"
-                        autocomplete="postal-code"
-                    >
+                        <input
+                            type="text"
+                            id="ward"
+                            maxlength="100"
+                        >
 
-                    <small class="field-error" data-field="postalCode"></small>
-
-
-                    <label for="defaultShippingAddress">
-                        Địa chỉ giao hàng mặc định
-                    </label>
-
-                    <textarea
-                        id="defaultShippingAddress"
-                        rows="4"
-                        maxlength="1000"
-                    ></textarea>
-
-                    <small class="field-error" data-field="defaultShippingAddress"></small>
+                        <small class="field-error" data-field="ward"></small>
 
 
-                    <button
-                        type="submit"
-                        class="btn btn-dark"
-                    >
-                        LƯU HỒ SƠ
-                    </button>
+                        <label for="district">
+                            Quận / Huyện
+                        </label>
 
-                </form>
+                        <input
+                            type="text"
+                            id="district"
+                            maxlength="100"
+                        >
 
-
-            </div>
-
-
-            <!-- ================= YÊU THÍCH ================= -->
-
-            <a id="wishlist"></a>
-
-            <div class="account-placeholder-section">
-
-                <span class="section-label">YÊU THÍCH</span>
-
-                <div class="state-box empty-state">
-                    <h3>Chưa có sản phẩm yêu thích</h3>
-                    <p>
-                        Danh sách yêu thích sẽ được đồng bộ với tài khoản của bạn
-                        khi tính năng này được kết nối với máy chủ.
-                    </p>
-                </div>
-
-            </div>
+                        <small class="field-error" data-field="district"></small>
 
 
-            <!-- ================= ĐÃ XEM ================= -->
+                        <label for="city">
+                            Tỉnh / Thành phố
+                        </label>
 
-            <a id="viewed"></a>
+                        <input
+                            type="text"
+                            id="city"
+                            maxlength="100"
+                        >
 
-            <div class="account-placeholder-section">
+                        <small class="field-error" data-field="city"></small>
 
-                <span class="section-label">ĐÃ XEM GẦN ĐÂY</span>
 
-                <div class="state-box empty-state">
-                    <h3>Chưa có lịch sử xem sản phẩm</h3>
-                    <p>
-                        Lịch sử sản phẩm bạn đã xem sẽ hiển thị tại đây
-                        khi tính năng này được kết nối với máy chủ.
-                    </p>
-                </div>
+                        <label for="postalCode">
+                            Mã bưu chính
+                        </label>
+
+                        <input
+                            type="text"
+                            id="postalCode"
+                            maxlength="20"
+                            autocomplete="postal-code"
+                        >
+
+                        <small class="field-error" data-field="postalCode"></small>
+
+
+                        <label for="defaultShippingAddress">
+                            Địa chỉ giao hàng mặc định
+                        </label>
+
+                        <textarea
+                            id="defaultShippingAddress"
+                            rows="4"
+                            maxlength="1000"
+                        ></textarea>
+
+                        <small class="field-error" data-field="defaultShippingAddress"></small>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-dark"
+                        >
+                            LƯU HỒ SƠ
+                        </button>
+
+                    </form>
+
+                </section>
+
 
             </div>
 

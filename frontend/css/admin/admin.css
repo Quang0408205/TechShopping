@@ -814,6 +814,82 @@ button.admin-badge {
     accent-color: var(--color-ink);
 }
 
+/* Tab loại tài khoản (Người dùng & phân quyền) */
+.admin-tabs {
+    display: flex;
+    gap: 4px;
+
+    margin-bottom: 16px;
+
+    border-bottom: 1px solid var(--gray-200, #e5e5e5);
+}
+
+.admin-tab {
+    padding: 10px 18px;
+    margin-bottom: -1px;
+
+    background: none;
+    border: 0;
+    border-bottom: 2px solid transparent;
+
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-600);
+
+    cursor: pointer;
+}
+
+.admin-tab:hover {
+    color: var(--color-ink);
+}
+
+.admin-tab.is-active {
+    color: var(--color-ink);
+    border-bottom-color: var(--color-ink);
+}
+
+/* Hộp thoại hiện mật khẩu tạm một lần */
+.modal-secret {
+    max-width: 480px;
+}
+
+.modal-secret-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+
+    margin: 14px 0;
+}
+
+.modal-secret-label {
+    flex-basis: 100%;
+
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.modal-secret-value {
+    flex: 1;
+    min-width: 0;
+
+    padding: 10px 12px;
+
+    background: var(--gray-100, #f5f5f5);
+    border: 1px solid var(--gray-200, #e5e5e5);
+
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    word-break: break-all;
+    user-select: all;
+}
+
+.modal-secret-warning {
+    font-size: 12px;
+    color: var(--color-danger);
+}
+
 /* Phân trang dưới bảng */
 .admin-pagination {
     display: flex;

@@ -142,7 +142,7 @@ class StoreInventoryApiIntegrationTest {
 
         Long staffUserId = userRepository.findByUsername("tk.staff").orElseThrow().getId();
         staffEmployeeId = data(send(post("/api/v1/admin/employees"), adminToken,
-                Map.of("userId", staffUserId, "storeId", storeA.getId(), "positionAtStore", "Quản lý chi nhánh"))
+                Map.of("userId", staffUserId, "storeId", storeA.getId(), "positionAtStore", "Nhân viên bán hàng"))
                 .andExpect(status().isCreated())).get("id").asLong();
     }
 
@@ -402,6 +402,8 @@ class StoreInventoryApiIntegrationTest {
     /** Registers, adds the role in the DB, then logs in again so the access token carries it. */
     private String registerWithRole(String username, String role) throws Exception {
         Long id = register(username).get("user").get("id").asLong();
+        // internal accounts hold one role only (never CUSTOMER)
+        userRoleRepository.deleteAll(userRoleRepository.findAllByIdUserId(id));
         userRoleRepository.save(new UserRole(userRepository.getReferenceById(id),
                 roleRepository.findByName(role).orElseThrow()));
         entityManager.flush();
