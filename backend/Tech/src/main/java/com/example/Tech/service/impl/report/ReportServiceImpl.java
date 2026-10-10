@@ -155,7 +155,7 @@ public class ReportServiceImpl implements ReportService {
                 revenue ? net(delivered(previousStart, previousEnd, storeId), previousStart, previousEnd, storeId) : null,
                 statuses.getOrDefault("PENDING", 0L), statuses.getOrDefault("CONFIRMED", 0L),
                 statuses.getOrDefault("SHIPPING", 0L),
-                queries.openServiceRequests(storeId), stock[0], stock[1],
+                queries.openServiceRequests(storeId), queries.openContactRequests(), stock[0], stock[1],
                 scope.admin() ? queries.openStores() : null,
                 scope.admin() ? queries.activeEmployees() : null);
     }

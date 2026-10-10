@@ -29,8 +29,6 @@
 
         setupSearchSuggest();
 
-        setupNewsletter();
-
         setupBackToTop();
 
         trackStickyHeader();
@@ -315,45 +313,6 @@
                     form.requestSubmit();
 
                 });
-
-            });
-
-        });
-
-    }
-
-
-    /* ---------- Nhận tin (MOCK: chưa có API) ---------- */
-
-    function setupNewsletter() {
-
-        document.querySelectorAll(".newsletter-form").forEach(function (form) {
-
-            const input = form.querySelector("input[type='email']");
-
-            form.addEventListener("submit", function (event) {
-
-                event.preventDefault();
-
-                const valid = input.value.trim() !== "" && input.checkValidity();
-
-                input.setAttribute("aria-invalid", String(!valid));
-
-                if (typeof showToast !== "function") {
-                    return;
-                }
-
-                if (!valid) {
-                    showToast("Vui lòng nhập email hợp lệ.", "error");
-                    input.focus();
-                    return;
-                }
-
-                showToast("Cảm ơn bạn! Tính năng nhận tin đang được hoàn thiện.");
-
-                form.reset();
-
-                input.removeAttribute("aria-invalid");
 
             });
 
