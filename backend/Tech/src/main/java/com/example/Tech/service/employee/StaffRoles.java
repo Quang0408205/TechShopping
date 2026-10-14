@@ -30,8 +30,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StaffRoles {
 
-    /** Label given to a manager who goes back to STAFF. */
-    public static final String DEFAULT_POSITION = "Nhân viên bán hàng";
+    /**
+     * The one label of a STAFF assignment (plan v3 GĐ D: the old free labels "Nhân viên bán hàng / kỹ thuật / Thu ngân"
+     * changed nothing, so they were merged; migration 13 renamed the stored ones). Labels sent by clients are ignored.
+     */
+    public static final String DEFAULT_POSITION = "Nhân viên chi nhánh";
 
     private static final String MANAGER = RoleName.BRANCH_MANAGER.name();
 

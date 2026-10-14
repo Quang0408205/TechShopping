@@ -47,6 +47,11 @@ public final class ProductFilterSpecifications {
             if (filter.isActive() != null) {
                 predicates.add(cb.equal(root.get("active"), filter.isActive()));
             }
+            // plan v3: "on sale" (what the shop pages ask for) also needs a visible category; NULL counts as visible
+            if (Boolean.TRUE.equals(filter.isActive())) {
+                var categoryActive = root.get("category").<Boolean>get("active");
+                predicates.add(cb.or(cb.isNull(categoryActive), cb.isTrue(categoryActive)));
+            }
             if (filter.minPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("basePrice"), filter.minPrice()));
             }

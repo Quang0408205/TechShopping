@@ -39,11 +39,6 @@ public record HireRequest(
         @Schema(example = "0901234567")
         String phone,
 
-        @Size(min = AccountUtil.MIN_PASSWORD_LENGTH, max = AccountUtil.MAX_PASSWORD_BYTES,
-                message = "Mật khẩu tạm từ 8 đến 72 ký tự")
-        @Schema(description = "Optional; empty = a random 12-character password. Returned once in the response")
-        String temporaryPassword,
-
         @Schema(description = "STAFF or BRANCH_MANAGER (ADMIN only; a manager can only hire STAFF)", example = "STAFF")
         String role,
 
@@ -51,8 +46,8 @@ public record HireRequest(
         Integer storeId,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(description = "Display label; \"Quản lý chi nhánh\" is reserved for the BRANCH_MANAGER role",
-                example = "Nhân viên bán hàng")
+        @Schema(description = "Ignored since plan v3: STAFF get \"Nhân viên chi nhánh\", BRANCH_MANAGER \"Quản lý chi nhánh\"; "
+                + "sending \"Quản lý chi nhánh\" with role STAFF is refused")
         String positionAtStore,
 
         @Size(max = 50, message = "Mã nhân viên tối đa 50 ký tự")

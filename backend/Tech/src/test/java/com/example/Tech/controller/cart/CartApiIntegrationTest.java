@@ -19,6 +19,7 @@ import com.example.Tech.service.product.ProductService;
 import com.example.Tech.service.product.ProductVariantService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
+import com.example.Tech.support.StoreFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -142,6 +144,7 @@ class CartApiIntegrationTest {
         primary.setDisplayOrder(2);
         primary.setPrimary(true);
         imageRepository.save(primary);
+        StoreFixtures.warehouse(entityManager, black, white, free);
         entityManager.flush();
     }
 
@@ -325,6 +328,14 @@ class CartApiIntegrationTest {
     void deletingAVariant_removesItFromCarts() throws Exception {
         add(black, 1);
         add(white, 1);
+
+        // plan v3 GĐ E: a variant still in stock cannot be deleted (409, not a database error)
+        assertThatThrownBy(() -> productVariantService.delete(black.getId()))
+                .isInstanceOfSatisfying(com.example.Tech.exception.BusinessException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(com.example.Tech.exception.ErrorCode.RESOURCE_IN_USE));
+        entityManager.createNativeQuery("update inventory set quantity = 0 where variant_id = :v")
+                .setParameter("v", black.getId()).executeUpdate();
+        entityManager.clear();
 
         productVariantService.delete(black.getId());
         entityManager.flush();

@@ -20,6 +20,8 @@ create table users (
     phone varchar(20),
     avatar_url text,
     is_active boolean default true,
+    must_change_password boolean not null default false,
+    password_expires_at timestamp,
     last_login timestamp,
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp,

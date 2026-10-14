@@ -40,13 +40,11 @@ function getStaffRoleLabel(role) {
 
 
 /*
- * Chức danh tại chi nhánh (employee_assignments.position_at_store) chỉ để HIỂN THỊ.
- * "Quản lý chi nhánh" gắn với role BRANCH_MANAGER nên không có trong danh sách chọn.
+ * Vị trí tại chi nhánh (employee_assignments.position_at_store) đi theo role, backend tự đặt
+ * (kế hoạch v3 GĐ D): STAFF = "Nhân viên chi nhánh", BRANCH_MANAGER = "Quản lý chi nhánh".
  */
 
 const BRANCH_MANAGER_POSITION = "Quản lý chi nhánh";
-
-const STORE_POSITIONS = ["Nhân viên bán hàng", "Nhân viên kỹ thuật", "Thu ngân"];
 
 
 /* Tài khoản (user của AuthResponse / UserResponse) có quyền vào khu nội bộ */
@@ -151,6 +149,7 @@ async function saveStaffSession(authResponse) {
  *   { reason: "none" }             chưa đăng nhập
  *   { reason: "expired" | "locked" | "denied" }  phiên đã bị xoá
  *   { reason: "network" }          không gọi được máy chủ (giữ nguyên phiên)
+ *   { reason: "password" }          tài khoản phải đổi mật khẩu tạm (giữ phiên, về admin/change-password.html)
  */
 
 async function checkStaffSession() {
@@ -184,6 +183,13 @@ async function checkStaffSession() {
         await logout();
 
         return { reason: "denied" };
+
+    }
+
+
+    if (me.mustChangePassword) {
+
+        return { reason: "password" };
 
     }
 
@@ -273,6 +279,15 @@ async function requireStaffLogin() {
         currentUrl.startsWith(SITE_ROOT)
             ? currentUrl.slice(SITE_ROOT.length)
             : "admin/dashboard.html";
+
+    if (result.reason === "password") {
+
+        window.location.replace(siteUrl("admin/change-password.html"));
+
+        return null;
+
+    }
+
 
     const params = new URLSearchParams();
 

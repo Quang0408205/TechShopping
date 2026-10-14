@@ -8,7 +8,8 @@
  *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
  *               image, quantity, lineTotal, available }],
  *     totalQuantity, subtotal, shippingFee, total, hasUnavailableItems }
- * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá),
+ * availableQuantity: số còn ở các chi nhánh đang mở (kế hoạch v3 GĐ E; null = API cũ).
+ * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá) hoặc không đủ hàng,
  * không tính vào tạm tính, chỉ còn nút xoá.
  *
  * Giỏ cũ lưu trên trình duyệt ("poy_cart_<userId>", F2) được chuyển lên
@@ -50,7 +51,8 @@ function toCartSummary(cart) {
             image: isSafeImageUrl(item.imageUrl) ? item.imageUrl : null,
             quantity: item.quantity,
             lineTotal: Number(item.lineTotal) || 0,
-            available: item.available === true
+            available: item.available === true,
+            availableQuantity: Number.isInteger(item.availableQuantity) ? item.availableQuantity : null
         };
 
     });

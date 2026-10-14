@@ -40,12 +40,6 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (GET /api/v1/admin/reports/sales). Doanh thu = đơn <strong>đã giao</strong> theo ngày giao
-                (gồm phí giao hàng); tiền hoàn = trả hàng đã hoàn tiền, tính vào ngày hoàn. Doanh thu theo danh mục /
-                sản phẩm dùng thành tiền từng dòng đơn (không gồm phí giao hàng). Bỏ trống ngày = 30 ngày gần nhất;
-                xem theo ngày tối đa 62 ngày, mỗi lần tối đa 366 ngày.
-            </p>
 
             <div class="admin-filter-bar admin-report-filters">
 
@@ -172,11 +166,6 @@
                     <span class="admin-row-count" id="stockInPeriod"></span>
                 </div>
 
-                <p class="admin-mock-note admin-live-note">
-                    Dữ liệu thật (GET /api/v1/admin/inventory/stock-in-stats): các lần "Nhập kho" ở trang Tồn kho.
-                    Nhập kho chỉ ghi số lượng (không có giá nhập) nên thống kê tính theo số lượng; hàng xuất bán / hoàn kho
-                    không tính. Bỏ trống ngày = toàn bộ thời gian.
-                </p>
 
                 <div class="admin-filter-bar">
 

@@ -82,6 +82,8 @@ public class UserServiceImpl implements UserService {
                     "New password must be different from the current password");
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setMustChangePassword(false);
+        user.setPasswordExpiresAt(null);
         userRepository.saveAndFlush(user);
         refreshTokenService.revokeAll(userId);
         log.info("User id={} changed password; all refresh tokens revoked", userId);

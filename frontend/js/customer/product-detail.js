@@ -155,6 +155,19 @@ document.addEventListener(
             }
 
 
+            /* Kế hoạch v3: danh mục bị ẩn → sản phẩm không bán, xử lý như ngừng bán */
+
+            if (categoryMaps && categoryMaps.hiddenIds && categoryMaps.hiddenIds[product.categoryId]) {
+
+                skeleton.hidden = true;
+
+                showNotFound();
+
+                return;
+
+            }
+
+
             skeleton.hidden = true;
 
             renderProduct(images);
@@ -270,13 +283,11 @@ document.addEventListener(
 
             const link = document.getElementById("breadcrumbCategory");
 
-            const filterKey = getCategoryFilterKey(categorySlug);
-
             link.textContent = product.categoryName;
 
             link.href = siteUrl(
-                filterKey
-                    ? "customer/products.html?category=" + encodeURIComponent(filterKey)
+                categorySlug
+                    ? "customer/products.html?category=" + encodeURIComponent(categoryKeyOf(categorySlug))
                     : "customer/products.html"
             );
 
@@ -442,8 +453,9 @@ document.addEventListener(
                 return `
                     <button
                         type="button"
-                        class="variant-btn"
+                        class="variant-btn${isSoldOut(variant) ? " is-sold-out" : ""}"
                         data-variant-id="${escapeHtml(variant.id)}"
+                        ${isSoldOut(variant) ? 'title="Tạm hết hàng"' : ""}
                     >
                         ${escapeHtml(getVariantLabel(variant))}
                     </button>
@@ -469,7 +481,8 @@ document.addEventListener(
             });
 
 
-            selectVariant(variants[0]);
+            /* Mở trang ở phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E) */
+            selectVariant(variants.find(function (variant) { return !isSoldOut(variant); }) || variants[0]);
 
         }
 
@@ -530,20 +543,67 @@ document.addEventListener(
             promoEl.hidden = !prices.promotionName;
 
 
-            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ */
+            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3 GĐ E) */
 
-            addToCartBtn.disabled = !hasPrice;
+            const canBuy = canBuyCurrent();
 
-            buyNowBtn.disabled = !hasPrice;
+            addToCartBtn.disabled = !canBuy;
 
-            document.getElementById("qtyMinus").disabled = !hasPrice;
+            buyNowBtn.disabled = !canBuy;
 
-            document.getElementById("qtyPlus").disabled = !hasPrice;
+            document.getElementById("qtyMinus").disabled = !canBuy;
+
+            document.getElementById("qtyPlus").disabled = !canBuy;
 
             document.getElementById("contactNote").hidden = hasPrice;
 
+            renderStock(hasPrice);
+
 
             renderSpecs();
+
+        }
+
+
+        /* Có giá và (nếu API trả số lượng) còn hàng ở chi nhánh đang mở */
+
+        function canBuyCurrent() {
+
+            return getPrices().price > 0 && !isSoldOut(currentVariant);
+
+        }
+
+
+        function availableUnits() {
+
+            return currentVariant && Number.isInteger(currentVariant.availableQuantity)
+                ? currentVariant.availableQuantity
+                : null;
+
+        }
+
+
+        function renderStock(hasPrice) {
+
+            const stockEl = document.getElementById("detailStock");
+
+            const units = availableUnits();
+
+            if (!hasPrice || units === null) {
+
+                stockEl.hidden = true;
+
+                return;
+
+            }
+
+            stockEl.hidden = false;
+
+            stockEl.classList.toggle("is-out", units === 0);
+
+            stockEl.textContent = units === 0
+                ? "Tạm hết hàng ở tất cả chi nhánh"
+                : units <= 5 ? "Chỉ còn " + units + " sản phẩm" : "Còn hàng";
 
         }
 
@@ -572,7 +632,13 @@ document.addEventListener(
 
             document.getElementById("qtyPlus").addEventListener("click", function () {
 
-                if (quantity < MAX_QUANTITY) {
+                const units = availableUnits();
+
+                if (units !== null && quantity >= units) {
+
+                    showToast("Chỉ còn " + units + " sản phẩm cho phiên bản này.", "error");
+
+                } else if (quantity < MAX_QUANTITY) {
 
                     setQuantity(quantity + 1);
 
@@ -602,7 +668,7 @@ document.addEventListener(
 
             const prices = getPrices();
 
-            if (!product || prices.price <= 0) {
+            if (!product || prices.price <= 0 || isSoldOut(currentVariant)) {
                 return false;
             }
 
@@ -658,11 +724,11 @@ document.addEventListener(
             } finally {
 
                 /* Người dùng có thể đã đổi sang phiên bản khác trong lúc chờ */
-                const hasPrice = getPrices().price > 0;
+                const canBuy = canBuyCurrent();
 
-                addToCartBtn.disabled = !hasPrice;
+                addToCartBtn.disabled = !canBuy;
 
-                buyNowBtn.disabled = !hasPrice;
+                buyNowBtn.disabled = !canBuy;
 
             }
 

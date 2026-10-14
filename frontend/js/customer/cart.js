@@ -144,10 +144,20 @@ function renderCart(summary) {
 
         const variantAttribute = `data-variant-id="${escapeHtml(String(item.variantId))}"`;
 
+        /* Kế hoạch v3 GĐ E: thiếu hàng ≠ ngừng bán; dòng thiếu hàng vẫn giảm được số lượng */
+        const stockShort = !item.available && item.availableQuantity !== null && item.availableQuantity < item.quantity;
+
+        const unavailableTag = !stockShort
+            ? "Ngừng bán"
+            : item.availableQuantity === 0 ? "Hết hàng" : "Chỉ còn " + item.availableQuantity;
+
         const unitPrice = item.available
             ? formatPrice(item.price) +
                 (item.oldPrice ? `<span class="cart-old-price">${formatPrice(item.oldPrice)}</span>` : "")
-            : `<span class="cart-unavailable-tag">Ngừng bán</span>`;
+            : `<span class="cart-unavailable-tag">${escapeHtml(unavailableTag)}</span>`;
+
+        const canIncrease = item.available && item.quantity < MAX_CART_LINE_QUANTITY
+            && (item.availableQuantity === null || item.quantity < item.availableQuantity);
 
         return `
             <tr class="${item.available ? "" : "cart-row-unavailable"}">
@@ -168,14 +178,14 @@ function renderCart(summary) {
                 <td>
                     <div class="quantity-control">
                         <button type="button" data-action="decrease" ${variantAttribute} aria-label="Giảm số lượng"
-                            ${item.available ? "" : "disabled"}>
+                            ${item.available || (stockShort && item.quantity > 1) ? "" : "disabled"}>
                             −
                         </button>
                         <span>
                             ${item.quantity}
                         </span>
                         <button type="button" data-action="increase" ${variantAttribute} aria-label="Tăng số lượng"
-                            ${!item.available || item.quantity >= MAX_CART_LINE_QUANTITY ? "disabled" : ""}>
+                            ${canIncrease ? "" : "disabled"}>
                             +
                         </button>
                     </div>
@@ -203,7 +213,7 @@ function renderCart(summary) {
     const checkoutAction = summary.hasUnavailableItems
         ? `
             <p class="cart-unavailable-note" id="cartUnavailableNote">
-                Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng xóa các sản phẩm này trước khi thanh toán.
+                Giỏ hàng có sản phẩm đã ngừng bán hoặc không đủ hàng. Vui lòng xóa hoặc giảm số lượng các sản phẩm này trước khi thanh toán.
             </p>
             <button type="button" class="btn btn-dark" id="checkoutButton" disabled>
                 Tiến hành thanh toán

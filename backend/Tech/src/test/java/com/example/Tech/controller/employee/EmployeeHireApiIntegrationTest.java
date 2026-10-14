@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -79,6 +80,9 @@ class EmployeeHireApiIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     private final List<Long> userIds = new ArrayList<>();
 
     private String adminToken;
@@ -131,23 +135,22 @@ class EmployeeHireApiIntegrationTest {
     @Test
     void adminHire_createsAccountProfileAndAssignment_withOneRoleOnly() throws Exception {
         Map<String, Object> body = hireBody("hr.moi", "staff", storeA.getId());
-        body.put("temporaryPassword", "Tam@Pass123");
         body.put("employeeCode", "ZZHR01");
         body.put("salary", 9000000);
         body.put("positionAtStore", "Thu ngân");
-        JsonNode hired = hire(adminToken, body, 201);
+        JsonNode hired = hireRaw(adminToken, body, 201);
 
         assertThat(hired.get("role").asString()).isEqualTo("STAFF");
-        assertThat(hired.get("temporaryPassword").asString()).isEqualTo("Tam@Pass123");
+        String temporary = hired.get("temporaryPassword").asString();
         JsonNode employee = hired.get("employee");
         assertThat(employee.get("assignment").get("storeId").asInt()).isEqualTo(storeA.getId());
-        assertThat(employee.get("assignment").get("positionAtStore").asString()).isEqualTo("Thu ngân");
+        assertThat(employee.get("assignment").get("positionAtStore").asString()).isEqualTo("Nhân viên chi nhánh");
         assertThat(employee.get("employeeCode").asString()).isEqualTo("ZZHR01");
         assertThat(employee.get("active").asBoolean()).isTrue();
 
         // the new account signs in through the normal login and has exactly one internal role
         JsonNode auth = data(send(post("/api/v1/auth/login"), null,
-                Map.of("identifier", "hr.moi", "password", "Tam@Pass123")).andExpect(status().isOk()));
+                Map.of("identifier", "hr.moi", "password", temporary)).andExpect(status().isOk()));
         assertThat(auth.get("user").get("roles")).hasSize(1);
         assertThat(auth.get("user").get("roles").get(0).asString()).isEqualTo("STAFF");
         assertThat(userRoleRepository.findRoleNamesByUserId(employee.get("userId").asLong())).containsExactly("STAFF");
@@ -155,14 +158,14 @@ class EmployeeHireApiIntegrationTest {
     }
 
     @Test
-    void adminHire_withoutPassword_generatesATwelveCharacterOneAndNeverCachesIt() throws Exception {
+    void adminHire_alwaysUsesTheDefaultTemporaryPassword_ignoresOneSentByTheClient_andNeverCachesIt() throws Exception {
         Map<String, Object> body = hireBody("hr.tudong", "STAFF", storeA.getId());
-        body.remove("temporaryPassword");
+        body.put("temporaryPassword", "Tam@Pass123");
         ResultActions result = send(post(HIRE), adminToken, body)
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Cache-Control", "no-store"));
         String password = data(result).get("temporaryPassword").asString();
-        assertThat(password).hasSize(12).matches(".*[a-z].*").matches(".*[A-Z].*").matches(".*\\d.*");
+        assertThat(password).isEqualTo("1");
         assertThat(login("hr.tudong", password)).isNotBlank();
     }
 
@@ -286,10 +289,10 @@ class EmployeeHireApiIntegrationTest {
     @Test
     void branch_hire_alwaysJoinsTheManagersOwnStore_andOnlyAsStaff() throws Exception {
         Map<String, Object> body = hireBody("hr.nvmoi", "STAFF", storeB.getId());
-        JsonNode hired = hire(managerAToken, body, 201);
+        JsonNode hired = hireRaw(managerAToken, body, 201);
         assertThat(hired.get("employee").get("assignment").get("storeId").asInt()).isEqualTo(storeA.getId());
         assertThat(hired.get("role").asString()).isEqualTo("STAFF");
-        assertThat(hired.get("employee").get("assignment").get("positionAtStore").asString()).isEqualTo("Nhân viên bán hàng");
+        assertThat(hired.get("employee").get("assignment").get("positionAtStore").asString()).isEqualTo("Nhân viên chi nhánh");
         assertThat(login("hr.nvmoi", hired.get("temporaryPassword").asString())).isNotBlank();
         userIds.add(hired.get("employee").get("userId").asLong());
 
@@ -313,7 +316,7 @@ class EmployeeHireApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.employeeCode").value("ZZHR77"))
                 .andExpect(jsonPath("$.data.department").value("Kỹ thuật"))
-                .andExpect(jsonPath("$.data.assignment.positionAtStore").value("Nhân viên kỹ thuật"));
+                .andExpect(jsonPath("$.data.assignment.positionAtStore").value("Nhân viên chi nhánh"));
 
         send(put(BRANCH + "/employees/" + staffAEmployeeId), managerAToken, Map.of("positionAtStore", "Quản lý chi nhánh"))
                 .andExpect(status().isBadRequest())
@@ -370,6 +373,86 @@ class EmployeeHireApiIntegrationTest {
                 .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
     }
 
+    // ---------- temporary password: forced change + expiry ----------
+
+    @Test
+    void temporaryPassword_firstLoginMustChangeIt_andOnlyTheChangeCallsWorkUntilThen() throws Exception {
+        JsonNode hired = hireRaw(adminToken, hireBody("hr.tam", "STAFF", storeA.getId()), 201);
+        String temporary = hired.get("temporaryPassword").asString();
+        assertThat(hired.get("passwordExpiresAt").asString()).isNotBlank();
+
+        JsonNode auth = data(send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.tam", "password", temporary))
+                .andExpect(status().isOk()));
+        assertThat(auth.get("user").get("mustChangePassword").asBoolean()).isTrue();
+        String restricted = auth.get("accessToken").asString();
+
+        // everything except "who am I", the password change and /auth/* is blocked
+        send(get("/api/v1/employees/me"), restricted, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("PASSWORD_CHANGE_REQUIRED"));
+        send(get("/api/v1/admin/orders"), restricted, null)
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("PASSWORD_CHANGE_REQUIRED"));
+        send(get("/api/v1/users/me"), restricted, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.mustChangePassword").value(true));
+
+        // a refreshed token is still restricted
+        String refreshed = data(send(post("/api/v1/auth/refresh"), null,
+                Map.of("refreshToken", auth.get("refreshToken").asString())).andExpect(status().isOk()))
+                .get("accessToken").asString();
+        send(get("/api/v1/employees/me"), refreshed, null).andExpect(status().isForbidden());
+
+        // wrong current password / same password are refused; the right change clears the flag and the deadline
+        send(put("/api/v1/users/me/password"), restricted, Map.of("currentPassword", "SaiMatKhau@1", "newPassword", "MatKhauMoi@456"))
+                .andExpect(status().isBadRequest());
+        send(put("/api/v1/users/me/password"), restricted, Map.of("currentPassword", temporary, "newPassword", temporary))
+                .andExpect(status().isBadRequest());
+        send(put("/api/v1/users/me/password"), restricted, Map.of("currentPassword", temporary, "newPassword", "MatKhauMoi@456"))
+                .andExpect(status().isOk());
+        var user = userRepository.findByUsername("hr.tam").orElseThrow();
+        assertThat(user.isMustChangePassword()).isFalse();
+        assertThat(user.getPasswordExpiresAt()).isNull();
+
+        JsonNode again = data(send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.tam", "password", "MatKhauMoi@456"))
+                .andExpect(status().isOk()));
+        assertThat(again.get("user").get("mustChangePassword").asBoolean()).isFalse();
+        send(get("/api/v1/employees/me"), again.get("accessToken").asString(), null).andExpect(status().isOk());
+    }
+
+    @Test
+    void temporaryPassword_expiredOne_cannotLogInOrRefresh_butRightAfterChangeThereIsNoDeadline() throws Exception {
+        JsonNode hired = hireRaw(adminToken, hireBody("hr.hethan", "STAFF", storeA.getId()), 201);
+        String temporary = hired.get("temporaryPassword").asString();
+        var user = userRepository.findByUsername("hr.hethan").orElseThrow();
+        assertThat(user.getPasswordExpiresAt()).isAfter(java.time.LocalDateTime.now().plusDays(6));
+
+        // a session opened before the deadline cannot be refreshed after it
+        String refreshToken = data(send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.hethan", "password", temporary))
+                .andExpect(status().isOk())).get("refreshToken").asString();
+        user.setPasswordExpiresAt(java.time.LocalDateTime.now().minusMinutes(1));
+        userRepository.saveAndFlush(user);
+
+        send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.hethan", "password", temporary))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("TEMP_PASSWORD_EXPIRED"));
+        send(post("/api/v1/auth/refresh"), null, Map.of("refreshToken", refreshToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error.code").value("TEMP_PASSWORD_EXPIRED"));
+        // a wrong password still looks like a wrong password (no hint that the account exists)
+        send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.hethan", "password", "SaiMatKhau@1"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void temporaryPassword_applyOnlyToHiredAccounts_customersAndSettledStaffAreNotRestricted() throws Exception {
+        JsonNode auth = data(send(post("/api/v1/auth/login"), null, Map.of("identifier", "hr.khach", "password", PASSWORD))
+                .andExpect(status().isOk()));
+        assertThat(auth.get("user").get("mustChangePassword").asBoolean()).isFalse();
+        send(get("/api/v1/orders"), customerToken, null).andExpect(status().isOk());
+        send(get("/api/v1/employees/me"), staffAToken, null).andExpect(status().isOk());
+    }
+
     // ---------- helpers ----------
 
     private Map<String, Object> hireBody(String username, String role, Integer storeId) {
@@ -377,7 +460,6 @@ class EmployeeHireApiIntegrationTest {
         body.put("email", username + "@example.com");
         body.put("username", username);
         body.put("fullname", "Nhân Viên " + username);
-        body.put("temporaryPassword", PASSWORD);
         if (role != null) {
             body.put("role", role);
         }
@@ -387,7 +469,19 @@ class EmployeeHireApiIntegrationTest {
         return body;
     }
 
+    /** Hires and then sets the known test password with no forced change, so the account can be used right away. */
     private JsonNode hire(String token, Map<String, Object> body, int expectedStatus) throws Exception {
+        JsonNode data = hireRaw(token, body, expectedStatus);
+        var user = userRepository.findById(data.get("employee").get("userId").asLong()).orElseThrow();
+        user.setPasswordHash(passwordEncoder.encode(PASSWORD));
+        user.setMustChangePassword(false);
+        user.setPasswordExpiresAt(null);
+        userRepository.saveAndFlush(user);
+        return data;
+    }
+
+    /** Hires and keeps the real state: generated temporary password, forced change, expiry date. */
+    private JsonNode hireRaw(String token, Map<String, Object> body, int expectedStatus) throws Exception {
         JsonNode data = data(send(post(token.equals(managerAToken) ? BRANCH + "/employees/hire" : HIRE), token, body)
                 .andExpect(status().is(expectedStatus)));
         userIds.add(data.get("employee").get("userId").asLong());

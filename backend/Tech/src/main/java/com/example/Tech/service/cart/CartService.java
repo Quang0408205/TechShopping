@@ -3,6 +3,9 @@ package com.example.Tech.service.cart;
 import com.example.Tech.dto.request.cart.CartItemAddRequest;
 import com.example.Tech.dto.request.cart.CartItemUpdateRequest;
 import com.example.Tech.dto.response.cart.CartResponse;
+import com.example.Tech.dto.response.cart.StoreAvailabilityResponse;
+
+import java.util.List;
 
 /**
  * The logged-in user's cart (the id comes from the access token). Every operation re-checks the account
@@ -27,4 +30,7 @@ public interface CartService {
     CartResponse removeItem(Long userId, Long variantId);
 
     CartResponse clear(Long userId);
+
+    /** Plan v3 GĐ E: every open store, and whether it holds the whole cart (pickup choice at checkout). */
+    List<StoreAvailabilityResponse> storeAvailability(Long userId);
 }

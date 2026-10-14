@@ -28,8 +28,7 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
-		<springdoc.version>3.0.3</springdoc.version>
-	</properties>
+		<springdoc.version>3.0.3</springdoc.version>	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

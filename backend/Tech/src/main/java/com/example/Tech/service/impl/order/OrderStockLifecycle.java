@@ -17,6 +17,8 @@ import com.example.Tech.repository.inventory.InventoryRepository;
 import com.example.Tech.repository.inventory.StockMovementRepository;
 import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.store.StoreRepository;
+import com.example.Tech.service.inventory.StockAvailability;
+import com.example.Tech.service.inventory.StockAvailability.StoreStock;
 import com.example.Tech.service.order.NearestStoreResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -31,8 +33,8 @@ import java.util.TreeMap;
 
 /**
  * Store side of an order's life (Phase 7), in the same shape as OrderPaymentLifecycle: no transaction of its own,
- * it runs inside the caller's, after the caller has locked the order row. At placement it decides which store
- * handles the order; stock is not checked there (an order can always be placed), only when staff confirm it.
+ * it runs inside the caller's, after the caller has locked the order row. At placement it picks a store holding
+ * the whole order (plan v3 GĐ E, read without a lock and nothing reserved); staff confirmation deducts the stock.
  */
 @Component
 @RequiredArgsConstructor
@@ -44,6 +46,7 @@ public class OrderStockLifecycle {
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final OrderItemRepository orderItemRepository;
+    private final StockAvailability stockAvailability;
 
     /** Rules bean validation cannot express; runs before the cart is read. */
     public void validateDeliverySelection(DeliveryType deliveryType, Integer pickupStoreId, String shippingAddress) {
@@ -62,25 +65,60 @@ public class OrderStockLifecycle {
     }
 
     /**
-     * Sets the delivery type and the store of a new order. PICKUP: the chosen store, which must be open, and the
-     * shipping address becomes the store's address. HOME_DELIVERY: the open store nearest to the shipping address
-     * (NearestStoreResolver); with no open store at all the order is still placed, without a store.
+     * Sets the delivery type and the store of a new order (plan v3 GĐ E: one store must hold the whole order).
+     * PICKUP: the chosen store, which must be open and hold every unit; the shipping address becomes the store's.
+     * HOME_DELIVERY: among the open stores holding every unit, the one nearest to the address (NearestStoreResolver),
+     * then the one with more units of the ordered variants. 409 OUT_OF_STOCK listing the short items otherwise.
+     * Nothing is reserved: confirmation re-checks and deducts under a lock.
+     *
+     * @param needed variantId → quantity of the cart
+     * @param labels variantId → "Product - Variant" for the messages
      */
-    public void assignBranch(Order order, DeliveryType deliveryType, Integer pickupStoreId) {
+    public void assignBranch(Order order, DeliveryType deliveryType, Integer pickupStoreId,
+                             Map<Long, Integer> needed, Map<Long, String> labels) {
         order.setDeliveryType(deliveryType);
+        Map<Integer, StoreStock> stock = stockAvailability.byStore(needed.keySet());
         if (deliveryType == DeliveryType.PICKUP) {
             Store store = storeRepository.findById(pickupStoreId)
                     .filter(found -> !Boolean.FALSE.equals(found.getActive()))
                     .orElseThrow(() -> BusinessException.invalidField("pickupStoreId",
                             "Chi nhánh không tồn tại hoặc đang tạm đóng"));
+            StoreStock held = stock.get(store.getId());
+            List<String> missing = StockAvailability.shortages(needed, labels,
+                    variantId -> held == null ? 0 : held.quantityOf(variantId));
+            if (!missing.isEmpty()) {
+                throw new BusinessException(ErrorCode.OUT_OF_STOCK,
+                        "Chi nhánh %s không đủ hàng: %s. Hãy chọn chi nhánh khác hoặc giao tận nhà"
+                                .formatted(store.getName(), String.join("; ", missing)));
+            }
             order.setStore(store);
             order.setShippingAddress(PICKUP_ADDRESS_PREFIX + store.getName() + ", " + fullAddress(store));
             return;
         }
-        Optional<Store> nearest = NearestStoreResolver.resolve(order.getShippingAddress(),
-                storeRepository.findAllByActiveTrueOrderByName());
-        order.setStore(nearest.orElse(null));
+
+        Map<Integer, StoreStock> holding = new HashMap<>();
+        stock.forEach((storeId, storeStock) -> {
+            if (storeStock.holds(needed)) {
+                holding.put(storeId, storeStock);
+            }
+        });
+        if (holding.isEmpty()) {
+            Map<Long, Integer> totals = new HashMap<>();
+            stock.values().forEach(storeStock -> storeStock.quantities().forEach((variantId, quantity) ->
+                    totals.merge(variantId, quantity, Integer::sum)));
+            List<String> missing = StockAvailability.shortages(needed, labels, variantId -> totals.getOrDefault(variantId, 0));
+            throw new BusinessException(ErrorCode.OUT_OF_STOCK, missing.isEmpty()
+                    ? "Không chi nhánh nào có đủ cả đơn. Hãy đặt riêng từng sản phẩm hoặc chọn nhận tại cửa hàng"
+                    : "Không đủ hàng: " + String.join("; ", missing));
+        }
+        Store nearest = NearestStoreResolver.resolve(order.getShippingAddress(),
+                        holding.values().stream().map(StoreStock::store).toList(),
+                        store -> holding.get(store.getId()).unitsOf(needed))
+                .orElseThrow();
+        order.setStore(nearest);
     }
+
+
 
     /**
      * PENDING → CONFIRMED: takes the order's quantities from its store. Locks the inventory rows of the store (by

@@ -51,6 +51,14 @@ public class User {
     @Column(name = "is_active")
     private Boolean active = true;
 
+    /** Set when the account is hired with a temporary password; cleared by the first password change. */
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword = false;
+
+    /** Deadline for changing the temporary password; null = no deadline. */
+    @Column(name = "password_expires_at")
+    private LocalDateTime passwordExpiresAt;
+
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
@@ -64,6 +72,11 @@ public class User {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    /** The temporary password was not changed in time: the account cannot log in until it is reissued. */
+    public boolean isTemporaryPasswordExpired(LocalDateTime now) {
+        return mustChangePassword && passwordExpiresAt != null && now.isAfter(passwordExpiresAt);
+    }
 
     /** An account can be used only when it is not soft-deleted and not deactivated (null counts as active). */
     public boolean isEnabled() {

@@ -64,6 +64,8 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid login or password"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "You do not have permission to perform this action"),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),
+    PASSWORD_CHANGE_REQUIRED(HttpStatus.FORBIDDEN, "Bạn cần đổi mật khẩu tạm trước khi sử dụng hệ thống"),
+    TEMP_PASSWORD_EXPIRED(HttpStatus.FORBIDDEN, "Mật khẩu tạm đã hết hạn, vui lòng liên hệ quản lý để được cấp lại"),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "User not found"),
@@ -128,6 +130,8 @@ public enum ErrorCode {
     // Inventory
     INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),
     ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước"),
+    /** Plan v3 GĐ E: no open store holds the whole cart (home delivery), the chosen pickup store lacks items, or the cart asks for more than all stores hold. */
+    OUT_OF_STOCK(HttpStatus.CONFLICT, "Không đủ hàng"),
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),

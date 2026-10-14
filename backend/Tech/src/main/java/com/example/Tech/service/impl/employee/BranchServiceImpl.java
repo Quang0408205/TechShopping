@@ -97,10 +97,6 @@ public class BranchServiceImpl implements BranchService {
         employee.setPosition(trimToNull(request.position()));
         employee.setSalary(request.salary());
         employee.setHiringDate(request.hiringDate());
-        if (label != null) {
-            current.setPositionAtStore(label);
-            assignmentRepository.save(current);
-        }
         employeeRepository.saveAndFlush(employee);
         log.info("Manager id={} updated employee id={}", managerId, employeeId);
         return EmployeeMapper.toResponse(employee, current);

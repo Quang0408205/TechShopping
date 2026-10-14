@@ -12,6 +12,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 
 /**
@@ -56,6 +57,7 @@ public class SecurityConfig {
     private final RestAuthenticationEntryPoint authenticationEntryPoint;
     private final RestAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationConverter jwtAuthenticationConverter;
+    private final SecurityErrorResponseWriter errorWriter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -94,7 +96,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/branch/**").hasRole(BRANCH_MANAGER)
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()
-                );
+                )
+                .addFilterAfter(new PasswordChangeRequiredFilter(errorWriter), BearerTokenAuthenticationFilter.class);
         return http.build();
     }
 

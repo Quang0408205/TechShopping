@@ -281,6 +281,24 @@
 
 /* ================= HÀNH ĐỘNG ================= */
 
+/* Kế hoạch v3 GĐ E: tình trạng hàng của phiên bản đang chọn */
+.detail-stock {
+    margin-bottom: var(--space-2);
+
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-success);
+}
+
+.detail-stock.is-out {
+    color: var(--color-danger);
+}
+
+.variant-btn.is-sold-out {
+    color: var(--gray-500);
+    text-decoration: line-through;
+}
+
 .detail-contact-note {
     margin-bottom: var(--space-2);
     padding: 12px 16px;

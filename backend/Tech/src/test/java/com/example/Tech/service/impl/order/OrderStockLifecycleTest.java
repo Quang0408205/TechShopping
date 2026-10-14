@@ -17,6 +17,8 @@ import com.example.Tech.repository.inventory.InventoryRepository;
 import com.example.Tech.repository.inventory.StockMovementRepository;
 import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.store.StoreRepository;
+import com.example.Tech.service.inventory.StockAvailability;
+import com.example.Tech.service.inventory.StockAvailability.StoreStock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -25,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,6 +55,9 @@ class OrderStockLifecycleTest {
     @Mock
     private OrderItemRepository orderItemRepository;
 
+    @Mock
+    private StockAvailability stockAvailability;
+
     @InjectMocks
     private OrderStockLifecycle lifecycle;
 
@@ -67,13 +73,19 @@ class OrderStockLifecycleTest {
         assertInvalid(DeliveryType.HOME_DELIVERY, null, null, "shippingAddress");
     }
 
+    // plan v3 GĐ E: one open store must hold the whole order; variant 10 × 2 and variant 20 × 1 below
+    private static final Map<Long, Integer> NEEDED = Map.of(10L, 2, 20L, 1);
+    private static final Map<Long, String> LABELS = Map.of(10L, "Điện thoại - Đen", 20L, "Ốp lưng - Trong");
+
     @Test
-    void assignBranch_pickup_usesTheChosenStoreAndItsAddress() {
+    void assignBranch_pickup_usesTheChosenStoreAndItsAddress_whenItHoldsEverything() {
         Store store = store(3, "POY Quận 1", true);
         when(storeRepository.findById(3)).thenReturn(Optional.of(store));
+        when(stockAvailability.byStore(NEEDED.keySet()))
+                .thenReturn(Map.of(3, new StoreStock(store, Map.of(10L, 2, 20L, 5))));
         Order order = new Order();
 
-        lifecycle.assignBranch(order, DeliveryType.PICKUP, 3);
+        lifecycle.assignBranch(order, DeliveryType.PICKUP, 3, NEEDED, LABELS);
 
         assertThat(order.getStore()).isSameAs(store);
         assertThat(order.getDeliveryType()).isEqualTo(DeliveryType.PICKUP);
@@ -82,39 +94,101 @@ class OrderStockLifecycleTest {
     }
 
     @Test
+    void assignBranch_pickupAtAStoreLackingItems_isOutOfStock_listingEveryShortLine() {
+        Store store = store(3, "POY Quận 1", true);
+        when(storeRepository.findById(3)).thenReturn(Optional.of(store));
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(3, new StoreStock(store, Map.of(10L, 1))));
+        Order order = new Order();
+
+        assertThatThrownBy(() -> lifecycle.assignBranch(order, DeliveryType.PICKUP, 3, NEEDED, LABELS))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.OUT_OF_STOCK);
+                    assertThat(ex.getMessage()).isEqualTo("Chi nhánh POY Quận 1 không đủ hàng: Điện thoại - Đen (cần 2, còn 1); "
+                            + "Ốp lưng - Trong (cần 1, còn 0). Hãy chọn chi nhánh khác hoặc giao tận nhà");
+                });
+        assertThat(order.getStore()).isNull();
+    }
+
+    @Test
     void assignBranch_pickupAtAClosedOrUnknownStore_isRejectedOnPickupStoreId() {
         when(storeRepository.findById(3)).thenReturn(Optional.of(store(3, "Đóng", false)));
         when(storeRepository.findById(4)).thenReturn(Optional.empty());
 
         for (int id : new int[]{3, 4}) {
-            assertThatThrownBy(() -> lifecycle.assignBranch(new Order(), DeliveryType.PICKUP, id))
+            assertThatThrownBy(() -> lifecycle.assignBranch(new Order(), DeliveryType.PICKUP, id, NEEDED, LABELS))
                     .isInstanceOfSatisfying(BusinessException.class,
                             ex -> assertThat(ex.getDetails()).containsKey("pickupStoreId"));
         }
     }
 
     @Test
-    void assignBranch_homeDelivery_picksTheNearestOpenStore_orNoneWhenNoStoreIsOpen() {
+    void assignBranch_homeDelivery_picksTheNearestStoreAmongThoseHoldingTheWholeOrder() {
         Store q1 = store(1, "POY Quận 1", true);
         Store q5 = store(2, "POY Quận 5", true);
         q5.setDistrict("Quận 5");
-        when(storeRepository.findAllByActiveTrueOrderByName()).thenReturn(List.of(q1, q5));
         Order order = new Order();
         order.setShippingAddress("12 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh");
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(
+                1, new StoreStock(q1, Map.of(10L, 2, 20L, 1)),
+                2, new StoreStock(q5, Map.of(10L, 9, 20L, 9))));
 
-        lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null);
+        lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS);
 
         assertThat(order.getStore()).isSameAs(q5);
         assertThat(order.getDeliveryType()).isEqualTo(DeliveryType.HOME_DELIVERY);
         assertThat(order.getShippingAddress()).isEqualTo("12 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh");
 
-        when(storeRepository.findAllByActiveTrueOrderByName()).thenReturn(List.of());
-        Order noStore = new Order();
-        noStore.setShippingAddress("Quận 5");
-        lifecycle.assignBranch(noStore, DeliveryType.HOME_DELIVERY, null);
-        assertThat(noStore.getStore()).isNull();
+        // the nearest store lacks one unit → the farther store holding everything handles it
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(
+                1, new StoreStock(q1, Map.of(10L, 2, 20L, 1)),
+                2, new StoreStock(q5, Map.of(10L, 1, 20L, 9))));
+        Order farther = new Order();
+        farther.setShippingAddress("12 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh");
+        lifecycle.assignBranch(farther, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS);
+        assertThat(farther.getStore()).isSameAs(q1);
     }
 
+    @Test
+    void assignBranch_homeDelivery_equallyNearStores_theOneWithMoreUnitsWins() {
+        Store a = store(1, "POY A", true);
+        Store b = store(2, "POY B", true);
+        Order order = new Order();
+        order.setShippingAddress("Phường 3, Quận Gò Vấp");
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(
+                1, new StoreStock(a, Map.of(10L, 2, 20L, 1)),
+                2, new StoreStock(b, Map.of(10L, 6, 20L, 4))));
+
+        lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS);
+
+        assertThat(order.getStore()).isSameAs(b);
+    }
+
+    @Test
+    void assignBranch_homeDelivery_noStoreHoldsTheWholeOrder_isOutOfStock() {
+        Store a = store(1, "POY A", true);
+        Store b = store(2, "POY B", true);
+        Order order = new Order();
+        order.setShippingAddress("Quận 1");
+        // enough units in total, but split between the stores
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(
+                1, new StoreStock(a, Map.of(10L, 2)),
+                2, new StoreStock(b, Map.of(20L, 1))));
+        assertThatThrownBy(() -> lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.OUT_OF_STOCK);
+                    assertThat(ex.getMessage()).startsWith("Không chi nhánh nào có đủ cả đơn");
+                });
+
+        // not enough units at all (and no open store with any row)
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of(1, new StoreStock(a, Map.of(10L, 1))));
+        assertThatThrownBy(() -> lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS))
+                .hasMessage("Không đủ hàng: Điện thoại - Đen (cần 2, còn 1); Ốp lưng - Trong (cần 1, còn 0)");
+        when(stockAvailability.byStore(NEEDED.keySet())).thenReturn(Map.of());
+        assertThatThrownBy(() -> lifecycle.assignBranch(order, DeliveryType.HOME_DELIVERY, null, NEEDED, LABELS))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.OUT_OF_STOCK));
+        assertThat(order.getStore()).isNull();
+    }
     @Test
     void onOrderConfirmed_takesTheSummedQuantityOfEveryVariant_andWritesOneOutMovementEach() {
         Store store = store(3, "POY Quận 1", true);

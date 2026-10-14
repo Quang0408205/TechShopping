@@ -53,10 +53,10 @@ public class ProductMapper {
     }
 
     /**
-     * The primary image URL and the effective price are looked up by the service (one query per page each, see
-     * ProductImageRepository and PromotionPricingService).
+     * The primary image URL, the effective price and the available units are looked up by the service (one query
+     * per page each, see ProductImageRepository, PromotionPricingService and StockAvailability).
      */
-    public ProductResponse toResponse(Product product, String primaryImageUrl, EffectivePrice price) {
+    public ProductResponse toResponse(Product product, String primaryImageUrl, EffectivePrice price, int availableQuantity) {
         Category category = product.getCategory();
         Brand brand = product.getBrand();
         return new ProductResponse(
@@ -84,7 +84,8 @@ public class ProductMapper {
                 price.unitPrice(),
                 price.activePromotionName(),
                 product.getTgddRating(),
-                product.getTgddReviewCount()
+                product.getTgddReviewCount(),
+                availableQuantity
         );
     }
 }

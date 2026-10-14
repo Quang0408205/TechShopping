@@ -290,7 +290,7 @@ class AdminUserApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.roles[0]").value("STAFF"));
         assertThat(assignmentRepository.findActiveWithStoreByUserId(staffId).orElseThrow().getPositionAtStore())
-                .isEqualTo("Nhân viên bán hàng");
+                .isEqualTo("Nhân viên chi nhánh");
     }
 
     @Test

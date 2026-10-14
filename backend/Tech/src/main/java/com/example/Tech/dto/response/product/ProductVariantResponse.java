@@ -27,6 +27,8 @@ public record ProductVariantResponse(
         BigDecimal effectivePrice,
 
         @Schema(description = "Name of the promotion giving effectivePrice; null when no promotion applies")
-        String activePromotionName
+        String activePromotionName,
+        @Schema(description = "Units customers can still buy: this variant's stock in OPEN stores (plan v3); 0 = out of stock")
+        Integer availableQuantity
 ) {
 }

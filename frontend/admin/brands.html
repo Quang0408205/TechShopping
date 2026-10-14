@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Thương hiệu - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang, kiểm tra ở js/admin/admin-layout.js; data-taxonomy: cấu hình trong js/admin/taxonomy.js -->
+<body class="admin-body" data-page-title="Thương hiệu" data-roles="ADMIN" data-taxonomy="brands">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="brands"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="taxFilterForm" role="search">
+
+                    <input type="search" id="taxKeyword" placeholder="Tìm tên, slug…" maxlength="100" aria-label="Từ khoá">
+
+                    <select id="taxStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="true">Đang hiển thị</option>
+                        <option value="false">Đã ẩn</option>
+                    </select>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="taxNewBtn">
+                    + THÊM THƯƠNG HIỆU
+                </button>
+
+            </div>
+
+
+            <!-- Thêm / sửa thương hiệu -->
+            <section class="admin-panel" id="taxFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="taxFormTitle">Thêm thương hiệu</h2>
+                </div>
+
+                <form id="taxForm" novalidate>
+
+                    <p id="taxFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="taxName">Tên thương hiệu *</label>
+                            <input type="text" id="taxName" maxlength="100" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="taxSlug">Slug (đường dẫn)</label>
+                            <input type="text" id="taxSlug" maxlength="100" placeholder="Tự tạo từ tên nếu để trống">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="taxImage">Logo (link ảnh)</label>
+                            <input type="url" id="taxImage" maxlength="500" placeholder="https://… (có thể bỏ trống)">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="taxWebsite">Website</label>
+                            <input type="url" id="taxWebsite" maxlength="255" placeholder="https://…">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="taxDescription">Mô tả</label>
+                            <textarea id="taxDescription" rows="3"></textarea>
+                        </div>
+
+                        <label class="admin-field-check admin-field-wide">
+                            <input type="checkbox" id="taxActive" checked>
+                            Hiển thị trên website
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="taxSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="taxCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách thương hiệu</h2>
+                    <span class="admin-row-count" id="taxRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Thương hiệu</th>
+                                <th>Website</th>
+                                <th>Sản phẩm</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="taxTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="taxPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/taxonomy.js"></script>
+
+</body>
+</html>

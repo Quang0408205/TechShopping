@@ -110,7 +110,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.setActive(true);
         Employee saved = employeeRepository.save(employee);
         EmployeeAssignment assignment = store == null ? null
-                : startAssignment(saved, store, request.positionAtStore(), today());
+                : startAssignment(saved, store, staffRoles.isManager(user.getId())
+                        ? EmployeeAssignment.BRANCH_MANAGER_POSITION : StaffRoles.DEFAULT_POSITION, today());
         log.info("Admin id={} created employee id={} for user id={} (store {})", adminId, saved.getId(), user.getId(),
                 store == null ? "-" : store.getId());
         return toResponse(saved, assignment);
@@ -162,8 +163,8 @@ public class EmployeeServiceImpl implements EmployeeService {
         Long userId = employee.getUser().getId();
         boolean manager = staffRoles.isManager(userId);
         // the role decides: a manager is always labelled as one, and nobody becomes a manager through the label
-        String position = manager ? EmployeeAssignment.BRANCH_MANAGER_POSITION : request.positionAtStore();
-        rejectManagerLabel(userId, position);
+        rejectManagerLabel(userId, request.positionAtStore());
+        String position = manager ? EmployeeAssignment.BRANCH_MANAGER_POSITION : StaffRoles.DEFAULT_POSITION;
         if (manager) {
             staffRoles.requireFreeManagerSeat(store.getId(), userId);
         }

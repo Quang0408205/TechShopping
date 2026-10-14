@@ -38,11 +38,6 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (catalogue /api/v1/products): thêm, sửa, ẩn / hiện và xoá có hiệu lực ngay trên website.
-                Ảnh sản phẩm quản lý ngay trong form; phiên bản và thông số kỹ thuật được quản lý qua API riêng (chưa có màn hình).
-            </p>
-
 
             <div class="admin-filter-bar admin-filter-bar--split">
 
@@ -52,6 +47,10 @@
 
                     <select id="productCategoryFilter" aria-label="Danh mục">
                         <option value="">Mọi danh mục</option>
+                    </select>
+
+                    <select id="productBrandFilter" aria-label="Thương hiệu">
+                        <option value="">Mọi thương hiệu</option>
                     </select>
 
                     <select id="productStatusFilter" aria-label="Trạng thái">
@@ -117,11 +116,6 @@
                         <div class="admin-field">
                             <label for="pfSlug">Slug (đường dẫn)</label>
                             <input type="text" id="pfSlug" maxlength="255" placeholder="Tự tạo từ tên nếu để trống">
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="pfStock">Tồn kho</label>
-                            <input type="number" id="pfStock" min="0" step="1">
                         </div>
 
                         <div class="admin-field">

@@ -23,16 +23,15 @@ import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.service.employee.EmployeeHiringService;
 import com.example.Tech.service.employee.StaffRoles;
 import com.example.Tech.service.user.CurrentUserLoader;
-import com.example.Tech.util.AccountUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Locale;
 
 @Slf4j
@@ -41,11 +40,10 @@ import java.util.Locale;
 @Transactional
 public class EmployeeHiringServiceImpl implements EmployeeHiringService {
 
-    private static final String LOWER = "abcdefghijkmnpqrstuvwxyz";
-    private static final String UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    private static final String DIGITS = "23456789";
-    private static final String SYMBOLS = "@#$%&*!?";
-    private static final int GENERATED_LENGTH = 12;
+    /** Every new account starts with this password; it must be replaced at the first login (and expires, see below). */
+    static final String DEFAULT_TEMPORARY_PASSWORD = "1";
+    /** Days a new employee has to replace the temporary password. */
+    static final int TEMPORARY_PASSWORD_DAYS = 7;
 
     private final CurrentUserLoader currentUserLoader;
     private final UserRepository userRepository;
@@ -58,7 +56,6 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final Clock clock;
-    private final SecureRandom random = new SecureRandom();
 
     @Override
     public HireResponse hireAsAdmin(Long adminId, HireRequest request) {
@@ -82,12 +79,7 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
     }
 
     private HireResponse hire(Long actorId, HireRequest request, RoleName role, Store store) {
-        String password = request.temporaryPassword() == null || request.temporaryPassword().isBlank()
-                ? generatePassword() : request.temporaryPassword();
-        if (AccountUtil.exceedsBcryptLimit(password)) {
-            throw BusinessException.invalidField("temporaryPassword",
-                    "Mật khẩu tạm tối đa %d byte".formatted(AccountUtil.MAX_PASSWORD_BYTES));
-        }
+        String password = DEFAULT_TEMPORARY_PASSWORD;
         User user = userMapper.toEntity(new RegisterRequest(request.email(), request.username(), password,
                 request.fullname(), request.phone()));
         if (userRepository.existsByEmail(user.getEmail())) {
@@ -108,6 +100,9 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(password));
+        user.setMustChangePassword(true);
+        LocalDateTime passwordExpiresAt = LocalDateTime.now(clock).plusDays(TEMPORARY_PASSWORD_DAYS);
+        user.setPasswordExpiresAt(passwordExpiresAt);
         User savedUser = userRepository.saveAndFlush(user);
         Role roleEntity = roleRepository.findByName(role.name())
                 .orElseThrow(() -> new IllegalStateException("Role " + role + " is missing"));
@@ -134,7 +129,7 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
         // the password is only in the response; it is never logged
         log.info("User id={} hired {} id={} (employee id={}) into store id={}", actorId, role, savedUser.getId(),
                 savedEmployee.getId(), store.getId());
-        return new HireResponse(EmployeeMapper.toResponse(savedEmployee, assignment), role.name(), password);
+        return new HireResponse(EmployeeMapper.toResponse(savedEmployee, assignment), role.name(), password, passwordExpiresAt);
     }
 
     /** STAFF or BRANCH_MANAGER only: customers and administrators are never created here. */
@@ -149,20 +144,16 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
         throw new BusinessException(ErrorCode.ROLE_NOT_ASSIGNABLE);
     }
 
-    /** A manager always carries the manager label; STAFF cannot claim it and default to the sales label. */
+    /** A manager always carries the manager label; STAFF cannot claim it and always get the staff label. */
     private static String positionLabel(RoleName role, String requested) {
         if (role == RoleName.BRANCH_MANAGER) {
             return EmployeeAssignment.BRANCH_MANAGER_POSITION;
         }
-        String label = trimToNull(requested);
-        if (label == null) {
-            return StaffRoles.DEFAULT_POSITION;
-        }
-        if (StaffRoles.isManagerPosition(label)) {
+        if (StaffRoles.isManagerPosition(requested)) {
             throw BusinessException.invalidField("positionAtStore",
                     "Muốn làm Quản lý chi nhánh, hãy tuyển với vai trò Quản lý chi nhánh");
         }
-        return label;
+        return StaffRoles.DEFAULT_POSITION;
     }
 
     private Store openStore(Integer storeId) {
@@ -174,24 +165,6 @@ public class EmployeeHiringServiceImpl implements EmployeeHiringService {
         return store;
     }
 
-    private String generatePassword() {
-        StringBuilder password = new StringBuilder(GENERATED_LENGTH);
-        // one of each class first, then fill; shuffled so the first four are not always the same kinds
-        for (String pool : new String[]{LOWER, UPPER, DIGITS, SYMBOLS}) {
-            password.append(pool.charAt(random.nextInt(pool.length())));
-        }
-        String all = LOWER + UPPER + DIGITS + SYMBOLS;
-        while (password.length() < GENERATED_LENGTH) {
-            password.append(all.charAt(random.nextInt(all.length())));
-        }
-        for (int i = password.length() - 1; i > 0; i--) {
-            int j = random.nextInt(i + 1);
-            char swap = password.charAt(i);
-            password.setCharAt(i, password.charAt(j));
-            password.setCharAt(j, swap);
-        }
-        return password.toString();
-    }
 
     private static String trimToNull(String value) {
         return value == null || value.isBlank() ? null : value.trim();

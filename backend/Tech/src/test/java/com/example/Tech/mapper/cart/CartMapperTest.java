@@ -75,7 +75,7 @@ class CartMapperTest {
                 .thenReturn(new EffectivePrice(new BigDecimal("800000"), new BigDecimal("1000000"), "Sale 20%"));
         CartItem item = new CartItem(cart, variant, 2);
 
-        CartItemResponse response = cartMapper.toItemResponse(item, "/img.png");
+        CartItemResponse response = cartMapper.toItemResponse(item, "/img.png", 5);
 
         assertThat(response.unitPrice()).isEqualByComparingTo("800000");
         assertThat(response.originalPrice()).isEqualByComparingTo("1000000");
@@ -90,7 +90,7 @@ class CartMapperTest {
                 .thenReturn(new EffectivePrice(new BigDecimal("1000000"), new BigDecimal("1000000"), null));
         CartItem item = new CartItem(cart, variant, 1);
 
-        CartItemResponse response = cartMapper.toItemResponse(item, null);
+        CartItemResponse response = cartMapper.toItemResponse(item, null, 5);
 
         assertThat(response.originalPrice()).isNull();
     }
@@ -101,7 +101,7 @@ class CartMapperTest {
                 .thenReturn(new EffectivePrice(BigDecimal.ZERO, new BigDecimal("1000000"), "Sale 100%"));
         CartItem item = new CartItem(cart, variant, 1);
 
-        CartItemResponse response = cartMapper.toItemResponse(item, null);
+        CartItemResponse response = cartMapper.toItemResponse(item, null, 5);
 
         assertThat(response.available()).isFalse();
         verify(promotionPricingService, times(1)).resolve(eq(variant), any());
@@ -114,9 +114,23 @@ class CartMapperTest {
                 .thenReturn(new EffectivePrice(new BigDecimal("1000000"), new BigDecimal("1000000"), null));
         CartItem item = new CartItem(cart, variant, 1);
 
-        CartItemResponse response = cartMapper.toItemResponse(item, null);
+        CartItemResponse response = cartMapper.toItemResponse(item, null, 5);
 
         assertThat(response.available()).isFalse();
+    }
+
+    @Test
+    void toItemResponse_fewerUnitsInOpenStoresThanTheQuantity_isNotAvailable() {
+        when(promotionPricingService.resolve(eq(variant), any()))
+                .thenReturn(new EffectivePrice(new BigDecimal("1000000"), new BigDecimal("1000000"), null));
+        CartItem item = new CartItem(cart, variant, 3);
+
+        CartItemResponse shortLine = cartMapper.toItemResponse(item, null, 2);
+        CartItemResponse enough = cartMapper.toItemResponse(item, null, 3);
+
+        assertThat(shortLine.available()).isFalse();
+        assertThat(shortLine.availableQuantity()).isEqualTo(2);
+        assertThat(enough.available()).isTrue();
     }
 
     @Test

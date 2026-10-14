@@ -24,6 +24,7 @@ import com.example.Tech.service.product.ProductService;
 import com.example.Tech.service.promotion.EffectivePrice;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.util.SlugUtil;
+import com.example.Tech.service.inventory.StockAvailability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -52,6 +53,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
     private final ProductImageMapper imageMapper;
     private final PromotionPricingService pricingService;
+    private final StockAvailability stockAvailability;
     private final Clock clock;
 
     @Override
@@ -63,8 +65,9 @@ public class ProductServiceImpl implements ProductService {
         Page<Product> page = productRepository.findAll(ProductFilterSpecifications.matching(filter), pageable);
         Map<Long, String> imageUrls = primaryImageUrls(page.getContent().stream().map(Product::getId).toList());
         Map<Long, EffectivePrice> prices = pricingService.resolveProducts(page.getContent(), LocalDateTime.now(clock));
-        return PageResponse.from(page.map(product ->
-                productMapper.toResponse(product, imageUrls.get(product.getId()), prices.get(product.getId()))));
+        Map<Long, Integer> available = stockAvailability.byProduct(page.getContent().stream().map(Product::getId).toList());
+        return PageResponse.from(page.map(product -> productMapper.toResponse(product, imageUrls.get(product.getId()),
+                prices.get(product.getId()), available.getOrDefault(product.getId(), 0))));
     }
 
     @Override
@@ -116,7 +119,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElse(null);
 
         log.info("Created product id={} with {} image(s)", saved.getId(), imageEntities.size());
-        return productMapper.toResponse(saved, primaryImageUrl, priceOf(saved));
+        return productMapper.toResponse(saved, primaryImageUrl, priceOf(saved), 0);
     }
 
     @Override
@@ -159,7 +162,7 @@ public class ProductServiceImpl implements ProductService {
 
     private ProductResponse toResponse(Product product) {
         return productMapper.toResponse(product, primaryImageUrls(List.of(product.getId())).get(product.getId()),
-                priceOf(product));
+                priceOf(product), stockAvailability.byProduct(List.of(product.getId())).getOrDefault(product.getId(), 0));
     }
 
     private EffectivePrice priceOf(Product product) {

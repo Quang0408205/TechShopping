@@ -42,6 +42,9 @@ public record ProductResponse(
         BigDecimal tgddRating,
 
         @Schema(description = "Number of ratings behind tgddRating on Thế Giới Di Động (0 when unknown)")
-        Integer tgddReviewCount
+        Integer tgddReviewCount,
+        @Schema(description = "Units customers can still buy: stock of every variant in OPEN stores (inventory per "
+                + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
+        Integer availableQuantity
 ) {
 }

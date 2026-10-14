@@ -31,7 +31,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -83,8 +86,15 @@ public class OrderServiceImpl implements OrderService {
         order.setNotes(trimToNull(request.note()));
         order.setPaymentMethod(request.paymentMethod());
         order.setStatus(OrderStatus.PENDING);
-        // after the address is set: home delivery picks the store nearest to it, pickup replaces it
-        orderStockLifecycle.assignBranch(order, deliveryType, request.pickupStoreId());
+        // after the address is set: home delivery picks the nearest store holding the whole cart, pickup replaces it
+        Map<Long, Integer> needed = new LinkedHashMap<>();
+        Map<Long, String> labels = new HashMap<>();
+        for (CartItem line : lines) {
+            ProductVariant variant = line.getVariant();
+            needed.merge(variant.getId(), line.getQuantity(), Integer::sum);
+            labels.put(variant.getId(), variant.getProduct().getName() + " - " + variant.getVariantName());
+        }
+        orderStockLifecycle.assignBranch(order, deliveryType, request.pickupStoreId(), needed, labels);
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (CartItem line : lines) {

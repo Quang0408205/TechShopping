@@ -48,7 +48,7 @@ public class ProductVariantMapper {
 
     /** The effective price is computed by the service (PromotionPricingService, one query per list). */
     public ProductVariantResponse toResponse(ProductVariant variant, List<AttributeValue> attributeValues,
-                                             EffectivePrice price) {
+                                             EffectivePrice price, int availableQuantity) {
         return new ProductVariantResponse(
                 variant.getId(),
                 variant.getProduct().getId(),
@@ -65,7 +65,8 @@ public class ProductVariantMapper {
                 variant.getCreatedAt(),
                 variant.getUpdatedAt(),
                 price.unitPrice(),
-                price.activePromotionName()
+                price.activePromotionName(),
+                availableQuantity
         );
     }
 }

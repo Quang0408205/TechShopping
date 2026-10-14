@@ -19,6 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -80,17 +82,36 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void delete(Integer id) {
-        Category category = findCategory(id);
+    public void delete(Integer id, boolean withProducts) {
+        findCategory(id);
         if (categoryRepository.existsByParentId(id)) {
             throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
-                    "Category %d still has child categories".formatted(id));
+                    "Danh mục còn danh mục con; hãy chuyển hoặc xoá các danh mục con trước",
+                    Map.of("reason", "CHILDREN"));
         }
-        if (productRepository.existsByCategoryId(id)) {
-            throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
-                    "Category %d is still used by products".formatted(id));
+        long products = productRepository.countAllRowsByCategoryId(id);
+        if (products > 0) {
+            if (!withProducts) {
+                throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
+                        "Danh mục còn %d sản phẩm".formatted(products),
+                        Map.of("reason", "PRODUCTS", "products", String.valueOf(products)));
+            }
+            // plan v3: products with a sales / stock / review history are never removed (hide the category instead)
+            long withHistory = productRepository.countWithHistoryByCategoryId(id);
+            if (withHistory > 0) {
+                throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
+                        "%d sản phẩm của danh mục đã có đơn hàng, tồn kho hoặc đánh giá nên không xoá được; hãy ẩn danh mục"
+                                .formatted(withHistory),
+                        Map.of("reason", "HISTORY", "products", String.valueOf(withHistory)));
+            }
+            int cartLines = productRepository.deleteCartLinesByCategoryId(id);
+            productRepository.deleteRecommendationsByCategoryId(id);
+            productRepository.deleteInteractionsByCategoryId(id);
+            productRepository.deleteRelationsByCategoryId(id);
+            int removed = productRepository.deleteAllRowsByCategoryId(id);
+            log.info("Category id={}: deleted {} product(s) with their variants / images, {} cart line(s)", id, removed, cartLines);
         }
-        categoryRepository.delete(category);
+        categoryRepository.deleteById(id);
         categoryRepository.flush();
         log.info("Deleted category id={}", id);
     }

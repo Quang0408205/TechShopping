@@ -106,6 +106,7 @@ public class AuthServiceImpl implements AuthService {
         }
         // Checked only after the password, so the response does not reveal which accounts exist
         ensureEnabled(user);
+        ensureTemporaryPasswordValid(user);
 
         user.setLastLogin(LocalDateTime.now(clock));
         log.info("User id={} logged in", user.getId());
@@ -118,6 +119,7 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
         ensureEnabled(user);
+        ensureTemporaryPasswordValid(user);
         return issueTokens(user, roleNames(user.getId()));
     }
 
@@ -136,6 +138,12 @@ public class AuthServiceImpl implements AuthService {
     private static void ensureEnabled(User user) {
         if (!user.isEnabled()) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
+        }
+    }
+
+    private void ensureTemporaryPasswordValid(User user) {
+        if (user.isTemporaryPasswordExpired(LocalDateTime.now(clock))) {
+            throw new BusinessException(ErrorCode.TEMP_PASSWORD_EXPIRED);
         }
     }
 

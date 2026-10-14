@@ -3,6 +3,7 @@ package com.example.Tech.controller.cart;
 import com.example.Tech.dto.request.cart.CartItemAddRequest;
 import com.example.Tech.dto.request.cart.CartItemUpdateRequest;
 import com.example.Tech.dto.response.cart.CartResponse;
+import com.example.Tech.dto.response.cart.StoreAvailabilityResponse;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.service.cart.CartService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * The logged-in user's cart. Requires a valid access token (see SecurityConfig). Lines are addressed by
@@ -47,6 +50,14 @@ public class CartController {
         return ResponseEntity.ok(ApiResult.ok(cartService.getCart(userId(jwt))));
     }
 
+    @GetMapping("/store-availability")
+    @Operation(summary = "Every open store and whether it holds my whole cart (pickup choice at checkout)")
+    @ApiResponse(responseCode = "200", description = "Stores returned, by name")
+    public ResponseEntity<ApiResult<List<StoreAvailabilityResponse>>> storeAvailability(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(ApiResult.ok(cartService.storeAvailability(userId(jwt))));
+    }
+
     @PostMapping("/items")
     @Operation(summary = "Add a variant; the quantity is added to an existing line, capped at "
             + CartService.MAX_LINE_QUANTITY)
@@ -54,7 +65,7 @@ public class CartController {
             @ApiResponse(responseCode = "200", description = "Item added, cart returned"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR"),
             @ApiResponse(responseCode = "404", description = "PRODUCT_VARIANT_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "PRODUCT_NOT_AVAILABLE, CART_LIMIT_EXCEEDED")
+            @ApiResponse(responseCode = "409", description = "PRODUCT_NOT_AVAILABLE, CART_LIMIT_EXCEEDED, OUT_OF_STOCK")
     })
     public ResponseEntity<ApiResult<CartResponse>> addItem(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                            @Valid @RequestBody CartItemAddRequest request) {
@@ -66,7 +77,8 @@ public class CartController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Quantity changed, cart returned"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR"),
-            @ApiResponse(responseCode = "404", description = "CART_ITEM_NOT_FOUND")
+            @ApiResponse(responseCode = "404", description = "CART_ITEM_NOT_FOUND"),
+            @ApiResponse(responseCode = "409", description = "OUT_OF_STOCK (raising above what the open stores hold)")
     })
     public ResponseEntity<ApiResult<CartResponse>> updateItem(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                               @PathVariable Long variantId,

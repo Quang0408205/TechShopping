@@ -25,6 +25,8 @@ public class JwtConfig {
 
     public static final String ROLES_CLAIM = "roles";
     public static final String USERNAME_CLAIM = "username";
+    /** Present (true) only while the account still has to replace its temporary password. */
+    public static final String PASSWORD_CHANGE_CLAIM = "pwd_change";
 
     @Bean
     public JwtEncoder jwtEncoder(JwtProperties properties) {
