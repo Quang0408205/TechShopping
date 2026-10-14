@@ -22,6 +22,9 @@ import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.VariantAttributeValueRepository;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.repository.inventory.InventoryRepository;
+import com.example.Tech.repository.inventory.StockMovementRepository;
+import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -70,6 +73,15 @@ class ProductVariantServiceImplTest {
     @Mock
     private PromotionProductRepository promotionProductRepository;
 
+    @Mock
+    private StockAvailability stockAvailability;
+
+    @Mock
+    private InventoryRepository inventoryRepository;
+
+    @Mock
+    private StockMovementRepository stockMovementRepository;
+
     private ProductVariantServiceImpl variantService;
 
     @BeforeEach
@@ -77,8 +89,8 @@ class ProductVariantServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
                 attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
-                new ProductVariantMapper(new AttributeValueMapper()),
-                new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
+                inventoryRepository, stockMovementRepository, new ProductVariantMapper(new AttributeValueMapper()),
+                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone());
     }
 
     @Test

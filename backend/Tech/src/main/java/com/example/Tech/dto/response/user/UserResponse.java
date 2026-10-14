@@ -14,6 +14,7 @@ public record UserResponse(
         List<String> roles,
         LocalDateTime lastLogin,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        boolean mustChangePassword
 ) {
 }

@@ -21,9 +21,11 @@ public record CartItemResponse(
         Integer quantity,
         @Schema(description = "unitPrice × quantity")
         BigDecimal lineTotal,
-        @Schema(description = "false when the product was deleted, hidden or has no price; "
-                + "such lines are not counted in the subtotal")
+        @Schema(description = "false when the product was deleted, hidden or has no price, or when the open stores "
+                + "hold fewer units than quantity (plan v3); such lines are not counted in the subtotal")
         boolean available,
+        @Schema(description = "Units of this variant in all open stores (0 = out of stock)")
+        Integer availableQuantity,
         LocalDateTime addedAt
 ) {
 }

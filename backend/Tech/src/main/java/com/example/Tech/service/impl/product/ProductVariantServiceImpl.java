@@ -21,6 +21,9 @@ import com.example.Tech.repository.product.VariantAttributeValueRepository;
 import com.example.Tech.service.product.ProductVariantService;
 import com.example.Tech.service.promotion.EffectivePrice;
 import com.example.Tech.service.promotion.PromotionPricingService;
+import com.example.Tech.repository.inventory.InventoryRepository;
+import com.example.Tech.repository.inventory.StockMovementRepository;
+import com.example.Tech.service.inventory.StockAvailability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,8 +53,11 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final VariantAttributeValueRepository variantAttributeValueRepository;
     private final CartItemRepository cartItemRepository;
     private final OrderItemRepository orderItemRepository;
+    private final InventoryRepository inventoryRepository;
+    private final StockMovementRepository stockMovementRepository;
     private final ProductVariantMapper variantMapper;
     private final PromotionPricingService pricingService;
+    private final StockAvailability stockAvailability;
     private final Clock clock;
 
     @Override
@@ -61,9 +67,10 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         Map<Long, List<AttributeValue>> valuesByVariant = loadAttributeValues(
                 variants.stream().map(ProductVariant::getId).toList());
         Map<Long, EffectivePrice> prices = pricingService.resolveVariants(variants, LocalDateTime.now(clock));
+        Map<Long, Integer> available = stockAvailability.byVariant(variants.stream().map(ProductVariant::getId).toList());
         return variants.stream()
-                .map(variant -> variantMapper.toResponse(variant,
-                        valuesByVariant.getOrDefault(variant.getId(), List.of()), prices.get(variant.getId())))
+                .map(variant -> variantMapper.toResponse(variant, valuesByVariant.getOrDefault(variant.getId(), List.of()),
+                        prices.get(variant.getId()), available.getOrDefault(variant.getId(), 0)))
                 .toList();
     }
 
@@ -87,7 +94,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
         ProductVariant saved = variantRepository.save(variant);
         log.info("Created product variant id={} for product id={}", saved.getId(), request.productId());
-        return variantMapper.toResponse(saved, List.of(), pricingService.resolve(saved, LocalDateTime.now(clock)));
+        return variantMapper.toResponse(saved, List.of(), pricingService.resolve(saved, LocalDateTime.now(clock)), 0);
     }
 
     @Override
@@ -122,6 +129,13 @@ public class ProductVariantServiceImpl implements ProductVariantService {
             throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
                     "Product variant %d appears in orders and cannot be deleted; hide the product instead".formatted(id));
         }
+        // the stock book keeps history: a variant with units in a store or with movements stays (hide the product)
+        if (inventoryRepository.existsByIdVariantIdAndQuantityGreaterThan(id, 0)
+                || stockMovementRepository.existsByVariantId(id)) {
+            throw new BusinessException(ErrorCode.RESOURCE_IN_USE,
+                    "Phiên bản còn tồn kho hoặc đã có lịch sử nhập / xuất kho, không xoá được; hãy ẩn sản phẩm");
+        }
+        inventoryRepository.deleteAllByVariantId(id);
         int cartLines = cartItemRepository.deleteAllByVariantId(id);
         if (cartLines > 0) {
             log.info("Removed product variant id={} from {} cart line(s)", id, cartLines);
@@ -171,7 +185,8 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private ProductVariantResponse toResponse(ProductVariant variant) {
         List<AttributeValue> values = loadAttributeValues(List.of(variant.getId()))
                 .getOrDefault(variant.getId(), List.of());
-        return variantMapper.toResponse(variant, values, pricingService.resolve(variant, LocalDateTime.now(clock)));
+        return variantMapper.toResponse(variant, values, pricingService.resolve(variant, LocalDateTime.now(clock)),
+                stockAvailability.byVariant(List.of(variant.getId())).getOrDefault(variant.getId(), 0));
     }
 
     /** Loads attribute values of several variants in one query, grouped by variant id. */

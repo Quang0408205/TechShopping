@@ -15,6 +15,10 @@
  *   GET /stores, không cần địa chỉ, miễn phí vận chuyển giống server — GET /cart
  *   luôn tính phí giao tận nhà nên tóm tắt tự bỏ phí khi chọn nhận tại cửa hàng).
  *   Không tải được / chưa có cửa hàng nào → khoá lựa chọn nhận tại cửa hàng.
+ * - Kế hoạch v3 GĐ E: GET /cart/store-availability cho biết cửa hàng nào có đủ cả giỏ;
+ *   cửa hàng thiếu hàng hiện "(thiếu hàng)" và không chọn được. Không cửa hàng nào đủ
+ *   → báo trước (giao tận nhà cũng sẽ bị 409 OUT_OF_STOCK). Gặp OUT_OF_STOCK lúc đặt
+ *   → tải lại giỏ + tình trạng hàng.
  * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) gửi
  *   người nhận / hình thức nhận (+ địa chỉ hoặc cửa hàng) / ghi chú / phương thức
  *   thanh toán (+ hồ sơ trả góp); server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang
@@ -94,7 +98,10 @@ document.addEventListener(
         };
 
         const UNAVAILABLE_MESSAGE =
-            "Giỏ hàng có sản phẩm đã ngừng bán. Vui lòng quay lại giỏ hàng để xóa trước khi đặt hàng.";
+            "Giỏ hàng có sản phẩm đã ngừng bán hoặc không đủ hàng. Vui lòng quay lại giỏ hàng để xóa hoặc giảm số lượng trước khi đặt hàng.";
+
+        const NO_STORE_HOLDS_CART_MESSAGE =
+            "Hiện không chi nhánh nào có đủ hàng cho cả giỏ của bạn. Hãy giảm số lượng hoặc đặt riêng từng sản phẩm.";
 
 
         /* Tải song song với giỏ hàng; lỗi → null (khoá lựa chọn trả góp) */
@@ -103,6 +110,9 @@ document.addEventListener(
 
         /* Cửa hàng đang mở (công khai); lỗi → null (khoá "Nhận tại cửa hàng") */
         const storesPromise = loadPickupStores();
+
+        /* Cửa hàng nào có đủ cả giỏ (v3 GĐ E); lỗi → null (không khoá gì, server vẫn kiểm tra) */
+        const stockPromise = loadStoreStock();
 
 
         let summary;
@@ -145,6 +155,8 @@ document.addEventListener(
 
         let pickupStores = await storesPromise;
 
+        let storeStock = await stockPromise;
+
         let currentTotal = summary.total;
 
         /* Giỏ trên server gần nhất (phí ship trong đó luôn là phí giao tận nhà) */
@@ -167,6 +179,10 @@ document.addEventListener(
             showFormError(UNAVAILABLE_MESSAGE);
 
             document.getElementById("checkoutSubmitBtn").disabled = true;
+
+        } else if (noStoreHoldsCart()) {
+
+            showFormError(NO_STORE_HOLDS_CART_MESSAGE);
 
         }
 
@@ -317,6 +333,61 @@ document.addEventListener(
         }
 
 
+        /* storeId → { available, missing } của giỏ hiện tại; null khi không tải được */
+
+        async function loadStoreStock() {
+
+            try {
+
+                const rows = await apiRequest("/cart/store-availability", { auth: true }) || [];
+
+                const byId = {};
+
+                rows.forEach(function (row) {
+                    byId[String(row.storeId)] = row;
+                });
+
+                return byId;
+
+            } catch (error) {
+
+                return null;
+
+            }
+
+        }
+
+
+        function storeLacksItems(store) {
+
+            const entry = storeStock && store ? storeStock[String(store.id)] : null;
+
+            return Boolean(entry) && entry.available === false;
+
+        }
+
+
+        function noStoreHoldsCart() {
+
+            return Boolean(storeStock) && (pickupStores || []).length > 0
+                && pickupStores.every(storeLacksItems);
+
+        }
+
+
+        async function refreshStoresAndStock() {
+
+            const results = await Promise.all([loadPickupStores(), loadStoreStock()]);
+
+            pickupStores = results[0];
+
+            storeStock = results[1];
+
+            fillPickupStores();
+
+        }
+
+
         /* Điền ô chọn cửa hàng (giữ cửa hàng đang chọn nếu vẫn mở); không có cửa hàng nào → khoá lựa chọn */
 
         function fillPickupStores() {
@@ -328,11 +399,16 @@ document.addEventListener(
 
                     const area = [store.district, store.city].filter(Boolean).join(", ");
 
-                    return `<option value="${escapeHtml(String(store.id))}">${escapeHtml(store.name + (area ? " — " + area : ""))}</option>`;
+                    const lacks = storeLacksItems(store);
+
+                    return `<option value="${escapeHtml(String(store.id))}" ${lacks ? "disabled" : ""}>`
+                        + `${escapeHtml(store.name + (area ? " — " + area : "") + (lacks ? " (thiếu hàng)" : ""))}</option>`;
 
                 }).join("");
 
-            if (findPickupStore(selected)) {
+            const selectedStore = findPickupStore(selected);
+
+            if (selectedStore && !storeLacksItems(selectedStore)) {
                 pickupSelect.value = selected;
             }
 
@@ -343,6 +419,8 @@ document.addEventListener(
                 reason = "Hiện chưa tải được danh sách cửa hàng. Vui lòng chọn giao tận nhà hoặc tải lại trang.";
             } else if (pickupStores.length === 0) {
                 reason = "Hiện chưa có cửa hàng nào nhận đơn tại chỗ.";
+            } else if (noStoreHoldsCart()) {
+                reason = "Không cửa hàng nào có đủ hàng cho cả giỏ của bạn.";
             }
 
             pickupRadio.disabled = reason !== "";
@@ -577,7 +655,7 @@ document.addEventListener(
 
             if (data.deliveryType === "PICKUP") {
 
-                if (!findPickupStore(data.pickupStoreId)) {
+                if (!findPickupStore(data.pickupStoreId) || storeLacksItems(findPickupStore(data.pickupStoreId))) {
                     invalid.push("pickupStoreId");
                 }
 
@@ -713,12 +791,10 @@ document.addEventListener(
                 showFormError(getErrorMessage(error));
 
 
-                /* Cửa hàng vừa tạm đóng: tải lại danh sách cửa hàng đang mở */
-                if (error.details && error.details.pickupStoreId) {
+                /* Cửa hàng vừa tạm đóng / tồn kho vừa đổi: tải lại cửa hàng + tình trạng hàng */
+                if ((error.details && error.details.pickupStoreId) || error.code === "OUT_OF_STOCK") {
 
-                    pickupStores = await loadPickupStores();
-
-                    fillPickupStores();
+                    await refreshStoresAndStock();
 
                 }
 
@@ -728,7 +804,7 @@ document.addEventListener(
                  * để trả góp): vẽ lại tóm tắt từ server
                  */
                 if (error.code === "CART_EMPTY" || error.code === "PRODUCT_NOT_AVAILABLE"
-                    || error.code === "INSTALLMENT_NOT_ELIGIBLE") {
+                    || error.code === "INSTALLMENT_NOT_ELIGIBLE" || error.code === "OUT_OF_STOCK") {
 
                     try {
 

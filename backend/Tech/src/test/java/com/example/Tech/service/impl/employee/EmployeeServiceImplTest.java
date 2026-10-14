@@ -146,7 +146,7 @@ class EmployeeServiceImplTest {
         assertThat(response.id()).isEqualTo(50L);
         assertThat(response.employeeCode()).isEqualTo("NV001");
         assertThat(response.assignment().storeId()).isEqualTo(3);
-        assertThat(response.assignment().positionAtStore()).isEqualTo("Thu ngân");
+        assertThat(response.assignment().positionAtStore()).isEqualTo(StaffRoles.DEFAULT_POSITION);
         assertThat(response.assignment().startDate()).isEqualTo(TODAY);
     }
 
@@ -204,7 +204,7 @@ class EmployeeServiceImplTest {
         service.assign(ADMIN_ID, 50L, new AssignmentRequest(3, "Thu ngân", null));
 
         assertThat(current.getActive()).isTrue();
-        assertThat(current.getPositionAtStore()).isEqualTo("Thu ngân");
+        assertThat(current.getPositionAtStore()).isEqualTo(StaffRoles.DEFAULT_POSITION);
         verify(assignmentRepository, never()).saveAndFlush(any());
         verify(refreshTokenService, never()).revokeAll(any());
     }

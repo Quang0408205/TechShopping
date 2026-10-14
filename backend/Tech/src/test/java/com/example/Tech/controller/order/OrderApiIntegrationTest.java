@@ -7,6 +7,7 @@ import com.example.Tech.entity.product.ProductImage;
 import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.store.StoreRepository;
+import com.example.Tech.support.StoreFixtures;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
@@ -102,6 +103,7 @@ class OrderApiIntegrationTest {
     private ProductVariant black;
     private ProductVariant white;
     private ProductVariant cover;
+    private Store warehouse;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -125,6 +127,7 @@ class OrderApiIntegrationTest {
         image.setImageUrl("https://cdn.example/order-x.jpg");
         image.setPrimary(true);
         imageRepository.save(image);
+        warehouse = StoreFixtures.warehouse(entityManager, black, white, cover);
         entityManager.flush();
     }
 
@@ -254,6 +257,8 @@ class OrderApiIntegrationTest {
         Store q1 = storeRepository.save(store("ZZ DH Quận 1", "Quận 1", true));
         Store q5 = storeRepository.save(store("ZZ DH Quận 5", "Quận 5", true));
         entityManager.flush();
+        StoreFixtures.stock(entityManager, q1, cover, 5);
+        StoreFixtures.stock(entityManager, q5, cover, 5);
         addToCart(cover, 1);
 
         JsonNode order = data(send(post("/api/v1/orders"), token, orderBody())
@@ -272,6 +277,7 @@ class OrderApiIntegrationTest {
     void pickup_atTheChosenStore_isFreeOfShipping_andNeedsNoAddress() throws Exception {
         Store q1 = storeRepository.save(store("ZZ DH Quận 1", "Quận 1", true));
         entityManager.flush();
+        StoreFixtures.stock(entityManager, q1, cover, 2);
         addToCart(cover, 2);
         Map<String, Object> body = orderBody();
         body.remove("shippingAddress");
@@ -317,6 +323,91 @@ class OrderApiIntegrationTest {
 
         send(get("/api/v1/cart"), token, null)
                 .andExpect(jsonPath("$.data.items.length()").value(1));
+    }
+
+    @Test
+    void homeDelivery_onlyStoresHoldingTheWholeCart_count_elseOutOfStock_andTheCartIsKept() throws Exception {
+        Store q5 = storeRepository.save(store("ZZ DH Quận 5", "Quận 5", true));
+        entityManager.flush();
+        StoreFixtures.stock(entityManager, q5, cover, 5);
+        addToCart(cover, 1);
+        addToCart(black, 1);
+
+        // Quận 5 is nearer but lacks the phone → the warehouse holding both handles the order
+        JsonNode order = data(send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated()));
+        assertThat(order.get("storeId").asInt()).isEqualTo(warehouse.getId());
+
+        // nobody holds both any more: the phone only at Quận 5, the cover only at the (closed) warehouse
+        warehouse.setActive(false);
+        storeRepository.saveAndFlush(entityManager.merge(warehouse));
+        StoreFixtures.stock(entityManager, q5, black, 1);
+        Store other = storeRepository.save(store("ZZ DH Quận 7", "Quận 7", true));
+        entityManager.flush();
+        StoreFixtures.stock(entityManager, other, white, 3);
+        entityManager.createNativeQuery("update inventory set quantity = 0 where store_id = :s and variant_id = :v")
+                .setParameter("s", q5.getId()).setParameter("v", cover.getId()).executeUpdate();
+        entityManager.clear();
+        StoreFixtures.stock(entityManager, other, cover, 1);
+        addToCart(cover, 1);
+        addToCart(black, 1);
+        send(post("/api/v1/orders"), token, orderBody())
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.error.message").value(org.hamcrest.Matchers.startsWith("Không chi nhánh nào có đủ cả đơn")));
+        send(get("/api/v1/cart"), token, null)
+                .andExpect(jsonPath("$.data.items.length()").value(2));
+
+        // more than all open stores hold → the cart refuses the line before checkout
+        send(post("/api/v1/cart/items"), token, Map.of("variantId", white.getId(), "quantity", 4))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("OUT_OF_STOCK"));
+    }
+
+    @Test
+    void pickup_atAStoreLackingItems_isOutOfStock_andStoreAvailabilityTellsWhichStoresHoldTheCart() throws Exception {
+        Store q1 = storeRepository.save(store("ZZ DH Quận 1", "Quận 1", true));
+        entityManager.flush();
+        StoreFixtures.stock(entityManager, q1, cover, 1);
+        addToCart(cover, 2);
+
+        JsonNode stores = data(send(get("/api/v1/cart/store-availability"), token, null).andExpect(status().isOk()));
+        JsonNode atQ1 = null;
+        JsonNode atWarehouse = null;
+        for (JsonNode store : stores) {
+            if (store.get("storeId").asInt() == q1.getId()) {
+                atQ1 = store;
+            } else if (store.get("storeId").asInt() == warehouse.getId()) {
+                atWarehouse = store;
+            }
+        }
+        assertThat(atWarehouse.get("available").asBoolean()).isTrue();
+        assertThat(atQ1.get("available").asBoolean()).isFalse();
+        assertThat(atQ1.get("missing").get(0).asString()).isEqualTo("Ốp lưng Đơn Hàng - Trong suốt (cần 2, còn 1)");
+
+        Map<String, Object> body = orderBody();
+        body.remove("shippingAddress");
+        body.put("deliveryType", "PICKUP");
+        body.put("pickupStoreId", q1.getId());
+        send(post("/api/v1/orders"), token, body)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("OUT_OF_STOCK"))
+                .andExpect(jsonPath("$.error.message").value(
+                        "Chi nhánh ZZ DH Quận 1 không đủ hàng: Ốp lưng Đơn Hàng - Trong suốt (cần 2, còn 1). "
+                                + "Hãy chọn chi nhánh khác hoặc giao tận nhà"));
+        body.put("pickupStoreId", warehouse.getId());
+        send(post("/api/v1/orders"), token, body).andExpect(status().isCreated());
+    }
+
+    @Test
+    void productAndVariantResponses_showTheUnitsOfOpenStores() throws Exception {
+        send(get("/api/v1/products/" + phone.getId()), null, null)
+                .andExpect(jsonPath("$.data.availableQuantity").value(100));
+        send(get("/api/v1/products/" + phone.getId() + "/variants"), null, null)
+                .andExpect(jsonPath("$.data[0].availableQuantity").value(50));
+        warehouse.setActive(false);
+        storeRepository.saveAndFlush(entityManager.merge(warehouse));
+        send(get("/api/v1/products/" + phone.getId()), null, null)
+                .andExpect(jsonPath("$.data.availableQuantity").value(0));
     }
 
     @Test

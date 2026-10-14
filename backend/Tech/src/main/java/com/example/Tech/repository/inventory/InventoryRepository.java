@@ -55,4 +55,26 @@ public interface InventoryRepository extends JpaRepository<Inventory, InventoryI
     int insertIfMissing(@Param("storeId") Integer storeId, @Param("variantId") Long variantId);
 
     boolean existsByIdStoreId(Integer storeId);
+
+    boolean existsByIdVariantIdAndQuantityGreaterThan(Long variantId, Integer quantity);
+
+    @Modifying(flushAutomatically = true)
+    @Query("delete from Inventory i where i.id.variantId = :variantId")
+    int deleteAllByVariantId(@Param("variantId") Long variantId);
+
+    // Plan v3 GĐ E: what customers can still buy = stock of OPEN stores only (no reservation)
+
+    /** [productId, sum of quantity] over open stores. */
+    @Query("select i.variant.product.id, sum(i.quantity) from Inventory i where i.store.active = true "
+            + "and i.variant.product.id in :productIds group by i.variant.product.id")
+    List<Object[]> sumOpenStockByProductIds(@Param("productIds") Collection<Long> productIds);
+
+    /** [variantId, sum of quantity] over open stores. */
+    @Query("select i.id.variantId, sum(i.quantity) from Inventory i where i.store.active = true "
+            + "and i.id.variantId in :variantIds group by i.id.variantId")
+    List<Object[]> sumOpenStockByVariantIds(@Param("variantIds") Collection<Long> variantIds);
+
+    /** Rows of open stores for the given variants, with the store. */
+    @Query("select i from Inventory i join fetch i.store s where s.active = true and i.id.variantId in :variantIds")
+    List<Inventory> findOpenStoreRows(@Param("variantIds") Collection<Long> variantIds);
 }

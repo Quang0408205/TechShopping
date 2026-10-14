@@ -9,7 +9,8 @@
  *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
  *   POST  /admin/orders/{id}/installment/approve | reject { reason }
  *   PATCH /admin/orders/{id}/store { storeId }   chỉ ADMIN, đơn đang chờ (vd. chi nhánh thiếu hàng)
- * Chỉ cho chọn bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
+ * Chỉ hiện nút cho bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
+ * Số đơn trên tab trạng thái = totalElements của GET /admin/orders?size=1 với cùng bộ lọc.
  * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại;
  * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED / INSUFFICIENT_STOCK / ORDER_STORE_MISSING → câu của server.
  */
@@ -30,6 +31,22 @@ const ORDER_NEXT_STATUSES = {
     PENDING: ["CONFIRMED", "CANCELLED"],
     CONFIRMED: ["SHIPPING", "CANCELLED"],
     SHIPPING: ["DELIVERED"]
+};
+
+/* Nhãn nút chuyển sang từng trạng thái */
+const ORDER_STATUS_ACTION_LABELS = {
+    CONFIRMED: "XÁC NHẬN",
+    SHIPPING: "GIAO HÀNG",
+    DELIVERED: "ĐÃ GIAO",
+    CANCELLED: "HỦY"
+};
+
+const ORDER_STATUS_BADGE_CLASSES = {
+    PENDING: "admin-badge-warning",
+    CONFIRMED: "admin-badge-info",
+    SHIPPING: "admin-badge-info",
+    DELIVERED: "admin-badge-success",
+    CANCELLED: "admin-badge-danger"
 };
 
 const STAFF_DELIVERY_TYPE_LABELS = {
@@ -73,6 +90,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const pagination = document.getElementById("orderPagination");
 
+    const statusTabs = document.getElementById("orderStatusTabs");
+
+    const quickDates = document.getElementById("orderQuickDates");
+
 
     let currentPage = 0;
 
@@ -108,6 +129,38 @@ document.addEventListener("DOMContentLoaded", async function () {
         control.addEventListener("change", reloadFromFirstPage);
     });
 
+    statusTabs.addEventListener("click", function (event) {
+
+        const tab = event.target.closest("[data-status]");
+
+        if (!tab || statusFilter.value === tab.dataset.status) {
+            return;
+        }
+
+        statusFilter.value = tab.dataset.status;
+
+        reloadFromFirstPage();
+
+    });
+
+    quickDates.addEventListener("click", function (event) {
+
+        const button = event.target.closest("[data-range]");
+
+        if (!button) {
+            return;
+        }
+
+        const range = quickDateRange(button.dataset.range);
+
+        fromDateInput.value = range[0];
+
+        toDateInput.value = range[1];
+
+        reloadFromFirstPage();
+
+    });
+
     setupStoreFilter(storeFilter, staff).catch(function (error) {
         handleError(error, function (message) {
             showToast("Không tải được danh sách chi nhánh: " + message, "error");
@@ -127,7 +180,9 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const action = button.dataset.action;
 
-        if (action === "toggle") {
+        if (action === "status") {
+            chooseStatus(order, button.dataset.status);
+        } else if (action === "toggle") {
             toggleDetail(order.id);
         } else if (action === "tracking") {
             editTrackingNumber(order);
@@ -144,26 +199,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
     });
-
-    tbody.addEventListener("change", function (event) {
-
-        const select = event.target.closest(".js-status-select");
-
-        const order = select && findOrder(select.dataset.id);
-
-        if (!order) {
-            return;
-        }
-
-        const nextStatus = select.value;
-
-        /* Ô chọn giữ trạng thái hiện tại cho tới khi máy chủ xác nhận thay đổi */
-        select.value = order.status;
-
-        chooseStatus(order, nextStatus);
-
-    });
-
 
     pagination.addEventListener("click", function (event) {
 
@@ -212,35 +247,22 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         filterError.hidden = true;
 
+        syncFilterButtons();
+
 
         const requestId = ++requestCounter;
 
-        const params = new URLSearchParams({
-            page: String(currentPage),
-            size: String(ORDER_PAGE_SIZE)
-        });
+        const params = filterParams();
 
-        const keyword = keywordInput.value.trim();
+        params.set("page", String(currentPage));
 
-        if (keyword) {
-            params.set("keyword", keyword);
-        }
+        params.set("size", String(ORDER_PAGE_SIZE));
 
         if (statusFilter.value) {
             params.set("status", statusFilter.value);
         }
 
-        if (fromDate) {
-            params.set("fromDate", fromDate);
-        }
-
-        if (toDate) {
-            params.set("toDate", toDate);
-        }
-
-        if (isAdmin && storeFilter.value) {
-            params.set("storeId", storeFilter.value);
-        }
+        loadStatusCounts(requestId);
 
 
         tbody.innerHTML = adminEmptyRow(8,"Đang tải…");
@@ -294,14 +316,191 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
+    /* Bộ lọc chung (trừ trạng thái và phân trang) */
+
+    function filterParams() {
+
+        const params = new URLSearchParams();
+
+        const keyword = keywordInput.value.trim();
+
+        if (keyword) {
+            params.set("keyword", keyword);
+        }
+
+        if (fromDateInput.value) {
+            params.set("fromDate", fromDateInput.value);
+        }
+
+        if (toDateInput.value) {
+            params.set("toDate", toDateInput.value);
+        }
+
+        if (isAdmin && storeFilter.value) {
+            params.set("storeId", storeFilter.value);
+        }
+
+        return params;
+
+    }
+
+
+    /* Số đơn từng tab; lỗi thì để trống số, danh sách vẫn hiển thị */
+
+    async function loadStatusCounts(requestId) {
+
+        const tabs = Array.from(statusTabs.querySelectorAll("[data-status]"));
+
+        const counts = await Promise.all(tabs.map(function (tab) {
+
+            const params = filterParams();
+
+            params.set("size", "1");
+
+            if (tab.dataset.status) {
+                params.set("status", tab.dataset.status);
+            }
+
+            return apiRequest("/admin/orders?" + params.toString(), { auth: true })
+                .then(function (page) { return page.totalElements; })
+                .catch(function () { return null; });
+
+        }));
+
+        if (requestId !== requestCounter) {
+            return;
+        }
+
+        tabs.forEach(function (tab, index) {
+            tab.querySelector(".admin-tab-count").textContent = counts[index] === null ? "" : String(counts[index]);
+        });
+
+    }
+
+
+    /* Tab đang chọn + nút ngày nhanh khớp với ô Từ / đến */
+
+    function syncFilterButtons() {
+
+        statusTabs.querySelectorAll("[data-status]").forEach(function (tab) {
+
+            const active = tab.dataset.status === statusFilter.value;
+
+            tab.classList.toggle("is-active", active);
+
+            tab.setAttribute("aria-selected", String(active));
+
+        });
+
+        quickDates.querySelectorAll("[data-range]").forEach(function (button) {
+
+            const range = quickDateRange(button.dataset.range);
+
+            const pressed = range[0] === fromDateInput.value && range[1] === toDateInput.value;
+
+            button.setAttribute("aria-pressed", String(pressed));
+
+        });
+
+    }
+
+
+    /* [từ, đến] dạng yyyy-mm-dd theo giờ máy; "all" = bỏ trống */
+
+    function quickDateRange(range) {
+
+        const today = new Date();
+
+        const daysAgo = function (days) {
+            return new Date(today.getFullYear(), today.getMonth(), today.getDate() - days);
+        };
+
+        if (range === "today") {
+            return [isoDate(today), isoDate(today)];
+        }
+
+        if (range === "yesterday") {
+            return [isoDate(daysAgo(1)), isoDate(daysAgo(1))];
+        }
+
+        if (range === "7d") {
+            return [isoDate(daysAgo(6)), isoDate(today)];
+        }
+
+        if (range === "month") {
+            return [isoDate(new Date(today.getFullYear(), today.getMonth(), 1)), isoDate(today)];
+        }
+
+        return ["", ""];
+
+    }
+
+
+    function isoDate(date) {
+
+        return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+
+    }
+
+
+    /* Tiêu đề nhóm ngày: Hôm nay / Hôm qua / Thứ Bảy, 11/10/2026 */
+
+    function dayGroupLabel(key) {
+
+        const range = quickDateRange("yesterday");
+
+        if (key === quickDateRange("today")[0]) {
+            return "Hôm nay";
+        }
+
+        if (key === range[0]) {
+            return "Hôm qua";
+        }
+
+        const label = new Date(key + "T00:00:00").toLocaleDateString("vi-VN", {
+            weekday: "long", day: "numeric", month: "numeric", year: "numeric"
+        });
+
+        return label.charAt(0).toUpperCase() + label.slice(1);
+
+    }
+
+
     /* ================= HIỂN THỊ ================= */
 
     function renderTable(page) {
 
         document.getElementById("orderRowCount").textContent = page.totalElements + " đơn hàng";
 
-        tbody.innerHTML = currentOrders.map(renderOrderRows).join("") ||
-            adminEmptyRow(8,"Không có đơn hàng nào phù hợp bộ lọc");
+        /* Danh sách mới nhất trước → các đơn cùng ngày đặt nằm liền nhau */
+        const groups = [];
+
+        currentOrders.forEach(function (order) {
+
+            const key = isoDate(new Date(order.orderDate));
+
+            const last = groups[groups.length - 1];
+
+            if (last && last.key === key) {
+                last.orders.push(order);
+            } else {
+                groups.push({ key: key, orders: [order] });
+            }
+
+        });
+
+        tbody.innerHTML = groups.map(function (group) {
+
+            return `
+                <tr class="admin-date-group">
+                    <th colspan="8" scope="colgroup">
+                        ${escapeHtml(dayGroupLabel(group.key))}
+                        <span>${group.orders.length} đơn</span>
+                    </th>
+                </tr>
+            ` + group.orders.map(renderOrderRows).join("");
+
+        }).join("") || adminEmptyRow(8,"Không có đơn hàng nào phù hợp bộ lọc");
 
         renderPagination(page);
 
@@ -333,7 +532,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 </td>
                 <td>
                     <strong>${escapeHtml(order.code)}</strong>
-                    <span class="admin-subtext">${escapeHtml(formatDateTimeVi(order.orderDate))}</span>
+                    <span class="admin-subtext" title="${escapeHtml(formatDateTimeVi(order.orderDate))}">${escapeHtml(new Date(order.orderDate).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }))}</span>
                     <span class="admin-subtext">${escapeHtml(order.storeName || "Chưa có chi nhánh")}</span>
                 </td>
                 <td>
@@ -362,44 +561,80 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    /* Ô chọn chỉ gồm trạng thái hiện tại + các bước kế tiếp; hết bước → huy hiệu */
+    /* Huy hiệu trạng thái + nút cho các bước kế tiếp (và việc đang chặn bước Xác nhận) */
 
     function statusCellHtml(order) {
 
-        const nextStatuses = ORDER_NEXT_STATUSES[order.status] || [];
+        const id = escapeHtml(String(order.id));
 
         const label = STAFF_ORDER_STATUS_LABELS[order.status] || order.status;
 
-        if (nextStatuses.length === 0) {
-
-            const badgeClass = order.status === "DELIVERED" ? "admin-badge-success" : "admin-badge-danger";
-
-            return `<span class="admin-badge ${badgeClass}">${escapeHtml(label)}</span>`;
-
-        }
-
+        const badgeHtml = `<span class="admin-badge ${ORDER_STATUS_BADGE_CLASSES[order.status] || "admin-badge-neutral"}">${escapeHtml(label)}</span>`;
 
         const waiting = waitingFor(order);
 
         const waitingHtml = waiting ? `<span class="admin-subtext admin-waiting">${escapeHtml(waiting)}</span>` : "";
 
+        const actionButton = function (action, text, extraClass, extraAttrs) {
+            return `<button type="button" class="btn ${extraClass} admin-action-btn" data-action="${action}" data-id="${id}" ${extraAttrs || ""}>${text}</button>`;
+        };
 
-        /* ADMIN chỉ xem: không có ô đổi trạng thái */
+        const buttons = [];
 
+
+        /* ADMIN chỉ xem; được gán / đổi chi nhánh cho đơn đang chờ */
         if (isAdmin) {
-            return `<span class="admin-badge admin-badge-neutral">${escapeHtml(label)}</span>` + waitingHtml;
+
+            if (order.status === "PENDING") {
+                buttons.push(actionButton("store", order.storeId ? "ĐỔI CHI NHÁNH" : "GÁN CHI NHÁNH", "btn-outline-dark"));
+            }
+
+        } else {
+
+            const plan = order.installment;
+
+            const payment = order.payment;
+
+            if (order.status === "PENDING" && plan && plan.status === "PENDING_APPROVAL") {
+                buttons.push(actionButton("approve", "DUYỆT TRẢ GÓP", "btn-dark"));
+            }
+
+            if (order.status === "PENDING" && order.paymentMethod === "BANK_TRANSFER" && payment && payment.status === "PENDING") {
+                buttons.push(actionButton("confirm-payment", "ĐÃ NHẬN TIỀN", "btn-dark"));
+            }
+
+            (ORDER_NEXT_STATUSES[order.status] || []).forEach(function (status) {
+
+                if (status === "CANCELLED") {
+
+                    /* Trả góp đang chờ duyệt: hủy bằng nút Từ chối (bắt buộc ghi lý do) */
+                    buttons.push(plan && plan.status === "PENDING_APPROVAL"
+                        ? actionButton("reject", "TỪ CHỐI", "btn-outline-dark admin-action-danger")
+                        : actionButton("status", ORDER_STATUS_ACTION_LABELS[status], "btn-outline-dark admin-action-danger", `data-status="${status}"`));
+
+                    return;
+
+                }
+
+                const blocked = status === "CONFIRMED" && waiting;
+
+                buttons.push(actionButton(
+                    "status",
+                    ORDER_STATUS_ACTION_LABELS[status],
+                    blocked ? "btn-outline-dark" : "btn-dark",
+                    `data-status="${status}"` + (blocked ? ` disabled title="${escapeHtml(waiting)}"` : "")
+                ));
+
+            });
+
+            if (payment && payment.status === "REFUND_PENDING") {
+                buttons.push(actionButton("refund", "ĐÃ HOÀN TIỀN", "btn-dark"));
+            }
+
         }
 
-
-        const labels = {};
-
-        labels[order.status] = label;
-
-        nextStatuses.forEach(function (status) {
-            labels[status] = "→ " + STAFF_ORDER_STATUS_LABELS[status];
-        });
-
-        return statusSelectHtml(order.id, order.status, labels, "Trạng thái đơn " + order.code) + waitingHtml;
+        return badgeHtml + waitingHtml +
+            (buttons.length ? `<div class="admin-order-actions">${buttons.join("")}</div>` : "");
 
     }
 

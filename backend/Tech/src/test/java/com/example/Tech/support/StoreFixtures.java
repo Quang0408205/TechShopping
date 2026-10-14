@@ -53,6 +53,18 @@ public final class StoreFixtures {
         return employee;
     }
 
+    /**
+     * Plan v3 GĐ E: the cart and checkout only sell what an open store holds. An open store (in a district no test
+     * address names) with 50 units of each variant, so carts and home-delivery orders of the test work.
+     */
+    public static Store warehouse(EntityManager entityManager, ProductVariant... variants) {
+        Store store = store(entityManager, "ZZ Kho tổng (test)", "Quận Kho Test");
+        for (ProductVariant variant : variants) {
+            stock(entityManager, store, variant, 50);
+        }
+        return store;
+    }
+
     /** Works with detached Store / variant objects too (a checkout clears the persistence context). */
     public static void stock(EntityManager entityManager, Store store, ProductVariant variant, int quantity) {
         entityManager.persist(new Inventory(entityManager.getReference(Store.class, store.getId()),

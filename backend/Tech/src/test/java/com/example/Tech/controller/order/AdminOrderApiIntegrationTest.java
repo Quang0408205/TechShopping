@@ -301,8 +301,10 @@ class AdminOrderApiIntegrationTest {
 
     @Test
     void confirm_withoutEnoughStock_is409_adminMovesTheOrderToAStoreThatHasIt() throws Exception {
-        entityManager.find(Inventory.class, new InventoryId(storeA.getId(), phone.getId())).setQuantity(1);
         long orderId = placeOrder(phone, 2, "Nguyễn Văn An", "0901234567");
+        // plan v3 GĐ E: placing needs the stock; another sale takes it before staff confirm (nothing is reserved)
+        entityManager.find(Inventory.class, new InventoryId(storeA.getId(), phone.getId())).setQuantity(1);
+        entityManager.flush();
 
         patchStatus(orderId, "CONFIRMED", null)
                 .andExpect(status().isConflict())

@@ -26,7 +26,7 @@ public record EmployeeCreateRequest(
         String department,
 
         @Size(max = 100, message = "Chức vụ tối đa 100 ký tự")
-        @Schema(example = "Nhân viên bán hàng")
+        @Schema(description = "Free-text title (no longer shown in the internal UI)")
         String position,
 
         @PositiveOrZero(message = "Lương không được âm")
@@ -40,8 +40,8 @@ public record EmployeeCreateRequest(
         Integer storeId,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(description = "\"Quản lý chi nhánh\" / \"Trưởng ...\" is shown as branch manager in the admin area",
-                example = "Nhân viên")
+        @Schema(description = "Ignored since plan v3: the label follows the role (\"Nhân viên chi nhánh\" / \"Quản lý chi nhánh\"); "
+                + "\"Quản lý chi nhánh\" for an account without the BRANCH_MANAGER role is refused")
         String positionAtStore
 ) {
 }

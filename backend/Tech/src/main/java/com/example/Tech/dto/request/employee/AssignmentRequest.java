@@ -16,7 +16,8 @@ public record AssignmentRequest(
         Integer storeId,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(example = "Quản lý chi nhánh")
+        @Schema(description = "Ignored since plan v3: the label follows the role (\"Nhân viên chi nhánh\" / \"Quản lý chi nhánh\"); "
+                + "\"Quản lý chi nhánh\" for an account without the BRANCH_MANAGER role is refused")
         String positionAtStore,
 
         @Schema(description = "Default today", example = "2026-10-03")

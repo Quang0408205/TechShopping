@@ -11,6 +11,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     renderAuthState();
 
+    renderMegaMenuCategories();
+
     migrateLegacyCart();
 
     /* Gọi GET /cart (sau khi chuyển giỏ cũ trên trình duyệt lên server) */
@@ -23,6 +25,63 @@ document.addEventListener("DOMContentLoaded", async function () {
     setupScrollReveal();
 
 });
+
+
+/* ================= DANH MỤC TRÊN MENU HEADER (kế hoạch v3) ================= */
+
+/*
+ * Thay 4 thẻ viết sẵn trong partials/header.html bằng các danh mục ĐANG HIỂN THỊ (tối đa 6, theo thứ tự
+ * ADMIN đặt). Lỗi tải danh mục → giữ thẻ viết sẵn. Trang không có header (auth/) → bỏ qua.
+ */
+
+const MEGA_MENU_MAX_CATEGORIES = 6;
+
+async function renderMegaMenuCategories() {
+
+    const grid = document.querySelector("#megaMenu .mega-menu-grid");
+
+    if (!grid || typeof loadShopCategories !== "function") {
+        return;
+    }
+
+    let categories;
+
+    try {
+
+        categories = (await loadShopCategories()).visible.slice(0, MEGA_MENU_MAX_CATEGORIES);
+
+    } catch (error) {
+
+        return;
+
+    }
+
+    grid.querySelectorAll(".mega-card").forEach(function (card) {
+        card.remove();
+    });
+
+    const links = grid.querySelector(".mega-links");
+
+    categories.forEach(function (category) {
+
+        const card = document.createElement("a");
+
+        card.className = "mega-card";
+
+        card.href = categoryUrlOf(category);
+
+        card.innerHTML = `
+            <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
+            <span>${escapeHtml(category.name)}</span>
+        `;
+
+        grid.insertBefore(card, links);
+
+    });
+
+    grid.style.setProperty("--mega-cols", String(Math.max(categories.length, 1)));
+
+}
 
 
 /* ================= TÀI KHOẢN (HEADER) ================= */
@@ -335,7 +394,7 @@ function setupScrollReveal() {
  * Thẻ sản phẩm render sau (products.js, home.js) gọi lại với lưới mới;
  * cờ data-cart-bound tránh gắn sự kiện 2 lần cho cùng một nút.
  * Thẻ không biết phiên bản, nên lúc bấm mới lấy GET /products/{id}/variants
- * và chọn phiên bản đầu tiên (giống phiên bản mặc định ở trang chi tiết).
+ * và chọn phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E; không còn bản nào → báo hết hàng).
  */
 
 function setupAddToCart(root) {
@@ -386,7 +445,17 @@ function setupAddToCart(root) {
                     "/products/" + encodeURIComponent(productId) + "/variants"
                 );
 
-                const variant = Array.isArray(variants) && variants.length > 0 ? variants[0] : null;
+                const list = Array.isArray(variants) ? variants : [];
+
+                const variant = list.find(function (item) { return !isSoldOut(item); }) || list[0] || null;
+
+                if (variant && isSoldOut(variant)) {
+
+                    showToast("Sản phẩm tạm hết hàng ở mọi chi nhánh.", "error");
+
+                    return;
+
+                }
 
                 const prices = variant
                     ? resolvePrices({ basePrice: button.dataset.price }, variant)

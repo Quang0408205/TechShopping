@@ -40,21 +40,22 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (GET /api/v1/admin/orders): đổi trạng thái có hiệu lực ngay và khách thấy trên trang "Đơn hàng của tôi".
-                Đơn chuyển khoản phải được bấm "Đã nhận tiền", đơn trả góp phải được duyệt, trước khi chuyển sang Đã xác nhận
-                (mở ▸ để xem khối Thanh toán).
-                Nhân viên chỉ thấy và xử lý đơn của chi nhánh mình đang được gán. Xác nhận đơn trừ tồn kho của
-                chi nhánh xử lý (thiếu hàng thì không xác nhận được). ADMIN chỉ xem mọi đơn và đổi chi nhánh cho đơn
-                đang chờ ở dòng chi tiết; việc xử lý đơn do nhân viên chi nhánh thực hiện.
-            </p>
 
+            <!-- Tab trạng thái: js/admin/orders.js đồng bộ với #orderStatusFilter (ẩn) và điền số đơn -->
+            <div class="admin-tabs admin-order-tabs" id="orderStatusTabs" role="tablist" aria-label="Trạng thái đơn">
+                <button type="button" role="tab" class="admin-tab" data-status="">Tất cả <span class="admin-tab-count"></span></button>
+                <button type="button" role="tab" class="admin-tab" data-status="PENDING">Chờ xác nhận <span class="admin-tab-count"></span></button>
+                <button type="button" role="tab" class="admin-tab" data-status="CONFIRMED">Đã xác nhận <span class="admin-tab-count"></span></button>
+                <button type="button" role="tab" class="admin-tab" data-status="SHIPPING">Đang giao <span class="admin-tab-count"></span></button>
+                <button type="button" role="tab" class="admin-tab" data-status="DELIVERED">Đã giao <span class="admin-tab-count"></span></button>
+                <button type="button" role="tab" class="admin-tab" data-status="CANCELLED">Đã hủy <span class="admin-tab-count"></span></button>
+            </div>
 
             <form class="admin-filter-bar" id="orderFilterForm" role="search">
 
                 <input type="search" id="orderKeyword" placeholder="Mã đơn, người nhận, SĐT, email khách…" maxlength="255" aria-label="Từ khoá">
 
-                <select id="orderStatusFilter" aria-label="Trạng thái">
+                <select id="orderStatusFilter" aria-label="Trạng thái" hidden>
                     <option value="">Tất cả trạng thái</option>
                     <option value="PENDING">Chờ xác nhận</option>
                     <option value="CONFIRMED">Đã xác nhận</option>
@@ -62,6 +63,14 @@
                     <option value="DELIVERED">Đã giao hàng</option>
                     <option value="CANCELLED">Đã hủy</option>
                 </select>
+
+                <div class="admin-quick-dates" id="orderQuickDates" role="group" aria-label="Khoảng ngày đặt">
+                    <button type="button" data-range="today">Hôm nay</button>
+                    <button type="button" data-range="yesterday">Hôm qua</button>
+                    <button type="button" data-range="7d">7 ngày</button>
+                    <button type="button" data-range="month">Tháng này</button>
+                    <button type="button" data-range="all">Mọi ngày</button>
+                </div>
 
                 <label class="admin-date-filter">
                     Từ
@@ -101,7 +110,7 @@
                                 <th>SL</th>
                                 <th>Tổng tiền</th>
                                 <th>Thanh toán</th>
-                                <th>Trạng thái</th>
+                                <th>Trạng thái / xử lý</th>
                             </tr>
                         </thead>
                         <tbody id="orderTableBody"></tbody>

@@ -56,6 +56,10 @@ class OrderPlacementConcurrencyTest {
                 + "values ('Điện thoại Đặt Đồng Thời', ?, ?, 5000000) returning product_id", Long.class, TAG, categoryId);
         Long variantId = jdbc.queryForObject("insert into product_variants (product_id, variant_name, price) "
                 + "values (?, 'Mặc định', 5000000) returning variant_id", Long.class, productId);
+        // plan v3 GĐ E: an open store must hold the cart
+        Integer storeId = jdbc.queryForObject("insert into stores (name, address, district, city, is_active) "
+                + "values (?, '1 Đường Test', 'Quận Kho Test', 'Hồ Chí Minh', true) returning store_id", Integer.class, TAG);
+        jdbc.update("insert into inventory (store_id, variant_id, quantity) values (?, ?, 10)", storeId, variantId);
         Long cartId = jdbc.queryForObject("insert into carts (user_id) values (?) returning cart_id", Long.class, userId);
         jdbc.update("insert into cart_items (cart_id, variant_id, quantity) values (?, ?, 2)", cartId, variantId);
     }
@@ -113,6 +117,8 @@ class OrderPlacementConcurrencyTest {
                 + "join users u on u.user_id = o.user_id where u.username = ?)", TAG);
         jdbc.update("delete from orders where user_id in (select user_id from users where username = ?)", TAG);
         jdbc.update("delete from users where username = ?", TAG);                // cascades carts, cart_items
+        jdbc.update("delete from inventory where store_id in (select store_id from stores where name = ?)", TAG);
+        jdbc.update("delete from stores where name = ?", TAG);
         jdbc.update("delete from products where slug = ?", TAG);                 // cascades variants
         jdbc.update("delete from categories where slug = ?", TAG);
     }

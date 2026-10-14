@@ -96,14 +96,15 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     try {
 
+        /* Tải hết (thương hiệu có thể quá 100, giới hạn size của backend) */
         const results = await Promise.all([
-            apiRequest("/categories?size=100&sort=name,asc"),
-            apiRequest("/brands?size=100&sort=name,asc")
+            fetchAllPages("/categories?sort=name,asc"),
+            fetchAllPages("/brands?sort=name,asc")
         ]);
 
-        categories = results[0].content || [];
+        categories = results[0];
 
-        brands = results[1].content || [];
+        brands = results[1];
 
     } catch (error) {
 
@@ -118,6 +119,23 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     fillSelect(document.getElementById("pfBrand"), brands, "— Không có —");
 
+    fillSelect(document.getElementById("productBrandFilter"), brands, "Mọi thương hiệu");
+
+    /* admin/products.html?categoryId= | brandId= (link số sản phẩm ở trang Danh mục / Thương hiệu) */
+    const initialParams = new URLSearchParams(window.location.search);
+
+    [["categoryId", "productCategoryFilter"], ["brandId", "productBrandFilter"]].forEach(function (pair) {
+
+        const select = document.getElementById(pair[1]);
+
+        const value = initialParams.get(pair[0]);
+
+        if (value && Array.from(select.options).some(function (option) { return option.value === value; })) {
+            select.value = value;
+        }
+
+    });
+
 
     document.getElementById("productFilterForm").addEventListener("submit", function (event) {
 
@@ -129,7 +147,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     });
 
-    ["productCategoryFilter", "productStatusFilter"].forEach(function (id) {
+    ["productCategoryFilter", "productBrandFilter", "productStatusFilter"].forEach(function (id) {
 
         document.getElementById(id).addEventListener("change", function () {
             currentPage = 0;
@@ -269,6 +287,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             params.set("categoryId", categoryId);
         }
 
+        const brandId = document.getElementById("productBrandFilter").value;
+
+        if (brandId) {
+            params.set("brandId", brandId);
+        }
+
         if (status) {
             params.set("isActive", status);
         }
@@ -403,8 +427,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         field("pfSlug").value = product ? product.slug : "";
 
-        field("pfStock").value = product && product.stockQuantity !== null ? product.stockQuantity : "";
-
         field("pfWarranty").value = product && product.warrantyMonths !== null ? product.warrantyMonths : "";
 
         field("pfWeight").value = product && product.weight !== null && product.weight !== undefined ? Number(product.weight) : "";
@@ -477,7 +499,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             brandId: numberOrNull("pfBrand"),
             basePrice: numberOrNull("pfBasePrice"),
             discountPrice: numberOrNull("pfDiscountPrice"),
-            stockQuantity: numberOrNull("pfStock"),
             sku: textOrNull("pfSku"),
             weight: numberOrNull("pfWeight"),
             warrantyMonths: numberOrNull("pfWarranty"),
@@ -505,8 +526,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return { error: "Slug chỉ gồm chữ thường không dấu, số và dấu gạch ngang (vd. dien-thoai-abc)." };
         }
 
-        if ([body.stockQuantity, body.warrantyMonths].some(function (n) { return n !== null && !(Number.isInteger(n) && n >= 0); })) {
-            return { error: "Tồn kho và bảo hành phải là số nguyên không âm." };
+        if (body.warrantyMonths !== null && !(Number.isInteger(body.warrantyMonths) && body.warrantyMonths >= 0)) {
+            return { error: "Bảo hành phải là số nguyên không âm." };
         }
 
         if (body.weight !== null && !(body.weight >= 0)) {
@@ -1151,7 +1172,6 @@ document.addEventListener("DOMContentLoaded", async function () {
             brandId: product.brandId,
             basePrice: product.basePrice,
             discountPrice: product.discountPrice,
-            stockQuantity: product.stockQuantity,
             sku: product.sku,
             weight: product.weight,
             warrantyMonths: product.warrantyMonths,

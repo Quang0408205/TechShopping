@@ -20,7 +20,9 @@ import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
+import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.service.cart.CartService;
+import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -33,7 +35,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +79,15 @@ class CartServiceImplTest {
     @Mock
     private PromotionProductRepository promotionProductRepository;
 
+    @Mock
+    private StockAvailability stockAvailability;
+
+    @Mock
+    private StoreRepository storeRepository;
+
+    /** Units in open stores per variant id; variants not listed have 100. */
+    private final Map<Long, Integer> stock = new HashMap<>();
+
     private CartServiceImpl cartService;
 
     private User user;
@@ -84,7 +98,14 @@ class CartServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
         cartService = new CartServiceImpl(cartRepository, cartItemRepository, variantRepository, imageRepository,
-                new CurrentUserLoader(userRepository, userRoleRepository), cartMapper);
+                new CurrentUserLoader(userRepository, userRoleRepository), cartMapper, stockAvailability, storeRepository);
+        lenient().when(stockAvailability.byVariant(any())).thenAnswer(call -> {
+            Map<Long, Integer> units = new HashMap<>();
+            for (Object id : (Collection<?>) call.getArgument(0)) {
+                units.put((Long) id, stock.getOrDefault((Long) id, 100));
+            }
+            return units;
+        });
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);
@@ -173,6 +194,44 @@ class CartServiceImplTest {
         verify(cartRepository).touch(CART_ID);
         assertThat(response.totalQuantity()).isEqualTo(3);
         assertThat(response.subtotal()).isEqualByComparingTo("47970000");
+    }
+
+    @Test
+    void addItem_aboveWhatTheOpenStoresHold_isOutOfStock_andNothingIsWritten() {
+        stubUser();
+        ProductVariant variant = variant(10L, product(1L, "Điện thoại A"), "15990000", null);
+        stock.put(10L, 2);
+        when(variantRepository.findByIdAndProductDeletedAtIsNull(10L)).thenReturn(Optional.of(variant));
+        when(cartRepository.findByUserId(USER_ID)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findAllWithProductByCartId(CART_ID)).thenReturn(List.of(item(100L, variant, 1)));
+
+        assertThatThrownBy(() -> cartService.addItem(USER_ID, new CartItemAddRequest(10L, 2)))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage("Điện thoại A - Phiên bản 10 chỉ còn 2 sản phẩm")
+                .extracting(ex -> ((BusinessException) ex).getErrorCode()).isEqualTo(ErrorCode.OUT_OF_STOCK);
+        stock.put(10L, 0);
+        assertThatThrownBy(() -> cartService.addItem(USER_ID, new CartItemAddRequest(10L, 1)))
+                .hasMessage("Điện thoại A - Phiên bản 10 tạm hết hàng");
+        verify(cartItemRepository, never()).upsertQuantity(anyLong(), anyLong(), anyInt(), anyInt());
+    }
+
+    @Test
+    void updateItem_lowering_isAllowedEvenAboveTheStock_raisingAboveIsNot() {
+        stubUser();
+        ProductVariant variant = variant(10L, product(1L, "Điện thoại A"), "15990000", null);
+        stock.put(10L, 1);
+        when(cartRepository.findByUserId(USER_ID)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.existsByCartIdAndVariantId(CART_ID, 10L)).thenReturn(true);
+        when(cartItemRepository.findAllWithProductByCartId(CART_ID)).thenReturn(List.of(item(100L, variant, 4)));
+        when(variantRepository.findById(10L)).thenReturn(Optional.of(variant));
+
+        CartResponse lowered = cartService.updateItem(USER_ID, 10L, new CartItemUpdateRequest(3));
+        assertError(() -> cartService.updateItem(USER_ID, 10L, new CartItemUpdateRequest(5)), ErrorCode.OUT_OF_STOCK);
+
+        verify(cartItemRepository).updateQuantity(CART_ID, 10L, 3);
+        verify(cartItemRepository, never()).updateQuantity(CART_ID, 10L, 5);
+        assertThat(lowered.items().getFirst().available()).isFalse();
+        assertThat(lowered.items().getFirst().availableQuantity()).isEqualTo(1);
     }
 
     @Test

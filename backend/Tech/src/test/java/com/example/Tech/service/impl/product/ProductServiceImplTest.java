@@ -20,6 +20,7 @@ import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,9 @@ class ProductServiceImplTest {
     @Mock
     private PromotionProductRepository promotionProductRepository;
 
+    @Mock
+    private StockAvailability stockAvailability;
+
     private ProductServiceImpl productService;
 
     @BeforeEach
@@ -72,7 +76,7 @@ class ProductServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         productService = new ProductServiceImpl(productRepository, categoryRepository, brandRepository,
                 imageRepository, new ProductMapper(), new ProductImageMapper(),
-                new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
+                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone());
     }
 
     @Test

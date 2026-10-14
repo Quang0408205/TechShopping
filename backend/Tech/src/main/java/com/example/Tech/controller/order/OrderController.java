@@ -47,7 +47,7 @@ public class OrderController {
             @ApiResponse(responseCode = "201", description = "Order placed, cart emptied"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (incl. installment data missing / not "
                     + "allowed / bad term), MALFORMED_REQUEST (unknown payment method or bank), INSTALLMENT_NOT_ELIGIBLE"),
-            @ApiResponse(responseCode = "409", description = "CART_EMPTY (also a double submit), PRODUCT_NOT_AVAILABLE")
+            @ApiResponse(responseCode = "409", description = "CART_EMPTY (also a double submit), PRODUCT_NOT_AVAILABLE, OUT_OF_STOCK (no open store holds the whole cart / the pickup store lacks items)")
     })
     public ResponseEntity<ApiResult<OrderResponse>> placeOrder(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                                @Valid @RequestBody OrderCreateRequest request) {

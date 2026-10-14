@@ -40,12 +40,6 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note" id="employeeNote">
-                Dữ liệu thật. <strong>Tuyển nhân sự</strong> tạo một tài khoản mới (không chuyển tài khoản khách hàng):
-                hệ thống đặt mật khẩu tạm và chỉ hiện nó một lần. Nhân viên chỉ thấy đơn hàng, trả góp và tồn kho của
-                chi nhánh đang được gán; Quản lý chi nhánh được xem thêm Báo cáo.
-            </p>
-
 
             <div class="admin-filter-bar admin-filter-bar--split">
 
@@ -108,8 +102,8 @@
                         </div>
 
                         <div class="admin-field" data-hire-only>
-                            <label for="empPassword">Mật khẩu tạm</label>
-                            <input type="text" id="empPassword" maxlength="72" autocomplete="off" placeholder="Để trống = hệ thống tự sinh">
+                            <label>Mật khẩu tạm</label>
+                            <p class="admin-field-hint">Mật khẩu tạm mặc định là 1. Nhân viên phải đổi ở lần đăng nhập đầu, quá 7 ngày chưa đổi thì mật khẩu hết hạn.</p>
                         </div>
 
                         <!-- Chỉ ADMIN khi tuyển: vai trò -->
@@ -133,16 +127,6 @@
                         </div>
 
                         <div class="admin-field">
-                            <label for="empDepartment">Bộ phận</label>
-                            <input type="text" id="empDepartment" maxlength="100" placeholder="vd. Bán hàng">
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="empPosition">Chức danh</label>
-                            <input type="text" id="empPosition" maxlength="100" placeholder="vd. Nhân viên chính thức">
-                        </div>
-
-                        <div class="admin-field">
                             <label for="empSalary">Lương (đ)</label>
                             <input type="number" id="empSalary" min="0" step="100000">
                         </div>
@@ -156,12 +140,6 @@
                         <div class="admin-field" id="empStoreField" data-admin-only>
                             <label for="empStoreId">Chi nhánh *</label>
                             <select id="empStoreId"></select>
-                        </div>
-
-                        <!-- Chức danh hiển thị tại chi nhánh (quản lý luôn là "Quản lý chi nhánh") -->
-                        <div class="admin-field" id="empStorePositionField">
-                            <label for="empStorePosition">Chức danh tại chi nhánh</label>
-                            <select id="empStorePosition"></select>
                         </div>
 
                         <!-- Chỉ khi sửa -->
@@ -203,11 +181,6 @@
                         </div>
 
                         <div class="admin-field">
-                            <label for="assignPosition">Vị trí tại chi nhánh</label>
-                            <select id="assignPosition"></select>
-                        </div>
-
-                        <div class="admin-field">
                             <label for="assignStartDate">Bắt đầu từ</label>
                             <input type="date" id="assignStartDate">
                         </div>
@@ -238,7 +211,6 @@
                                 <th>Nhân viên</th>
                                 <th>Liên hệ</th>
                                 <th id="employeeStoreHeader">Chi nhánh</th>
-                                <th>Chức danh</th>
                                 <th>Ngày vào làm</th>
                                 <th>Trạng thái</th>
                                 <th>Thao tác</th>

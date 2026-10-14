@@ -17,7 +17,8 @@
  *      đã chuyển hướng) và các hàm dùng chung cho bảng / bộ lọc.
  *
  * .admin-shell bị ẩn (css/admin/admin.css) cho tới khi body có class
- * "admin-ready", nên người không đủ quyền không thấy nội dung trang.
+ * "admin-ready" (máy chủ đã xác nhận) hoặc "admin-shell-early" (vẽ sớm theo phiên đã
+ * lưu, chỉ khi vai trò trong phiên được vào trang), nên người không đủ quyền không thấy trang.
  *
  * Thứ tự nạp: js/core/api.js → js/core/ui.js → js/core/layout.js →
  * (js/admin/mock-staff-data.js: chỉ 2 trang chưa có backend) → js/admin/staff-auth.js →
@@ -30,6 +31,26 @@ const adminLayoutReady = initAdminLayout();
 
 async function initAdminLayout() {
 
+    /*
+     * Chuyển trang không giật: có phiên đã lưu (đã được kiểm tra ở trang trước) và sidebar đã được
+     * layout.js chèn đồng bộ → vẽ khung ngay theo phiên đó, trước lần vẽ đầu. Máy chủ vẫn kiểm tra lại
+     * bên dưới; dữ liệu của trang chỉ tải sau bước đó (adminLayoutReady).
+     */
+    const cachedAuth = getAuth();
+
+    const cachedStaff = cachedAuth && cachedAuth.staff;
+
+    let shellShown = false;
+
+    if (cachedStaff && pageAllowedFor(cachedStaff) && document.getElementById("adminSidebar")) {
+
+        showShell(cachedStaff, "admin-shell-early");
+
+        shellShown = true;
+
+    }
+
+
     const staff = await requireStaffLogin();
 
     if (!staff) {
@@ -37,12 +58,7 @@ async function initAdminLayout() {
     }
 
 
-    const allowedRoles = (document.body.dataset.roles || "")
-        .split(",")
-        .map(function (role) { return role.trim(); })
-        .filter(Boolean);
-
-    if (allowedRoles.length > 0 && !hasStaffRole(staff, allowedRoles)) {
+    if (!pageAllowedFor(staff)) {
 
         window.location.replace(siteUrl("admin/dashboard.html?denied=1"));
 
@@ -56,6 +72,43 @@ async function initAdminLayout() {
     }
 
 
+    if (shellShown) {
+
+        /* Vai trò / tên / chi nhánh có thể vừa đổi */
+        applyMenuRbac(staff);
+
+        fillTopbarUser(staff);
+
+        document.body.classList.add("admin-ready");
+
+    } else {
+
+        showShell(staff, "admin-ready");
+
+    }
+
+
+    return staff;
+
+}
+
+
+function pageAllowedFor(staff) {
+
+    const allowedRoles = (document.body.dataset.roles || "")
+        .split(",")
+        .map(function (role) { return role.trim(); })
+        .filter(Boolean);
+
+    return allowedRoles.length === 0 || hasStaffRole(staff, allowedRoles);
+
+}
+
+
+/* readyClass: "admin-shell-early" (theo phiên đã lưu) hoặc "admin-ready" (máy chủ đã xác nhận) */
+
+function showShell(staff, readyClass) {
+
     applyMenuRbac(staff);
 
     fillTopbarUser(staff);
@@ -66,10 +119,7 @@ async function initAdminLayout() {
 
     setupPageTitle();
 
-    document.body.classList.add("admin-ready");
-
-
-    return staff;
+    document.body.classList.add(readyClass);
 
 }
 

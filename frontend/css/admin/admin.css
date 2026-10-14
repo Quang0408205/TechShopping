@@ -31,7 +31,8 @@
     visibility: hidden;
 }
 
-.admin-ready .admin-shell {
+.admin-ready .admin-shell,
+.admin-shell-early .admin-shell {
     visibility: visible;
 }
 
@@ -759,11 +760,6 @@ button.admin-badge {
 
 /* ================= B2: TRANG DỮ LIỆU THẬT (người dùng, sản phẩm) ================= */
 
-/* Ghi chú "dữ liệu thật" (màu xanh) để phân biệt với các trang dữ liệu mẫu */
-.admin-live-note {
-    border-left-color: var(--color-success);
-}
-
 /* Nút dạng chữ trong cột thao tác */
 .admin-actions-cell {
     white-space: nowrap;
@@ -847,6 +843,132 @@ button.admin-badge {
 .admin-tab.is-active {
     color: var(--color-ink);
     border-bottom-color: var(--color-ink);
+}
+
+/* ================= V3 GĐ B: TRANG ĐƠN HÀNG ================= */
+
+.admin-order-tabs {
+    flex-wrap: wrap;
+}
+
+.admin-tab-count {
+    display: inline-block;
+    min-width: 20px;
+    margin-left: 4px;
+    padding: 1px 6px;
+
+    border-radius: var(--radius-full);
+    background: var(--gray-100);
+
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    color: var(--gray-700);
+}
+
+.admin-tab-count:empty {
+    display: none;
+}
+
+.admin-tab.is-active .admin-tab-count {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+/* Nút chọn nhanh khoảng ngày (dạng nhóm nút liền nhau) */
+.admin-quick-dates {
+    display: inline-flex;
+    flex-wrap: wrap;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.admin-quick-dates button {
+    padding: 9px 12px;
+
+    border: 0;
+    border-right: 1px solid var(--gray-300);
+    background: var(--color-paper);
+
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-700);
+
+    cursor: pointer;
+}
+
+.admin-quick-dates button:last-child {
+    border-right: 0;
+}
+
+.admin-quick-dates button:hover {
+    background: var(--gray-100);
+}
+
+.admin-quick-dates button[aria-pressed="true"] {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+/* Dòng tiêu đề nhóm ngày trong bảng đơn */
+.admin-table .admin-date-group th {
+    padding: 10px 16px;
+
+    background: var(--gray-100);
+
+    font-size: 12px;
+    font-weight: 700;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-ink);
+}
+
+.admin-date-group span {
+    margin-left: 8px;
+
+    font-weight: 600;
+    color: var(--gray-500);
+}
+
+.admin-badge-info {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-strong);
+}
+
+/* Cụm nút xử lý trong cột trạng thái */
+.admin-order-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+
+    margin-top: 8px;
+}
+
+.admin-order-actions .admin-action-btn {
+    min-height: 32px;
+    padding: 0 12px;
+}
+
+.admin-order-actions .admin-action-btn[title]:disabled {
+    cursor: not-allowed;
+}
+
+/* ================= V3 GĐ C: DANH MỤC / THƯƠNG HIỆU ================= */
+
+.admin-tax-child {
+    padding-left: calc(var(--tax-depth, 0) * 24px);
+}
+
+.admin-tax-thumb {
+    width: 36px;
+    height: 36px;
+
+    font-size: 14px;
+    font-weight: 700;
 }
 
 /* Hộp thoại hiện mật khẩu tạm một lần */

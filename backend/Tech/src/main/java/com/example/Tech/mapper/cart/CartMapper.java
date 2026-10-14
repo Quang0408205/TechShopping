@@ -18,7 +18,8 @@ import java.util.List;
 
 /**
  * Builds the cart response. Prices always come from the variant at read time (cart_items has no price
- * column); a line is available only while its product is not deleted, not hidden and has a price.
+ * column); a line is available only while its product is not deleted, not hidden, has a price and the open
+ * stores hold enough units (plan v3 GD E).
  * The shipping fee is the one checkout charges (ShippingPolicy). Checkout (OrderServiceImpl) uses the same
  * unitPrice / isPurchasable rules.
  */
@@ -42,7 +43,8 @@ public class CartMapper {
                 hasUnavailableItems, cart.getUpdatedAt());
     }
 
-    public CartItemResponse toItemResponse(CartItem item, String imageUrl) {
+    /** availableUnits: the variant's units in all open stores (StockAvailability). */
+    public CartItemResponse toItemResponse(CartItem item, String imageUrl, int availableUnits) {
         ProductVariant variant = item.getVariant();
         Product product = variant.getProduct();
         BigDecimal unitPrice = unitPrice(variant);
@@ -59,7 +61,8 @@ public class CartMapper {
                 originalPrice,
                 item.getQuantity(),
                 unitPrice.multiply(BigDecimal.valueOf(item.getQuantity())),
-                isPurchasable(product, unitPrice),
+                isPurchasable(product, unitPrice) && availableUnits >= item.getQuantity(),
+                availableUnits,
                 item.getAddedAt());
     }
 
@@ -68,7 +71,7 @@ public class CartMapper {
         return promotionPricingService.resolve(variant, LocalDateTime.now(clock)).unitPrice();
     }
 
-    /** Not soft-deleted, not hidden (is_active NULL counts as active) and a price above 0. */
+    /** Not soft-deleted, not hidden, its category not hidden (is_active NULL counts as active) and a price above 0. */
     public boolean isPurchasable(ProductVariant variant) {
         return isPurchasable(variant.getProduct(), unitPrice(variant));
     }
@@ -76,6 +79,7 @@ public class CartMapper {
     private boolean isPurchasable(Product product, BigDecimal unitPrice) {
         return product.getDeletedAt() == null
                 && !Boolean.FALSE.equals(product.getActive())
+                && (product.getCategory() == null || !Boolean.FALSE.equals(product.getCategory().getActive()))
                 && unitPrice.signum() > 0;
     }
 }

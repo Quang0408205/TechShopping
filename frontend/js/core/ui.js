@@ -332,7 +332,9 @@ function getDisplayPrice(product) {
  * (A2). Nút .add-cart vẫn mang data-name /
  * data-price vì giỏ hàng còn lưu theo tên cho tới Phase 3.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
- * không cho thêm vào giỏ.
+ * không cho thêm vào giỏ. availableQuantity = 0 (không chi nhánh đang mở nào
+ * còn hàng, kế hoạch v3 GĐ E) → nhãn "Hết hàng", nút bị khoá.
+ * Thiếu trường này (API cũ) thì coi như còn hàng.
  * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
  * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
  * thay thế (bindProductImageFallbacks).
@@ -375,6 +377,15 @@ function productCardRatingHtml(product) {
 }
 
 
+/* Kế hoạch v3 GĐ E: sản phẩm / phiên bản không còn ở chi nhánh đang mở nào (thiếu trường = API cũ → còn hàng) */
+
+function isSoldOut(item) {
+
+    return item && item.availableQuantity === 0;
+
+}
+
+
 function productCardHtml(product, categorySlug) {
 
     const price = getDisplayPrice(product);
@@ -386,6 +397,8 @@ function productCardHtml(product, categorySlug) {
         : fallbackImage;
 
     const hasPrice = price > 0;
+
+    const soldOut = hasPrice && isSoldOut(product);
 
     const name = escapeHtml(product.name);
 
@@ -406,6 +419,7 @@ function productCardHtml(product, categorySlug) {
 
             <a href="${detailUrl}" class="product-image">
                 ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
+                ${soldOut ? `<span class="product-stock-badge">Hết hàng</span>` : ""}
                 <img
                     src="${escapeHtml(imageUrl)}"
                     data-fallback="${escapeHtml(fallbackImage)}"
@@ -436,9 +450,9 @@ function productCardHtml(product, categorySlug) {
                     class="add-cart"
                     data-name="${name}"
                     data-price="${price}"
-                    ${hasPrice ? "" : "disabled"}
+                    ${hasPrice && !soldOut ? "" : "disabled"}
                 >
-                    ${hasPrice ? "THÊM VÀO GIỎ" : "LIÊN HỆ ĐỂ ĐẶT HÀNG"}
+                    ${!hasPrice ? "LIÊN HỆ ĐỂ ĐẶT HÀNG" : soldOut ? "TẠM HẾT HÀNG" : "THÊM VÀO GIỎ"}
                 </button>
 
             </div>
@@ -831,6 +845,9 @@ async function fetchCategoryMaps() {
 
     const bySlug = {};
 
+    /* Kế hoạch v3: danh mục ADMIN ẩn → không hiện ở trang khách, sản phẩm của nó cũng không bán */
+    const hiddenIds = {};
+
 
     (page.content || []).forEach(function (category) {
 
@@ -838,9 +855,82 @@ async function fetchCategoryMaps() {
 
         bySlug[category.slug] = category.id;
 
+        if (category.isActive === false) {
+            hiddenIds[category.id] = true;
+        }
+
     });
 
 
-    return { byId: byId, bySlug: bySlug };
+    /* Danh mục đang hiển thị, theo "Thứ tự hiển thị" ADMIN đặt rồi theo tên */
+    const visible = (page.content || [])
+        .filter(function (category) { return category.isActive !== false; })
+        .sort(function (a, b) {
+            return (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.name.localeCompare(b.name, "vi");
+        });
+
+
+    return { byId: byId, bySlug: bySlug, hiddenIds: hiddenIds, visible: visible };
+
+}
+
+
+/* Một lần tải cho cả trang (header + nội dung trang); lỗi thì lần sau tải lại */
+
+let shopCategoriesPromise = null;
+
+function loadShopCategories() {
+
+    if (!shopCategoriesPromise) {
+
+        shopCategoriesPromise = fetchCategoryMaps().catch(function (error) {
+
+            shopCategoriesPromise = null;
+
+            throw error;
+
+        });
+
+    }
+
+    return shopCategoriesPromise;
+
+}
+
+
+/* Khoá trên URL ?category=: khoá cũ (phone, laptop…) nếu có, không thì chính slug */
+
+function categoryKeyOf(slug) {
+
+    return getCategoryFilterKey(slug) || slug;
+
+}
+
+
+function categoryUrlOf(category) {
+
+    return siteUrl("customer/products.html?category=" + encodeURIComponent(categoryKeyOf(category.slug)));
+
+}
+
+
+/* Ảnh của danh mục: ảnh biểu tượng ADMIN nhập → ảnh cắt sẵn của 4 danh mục gốc → ảnh thay thế */
+
+const CATEGORY_CARD_IMAGES = {
+    phone: "assets/images/category-phone.webp",
+    laptop: "assets/images/category-laptop.webp",
+    tablet: "assets/images/category-tablet.webp",
+    accessory: "assets/images/category-accessory.webp"
+};
+
+function categoryImageOf(category) {
+
+    if (isSafeImageUrl(category.iconUrl)) {
+        return category.iconUrl.trim();
+    }
+
+    const key = getCategoryFilterKey(category.slug);
+
+    return key && CATEGORY_CARD_IMAGES[key] ? siteUrl(CATEGORY_CARD_IMAGES[key]) : getFallbackImage(category.slug);
 
 }

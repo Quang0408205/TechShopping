@@ -40,6 +40,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,6 +60,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
+
+    private static final String WHITE_LABEL = "Điện thoại 1 - Trắng";
 
     private static final Long USER_ID = 7L;
     private static final ZoneId ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
@@ -112,6 +115,7 @@ class OrderServiceImplTest {
         Product phone = product(1L);
         black = variant(11L, phone, "15990000", "14990000");
         white = variant(12L, phone, "2000000", null);
+        white.setVariantName("Trắng");
     }
 
     @Test
@@ -165,13 +169,14 @@ class OrderServiceImplTest {
             Order order = invocation.getArgument(0);
             assertThat(order.getShippingAddress()).isEqualTo("12 Nguyễn Trãi");
             return null;
-        }).when(orderStockLifecycle).assignBranch(any(Order.class), eq(DeliveryType.HOME_DELIVERY), isNull());
+        }).when(orderStockLifecycle).assignBranch(any(Order.class), eq(DeliveryType.HOME_DELIVERY), isNull(), any(), any());
 
         orderService.placeOrder(USER_ID, request(null, PaymentMethod.COD));
 
         Order order = savedOrder();
         verify(orderStockLifecycle).validateDeliverySelection(DeliveryType.HOME_DELIVERY, null, "12 Nguyễn Trãi");
-        verify(orderStockLifecycle).assignBranch(order, DeliveryType.HOME_DELIVERY, null);
+        // plan v3 GĐ E: the cart quantities (and labels for the messages) go to the store choice
+        verify(orderStockLifecycle).assignBranch(order, DeliveryType.HOME_DELIVERY, null, Map.of(12L, 1), Map.of(12L, WHITE_LABEL));
         assertThat(order.getShippingCost()).isEqualByComparingTo("30000");
     }
 
@@ -185,7 +190,7 @@ class OrderServiceImplTest {
 
         Order order = savedOrder();
         verify(orderStockLifecycle).validateDeliverySelection(DeliveryType.PICKUP, 5, null);
-        verify(orderStockLifecycle).assignBranch(order, DeliveryType.PICKUP, 5);
+        verify(orderStockLifecycle).assignBranch(order, DeliveryType.PICKUP, 5, Map.of(12L, 1), Map.of(12L, WHITE_LABEL));
         assertThat(order.getShippingCost()).isEqualByComparingTo("0");
         assertThat(order.getTotalAmount()).isEqualByComparingTo("2000000");
     }

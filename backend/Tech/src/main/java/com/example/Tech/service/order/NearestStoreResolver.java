@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.ToIntFunction;
 import java.util.regex.Pattern;
 
 /**
@@ -15,8 +16,8 @@ import java.util.regex.Pattern;
  * district and city (score 3), its district only (2) or its city only (1). Both sides are compared without
  * accents, case or punctuation, with whole-word matching ("Quận 1" does not match "Quận 10"), and common short
  * forms are expanded (Q.1 / Q1 → quận 1, TP / Tp. → thành phố, HCM / TPHCM / Sài Gòn → Hồ Chí Minh, HN → Hà Nội).
- * Ties and addresses that match nothing go to the open store with the lowest id, so placement never fails while
- * a store is open; an empty list gives empty.
+ * Ties and addresses that match nothing go to the open store with the lowest id; an empty list gives empty.
+ * Plan v3 GĐ E: the caller passes only the stores holding the whole order, and may break ties by stock first.
  */
 public final class NearestStoreResolver {
 
@@ -31,9 +32,15 @@ public final class NearestStoreResolver {
     }
 
     public static Optional<Store> resolve(String shippingAddress, List<Store> openStores) {
+        return resolve(shippingAddress, openStores, store -> 0);
+    }
+
+    /** Highest address score, then the most {@code units} (e.g. stock of the ordered variants), then the lowest id. */
+    public static Optional<Store> resolve(String shippingAddress, List<Store> stores, ToIntFunction<Store> units) {
         String address = " " + normalize(shippingAddress) + " ";
-        return openStores.stream()
+        return stores.stream()
                 .max(Comparator.<Store>comparingInt(store -> score(address, store))
+                        .thenComparingInt(units)
                         .thenComparing(Store::getId, Comparator.reverseOrder()));
     }
 

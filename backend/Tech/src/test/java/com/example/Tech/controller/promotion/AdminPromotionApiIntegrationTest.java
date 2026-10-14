@@ -13,6 +13,7 @@ import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.AfterEach;
+import com.example.Tech.support.StoreFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,6 +129,7 @@ class AdminPromotionApiIntegrationTest {
         deleted = productRepository.save(deleted);
         phoneBlack = variantRepository.save(variant(phone, "Đen", "1000000"));
         laptopBase = variantRepository.save(variant(laptop, "Bản thường", "10000000"));
+        StoreFixtures.warehouse(entityManager, phoneBlack, laptopBase);
         entityManager.flush();
     }
 

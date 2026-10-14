@@ -117,6 +117,12 @@ const API_ERROR_MESSAGES = {
     ACCOUNT_DISABLED:
         "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.",
 
+    PASSWORD_CHANGE_REQUIRED:
+        "Bạn cần đổi mật khẩu tạm trước khi sử dụng hệ thống.",
+
+    TEMP_PASSWORD_EXPIRED:
+        "Mật khẩu tạm đã hết hạn. Vui lòng liên hệ quản lý để được cấp lại.",
+
     DUPLICATE_EMAIL:
         "Email này đã được đăng ký.",
 
@@ -174,6 +180,17 @@ const API_ERROR_MESSAGES = {
 
     RESOURCE_IN_USE:
         "Dữ liệu đang được sử dụng, không thể xoá.",
+
+    /* Kế hoạch v3 GĐ C: danh mục / thương hiệu */
+
+    DUPLICATE_CATEGORY:
+        "Slug danh mục đã được dùng. Hãy đổi slug hoặc tên khác.",
+
+    INVALID_CATEGORY_PARENT:
+        "Danh mục cha không hợp lệ (không chọn chính nó hoặc danh mục con của nó).",
+
+    DUPLICATE_BRAND:
+        "Tên hoặc slug thương hiệu đã tồn tại.",
 
     /* Ảnh sản phẩm (IMG) */
 

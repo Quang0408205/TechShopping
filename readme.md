@@ -216,6 +216,12 @@ docker compose up -d backend
 > # 12. Form Liên hệ lưu thật (contact_requests)
 > Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 13. Gộp vị trí nhân viên thành "Nhân viên chi nhánh" (kế hoạch v3 GĐ D)
+> Get-Content database\migrations\staff_position_label.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\staff_position_label.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 14. Mật khẩu tạm: bắt đổi ở lần đăng nhập đầu + hết hạn
+> Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):

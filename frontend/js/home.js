@@ -1,5 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
 
+    renderHomeCategories();
+
     renderHomeProductGrids();
 
     setupHomeTabs();
@@ -26,11 +28,69 @@ const HOME_PRODUCT_GRIDS = [
 let homeCategoriesPromise = null;
 
 
+/* ================= KHỐI "MUA SẮM THEO DANH MỤC" (kế hoạch v3) ================= */
+
+/*
+ * Một thẻ cho mỗi danh mục ĐANG HIỂN THỊ (theo thứ tự ADMIN đặt): thẻ đầu to, thẻ thứ hai rộng, các thẻ
+ * sau xếp hàng. Lỗi tải danh mục → giữ 4 thẻ viết sẵn trong index.html.
+ */
+
+const HOME_CATEGORY_NOTES = {
+    phone: "iPhone, Samsung Galaxy, Xiaomi, OPPO",
+    laptop: "MacBook, Asus, Dell, Lenovo, HP"
+};
+
+async function renderHomeCategories() {
+
+    const grid = document.querySelector(".category-grid");
+
+    if (!grid) {
+        return;
+    }
+
+    let categories;
+
+    try {
+
+        categories = (await loadShopCategories()).visible;
+
+    } catch (error) {
+
+        return;
+
+    }
+
+    if (categories.length === 0) {
+        return;
+    }
+
+    grid.innerHTML = categories.map(function (category, index) {
+
+        const size = index === 0 ? " category-card--large" : index === 1 ? " category-card--wide" : "";
+
+        const note = HOME_CATEGORY_NOTES[getCategoryFilterKey(category.slug)];
+
+        return `
+            <a href="${escapeHtml(categoryUrlOf(category))}" class="category-card${size}">
+                <div class="category-text">
+                    <h3>${escapeHtml(category.name)}</h3>
+                    ${index < 2 && note ? `<p>${escapeHtml(note)}</p>` : ""}
+                    <span class="category-more">Khám phá</span>
+                </div>
+                <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
+            </a>
+        `;
+
+    }).join("");
+
+}
+
+
 function getHomeCategories() {
 
     if (!homeCategoriesPromise) {
 
-        homeCategoriesPromise = fetchCategoryMaps().catch(function () {
+        homeCategoriesPromise = loadShopCategories().catch(function () {
 
             homeCategoriesPromise = null;
 

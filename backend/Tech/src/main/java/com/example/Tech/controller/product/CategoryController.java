@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -78,14 +79,15 @@ public class CategoryController {
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a category")
+    @Operation(summary = "Delete a category; with withProducts=true also its products when none has orders, stock or reviews")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Category deleted"),
             @ApiResponse(responseCode = "404", description = "CATEGORY_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "RESOURCE_IN_USE")
+            @ApiResponse(responseCode = "409", description = "RESOURCE_IN_USE (details.reason: CHILDREN, PRODUCTS, HISTORY)")
     })
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        categoryService.delete(id);
+    public ResponseEntity<Void> delete(@PathVariable Integer id,
+                                       @RequestParam(defaultValue = "false") boolean withProducts) {
+        categoryService.delete(id, withProducts);
         return ResponseEntity.noContent().build();
     }
 }

@@ -14,6 +14,8 @@ import java.util.List;
 
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
 
+    boolean existsByVariantId(Long variantId);
+
     /** What an order took from (OUT) or gave back to (RETURN) the stock, in insertion order. */
     List<StockMovement> findByOrderIdAndMovementTypeOrderById(Long orderId, MovementType movementType);
 

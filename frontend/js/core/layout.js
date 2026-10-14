@@ -12,16 +12,21 @@
  *
  * Cần nạp sau js/core/api.js (dùng SITE_ROOT) và trước main.js.
  * Cần chạy website qua HTTP (Live Server); mở file trực tiếp (file://) sẽ không tải được.
+ *
+ * Chuyển trang không giật: partial đã tải được lưu ở sessionStorage và chèn ĐỒNG BỘ ngay khi
+ * script chạy (trước lần vẽ đầu); bản mới vẫn được tải lại ngầm cho lần chuyển trang sau.
  */
+
+const PARTIAL_CACHE_PREFIX = "poy_partial:";
 
 const layoutReady = loadLayout();
 
 
 async function loadLayout() {
 
-    /* Script nằm cuối <body> nên các chỗ đặt đã có sẵn; vẫn chờ cho chắc */
+    /* Script nằm cuối <body> nên các chỗ đặt thường đã có sẵn */
 
-    if (document.readyState === "loading") {
+    if (document.readyState === "loading" && !document.querySelector("[data-include]")) {
 
         await new Promise(function (resolve) {
 
@@ -33,12 +38,32 @@ async function loadLayout() {
 
 
     const placeholders =
-        document.querySelectorAll("[data-include]");
+        Array.from(document.querySelectorAll("[data-include]"));
+
+    const missing = [];
+
+    placeholders.forEach(function (placeholder) {
+
+        const cached = readPartialCache(placeholder.dataset.include);
+
+        if (cached === null) {
+            missing.push(placeholder);
+        } else {
+            insertPartial(placeholder, cached);
+        }
+
+    });
 
 
-    await Promise.all(
-        Array.from(placeholders).map(includePartial)
-    );
+    await Promise.all(missing.map(includePartial));
+
+
+    /* Làm mới bản lưu cho lần sau (không đổi trang đang xem) */
+    placeholders.filter(function (placeholder) {
+        return missing.indexOf(placeholder) === -1;
+    }).forEach(function (placeholder) {
+        fetchPartial(placeholder.dataset.include).catch(function () { });
+    });
 
 
     document.dispatchEvent(
@@ -54,32 +79,7 @@ async function includePartial(placeholder) {
 
     try {
 
-        const response = await fetch(
-            siteUrl("partials/" + name + ".html")
-        );
-
-        if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-        }
-
-
-        const html =
-            (await response.text()).replaceAll("{{ROOT}}", SITE_ROOT);
-
-        const template =
-            document.createElement("template");
-
-        template.innerHTML = html;
-
-
-        /* Bỏ qua comment đầu file, lấy phần tử <header>/<footer> */
-        const element =
-            template.content.firstElementChild;
-
-
-        markActiveLink(element, placeholder.dataset.active);
-
-        placeholder.replaceWith(element);
+        insertPartial(placeholder, await fetchPartial(name));
 
     } catch (error) {
 
@@ -89,6 +89,60 @@ async function includePartial(placeholder) {
         );
 
     }
+
+}
+
+
+async function fetchPartial(name) {
+
+    const response = await fetch(
+        siteUrl("partials/" + name + ".html")
+    );
+
+    if (!response.ok) {
+        throw new Error("HTTP " + response.status);
+    }
+
+    const html = await response.text();
+
+    try {
+        sessionStorage.setItem(PARTIAL_CACHE_PREFIX + name, html);
+    } catch (error) {
+        /* sessionStorage bị chặn / đầy: chỉ mất phần chèn nhanh */
+    }
+
+    return html;
+
+}
+
+
+function readPartialCache(name) {
+
+    try {
+        return sessionStorage.getItem(PARTIAL_CACHE_PREFIX + name);
+    } catch (error) {
+        return null;
+    }
+
+}
+
+
+function insertPartial(placeholder, rawHtml) {
+
+    const template =
+        document.createElement("template");
+
+    template.innerHTML = rawHtml.replaceAll("{{ROOT}}", SITE_ROOT);
+
+
+    /* Bỏ qua comment đầu file, lấy phần tử <header>/<footer> */
+    const element =
+        template.content.firstElementChild;
+
+
+    markActiveLink(element, placeholder.dataset.active);
+
+    placeholder.replaceWith(element);
 
 }
 
