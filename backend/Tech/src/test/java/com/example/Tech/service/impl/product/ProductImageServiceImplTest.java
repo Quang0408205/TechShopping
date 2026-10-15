@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductImageCreateRequest;
 import com.example.Tech.dto.request.product.ProductImageUpdateRequest;
 import com.example.Tech.dto.response.product.ProductImageResponse;
@@ -47,7 +49,7 @@ class ProductImageServiceImplTest {
     @BeforeEach
     void setUp() {
         imageService = new ProductImageServiceImpl(imageRepository, productRepository, new ProductImageMapper(),
-                imageStorageService);
+                imageStorageService, new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductCreateRequest;
 import com.example.Tech.dto.request.product.ProductImageInput;
 import com.example.Tech.dto.request.product.ProductSearchRequest;
@@ -31,6 +32,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -55,6 +57,7 @@ public class ProductServiceImpl implements ProductService {
     private final PromotionPricingService pricingService;
     private final StockAvailability stockAvailability;
     private final Clock clock;
+    private final ReadCache cache;
 
     @Override
     public PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable) {
@@ -72,7 +75,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductResponse getById(Long id) {
-        return toResponse(findProduct(id));
+        // the product is cached for 10 minutes; the stock figure is always read fresh
+        ProductResponse product = cache.get(ReadCache.PRODUCT, id, new TypeReference<>() { },
+                () -> toResponse(findProduct(id)));
+        return product.withAvailableQuantity(stockAvailability.byProduct(List.of(id)).getOrDefault(id, 0));
     }
 
     /**
@@ -104,6 +110,7 @@ public class ProductServiceImpl implements ProductService {
         product.setBrand(findBrand(request.brandId()));
 
         Product saved = productRepository.save(product);
+        cache.evictAll(ReadCache.CATEGORY_BRANDS);
 
         List<ProductImage> imageEntities = new ArrayList<>();
         for (int i = 0; i < images.size(); i++) {
@@ -147,6 +154,7 @@ public class ProductServiceImpl implements ProductService {
         product.setBrand(brand);
 
         Product saved = productRepository.saveAndFlush(product);
+        evictProduct(id);
         log.info("Updated product id={}", id);
         return toResponse(saved);
     }
@@ -157,7 +165,17 @@ public class ProductServiceImpl implements ProductService {
         Product product = findProduct(id);
         product.setDeletedAt(LocalDateTime.now());
         product.setActive(false);
+        evictProduct(id);
+        cache.evict(ReadCache.VARIANTS, id);
+        cache.evict(ReadCache.IMAGES, id);
+        cache.evict(ReadCache.SPECS, id);
         log.info("Soft-deleted product id={}", id);
+    }
+
+    /** The product page data and the brand lists (category, brand or visibility may have changed). */
+    private void evictProduct(Long id) {
+        cache.evict(ReadCache.PRODUCT, id);
+        cache.evictAll(ReadCache.CATEGORY_BRANDS);
     }
 
     private ProductResponse toResponse(Product product) {

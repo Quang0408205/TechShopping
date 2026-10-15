@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.product.CategoryResponse;
@@ -7,7 +9,9 @@ import com.example.Tech.entity.product.Category;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
+import com.example.Tech.mapper.product.BrandMapper;
 import com.example.Tech.mapper.product.CategoryMapper;
+import com.example.Tech.repository.product.BrandRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,11 +38,15 @@ class CategoryServiceImplTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private BrandRepository brandRepository;
+
     private CategoryServiceImpl categoryService;
 
     @BeforeEach
     void setUp() {
-        categoryService = new CategoryServiceImpl(categoryRepository, productRepository, new CategoryMapper());
+        categoryService = new CategoryServiceImpl(categoryRepository, productRepository, new CategoryMapper(),
+                brandRepository, new BrandMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test

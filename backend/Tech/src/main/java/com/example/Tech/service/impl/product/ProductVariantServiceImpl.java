@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductVariantCreateRequest;
 import com.example.Tech.dto.request.product.ProductVariantUpdateRequest;
 import com.example.Tech.dto.response.product.ProductVariantResponse;
@@ -28,6 +29,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 import java.math.BigDecimal;
 import java.time.Clock;
@@ -59,9 +61,20 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final PromotionPricingService pricingService;
     private final StockAvailability stockAvailability;
     private final Clock clock;
+    private final ReadCache cache;
 
     @Override
     public List<ProductVariantResponse> getByProductId(Long productId) {
+        // variants and prices are cached for 10 minutes; the stock figures are always read fresh
+        List<ProductVariantResponse> variants = cache.get(ReadCache.VARIANTS, productId, new TypeReference<>() { },
+                () -> loadByProductId(productId));
+        Map<Long, Integer> available = stockAvailability.byVariant(variants.stream().map(ProductVariantResponse::id).toList());
+        return variants.stream()
+                .map(variant -> variant.withAvailableQuantity(available.getOrDefault(variant.id(), 0)))
+                .toList();
+    }
+
+    private List<ProductVariantResponse> loadByProductId(Long productId) {
         findProduct(productId);
         List<ProductVariant> variants = variantRepository.findAllByProductIdOrderByIdAsc(productId);
         Map<Long, List<AttributeValue>> valuesByVariant = loadAttributeValues(
@@ -93,6 +106,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         variant.setProduct(findProduct(request.productId()));
 
         ProductVariant saved = variantRepository.save(variant);
+        cache.evict(ReadCache.VARIANTS, request.productId());
         log.info("Created product variant id={} for product id={}", saved.getId(), request.productId());
         return variantMapper.toResponse(saved, List.of(), pricingService.resolve(saved, LocalDateTime.now(clock)), 0);
     }
@@ -112,6 +126,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         variant.setSkuVariant(sku);
 
         ProductVariant saved = variantRepository.saveAndFlush(variant);
+        cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
         log.info("Updated product variant id={}", id);
         return toResponse(saved);
     }
@@ -142,6 +157,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         }
         variantRepository.delete(variant);
         variantRepository.flush();
+        cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
         log.info("Deleted product variant id={}", id);
     }
 
@@ -165,6 +181,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         }
 
         variantAttributeValueRepository.save(new VariantAttributeValue(variant, attributeValue));
+        cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
         log.info("Assigned attribute value id={} to variant id={}", valueId, variantId);
         return toResponse(variant);
     }
@@ -172,13 +189,14 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     @Override
     @Transactional
     public void removeAttributeValue(Long variantId, Integer valueId) {
-        findVariant(variantId);
+        ProductVariant variant = findVariant(variantId);
         VariantAttributeValueId linkId = new VariantAttributeValueId(variantId, valueId);
         if (!variantAttributeValueRepository.existsById(linkId)) {
             throw new BusinessException(ErrorCode.VARIANT_ATTRIBUTE_VALUE_NOT_FOUND,
                     "Attribute value %d is not assigned to variant %d".formatted(valueId, variantId));
         }
         variantAttributeValueRepository.deleteById(linkId);
+        cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
         log.info("Removed attribute value id={} from variant id={}", valueId, variantId);
     }
 

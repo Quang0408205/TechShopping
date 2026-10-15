@@ -3,14 +3,20 @@ package com.example.Tech.service.product;
 import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.product.BrandResponse;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface CategoryService {
 
     PageResponse<CategoryResponse> getAll(Pageable pageable);
 
     CategoryResponse getById(Integer id);
+
+    /** Brands that have products on sale in the category, by name. */
+    List<BrandResponse> getBrands(Integer id);
 
     CategoryResponse create(CategoryCreateRequest request);
 
