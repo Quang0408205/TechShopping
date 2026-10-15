@@ -139,7 +139,7 @@ document.addEventListener(
 
                     <div class="order-card-items">
                         ${order.items.map(function (item) {
-                            return `<img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}">`;
+                            return `<img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}" referrerpolicy="no-referrer">`;
                         }).join("")}
                         <span class="order-card-count">${order.totalQuantity} sản phẩm</span>
                     </div>

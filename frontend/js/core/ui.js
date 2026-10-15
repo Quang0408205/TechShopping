@@ -423,6 +423,7 @@ function productCardHtml(product, categorySlug) {
                 <img
                     src="${escapeHtml(imageUrl)}"
                     data-fallback="${escapeHtml(fallbackImage)}"
+                    referrerpolicy="no-referrer"
                     alt="${name}"
                     loading="lazy"
                 >
@@ -932,5 +933,62 @@ function categoryImageOf(category) {
     const key = getCategoryFilterKey(category.slug);
 
     return key && CATEGORY_CARD_IMAGES[key] ? siteUrl(CATEGORY_CARD_IMAGES[key]) : getFallbackImage(category.slug);
+
+}
+
+
+/* ================= KHUYẾN NGHỊ SẢN PHẨM (AI) ================= */
+
+/* Sản phẩm khách xem gần nhất: "neo" cho các khu tương tự / mua kèm / nâng cấp ở trang Khuyến nghị */
+const LAST_VIEWED_PRODUCT_KEY = "poy_last_viewed_product";
+
+
+/*
+ * POST /recommendations {type, productId?, size} → {type, source: "AI" | "FALLBACK", items: [{product, score, reason}]}.
+ * type: PERSONAL | SIMILAR | UPSELL | CROSS_SELL. Gửi token khi đã đăng nhập để danh sách được cá nhân hoá;
+ * options.guest = true: luôn hỏi như khách (danh sách phổ biến).
+ */
+
+function fetchRecommendations(type, productId, size, options) {
+
+    const guest = options && options.guest === true;
+
+    return apiRequest("/recommendations", {
+        method: "POST",
+        auth: !guest && isLoggedIn(),
+        body: { type: type, productId: productId || null, size: size }
+    });
+
+}
+
+
+/* Lưới thẻ sản phẩm như renderProductGrid, thêm dòng "lý do gợi ý" dưới tên sản phẩm */
+
+function renderRecommendationGrid(container, items, categorySlugById) {
+
+    renderProductGrid(
+        container,
+        items.map(function (item) { return item.product; }),
+        categorySlugById
+    );
+
+    items.forEach(function (item) {
+
+        if (!item.reason) {
+            return;
+        }
+
+        const card = container.querySelector(
+            '.product-card[data-product-id="' + CSS.escape(String(item.product.id)) + '"] .product-info h3'
+        );
+
+        if (card) {
+            card.insertAdjacentHTML(
+                "afterend",
+                '<p class="product-reason">' + escapeHtml(item.reason) + "</p>"
+            );
+        }
+
+    });
 
 }

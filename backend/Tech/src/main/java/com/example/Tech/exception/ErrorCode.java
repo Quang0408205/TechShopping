@@ -148,7 +148,11 @@ public enum ErrorCode {
     // Contact form (kiemthu GĐ7)
     CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn liên hệ"),
     INVALID_CONTACT_STATUS(HttpStatus.CONFLICT, "Tin nhắn đã xử lý không quay lại trạng thái Mới được"),
-    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau");
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau"),
+
+    // AI service (recommendations, chatbot)
+    AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ AI đang tạm ngưng, vui lòng thử lại sau"),
+    CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện");
 
     private final HttpStatus status;
     private final String defaultMessage;

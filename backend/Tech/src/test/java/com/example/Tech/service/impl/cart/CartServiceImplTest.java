@@ -24,6 +24,7 @@ import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.service.cart.CartService;
 import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.promotion.PromotionPricingService;
+import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,6 +86,9 @@ class CartServiceImplTest {
     @Mock
     private StoreRepository storeRepository;
 
+    @Mock
+    private InteractionRecorder interactionRecorder;
+
     /** Units in open stores per variant id; variants not listed have 100. */
     private final Map<Long, Integer> stock = new HashMap<>();
 
@@ -98,7 +102,8 @@ class CartServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
         cartService = new CartServiceImpl(cartRepository, cartItemRepository, variantRepository, imageRepository,
-                new CurrentUserLoader(userRepository, userRoleRepository), cartMapper, stockAvailability, storeRepository);
+                new CurrentUserLoader(userRepository, userRoleRepository), cartMapper, stockAvailability, storeRepository,
+                interactionRecorder);
         lenient().when(stockAvailability.byVariant(any())).thenAnswer(call -> {
             Map<Long, Integer> units = new HashMap<>();
             for (Object id : (Collection<?>) call.getArgument(0)) {

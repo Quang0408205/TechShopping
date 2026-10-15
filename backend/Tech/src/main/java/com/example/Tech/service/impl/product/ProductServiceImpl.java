@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -73,6 +74,27 @@ public class ProductServiceImpl implements ProductService {
     @Override
     public ProductResponse getById(Long id) {
         return toResponse(findProduct(id));
+    }
+
+    @Override
+    public List<ProductResponse> getActiveByIds(List<Long> ids) {
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Product> byId = new HashMap<>();
+        for (Product product : productRepository.findAllById(ids)) {
+            if (product.getDeletedAt() == null && !Boolean.FALSE.equals(product.getActive())) {
+                byId.put(product.getId(), product);
+            }
+        }
+        List<Product> ordered = ids.stream().distinct().map(byId::get).filter(Objects::nonNull).toList();
+        Map<Long, String> imageUrls = primaryImageUrls(ordered.stream().map(Product::getId).toList());
+        Map<Long, EffectivePrice> prices = pricingService.resolveProducts(ordered, LocalDateTime.now(clock));
+        Map<Long, Integer> available = stockAvailability.byProduct(ordered.stream().map(Product::getId).toList());
+        return ordered.stream()
+                .map(product -> productMapper.toResponse(product, imageUrls.get(product.getId()),
+                        prices.get(product.getId()), available.getOrDefault(product.getId(), 0)))
+                .toList();
     }
 
     /**

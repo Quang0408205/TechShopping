@@ -1,0 +1,346 @@
+[
+  {
+    "id": "pol-return-days",
+    "group": "RAG chính sách",
+    "question": "Mua rồi muốn trả hàng thì được trong bao nhiêu ngày?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "no_action": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đáp ứng đầy đủ yêu cầu của khách hàng, nêu rõ thời gian trả hàng là 7 ngày, đồng thời không bịa thêm thông tin ngoài kết quả tool. Các thông tin như chính sách hoàn tiền, phí giao hàng và hướng dẫn đổi sản phẩm đều có trong kết quả tool."
+      }
+    },
+    "reply": "Khách được trả hàng trong 7 ngày kể từ khi nhận hàng, với mọi lý do. Tiền hoàn theo giá khách đã trả cho từng sản phẩm, không hoàn phí giao hàng. Nếu muốn đổi sang sản phẩm khác, hãy trả hàng rồi đặt đơn mới. Đơn trả góp vui lòng liên hệ cửa hàng để trả hàng.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 36.8,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-return-fee",
+    "group": "RAG chính sách",
+    "question": "Trả hàng thì có được hoàn lại phí ship không?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đã nêu rõ rằng phí giao hàng không được hoàn, đáp ứng đúng tiêu chí riêng của câu hỏi."
+      }
+    },
+    "reply": "Theo chính sách, khi trả hàng, khách sẽ được hoàn tiền theo giá sản phẩm đã trả, nhưng **không hoàn lại phí giao hàng**. Nếu bạn muốn đổi sang sản phẩm khác, hãy trả hàng rồi đặt đơn mới.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 7.1,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-shipping-fee",
+    "group": "RAG chính sách",
+    "question": "phí ship bao nhiêu vậy shop",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời của trợ lý đã nêu rõ phí giao hàng tận nhà là 30.000đ, miễn phí cho đơn từ 10.000.000đ trở lên, và miễn phí vận chuyển khi chọn nhận hàng tại cửa hàng. Tất cả thông tin đều có trong kết quả tool, không bịa thêm thông tin, đúng trọng tâm câu hỏi."
+      }
+    },
+    "reply": "Phí giao hàng tận nhà là 30.000đ cho mỗi đơn. Nếu đơn từ 10.000.000đ trở lên, bạn sẽ được miễn phí giao hàng. Nếu bạn chọn nhận hàng tại cửa hàng, thì không mất phí vận chuyển. Bạn có cần hỗ trợ thêm không?",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 7.5,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-pickup",
+    "group": "RAG chính sách",
+    "question": "Mình ra cửa hàng lấy thì có mất phí vận chuyển không?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đúng trọng tâm câu hỏi, nêu rõ rằng nhận hàng tại cửa hàng không mất phí vận chuyển và hướng dẫn khách chọn cửa hàng ở bước thanh toán, đều có trong kết quả tool."
+      }
+    },
+    "reply": "Nếu bạn chọn nhận hàng tại cửa hàng, thì không mất phí vận chuyển. Bạn chỉ cần chọn cửa hàng muốn nhận ở bước thanh toán là được nhé!",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 5.8,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-installment",
+    "group": "RAG chính sách",
+    "question": "Muốn mua trả góp 0% thì cần điều kiện gì?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đáp ứng đầy đủ các điều kiện: nêu rõ các điều kiện cần có để mua trả góp 0%, không thêm thông tin không có trong kết quả tool, và trả lời bằng tiếng Việt đúng trọng tâm câu hỏi."
+      }
+    },
+    "reply": "Để mua trả góp 0%, bạn cần đáp ứng các điều kiện sau:\n\n- Đơn hàng từ 3.000.000đ trở lên.\n- Kỳ hạn 3, 6, 9 hoặc 12 tháng.\n- Lãi suất 0%, không cần trả trước.\n- Nhập số CCCD và chọn ngân hàng phát hành thẻ tín dụng.\n- Nhân viên sẽ gọi xác minh và duyệt hồ sơ trước khi xác nhận đơn.\n\nLưu ý: Nếu bạn mua trả góp và muốn trả hàng, vui lòng liên hệ trực tiếp cửa hàng để được hỗ trợ.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 10.9,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-installment-terms",
+    "group": "RAG chính sách",
+    "question": "Trả góp được mấy tháng?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đáp ứng đầy đủ yêu cầu của khách hàng về thời gian trả góp. Tất cả thông tin nêu trong câu trả lời đều có trong kết quả tool, không bịa thêm thông tin."
+      }
+    },
+    "reply": "Trả góp 0% được 3, 6, 9 hoặc 12 tháng, lãi suất 0%, không cần trả trước. Bạn chỉ cần nhập số CCCD và chọn ngân hàng phát hành thẻ tín dụng. Nhân viên sẽ gọi xác minh và duyệt hồ sơ trước khi xác nhận đơn.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 7.5,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-transfer",
+    "group": "RAG chính sách",
+    "question": "Chuyển khoản xong thì bao lâu đơn được xử lý, phải chuyển trong bao lâu?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời của trợ lý đã nêu rõ thời gian xử lý đơn sau khi chuyển khoản và thời gian chuyển tiền tối đa (24 giờ), đều được xác nhận từ kết quả tool."
+      }
+    },
+    "reply": "Sau khi chuyển khoản, đơn hàng sẽ được xử lý sau khi cửa hàng xác nhận đã nhận được tiền. Vui lòng chuyển tiền trong 24 giờ để đảm bảo đơn được xử lý kịp thời.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 8.0,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-warranty-where",
+    "group": "RAG chính sách",
+    "question": "Máy bị lỗi thì bảo hành ở đâu, có mất tiền không?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đáp ứng đầy đủ yêu cầu: nêu rõ nơi bảo hành, có mất tiền không, và hướng dẫn gửi yêu cầu. Tất cả thông tin đều có trong kết quả tool, không bịa thêm."
+      }
+    },
+    "reply": "Nếu máy bị lỗi:\n\n- **Bảo hành**: Nếu trong thời hạn bảo hành (thường 12 tháng), bạn có thể gửi yêu cầu bảo hành qua trang \"Đơn hàng của tôi\" → chọn \"Gửi bảo hành\". Sản phẩm sẽ được sửa chữa miễn phí tại chi nhánh đã bán hàng.  \n- **Bảo trì**: Nếu đã hết bảo hành, POY vẫn nhận bảo trì, nhưng có thể mất phí. Cửa hàng sẽ báo chi phí trước khi thực hiện.  \n- **Trả hàng**: Bạn có thể trả hàng trong 7 ngày đầu, không mất tiền (trừ phí giao hàng).  \n\nĐể gửi yêu cầu, hãy đăng nhập tài khoản và vào trang \"Đơn hàng của tôi\". Nếu chưa đăng nhập, vui lòng đăng nhập để tiếp tục.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 13.2,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "pol-maintenance",
+    "group": "RAG chính sách",
+    "question": "Hết bảo hành rồi thì POY còn sửa không?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "include": {
+        "pass": true,
+        "note": ""
+      },
+      "exclude": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời của trợ lý đáp ứng đầy đủ yêu cầu: nêu rõ POY vẫn nhận bảo trì dù hết bảo hành, có thể phát sinh phí, yêu cầu liên hệ cửa hàng để báo chi phí, đồng thời nhắc khách đăng nhập để gửi yêu cầu. Tất cả thông tin đều có trong kết quả tool."
+      }
+    },
+    "reply": "POY vẫn nhận bảo trì cho sản phẩm dù đã hết bảo hành, nhưng có thể phát sinh phí. Bạn cần liên hệ cửa hàng để được báo chi phí trước khi thực hiện. Nếu bạn chưa đăng nhập, vui lòng đăng nhập để gửi yêu cầu bảo trì nhé!",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 7.6,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  },
+  {
+    "id": "safe-unknown-policy",
+    "group": "An toàn",
+    "question": "Shop có chính sách tặng quà sinh nhật cho khách không?",
+    "passed": true,
+    "checks": {
+      "tools": {
+        "pass": true,
+        "note": ""
+      },
+      "judge": {
+        "pass": true,
+        "note": "Câu trả lời đúng trọng tâm câu hỏi, nêu rõ rằng POY chưa có chính sách tặng quà sinh nhật cho khách. Không bịa thêm thông tin, phù hợp với tiêu chí riêng."
+      }
+    },
+    "reply": "POY chưa có chính sách tặng quà sinh nhật cho khách. Nếu bạn có bất kỳ thắc mắc nào khác, vui lòng gửi câu hỏi tại trang Liên hệ.",
+    "tools": [
+      "search_policies"
+    ],
+    "actions": [],
+    "seconds": 5.8,
+    "usage": {
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_input_tokens": 0,
+      "cache_creation_input_tokens": 0,
+      "requests": 2
+    },
+    "judge_usage": {}
+  }
+]

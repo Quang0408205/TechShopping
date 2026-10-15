@@ -641,3 +641,53 @@ function redirectToLogin(reason) {
         );
 
 }
+
+
+/* ================= GHI NHẬN HÀNH VI CHO HỆ THỐNG KHUYẾN NGHỊ ================= */
+
+/*
+ * POST /interactions {productId, type: "VIEW" | "CLICK"}. Chỉ khách đã đăng nhập ở khu mua sắm;
+ * lỗi bị bỏ qua vì đây là dữ liệu phụ, không được làm hỏng trang.
+ * keepalive: request CLICK vẫn được gửi khi trình duyệt chuyển sang trang chi tiết.
+ */
+
+function trackInteraction(productId, type) {
+
+    if (IS_STAFF_AREA || !isLoggedIn() || !productId) {
+        return;
+    }
+
+    try {
+
+        fetch(API_BASE_URL + "/interactions", {
+            method: "POST",
+            keepalive: true,
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + getAuth().accessToken
+            },
+            body: JSON.stringify({ productId: Number(productId), type: type })
+        }).catch(function () {});
+
+    } catch (error) {
+        /* bỏ qua */
+    }
+
+}
+
+
+/* Bấm vào thẻ sản phẩm ở bất kỳ danh sách nào (trang chủ, danh mục, khuyến nghị) → CLICK */
+
+document.addEventListener("click", function (event) {
+
+    const link = event.target.closest && event.target.closest(".product-card a");
+
+    if (!link) {
+        return;
+    }
+
+    const card = link.closest(".product-card");
+
+    trackInteraction(card && card.dataset.productId, "CLICK");
+
+});

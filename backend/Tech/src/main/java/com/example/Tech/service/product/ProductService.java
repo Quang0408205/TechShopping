@@ -7,6 +7,8 @@ import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public interface ProductService {
 
     /**
@@ -15,6 +17,12 @@ public interface ProductService {
     PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable);
 
     ProductResponse getById(Long id);
+
+    /**
+     * Products that can be shown to customers (not deleted, active), in the order of the ids; other ids are
+     * skipped. Used for lists whose order is decided elsewhere (recommendations).
+     */
+    List<ProductResponse> getActiveByIds(List<Long> ids);
 
     ProductResponse create(ProductCreateRequest request);
 

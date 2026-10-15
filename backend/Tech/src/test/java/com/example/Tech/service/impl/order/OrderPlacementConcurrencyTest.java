@@ -116,6 +116,9 @@ class OrderPlacementConcurrencyTest {
         jdbc.update("delete from order_items where order_id in (select o.order_id from orders o "
                 + "join users u on u.user_id = o.user_id where u.username = ?)", TAG);
         jdbc.update("delete from orders where user_id in (select user_id from users where username = ?)", TAG);
+        // placing the order records a PURCHASE interaction for the recommendation models
+        jdbc.update("delete from user_interactions where user_id in (select user_id from users where username = ?)",
+                TAG);
         jdbc.update("delete from users where username = ?", TAG);                // cascades carts, cart_items
         jdbc.update("delete from inventory where store_id in (select store_id from stores where name = ?)", TAG);
         jdbc.update("delete from stores where name = ?", TAG);

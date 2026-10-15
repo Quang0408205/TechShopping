@@ -54,3 +54,7 @@ database/tai_khoan_thu_nghiem.txt
 
 # Tài liệu nội bộ / handoff, chỉ giữ trên máy (không push)
 docs/
+
+### AI Service ###
+.venv/
+AI_Service/models/

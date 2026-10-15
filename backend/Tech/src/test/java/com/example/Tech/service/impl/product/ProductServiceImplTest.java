@@ -26,6 +26,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
@@ -286,7 +287,7 @@ class ProductServiceImplTest {
         assertThatThrownBy(() -> productService.search(filter, PageRequest.of(0, 20)))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.VALIDATION_ERROR);
-        verify(productRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+        verify(productRepository, never()).findAll(ArgumentMatchers.<Specification<Product>>any(), any(Pageable.class));
     }
 
     @Test

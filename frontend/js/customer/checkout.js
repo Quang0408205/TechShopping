@@ -279,7 +279,7 @@ document.addEventListener(
 
                 return `
                     <div class="checkout-item">
-                        <img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}">
+                        <img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}" referrerpolicy="no-referrer">
                         <div class="checkout-item-info">
                             <p class="checkout-item-name">${escapeHtml(item.name)}</p>
                             <p class="checkout-item-variant">${escapeHtml(item.variantLabel ? item.variantLabel + " × " : "× ")}${item.quantity}</p>

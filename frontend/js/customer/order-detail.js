@@ -233,7 +233,7 @@ function renderOrder(order) {
 
             return `
                 <div class="order-item-row">
-                    <img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}">
+                    <img src="${escapeHtml(cartItemImageUrl(item))}" alt="${escapeHtml(item.name)}" referrerpolicy="no-referrer">
                     <div class="order-item-info">
                         <a href="${escapeHtml(getProductDetailUrl(item.productId))}">
                             ${escapeHtml(item.name)}
