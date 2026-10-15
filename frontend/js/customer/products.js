@@ -5,7 +5,7 @@
  *   GET /categories?size=100                 → map slug ↔ id
  *   GET /products?isActive=true&categoryId=&brandId=&keyword=&minPrice=
  *       &maxPrice=&page=&size=12&sort=       → lưới sản phẩm + phân trang
- *   GET /products/{id}/images                → ảnh từng thẻ (js/core/ui.js)
+ *   ảnh thẻ: primaryImageUrl có sẵn trong danh sách (IMG-3, js/core/ui.js)
  *
  * Bộ lọc thương hiệu theo danh mục: backend không có endpoint "hãng theo
  * danh mục" (và 2.8 không sửa backend), nên gom brandId/brandName từ các
@@ -17,9 +17,14 @@ document.addEventListener(
     "DOMContentLoaded",
     function () {
 
-        /* Giá trị radio (giữ đúng data-category cũ) → slug danh mục trong DB (js/core/ui.js) */
+        /*
+         * Giá trị radio → slug danh mục trong DB. Kế hoạch v3: tab dựng từ các danh mục ĐANG HIỂN THỊ
+         * (GET /categories), giá trị = khoá cũ (laptop, phone…) nếu có, không thì slug (categoryKeyOf, ui.js).
+         */
 
-        const CATEGORY_SLUGS = PRODUCT_CATEGORY_FILTERS;
+        const CATEGORY_SLUGS = {};
+
+        const categoryTabs = document.querySelector(".category-tabs");
 
         const PAGE_SIZE = 12;
 
@@ -95,7 +100,9 @@ document.addEventListener(
 
             try {
 
-                categoryMaps = await fetchCategoryMaps();
+                categoryMaps = await loadShopCategories();
+
+                renderCategoryTabs(categoryMaps.visible);
 
             } catch (error) {
 
@@ -108,22 +115,55 @@ document.addEventListener(
             }
 
 
-            /* ?category= không khớp danh mục nào trong DB → coi như "Tất cả" */
+            /* ?category= không khớp danh mục đang hiển thị nào → coi như "Tất cả" */
 
             if (state.category && !getCategoryId(state.category)) {
 
                 state.category = "";
 
-                checkCategoryRadio("");
-
                 syncUrl();
 
             }
+
+            checkCategoryRadio(state.category);
 
 
             buildBrandFilters();
 
             loadProducts();
+
+        }
+
+
+        /* Tab "Tất cả" + một tab cho mỗi danh mục đang hiển thị (thay các tab viết sẵn trong HTML) */
+
+        function renderCategoryTabs(categories) {
+
+            Object.keys(CATEGORY_SLUGS).forEach(function (key) {
+                delete CATEGORY_SLUGS[key];
+            });
+
+            const tabs = categories.map(function (category) {
+
+                const key = categoryKeyOf(category.slug);
+
+                CATEGORY_SLUGS[key] = category.slug;
+
+                return `
+                    <label class="category-tab">
+                        <input type="radio" name="category" value="${escapeHtml(key)}">
+                        <span>${escapeHtml(category.name)}</span>
+                    </label>
+                `;
+
+            }).join("");
+
+            categoryTabs.innerHTML = `
+                <label class="category-tab">
+                    <input type="radio" name="category" value="">
+                    <span>Tất cả</span>
+                </label>
+            ` + tabs;
 
         }
 
@@ -150,7 +190,8 @@ document.addEventListener(
             const search = (params.get("search") || "").trim();
 
 
-            if (category && CATEGORY_SLUGS[category]) {
+            /* Kiểm tra sau khi tải danh mục (start); tab viết sẵn trong HTML chỉ để hiện trước */
+            if (category) {
 
                 state.category = category;
 
@@ -194,9 +235,9 @@ document.addEventListener(
 
         function checkCategoryRadio(value) {
 
-            const radio = document.querySelector(
-                'input[name="category"][value="' + value + '"]'
-            );
+            const radio = Array.from(document.querySelectorAll('input[name="category"]')).find(function (input) {
+                return input.value === value;
+            });
 
             if (radio) {
                 radio.checked = true;
@@ -330,9 +371,9 @@ document.addEventListener(
 
         function getCategoryLabel(categoryKey) {
 
-            const radio = document.querySelector(
-                'input[name="category"][value="' + categoryKey + '"]'
-            );
+            const radio = Array.from(document.querySelectorAll('input[name="category"]')).find(function (input) {
+                return input.value === categoryKey;
+            });
 
             return radio ? radio.parentElement.textContent.trim() : "";
 
@@ -740,10 +781,17 @@ document.addEventListener(
 
         function bindEvents() {
 
-            document.querySelectorAll('input[name="category"]')
-                .forEach(function (radio) {
+            /* Tab dựng lại sau khi tải danh mục → nghe sự kiện ở khung tab */
+            [categoryTabs]
+                .forEach(function (tabs) {
 
-                    radio.addEventListener("change", function () {
+                    tabs.addEventListener("change", function (event) {
+
+                        const radio = event.target;
+
+                        if (radio.name !== "category") {
+                            return;
+                        }
 
                         state.category = radio.value;
 

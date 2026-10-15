@@ -11,8 +11,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     renderAuthState();
 
+    renderMegaMenuCategories();
+
     migrateLegacyCart();
 
+    /* Gọi GET /cart (sau khi chuyển giỏ cũ trên trình duyệt lên server) */
     updateCartCount();
 
     setupHeaderSearch();
@@ -22,6 +25,63 @@ document.addEventListener("DOMContentLoaded", async function () {
     setupScrollReveal();
 
 });
+
+
+/* ================= DANH MỤC TRÊN MENU HEADER (kế hoạch v3) ================= */
+
+/*
+ * Thay 4 thẻ viết sẵn trong partials/header.html bằng các danh mục ĐANG HIỂN THỊ (tối đa 6, theo thứ tự
+ * ADMIN đặt). Lỗi tải danh mục → giữ thẻ viết sẵn. Trang không có header (auth/) → bỏ qua.
+ */
+
+const MEGA_MENU_MAX_CATEGORIES = 6;
+
+async function renderMegaMenuCategories() {
+
+    const grid = document.querySelector("#megaMenu .mega-menu-grid");
+
+    if (!grid || typeof loadShopCategories !== "function") {
+        return;
+    }
+
+    let categories;
+
+    try {
+
+        categories = (await loadShopCategories()).visible.slice(0, MEGA_MENU_MAX_CATEGORIES);
+
+    } catch (error) {
+
+        return;
+
+    }
+
+    grid.querySelectorAll(".mega-card").forEach(function (card) {
+        card.remove();
+    });
+
+    const links = grid.querySelector(".mega-links");
+
+    categories.forEach(function (category) {
+
+        const card = document.createElement("a");
+
+        card.className = "mega-card";
+
+        card.href = categoryUrlOf(category);
+
+        card.innerHTML = `
+            <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
+            <span>${escapeHtml(category.name)}</span>
+        `;
+
+        grid.insertBefore(card, links);
+
+    });
+
+    grid.style.setProperty("--mega-cols", String(Math.max(categories.length, 1)));
+
+}
 
 
 /* ================= TÀI KHOẢN (HEADER) ================= */
@@ -38,54 +98,165 @@ function renderAuthState() {
     }
 
 
+    /*
+     * Đã đăng nhập: thay nút "Đăng nhập" (.login-btn, giữ nguyên cho trạng thái chưa đăng nhập) bằng MỘT nút
+     * ảnh đại diện mở menu tài khoản. Gọi lại được (vd. vừa đổi ảnh / tên ở trang Tài khoản): menu cũ được thay.
+     */
+
     const user = getCurrentUser() || {};
 
-    const displayName =
-        user.fullname || user.username || "Tài khoản";
+    document.querySelectorAll(".header .login-btn, .header .user-menu")
+        .forEach(function (element) {
 
+            const template = document.createElement("template");
 
-    document.querySelectorAll(".header .login-btn")
-        .forEach(function (loginButton) {
+            template.innerHTML = userMenuHtml(user).trim();
 
-            loginButton.textContent = displayName;
+            const menu = template.content.firstElementChild;
 
-            loginButton.title = user.email || displayName;
+            element.replaceWith(menu);
 
-            loginButton.classList.add("user-name");
-
-            loginButton.href = siteUrl("customer/account.html");
-
-
-            const logoutButton =
-                document.createElement("a");
-
-            logoutButton.href = "#";
-
-            logoutButton.className = "login-btn logout-btn";
-
-            logoutButton.textContent = "Đăng xuất";
-
-
-            logoutButton.addEventListener(
-                "click",
-                async function (event) {
-
-                    event.preventDefault();
-
-                    await logout();
-
-                    window.location.reload();
-
-                }
-            );
-
-
-            loginButton.insertAdjacentElement(
-                "afterend",
-                logoutButton
-            );
+            bindUserMenu(menu);
 
         });
+
+}
+
+
+/* Chữ cái đầu của họ và tên: "Nguyễn Thị Lan" → "NL" */
+
+function userInitials(name) {
+
+    const words = String(name || "").trim().split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+        return "?";
+    }
+
+    return (words[0].charAt(0) + (words.length > 1 ? words[words.length - 1].charAt(0) : "")).toUpperCase();
+
+}
+
+
+function userAvatarHtml(user, className) {
+
+    const name = user.fullname || user.username || "";
+
+    const initials = `<span class="${className} ${className}--initials" aria-hidden="true">${escapeHtml(userInitials(name))}</span>`;
+
+    if (user.avatarUrl && isSafeImageUrl(user.avatarUrl)) {
+
+        /* ảnh hỏng → về chữ cái đầu (main.js gắn sự kiện error) */
+        return `<img class="${className}" src="${escapeHtml(user.avatarUrl)}" alt="" data-initials="${escapeHtml(userInitials(name))}">`;
+
+    }
+
+    return initials;
+
+}
+
+
+function userMenuHtml(user) {
+
+    const name = user.fullname || user.username || "Tài khoản";
+
+    return `
+        <div class="user-menu">
+            <button type="button" class="user-menu-toggle" aria-haspopup="true" aria-expanded="false"
+                aria-controls="userMenuPanel" aria-label="${escapeHtml("Tài khoản: " + name)}" title="${escapeHtml(user.email || name)}">
+                ${userAvatarHtml(user, "user-avatar")}
+            </button>
+            <div class="user-menu-panel" id="userMenuPanel" hidden>
+                <div class="user-menu-head">
+                    ${userAvatarHtml(user, "user-avatar")}
+                    <span>
+                        <strong class="user-menu-name">${escapeHtml(name)}</strong>
+                        <span class="user-menu-email">${escapeHtml(user.email || "")}</span>
+                    </span>
+                </div>
+                <a href="${escapeHtml(siteUrl("customer/account.html"))}">Tài khoản của tôi</a>
+                <a href="${escapeHtml(siteUrl("customer/orders.html"))}">Đơn hàng</a>
+                <a href="${escapeHtml(siteUrl("customer/service-requests.html"))}">Yêu cầu dịch vụ</a>
+                <button type="button" class="logout-btn">Đăng xuất</button>
+            </div>
+        </div>
+    `;
+
+}
+
+
+function bindUserMenu(menu) {
+
+    const toggle = menu.querySelector(".user-menu-toggle");
+
+    const panel = menu.querySelector(".user-menu-panel");
+
+
+    menu.querySelectorAll("img.user-avatar").forEach(function (img) {
+
+        img.addEventListener("error", function () {
+
+            const fallback = document.createElement("span");
+
+            fallback.className = "user-avatar user-avatar--initials";
+
+            fallback.setAttribute("aria-hidden", "true");
+
+            fallback.textContent = img.dataset.initials || "?";
+
+            img.replaceWith(fallback);
+
+        });
+
+    });
+
+
+    function setOpen(open) {
+
+        panel.hidden = !open;
+
+        toggle.setAttribute("aria-expanded", String(open));
+
+    }
+
+
+    toggle.addEventListener("click", function (event) {
+
+        event.stopPropagation();
+
+        setOpen(panel.hidden);
+
+    });
+
+    /* bấm ra ngoài hoặc Esc thì đóng */
+    document.addEventListener("click", function (event) {
+
+        if (!panel.hidden && !menu.contains(event.target)) {
+            setOpen(false);
+        }
+
+    });
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape" && !panel.hidden) {
+
+            setOpen(false);
+
+            toggle.focus();
+
+        }
+
+    });
+
+
+    menu.querySelector(".logout-btn").addEventListener("click", async function () {
+
+        await logout();
+
+        window.location.reload();
+
+    });
 
 }
 
@@ -162,7 +333,7 @@ function setupHeaderScrollEffect() {
  */
 
 const SCROLL_REVEAL_SELECTOR =
-    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid";
+    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid, .promo-grid, .review-grid";
 
 
 function setupScrollReveal() {
@@ -210,10 +381,10 @@ function setupScrollReveal() {
 }
 
 
-/* ================= CART (F2) ================= */
+/* ================= CART (Phase 3) ================= */
 
 /*
- * Lưu trữ giỏ hàng: js/core/cart-store.js (snapshot theo tài khoản).
+ * Lưu trữ giỏ hàng: js/core/cart-store.js (giỏ trên server, /api/v1/cart).
  * File này lo phần giao diện: nút "Thêm vào giỏ", bắt buộc đăng nhập,
  * hiệu ứng bay vào giỏ, toast.
  */
@@ -223,7 +394,7 @@ function setupScrollReveal() {
  * Thẻ sản phẩm render sau (products.js, home.js) gọi lại với lưới mới;
  * cờ data-cart-bound tránh gắn sự kiện 2 lần cho cùng một nút.
  * Thẻ không biết phiên bản, nên lúc bấm mới lấy GET /products/{id}/variants
- * và chọn phiên bản đầu tiên (giống phiên bản mặc định ở trang chi tiết).
+ * và chọn phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E; không còn bản nào → báo hết hàng).
  */
 
 function setupAddToCart(root) {
@@ -274,7 +445,17 @@ function setupAddToCart(root) {
                     "/products/" + encodeURIComponent(productId) + "/variants"
                 );
 
-                const variant = Array.isArray(variants) && variants.length > 0 ? variants[0] : null;
+                const list = Array.isArray(variants) ? variants : [];
+
+                const variant = list.find(function (item) { return !isSoldOut(item); }) || list[0] || null;
+
+                if (variant && isSoldOut(variant)) {
+
+                    showToast("Sản phẩm tạm hết hàng ở mọi chi nhánh.", "error");
+
+                    return;
+
+                }
 
                 const prices = variant
                     ? resolvePrices({ basePrice: button.dataset.price }, variant)
@@ -290,7 +471,7 @@ function setupAddToCart(root) {
                 }
 
 
-                addToCart(
+                await addToCart(
                     {
                         productId: Number(productId),
                         variantId: variant ? variant.id : null,
@@ -321,15 +502,16 @@ function setupAddToCart(root) {
 
 
 /*
- * addToCart(snapshot, quantity?, sourceElement?) → true nếu đã thêm.
- * - snapshot: { productId, variantId, name, variantLabel, price, image } (cart-store.js).
- * - Chưa đăng nhập: không thêm, chuyển tới trang đăng nhập (?reason=cart),
- *   đăng nhập xong quay lại đúng trang đang xem → trả về false.
+ * addToCart(snapshot, quantity?, sourceElement?) → Promise<true> nếu đã thêm.
+ * - snapshot: { productId, variantId, name, variantLabel } — server chỉ cần
+ *   variantId; tên / phiên bản dùng cho toast. Giá do server tính.
+ * - Chưa đăng nhập (hoặc phiên hết hạn): không thêm, chuyển tới trang đăng nhập
+ *   (?reason=cart), đăng nhập xong quay lại đúng trang đang xem → false.
  * - quantity: tuỳ chọn (trang chi tiết sản phẩm), mặc định 1.
  * - sourceElement: ảnh sản phẩm để chạy hiệu ứng bay vào giỏ (tuỳ chọn).
  */
 
-function addToCart(snapshot, quantity, sourceElement) {
+async function addToCart(snapshot, quantity, sourceElement) {
 
     if (!isLoggedIn()) {
 
@@ -340,25 +522,54 @@ function addToCart(snapshot, quantity, sourceElement) {
     }
 
 
-    const amount =
-        Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
+    if (snapshot.variantId === undefined || snapshot.variantId === null) {
 
-    const lineQuantity = addCartItem(snapshot, amount);
-
-    if (lineQuantity === 0) {
-
-        showToast("Không thể thêm sản phẩm này vào giỏ hàng.", "error");
+        showToast("Sản phẩm này hiện chưa thể đặt mua trực tuyến.", "error");
 
         return false;
 
     }
 
 
+    const amount =
+        Number.isInteger(quantity) && quantity > 0 ? quantity : 1;
+
+    let summary;
+
+    try {
+
+        summary = await addCartItem(snapshot, amount);
+
+    } catch (error) {
+
+        /* refresh thất bại → api.js đã xoá phiên: mời đăng nhập lại */
+        if (!isLoggedIn()) {
+
+            redirectToLogin("cart");
+
+            return false;
+
+        }
+
+        showToast(getErrorMessage(error), "error");
+
+        return false;
+
+    }
+
+
+    const line = summary.items.find(function (item) {
+        return String(item.variantId) === String(snapshot.variantId);
+    });
+
+    const lineQuantity = line ? line.quantity : amount;
+
+
     /* Số trên icon giỏ hàng tăng khi sản phẩm "bay" tới nơi */
 
     flyToCart(sourceElement, function () {
 
-        updateCartCount();
+        setCartCount(summary.totalQuantity);
 
         bumpCartIcon();
 

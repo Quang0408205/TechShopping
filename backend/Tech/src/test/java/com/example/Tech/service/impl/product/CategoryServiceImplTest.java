@@ -158,38 +158,75 @@ class CategoryServiceImplTest {
     }
 
     @Test
-    void delete_success() {
-        Category existing = category(1, "Laptop", null);
-        when(categoryRepository.findById(1)).thenReturn(Optional.of(existing));
-        when(categoryRepository.existsByParentId(1)).thenReturn(false);
-        when(productRepository.existsByCategoryId(1)).thenReturn(false);
-
-        categoryService.delete(1);
-
-        verify(categoryRepository).delete(existing);
-    }
-
-    @Test
-    void delete_usedByProducts_throwsResourceInUse() {
+    void delete_emptyCategory_isDeleted() {
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category(1, "Laptop", null)));
         when(categoryRepository.existsByParentId(1)).thenReturn(false);
-        when(productRepository.existsByCategoryId(1)).thenReturn(true);
+        when(productRepository.countAllRowsByCategoryId(1)).thenReturn(0L);
 
-        assertThatThrownBy(() -> categoryService.delete(1))
-                .extracting(ex -> ((BusinessException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.RESOURCE_IN_USE);
-        verify(categoryRepository, never()).delete(any());
+        categoryService.delete(1, false);
+
+        verify(categoryRepository).deleteById(1);
+        verify(productRepository, never()).deleteAllRowsByCategoryId(any());
     }
 
     @Test
-    void delete_withChildren_throwsResourceInUse() {
+    void delete_withProducts_withoutTheFlag_isInUse_withTheProductCount() {
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category(1, "Laptop", null)));
+        when(categoryRepository.existsByParentId(1)).thenReturn(false);
+        when(productRepository.countAllRowsByCategoryId(1)).thenReturn(3364L);
+
+        assertThatThrownBy(() -> categoryService.delete(1, false))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.RESOURCE_IN_USE);
+                    assertThat(ex.getDetails()).containsEntry("reason", "PRODUCTS").containsEntry("products", "3364");
+                });
+        verify(categoryRepository, never()).deleteById(any());
+        verify(productRepository, never()).deleteAllRowsByCategoryId(any());
+    }
+
+    @Test
+    void delete_withProducts_andTheFlag_deletesTheProductsThenTheCategory() {
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category(1, "Đồng Hồ", null)));
+        when(categoryRepository.existsByParentId(1)).thenReturn(false);
+        when(productRepository.countAllRowsByCategoryId(1)).thenReturn(2L);
+        when(productRepository.countWithHistoryByCategoryId(1)).thenReturn(0L);
+
+        categoryService.delete(1, true);
+
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(productRepository, categoryRepository);
+        order.verify(productRepository).deleteCartLinesByCategoryId(1);
+        order.verify(productRepository).deleteAllRowsByCategoryId(1);
+        order.verify(categoryRepository).deleteById(1);
+    }
+
+    @Test
+    void delete_withProducts_someWithOrdersStockOrReviews_isRefused_andNothingIsDeleted() {
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(category(1, "Điện thoại", null)));
+        when(categoryRepository.existsByParentId(1)).thenReturn(false);
+        when(productRepository.countAllRowsByCategoryId(1)).thenReturn(225L);
+        when(productRepository.countWithHistoryByCategoryId(1)).thenReturn(5L);
+
+        assertThatThrownBy(() -> categoryService.delete(1, true))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.RESOURCE_IN_USE);
+                    assertThat(ex.getDetails()).containsEntry("reason", "HISTORY");
+                    assertThat(ex.getMessage()).startsWith("5 sản phẩm của danh mục đã có đơn hàng");
+                });
+        verify(productRepository, never()).deleteCartLinesByCategoryId(any());
+        verify(productRepository, never()).deleteAllRowsByCategoryId(any());
+        verify(categoryRepository, never()).deleteById(any());
+    }
+
+    @Test
+    void delete_withChildren_throwsResourceInUse_evenWithTheFlag() {
         when(categoryRepository.findById(1)).thenReturn(Optional.of(category(1, "Laptop", null)));
         when(categoryRepository.existsByParentId(1)).thenReturn(true);
 
-        assertThatThrownBy(() -> categoryService.delete(1))
-                .extracting(ex -> ((BusinessException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.RESOURCE_IN_USE);
-        verify(categoryRepository, never()).delete(any());
+        assertThatThrownBy(() -> categoryService.delete(1, true))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getDetails()).containsEntry("reason", "CHILDREN"));
+        verify(categoryRepository, never()).deleteById(any());
+        verify(productRepository, never()).deleteAllRowsByCategoryId(any());
     }
 
     private static Category category(Integer id, String name, Category parent) {

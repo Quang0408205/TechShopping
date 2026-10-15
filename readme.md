@@ -69,65 +69,24 @@ docker compose up -d --build
 
 Mở trình duyệt vào **http://localhost:5510**.
 
-> Database dùng schema trong `database/techshopping.sql`. Docker không tự nạp catalog để bạn có thể kiểm tra schema trước, sau đó chủ động import dữ liệu crawl. Chưa có tài khoản nào: tự đăng ký trên web, hoặc tạo ADMIN ở Bước 5.
+> **Dữ liệu mẫu có sẵn.** Khi khởi tạo database Docker lần đầu, Docker chạy lần lượt schema, catalogue 4.288 sản phẩm từ `database/docker-init/03_seed_catalog.sql`, rồi dữ liệu local từ `database/docker-init/04_seed_local_sample_data.sql`. Seed hoạt động tạo 50 tài khoản khách hàng mẫu, 200 đơn (199 chờ xử lý và 1 đã giao), dữ liệu thanh toán, đánh giá mẫu, lịch trả góp, yêu cầu bảo trì, quan hệ sản phẩm và lịch sử tồn kho. Đây là dữ liệu giả lập, có dấu `SAMPLE-DATA`; không phải hoạt động khách hàng thật.
 >
-> Schema init chỉ chạy tự động khi PostgreSQL khởi tạo volume `postgres_data` mới. Volume/database đã tồn tại sẽ không tự được cập nhật schema khi chạy lại Docker; dùng migration cho thay đổi schema và không xóa volume nếu chưa sao lưu dữ liệu.
+> Dữ liệu được lưu trong volume Docker `postgres_data`, nên tắt / mở máy hay `docker compose down` đều **không mất**. File seed chỉ được nạp khi database còn trống, nên không ghi đè dữ liệu bạn đã tạo.
 
-### Crawl và import catalogue TGDĐ
+#### Đăng nhập tài khoản mẫu (chỉ local)
 
-Trước hết khởi động PostgreSQL và chờ healthy:
+50 tài khoản có username theo tên Việt không dấu, email dạng `username@example.test` và mật khẩu dùng chung `SampleOnly123!`. Một đơn mẫu đã giao để minh họa đánh giá/bảo trì; các đơn còn lại đang chờ xử lý. Tạo ADMIN riêng ở Bước 5 nếu cần.
 
-```powershell
-docker compose up -d postgres
-docker compose ps
-```
+| Loại tài khoản | Có sẵn sau khi cài? | Cách có |
+|---|---|---|
+| Khách hàng (`CUSTOMER`) | Có: 50 tài khoản mẫu ở trên (chỉ database mới tạo) | Tự đăng ký trên web |
+| Quản trị viên (`ADMIN`) | Không | Điền `ADMIN_EMAIL` / `ADMIN_USERNAME` / `ADMIN_PASSWORD` trong `.env` (Bước 5); chỉ tạo khi database chưa có ADMIN |
+| Quản lý chi nhánh (`BRANCH_MANAGER`) | Không | ADMIN tạo ít nhất 1 chi nhánh, rồi **Nhân viên → Tuyển nhân sự** chọn vai trò Quản lý + chi nhánh; mật khẩu tạm hiện **một lần** |
+| Nhân viên (`STAFF`) | Không | ADMIN tuyển (chọn chi nhánh) hoặc Quản lý chi nhánh tuyển (luôn vào chi nhánh của mình) |
 
-Sau đó chạy từ thư mục gốc dự án trong PowerShell:
+Tài khoản nội bộ đăng nhập ở http://localhost:5510/admin/login.html; trang đăng nhập khách từ chối tài khoản nội bộ.
 
-```powershell
-python -m pip install -r requirements.txt
-python -m playwright install chromium
-python Raw_data/crawler.py
-python Raw_data/clean_data.py
-```
-
-Trên macOS/Linux, các lệnh tương đương là:
-
-```sh
-python -m pip install -r requirements.txt
-python -m playwright install chromium
-python Raw_data/crawler.py
-python Raw_data/clean_data.py
-```
-
-`crawler.py` lưu CSV cạnh các script trong `Raw_data/` và lấy thêm mô tả, ảnh, thông số kỹ thuật
-và số đánh giá từ trang chi tiết. Quá trình có nghỉ giữa các trang; danh mục tải chưa hết hoặc trang
-chi tiết lỗi được ghi trạng thái trong CSV để nhận biết. `import_catalog.py` kiểm tra schema trước,
-chạy trong một transaction và có thể chạy lại để cập nhật danh mục, thương hiệu, sản phẩm, phiên bản,
-ảnh, thông số và thuộc tính mà không tạo lặp ảnh/thông số đã nhập.
-
-Khi đã kiểm tra CSV, import vào database PostgreSQL Docker của TechShopping (`techshopping`):
-
-```powershell
-$env:PGHOST = "localhost"
-$env:PGPORT = "5432"
-$env:PGUSER = "postgres"
-$env:PGPASSWORD = "postgres"
-$env:PGDATABASE = "techshopping"
-python Raw_data/import_catalog.py
-```
-
-Trên macOS/Linux, thay các dòng đặt biến môi trường phía trên bằng:
-
-```sh
-PGHOST=localhost PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres \
-PGDATABASE=techshopping python Raw_data/import_catalog.py
-```
-
-Đừng import chồng lên catalog seed cũ: khóa nhận diện catalog cũ khác với importer và có thể tạo sản phẩm trùng. File `database/docker-init/03_seed_catalog.sql` là dump cũ, không còn được Docker nạp và không khớp schema hiện tại.
-
-Crawler công khai không thể lấy tồn kho thực theo chi nhánh, người dùng, đơn hàng hay thanh toán;
-những bảng vận hành này không được tự điền bằng dữ liệu đoán.
+> Seed tự chạy **chỉ khi Docker khởi tạo một volume database mới, còn trống**. Nó không chạy lại trên volume hiện có khi restart hoặc pull code mới. Không xóa volume đang chứa dữ liệu để thử seed. Nếu cần bộ dữ liệu này trên DB khác, hãy tạo một database local riêng và khởi tạo mới; không chạy lại initializer trực tiếp trên DB đang có dữ liệu. Không dùng các tài khoản hay dữ liệu này trên production.
 
 ### Bước 5 (tuỳ chọn): Tạo tài khoản ADMIN đầu tiên
 
@@ -148,8 +107,34 @@ docker compose up -d backend
 - ADMIN chỉ được tạo **một lần**, khi database chưa có ADMIN nào (database đã có ADMIN thì 3 dòng này bị bỏ qua). Sau đó có thể xoá 3 dòng này khỏi `.env`.
 - Tài khoản khách hàng thì tự đăng ký trên web (nút **Đăng nhập** → **Đăng ký**).
 - **Khu quản trị nội bộ:** http://localhost:5510/admin/login.html, đăng nhập bằng email hoặc tên đăng nhập của ADMIN.
-  - Chỉ tài khoản có quyền **STAFF** hoặc **ADMIN** vào được.
-  - ADMIN cấp quyền cho người khác ở trang **Người dùng & phân quyền**: người đó tự đăng ký trên web trước, sau đó ADMIN tick **Nhân viên** cho tài khoản đó.
+  - Chỉ tài khoản nội bộ (**STAFF**, **BRANCH_MANAGER** hoặc **ADMIN**) vào được. Tài khoản nội bộ có **đúng một** vai trò và không bao giờ là khách hàng.
+  - **Tuyển nhân sự = tạo tài khoản mới** (không chuyển tài khoản khách): ADMIN gọi `POST /api/v1/admin/employees/hire` (STAFF hoặc BRANCH_MANAGER, vào chi nhánh bất kỳ); Quản lý chi nhánh gọi `POST /api/v1/branch/employees/hire` (chỉ STAFF, luôn vào chi nhánh của mình). Mật khẩu tạm (tự sinh 12 ký tự nếu để trống) chỉ trả **một lần**. Giao diện tuyển dụng làm ở giai đoạn 3 của `docs/kiemthu.md`.
+
+| Vai trò | Sinh ra bằng | Làm được |
+|---|---|---|
+| `CUSTOMER` | Chỉ `POST /auth/register` | Mua hàng |
+| `STAFF` | Admin hoặc Quản lý chi nhánh tuyển | Xử lý đơn / trả góp / hậu mãi / tồn kho của chi nhánh được gán (không xem doanh thu) |
+| `BRANCH_MANAGER` | Chỉ Admin tuyển hoặc nâng từ STAFF (`PUT /admin/users/{id}/roles`, cần đang có phân công; tối đa 1 quản lý / chi nhánh) | Như STAFF, cộng báo cáo / doanh thu và quản lý nhân viên chi nhánh mình (`/api/v1/branch/**`: xem, tuyển STAFF, sửa hồ sơ, cho nghỉ) |
+| `ADMIN` | Chỉ tài khoản bootstrap (`.env`) | Toàn hệ thống, chỉ xem đơn (không xử lý); đổi STAFF ↔ BRANCH_MANAGER, chuyển chi nhánh, khoá tài khoản |
+
+  Đổi vai trò / chuyển chi nhánh / cho nghỉ / khoá tài khoản đều thu hồi phiên đăng nhập của người đó.
+
+  **Mô hình phân quyền** (kiểm ở backend trên mọi request, đọc vai trò + phân công chi nhánh từ database chứ không tin token):
+
+  | Việc | Khách | Nhân viên | Quản lý chi nhánh | ADMIN |
+  |---|---|---|---|---|
+  | Mua hàng, giỏ hàng, đơn của tôi, bảo hành / trả hàng của mình, ảnh đại diện | ✅ | ✅* | ✅* | ✅* |
+  | Xem đơn / trả góp / hậu mãi / tồn kho | — | Chi nhánh mình | Chi nhánh mình | Mọi chi nhánh |
+  | **Xử lý** đơn, thanh toán, trả góp, hậu mãi, tin liên hệ | — | ✅ (chi nhánh mình; liên hệ: hộp thư chung) | ✅ (như nhân viên) | ❌ chỉ xem (`ADMIN_READ_ONLY`) |
+  | Đổi chi nhánh xử lý của đơn đang chờ | — | — | — | ✅ |
+  | Nhập kho | — | Chi nhánh mình | Chi nhánh mình | Mọi chi nhánh |
+  | Doanh thu (Tổng quan, Báo cáo, Excel) | — | ❌ | Chi nhánh mình | Mọi chi nhánh |
+  | Tuyển dụng | — | — | Chỉ nhân viên, vào chi nhánh mình | Nhân viên / quản lý, mọi chi nhánh |
+  | Sửa hồ sơ, cho nghỉ | — | — | Nhân viên chi nhánh mình (không tự sửa mình, không đụng quản lý khác) | Mọi người |
+  | Đổi STAFF ↔ BRANCH_MANAGER, khoá tài khoản | — | — | — | ✅ (tối đa 1 quản lý / chi nhánh; không đổi được tài khoản khách, không gán ADMIN) |
+  | Sản phẩm, khuyến mãi, chi nhánh, đánh giá, người dùng | — | — | — | ✅ |
+
+  \* Backend chưa chặn tài khoản nội bộ gọi API mua hàng; chỉ trang đăng nhập khách chặn họ.
 
 ---
 
@@ -157,13 +142,28 @@ docker compose up -d backend
 
 | Khu vực | Tính năng | Dữ liệu |
 |---|---|---|
-| Khách hàng | Đăng ký, đăng nhập, trang tài khoản (hồ sơ, địa chỉ, đổi mật khẩu) | **Thật** (API) |
-| Khách hàng | Trang chủ, danh sách sản phẩm (lọc, tìm kiếm, phân trang), chi tiết sản phẩm, trang khuyến nghị | **Thật** (877 sản phẩm) |
-| Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu theo từng tài khoản, hiệu ứng bay vào giỏ | Lưu trên trình duyệt (backend giỏ hàng: Phase 3) |
-| Khách hàng | Thanh toán, đơn hàng, chi tiết đơn | Mô phỏng, lưu trên trình duyệt (backend đơn hàng: Phase 4) |
-| Khách hàng | Chatbot hỗ trợ (câu trả lời dựng sẵn), liên hệ, dịch vụ | Mô phỏng (Phase 9) |
-| Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** | **Thật** (API) |
-| Quản trị | Tổng quan, bảo hành / đổi trả, hỗ trợ khách hàng, đơn chi nhánh, báo cáo, nhân viên, chi nhánh, lịch sử chatbot | Dữ liệu mẫu (Phase 4–9) |
+| Khách hàng | Đăng ký, đăng nhập (tài khoản nội bộ bị từ chối ở trang khách), trang tài khoản 3 khung #profile / #security / #address (hồ sơ + **ảnh đại diện tải lên** JPG/PNG/WebP ≤ 2 MB, đổi mật khẩu, địa chỉ), menu ảnh đại diện trên header | **Thật** (API) |
+| Khách hàng | Trang chủ, danh sách sản phẩm (tab danh mục, lọc thương hiệu có tìm kiếm, giá chọn nhanh, ngăn kéo bộ lọc trên điện thoại, tìm kiếm, phân trang), chi tiết sản phẩm (ảnh chính + ảnh phụ, giá và tên chương trình khuyến mãi đang chạy), trang khuyến nghị | **Thật** (4.288 sản phẩm) |
+| Khách hàng | **Đánh giá sản phẩm**: tab "ĐÁNH GIÁ" ở trang chi tiết (điểm trung bình + số đánh giá từng mức sao, toàn số thật), viết / sửa / xoá đánh giá của mình (1–5 sao, nhận xét, tối đa 5 ảnh), nhãn "Đã mua hàng", lọc theo sao / có ảnh, xem ảnh lớn; điểm Thế Giới Di Động hiện riêng để tham khảo; thẻ sản phẩm hiện sao (đánh giá thật, chưa có thì điểm TGDĐ ghi rõ "đánh giá tham khảo") | **Thật** (API) |
+| Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
+| Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
+| Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
+| Khách hàng | **Bảo hành / bảo trì / trả hàng** (Phase 6): ở chi tiết đơn đã giao xem hạn bảo hành từng sản phẩm, gửi bảo hành (còn hạn), bảo trì (mọi sản phẩm, có thể mất phí) hoặc trả hàng hoàn tiền trong 7 ngày (chọn sản phẩm + số lượng, xem số tiền hoàn dự kiến; đơn trả góp liên hệ cửa hàng), kèm tối đa 5 ảnh; trang **Yêu cầu dịch vụ** theo dõi trạng thái, ghi chú / lý do của cửa hàng, huỷ khi còn chờ; trang Dịch vụ có chính sách bảo hành / trả hàng | **Thật** (API) |
+| Khách hàng | **Liên hệ**: form gửi thật (họ tên, email, SĐT tuỳ chọn, chủ đề, nội dung; đã đăng nhập thì điền sẵn và gắn tài khoản; giới hạn số lần gửi theo IP / email), nhận mã tin nhắn | **Thật** (API) |
+| Khách hàng | **Trợ lý tra cứu nhanh** (nút nổi góc trang, không phải AI): trả lời chính sách giao hàng / trả hàng / bảo hành / thanh toán theo đúng quy tắc của hệ thống, link tra cứu đơn, tìm sản phẩm thật theo từ khoá | **Thật** (tra cứu API; chatbot AI ở Phase 9) |
+| Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
+| Quản trị | **Đơn hàng** (nhân viên xử lý, ADMIN chỉ xem): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy và xử lý đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được), hủy đơn đã xác nhận thì hoàn kho. ADMIN xem mọi đơn và chỉ điều phối: chuyển đơn đang chờ sang chi nhánh khác | **Thật** (API) |
+| Quản trị | **Trả góp** (nhân viên chi nhánh ghi nhận, ADMIN chỉ xem): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
+| Quản trị | **Khuyến mãi** (chỉ ADMIN): chương trình có thời gian bắt đầu / kết thúc, giảm theo % (có mức giảm tối đa) hoặc số tiền, chọn sản phẩm và đặt mức giảm riêng từng sản phẩm, tạm dừng / bật lại. Một sản phẩm chỉ thuộc một chương trình đang bật tại cùng thời điểm; giỏ hàng và thanh toán lấy giá thấp hơn giữa "Giá khuyến mãi" của sản phẩm và giá chương trình; đơn đã đặt giữ nguyên giá | **Thật** (API) |
+| Quản trị | **Chi nhánh** (chỉ ADMIN): thêm / sửa / tạm đóng / xoá (chỉ khi chưa dùng); quận / huyện + tỉnh / thành dùng để tự gán chi nhánh cho đơn giao tận nhà. **Nhân viên** (chỉ ADMIN): hồ sơ cho tài khoản có quyền Nhân viên, gán / chuyển / rút chi nhánh (giữ lịch sử), vị trí "Quản lý chi nhánh", đã nghỉ. Nhân viên thấy vai trò + chi nhánh của mình trên thanh trên cùng | **Thật** (API) |
+| Quản trị | **Tồn kho** (STAFF và ADMIN): tồn kho theo chi nhánh (nhân viên chỉ chi nhánh mình, ADMIN thêm chế độ "Tất cả chi nhánh" với tổng + số lượng từng chi nhánh), nhãn "Sắp hết" (≤ 5) / "Hết hàng", lọc hàng hết, **nhập kho** một bước (tìm sản phẩm → phiên bản → số lượng, nhà cung cấp, ghi chú), lịch sử nhập / xuất bán / hoàn kho của từng phiên bản | **Thật** (API) |
+| Quản trị | **Báo cáo → Hàng nhập kho theo chi nhánh** (chỉ ADMIN): tổng số lượng nhập, số lần nhập, số phiên bản, số nhà cung cấp, biểu đồ + bảng theo chi nhánh, lọc chi nhánh / khoảng ngày (tính theo số lượng, nhập kho không ghi giá nhập) | **Thật** (API) |
+| Quản trị | **Đánh giá** (chỉ ADMIN): mọi đánh giá của khách (kể cả đã ẩn), tìm theo sản phẩm / người viết / email / nội dung, lọc số sao / trạng thái / một sản phẩm, xem đủ nội dung + ảnh; **ẩn** (bắt buộc lý do: chọn nhanh + ghi thêm, người viết thấy lý do) / **hiện lại**, điểm sản phẩm tính lại ngay | **Thật** (API) |
+| Quản trị | **Bảo hành / Bảo trì / Đổi trả** (nhân viên chi nhánh của đơn xử lý, ADMIN chỉ xem mọi chi nhánh): danh sách gộp 3 loại, lọc loại / trạng thái / chi nhánh / ngày / từ khoá (mã BH / BT / DT, mã đơn, khách); bảo hành / bảo trì: tiếp nhận (ngày dự kiến, ghi chú, chi phí bảo trì) → đang xử lý → hoàn tất, từ chối có lý do; trả hàng: duyệt → nhận hàng (chọn món còn bán được để cộng lại tồn kho chi nhánh) → hoàn tiền (trừ tổng chi tiêu của khách) | **Thật** (API) |
+| Quản trị | **Tổng quan theo vai trò**: ADMIN "Toàn hệ thống" (doanh thu hôm nay / tháng so với cùng kỳ, đơn cần xử lý, yêu cầu dịch vụ, hàng sắp hết, chi nhánh, nhân viên, doanh thu 30 ngày, danh mục, so sánh chi nhánh, lối tắt); Quản lý "Chi nhánh …" (số của chi nhánh + đội ngũ); Nhân viên "Việc của tôi hôm nay" (không có doanh thu, danh sách việc có số đếm và link lọc sẵn) | **Thật** (API) |
+| Quản trị | **Báo cáo doanh thu** (ADMIN mọi chi nhánh, quản lý chi nhánh mình): lọc chi nhánh / ngày / nhóm theo ngày-tháng; thẻ tổng; cột theo thời gian; tròn theo danh mục + phương thức thanh toán; theo chi nhánh; doanh số + hoa hồng theo nhân viên; top 10 sản phẩm; **Xuất Excel** (.xlsx 7 sheet, `GET /api/v1/admin/reports/sales/export`) | **Thật** (API) |
+| Quản trị | **Liên hệ khách hàng** (một hộp thư chung cho nhân viên và quản lý mọi chi nhánh, ADMIN chỉ xem): lọc trạng thái / chủ đề / từ khoá, nhận xử lý, đánh dấu đã xử lý (bắt buộc ghi chú nội bộ), mở lại; số tin chờ xử lý ở Tổng quan | **Thật** (API) |
+| Quản trị | Lịch sử chatbot (ẩn khỏi menu, có banner "đang phát triển") | Dữ liệu mẫu (Phase 9) |
 
 ---
 
@@ -176,9 +176,65 @@ docker compose up -d backend
 | Sửa **backend** (`backend/Tech/`) | `docker compose up -d --build backend` |
 | Xem log backend | `docker compose logs -f backend` |
 | Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
-| Cập nhật code mới | `git pull` rồi `docker compose up -d --build` |
+| Cập nhật code mới | `git pull` rồi chạy các file **mới** trong `database/migrations/` (xem dưới), rồi `docker compose up -d --build` |
 
-> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại schema rỗng; cần chạy crawler/import riêng để nạp catalog.
+> **Cập nhật database đã có:** database chỉ được tạo từ `database/techshopping.sql` **một lần** (khi volume còn trống), nên khi schema đổi, database cũ cần chạy các file migration **theo đúng thứ tự dưới đây** (chạy lại nhiều lần vẫn an toàn):
+> ```powershell
+> # 1. Đơn hàng
+> Get-Content database\migrations\orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\orders_recipient.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 2. Khuyến mãi
+> Get-Content database\migrations\promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\promotions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 3. Thanh toán + trả góp
+> Get-Content database\migrations\payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\payments.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 4. Chi nhánh / tồn kho
+> Get-Content database\migrations\stores_inventory.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\stores_inventory.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 5. Thuộc tính theo danh mục
+> Get-Content database\migrations\category_attributes.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\category_attributes.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 6. Lịch sử trạng thái đơn hàng
+> Get-Content database\migrations\order_status_history.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\order_status_history.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 7. Đánh giá sản phẩm
+> Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\reviews.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 8. Điểm đánh giá Thế Giới Di Động tách khỏi điểm đánh giá thật
+> Get-Content database\migrations\product_tgdd_rating.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\product_tgdd_rating.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 9. Bảo hành / bảo trì / đổi trả
+> Get-Content database\migrations\after_sales.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\after_sales.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 10. Báo cáo doanh thu / doanh số nhân viên
+> Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\sales_reports.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 11. Vai trò Quản lý chi nhánh (BRANCH_MANAGER) — đổi role dữ liệu thật, sao lưu DB trước
+> Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\branch_manager_role.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 12. Form Liên hệ lưu thật (contact_requests)
+> Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\contact_requests.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 13. Gộp vị trí nhân viên thành "Nhân viên chi nhánh" (kế hoạch v3 GĐ D)
+> Get-Content database\migrations\staff_position_label.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\staff_position_label.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 14. Mật khẩu tạm: bắt đổi ở lần đăng nhập đầu + hết hạn
+> Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> ```
+
+> **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
+> ```powershell
+> $env:PGHOST = "localhost"; $env:PGPORT = "5432"; $env:PGUSER = "postgres"; $env:PGPASSWORD = "postgres"; $env:PGDATABASE = "techshopping"
+> python Raw_data/import_catalog.py --dry-run   # chạy thử rồi rollback, chỉ in số liệu
+> python Raw_data/import_catalog.py
+> ```
+> - Chạy được nhiều lần: mỗi sản phẩm nhận diện bằng mã `TGDD-<id nguồn>`, lần sau chỉ cập nhật (tên, giá, mô tả, thông số, điểm đánh giá TGDĐ, thêm ảnh mới). Điểm TGDĐ ghi vào cột riêng (`tgdd_rating`, `tgdd_review_count`, cần migration số 8), không đụng tới điểm đánh giá thật của khách trên web.
+> - Sản phẩm mẫu cũ có cùng trang TGDĐ được **cập nhật tại chỗ** (giữ id, nên giỏ hàng / đơn hàng / khuyến mãi / tồn kho đang trỏ tới vẫn đúng); sản phẩm cũ không còn trong dữ liệu mới bị **ẩn** (không xoá). Thương hiệu bị tách ("iPhone (Apple)", "MacBook"…) được gộp về tên chuẩn.
+> - Muốn crawl lại từ đầu: `python -m pip install -r requirements.txt`, `python -m playwright install chromium`, rồi `python Raw_data/crawler.py` và `python Raw_data/clean_data.py` trước khi import.
+
+> ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 4.288 sản phẩm đã crawl.
 
 ---
 
@@ -191,9 +247,12 @@ docker compose up -d backend
 | `port is already allocated` với cổng **5510** | Cổng bị chương trình khác dùng: trong `.env` đổi `FRONTEND_PORT=5520` (cổng khác bất kỳ), rồi `docker compose up -d` và mở http://localhost:5520 |
 | `port is already allocated` với cổng **8080**, **5432** hoặc **6379** | Tắt chương trình đang dùng cổng đó (ví dụ PostgreSQL / Redis cài sẵn trên máy, hoặc backend đang chạy bằng `mvnw`) |
 | Bấm "Thêm vào giỏ" thì bị chuyển sang trang đăng nhập | Đúng thiết kế: phải đăng nhập mới thêm được vào giỏ; đăng nhập xong sẽ quay lại đúng trang |
-| Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: ADMIN cấp quyền **Nhân viên** ở trang Người dùng & phân quyền, hoặc tạo ADMIN đầu tiên ở **Bước 5** |
+| Khu quản trị báo "Tài khoản này không có quyền truy cập khu nội bộ." | Tài khoản chỉ là khách hàng: tài khoản nội bộ phải được **tuyển mới** (ADMIN / Quản lý chi nhánh), hoặc tạo ADMIN đầu tiên ở **Bước 5** |
 | Web báo "Không thể kết nối tới máy chủ (localhost:8080)…" | Backend chưa khởi động xong hoặc bị lỗi: xem `docker compose logs backend` |
-| Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu |
+| Log backend có `Schema-validation: missing column` (ví dụ `recipient_name`, `citizen_id`, `confirmed_by`) hoặc `missing table [promotions]` | Database tạo từ schema cũ: chạy các file trong `database/migrations/` (mục **4. Dùng hằng ngày**), rồi `docker compose restart backend` |
+| Backend cứ khởi động lại, log có `UnknownHostException: postgres` | Container backend bị rơi khỏi mạng Docker: `docker compose up -d --force-recreate --no-deps backend` |
+| Trang Sản phẩm trống, không báo lỗi | Database được tạo **trước** khi có file seed nên chưa có sản phẩm. Nếu chưa có dữ liệu gì cần giữ: `docker compose down -v` rồi `docker compose up -d` để tạo lại database kèm dữ liệu mẫu; muốn giữ dữ liệu thì nạp catalogue bằng `Raw_data/import_catalog.py` (mục **4. Dùng hằng ngày**) |
+| Trang Sản phẩm chỉ có 877 sản phẩm, tên dạng "Điện thoại iPhone…" | Database còn catalogue mẫu cũ: chạy `Raw_data/import_catalog.py` (mục **4. Dùng hằng ngày**) |
 
 ---
 
@@ -228,6 +287,6 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 35 bảng), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `database/` | `techshopping.sql` (cấu trúc 45 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
-| `Raw_data/` | Dữ liệu crawl gốc (CSV) |
+| `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |

@@ -15,9 +15,17 @@ spring:
       pageable:
         default-page-size: 20
         max-page-size: 100
+  servlet:
+    multipart:
+      # Product image uploads (ImageStorageService.MAX_IMAGE_BYTES)
+      max-file-size: 5MB
+      max-request-size: 6MB
 
 server:
   port: 8080
+  tomcat:
+    # Read (and drop) the rest of a too-large upload so the client gets the 413 JSON instead of a reset connection
+    max-swallow-size: 20MB
 
 springdoc:
   api-docs:
@@ -40,3 +48,27 @@ app:
     issuer: techshopping
     access-token-ttl: 30m
     refresh-token-ttl: 7d
+  upload:
+    # Uploaded product images: folder on disk (relative = working directory; Docker uses the uploads_data volume)
+    dir: ${APP_UPLOAD_DIR:uploads}
+    # Origin the browser uses to reach this API; stored image URLs start with it
+    public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+  payment:
+    # Demo shop account shown for bank transfers (payments are simulated: staff confirms the money)
+    bank-transfer:
+      bank-name: ${PAYMENT_BANK_NAME:Vietcombank}
+      # VietQR bank id for the QR image (970436 = Vietcombank)
+      bank-bin: ${PAYMENT_BANK_BIN:970436}
+      account-number: ${PAYMENT_BANK_ACCOUNT_NUMBER:0123456789}
+      account-name: ${PAYMENT_BANK_ACCOUNT_NAME:CONG TY POY}
+      # Shown to the customer as "pay before"; unpaid orders are not cancelled automatically
+      deadline-hours: 24
+  sales:
+    # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
+    commission-rate: ${SALES_COMMISSION_RATE:0.01}
+  contact:
+    # Contact form: at most per-ip sends per client IP and per-email per email address in each window (Redis)
+    rate-limit:
+      per-ip: ${CONTACT_LIMIT_PER_IP:10}
+      per-email: ${CONTACT_LIMIT_PER_EMAIL:3}
+      window: 1h

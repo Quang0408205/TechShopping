@@ -9,8 +9,8 @@
  *   GET /products/{id}/specifications  → thông số (nếu có)
  *   GET /products?categoryId=&brandId= → "Sản phẩm tương tự"
  *
- * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng bỏ phần đánh
- * giá (mọi sản phẩm đều có rating 0, không bịa phân bố sao), bỏ các vùng
+ * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng không bịa phân
+ * bố sao (dòng ★ = đánh giá thật, chưa có thì điểm Thế Giới Di Động), bỏ các vùng
  * gợi ý mua kèm / nâng cấp (Phase 8) và không dùng catalogue mock.
  * Giỏ hàng: snapshot {productId, variantId, ...} theo tài khoản (js/core/cart-store.js, F2).
  */
@@ -55,6 +55,17 @@ document.addEventListener(
 
 
         setupTabs();
+
+        /* Bấm dòng ★ → mở tab Đánh giá */
+        document.getElementById("detailRating").addEventListener("click", function () {
+
+            const tab = document.querySelector('.tab-btn[data-tab="reviews"]');
+
+            tab.click();
+
+            tab.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        });
 
         setupQuantityControls();
 
@@ -144,6 +155,19 @@ document.addEventListener(
             }
 
 
+            /* Kế hoạch v3: danh mục bị ẩn → sản phẩm không bán, xử lý như ngừng bán */
+
+            if (categoryMaps && categoryMaps.hiddenIds && categoryMaps.hiddenIds[product.categoryId]) {
+
+                skeleton.hidden = true;
+
+                showNotFound();
+
+                return;
+
+            }
+
+
             skeleton.hidden = true;
 
             renderProduct(images);
@@ -209,6 +233,17 @@ document.addEventListener(
 
             document.getElementById("detailMeta").textContent = buildMetaText();
 
+            renderRatingLink();
+
+            /* Tab "ĐÁNH GIÁ" (js/customer/product-reviews.js); viết / sửa / xoá đánh giá → cập nhật dòng ★ */
+            initProductReviews(product, {
+                onSummaryChange: function (summary) {
+                    product.rating = summary.averageRating;
+                    product.totalReviews = summary.totalReviews;
+                    renderRatingLink();
+                }
+            });
+
 
             renderImages(images, categorySlug);
 
@@ -248,13 +283,11 @@ document.addEventListener(
 
             const link = document.getElementById("breadcrumbCategory");
 
-            const filterKey = getCategoryFilterKey(categorySlug);
-
             link.textContent = product.categoryName;
 
             link.href = siteUrl(
-                filterKey
-                    ? "customer/products.html?category=" + encodeURIComponent(filterKey)
+                categorySlug
+                    ? "customer/products.html?category=" + encodeURIComponent(categoryKeyOf(categorySlug))
                     : "customer/products.html"
             );
 
@@ -265,7 +298,7 @@ document.addEventListener(
         }
 
 
-        /* Thương hiệu · Mã · (đánh giá chỉ khi đã có lượt đánh giá thật) */
+        /* Thương hiệu · Mã (điểm đánh giá là nút riêng #detailRating, bấm → tab Đánh giá) */
 
         function buildMetaText() {
 
@@ -279,14 +312,26 @@ document.addEventListener(
                 parts.push("Mã: " + product.sku);
             }
 
-            if (product.totalReviews > 0 && Number(product.rating) > 0) {
-                parts.push(
-                    "★ " + Number(product.rating).toFixed(1) +
-                    " (" + product.totalReviews + " đánh giá)"
-                );
-            }
-
             return parts.join(" · ");
+
+        }
+
+
+        /* Đánh giá thật trên web; chưa có thì điểm trên Thế Giới Di Động (ghi rõ nguồn); không có → ẩn */
+
+        function renderRatingLink() {
+
+            const link = document.getElementById("detailRating");
+
+            const rating = productRatingSummary(product);
+
+            link.hidden = !rating;
+
+            if (rating) {
+                link.textContent = "★ " + rating.rating.toFixed(1) +
+                    " (" + rating.count.toLocaleString("vi-VN") + " đánh giá" +
+                    (rating.source === "tgdd" ? " trên Thế Giới Di Động" : "") + ")";
+            }
 
         }
 
@@ -355,6 +400,17 @@ document.addEventListener(
 
             thumbnails.querySelectorAll(".detail-thumb").forEach(function (button) {
 
+                /* Ảnh phụ hỏng: bỏ khỏi dải; còn dưới 2 ảnh thì ẩn cả dải */
+                button.querySelector("img").addEventListener("error", function () {
+
+                    button.remove();
+
+                    if (thumbnails.querySelectorAll(".detail-thumb").length < 2) {
+                        thumbnails.hidden = true;
+                    }
+
+                });
+
                 button.addEventListener("click", function () {
 
                     mainImage.src = button.dataset.url;
@@ -397,8 +453,9 @@ document.addEventListener(
                 return `
                     <button
                         type="button"
-                        class="variant-btn"
+                        class="variant-btn${isSoldOut(variant) ? " is-sold-out" : ""}"
                         data-variant-id="${escapeHtml(variant.id)}"
+                        ${isSoldOut(variant) ? 'title="Tạm hết hàng"' : ""}
                     >
                         ${escapeHtml(getVariantLabel(variant))}
                     </button>
@@ -424,7 +481,8 @@ document.addEventListener(
             });
 
 
-            selectVariant(variants[0]);
+            /* Mở trang ở phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E) */
+            selectVariant(variants.find(function (variant) { return !isSoldOut(variant); }) || variants[0]);
 
         }
 
@@ -476,20 +534,76 @@ document.addEventListener(
             }
 
 
-            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ */
+            /* Giá đến từ chương trình khuyến mãi → ghi tên chương trình (textContent: tên do admin nhập) */
 
-            addToCartBtn.disabled = !hasPrice;
+            const promoEl = document.getElementById("detailPromo");
 
-            buyNowBtn.disabled = !hasPrice;
+            promoEl.textContent = prices.promotionName ? "Khuyến mãi: " + prices.promotionName : "";
 
-            document.getElementById("qtyMinus").disabled = !hasPrice;
+            promoEl.hidden = !prices.promotionName;
 
-            document.getElementById("qtyPlus").disabled = !hasPrice;
+
+            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3 GĐ E) */
+
+            const canBuy = canBuyCurrent();
+
+            addToCartBtn.disabled = !canBuy;
+
+            buyNowBtn.disabled = !canBuy;
+
+            document.getElementById("qtyMinus").disabled = !canBuy;
+
+            document.getElementById("qtyPlus").disabled = !canBuy;
 
             document.getElementById("contactNote").hidden = hasPrice;
 
+            renderStock(hasPrice);
+
 
             renderSpecs();
+
+        }
+
+
+        /* Có giá và (nếu API trả số lượng) còn hàng ở chi nhánh đang mở */
+
+        function canBuyCurrent() {
+
+            return getPrices().price > 0 && !isSoldOut(currentVariant);
+
+        }
+
+
+        function availableUnits() {
+
+            return currentVariant && Number.isInteger(currentVariant.availableQuantity)
+                ? currentVariant.availableQuantity
+                : null;
+
+        }
+
+
+        function renderStock(hasPrice) {
+
+            const stockEl = document.getElementById("detailStock");
+
+            const units = availableUnits();
+
+            if (!hasPrice || units === null) {
+
+                stockEl.hidden = true;
+
+                return;
+
+            }
+
+            stockEl.hidden = false;
+
+            stockEl.classList.toggle("is-out", units === 0);
+
+            stockEl.textContent = units === 0
+                ? "Tạm hết hàng ở tất cả chi nhánh"
+                : units <= 5 ? "Chỉ còn " + units + " sản phẩm" : "Còn hàng";
 
         }
 
@@ -518,7 +632,13 @@ document.addEventListener(
 
             document.getElementById("qtyPlus").addEventListener("click", function () {
 
-                if (quantity < MAX_QUANTITY) {
+                const units = availableUnits();
+
+                if (units !== null && quantity >= units) {
+
+                    showToast("Chỉ còn " + units + " sản phẩm cho phiên bản này.", "error");
+
+                } else if (quantity < MAX_QUANTITY) {
 
                     setQuantity(quantity + 1);
 
@@ -539,23 +659,23 @@ document.addEventListener(
         /* ================= THÊM VÀO GIỎ / MUA NGAY ================= */
 
         /*
-         * F2: giỏ hàng lưu snapshot theo productId + variantId (cart-store.js),
+         * Phase 3: giỏ hàng trên server, mỗi dòng là một variantId (cart-store.js),
          * nên cùng một phiên bản thêm từ trang danh sách hay trang chi tiết
-         * luôn gộp chung một dòng.
+         * luôn gộp chung một dòng. Giá do server tính.
          */
 
-        function addCurrentToCart() {
+        async function addCurrentToCart() {
 
             const prices = getPrices();
 
-            if (!product || prices.price <= 0) {
+            if (!product || prices.price <= 0 || isSoldOut(currentVariant)) {
                 return false;
             }
 
 
             const mainImage = document.getElementById("mainImage");
 
-            /* false khi chưa đăng nhập (addToCart đã chuyển tới trang đăng nhập) */
+            /* false khi chưa đăng nhập (addToCart đã chuyển tới trang đăng nhập) hoặc API báo lỗi */
             return addToCart(
                 {
                     productId: product.id,
@@ -575,17 +695,47 @@ document.addEventListener(
         function setupActions() {
 
             addToCartBtn.addEventListener("click", function () {
-                addCurrentToCart();
+                runCartAction(false);
             });
 
 
             buyNowBtn.addEventListener("click", function () {
-
-                if (addCurrentToCart()) {
-                    window.location.href = siteUrl("customer/cart.html");
-                }
-
+                runCartAction(true);
             });
+
+        }
+
+
+        /* Khoá 2 nút trong lúc chờ API để không bấm trùng; "Mua ngay" xong thì sang giỏ hàng */
+
+        async function runCartAction(goToCart) {
+
+            addToCartBtn.disabled = true;
+
+            buyNowBtn.disabled = true;
+
+
+            let added = false;
+
+            try {
+
+                added = await addCurrentToCart();
+
+            } finally {
+
+                /* Người dùng có thể đã đổi sang phiên bản khác trong lúc chờ */
+                const canBuy = canBuyCurrent();
+
+                addToCartBtn.disabled = !canBuy;
+
+                buyNowBtn.disabled = !canBuy;
+
+            }
+
+
+            if (added && goToCart) {
+                window.location.href = siteUrl("customer/cart.html");
+            }
 
         }
 
@@ -602,6 +752,7 @@ document.addEventListener(
 
                     buttons.forEach(function (b) {
                         b.classList.toggle("active", b === button);
+                        b.setAttribute("aria-selected", String(b === button));
                     });
 
                     document.querySelectorAll(".tab-panel").forEach(function (panel) {

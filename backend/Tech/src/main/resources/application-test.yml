@@ -14,3 +14,10 @@ app:
   jwt:
     # Test-only key; never use it outside the test profile
     secret: test-only-jwt-secret-for-techshopping-tests-0123456789
+  upload:
+    # Keep test uploads out of the project folder
+    dir: ${java.io.tmpdir}/techshopping-test-uploads
+  contact:
+    rate-limit:
+      # every test / E2E request comes from 127.0.0.1: only the per-email limit is exercised
+      per-ip: 1000

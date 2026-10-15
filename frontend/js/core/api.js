@@ -48,7 +48,11 @@ const STAFF_AUTH_STORAGE_KEY = "poy_staff_auth";
 const AUTH_STORAGE_KEY =
     IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
 
-/* Tiền tố giỏ hàng: poy_cart_<userId> (js/core/cart-store.js); "poy_cart" là giỏ kiểu cũ */
+/*
+ * Giỏ hàng nằm trên server từ Phase 3. Hai khoá cũ chỉ còn để dọn một lần
+ * (js/core/cart-store.js): "poy_cart_<userId>" (F2, chuyển lên server) và
+ * "poy_cart" (kiểu cũ theo tên sản phẩm, bỏ đi).
+ */
 const CART_STORAGE_KEY = "poy_cart";
 
 
@@ -113,6 +117,12 @@ const API_ERROR_MESSAGES = {
     ACCOUNT_DISABLED:
         "Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.",
 
+    PASSWORD_CHANGE_REQUIRED:
+        "Bạn cần đổi mật khẩu tạm trước khi sử dụng hệ thống.",
+
+    TEMP_PASSWORD_EXPIRED:
+        "Mật khẩu tạm đã hết hạn. Vui lòng liên hệ quản lý để được cấp lại.",
+
     DUPLICATE_EMAIL:
         "Email này đã được đăng ký.",
 
@@ -169,7 +179,63 @@ const API_ERROR_MESSAGES = {
         "Thương hiệu không tồn tại.",
 
     RESOURCE_IN_USE:
-        "Dữ liệu đang được sử dụng, không thể xoá."
+        "Dữ liệu đang được sử dụng, không thể xoá.",
+
+    /* Kế hoạch v3 GĐ C: danh mục / thương hiệu */
+
+    DUPLICATE_CATEGORY:
+        "Slug danh mục đã được dùng. Hãy đổi slug hoặc tên khác.",
+
+    INVALID_CATEGORY_PARENT:
+        "Danh mục cha không hợp lệ (không chọn chính nó hoặc danh mục con của nó).",
+
+    DUPLICATE_BRAND:
+        "Tên hoặc slug thương hiệu đã tồn tại.",
+
+    /* Ảnh sản phẩm (IMG) */
+
+    PRODUCT_IMAGE_NOT_FOUND:
+        "Không tìm thấy ảnh (có thể đã bị xoá).",
+
+    PRODUCT_IMAGE_LIMIT_EXCEEDED:
+        "Mỗi sản phẩm có tối đa 10 ảnh.",
+
+    LAST_PRODUCT_IMAGE:
+        "Không thể xoá ảnh cuối cùng của sản phẩm. Hãy thêm ảnh khác trước.",
+
+    PRIMARY_IMAGE_REQUIRED:
+        "Sản phẩm phải có ảnh chính. Hãy đặt một ảnh khác làm ảnh chính.",
+
+    INVALID_IMAGE_FILE:
+        "Chỉ nhận ảnh JPG, PNG hoặc WebP.",
+
+    IMAGE_TOO_LARGE:
+        "Ảnh quá lớn (tối đa 5 MB).",
+
+    /* Giỏ hàng (Phase 3) */
+
+    PRODUCT_VARIANT_NOT_FOUND:
+        "Phiên bản sản phẩm không tồn tại hoặc đã ngừng kinh doanh.",
+
+    PRODUCT_NOT_AVAILABLE:
+        "Sản phẩm này hiện không còn bán.",
+
+    CART_ITEM_NOT_FOUND:
+        "Sản phẩm không còn trong giỏ hàng (có thể đã được xóa ở tab khác).",
+
+    CART_LIMIT_EXCEEDED:
+        "Giỏ hàng đã đủ 50 sản phẩm khác nhau. Vui lòng xóa bớt trước khi thêm mới.",
+
+    /* Đơn hàng (Phase 4) */
+
+    ORDER_NOT_FOUND:
+        "Không tìm thấy đơn hàng.",
+
+    CART_EMPTY:
+        "Giỏ hàng của bạn đang trống (đơn hàng có thể đã được đặt ở tab khác).",
+
+    INVALID_ORDER_STATUS:
+        "Đơn hàng đã được xử lý nên không thể thực hiện thao tác này. Vui lòng tải lại trang."
 
 };
 
@@ -285,6 +351,8 @@ function getCurrentUser() {
  * apiRequest("/products?size=12")
  * apiRequest("/auth/login", { method: "POST", body: {...} })
  * apiRequest("/users/me", { auth: true })
+ * apiRequest("/admin/uploads/product-images", { method: "POST", body: formData, auth: true })
+ *   (body là FormData thì gửi nguyên dạng multipart, không chuyển JSON)
  *
  * Trả về phần "data" khi thành công, ném ApiError khi thất bại.
  * Chỉ gửi token khi auth = true: backend từ chối token hỏng
@@ -325,11 +393,42 @@ async function apiRequest(path, options) {
 }
 
 
+/*
+ * Tải một file (vd. báo cáo Excel) bằng GET có token, làm mới token 1 lần nếu hết hạn.
+ * Thành công → Blob; lỗi (JSON ApiResult của backend) → ném ApiError như apiRequest.
+ */
+
+async function apiDownload(path) {
+
+    let response = await sendRequest(path, "GET", undefined, true);
+
+    if (response.status === 401) {
+
+        const refreshed = await refreshTokens();
+
+        if (refreshed) {
+            response = await sendRequest(path, "GET", undefined, true);
+        }
+
+    }
+
+    if (!response.ok) {
+        return readApiResult(response);
+    }
+
+    return response.blob();
+
+}
+
+
 async function sendRequest(path, method, body, useAuth) {
 
     const headers = {};
 
-    if (body !== undefined) {
+    /* FormData (upload file): trình duyệt tự đặt Content-Type multipart kèm boundary */
+    const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+
+    if (body !== undefined && !isFormData) {
         headers["Content-Type"] = "application/json";
     }
 
@@ -351,7 +450,7 @@ async function sendRequest(path, method, body, useAuth) {
             {
                 method: method,
                 headers: headers,
-                body: body !== undefined ? JSON.stringify(body) : undefined
+                body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body))
             }
         );
 

@@ -13,10 +13,12 @@
     <title>Thanh toán - POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/checkout.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -32,20 +34,30 @@
 
     <section class="page-hero">
 
-        <div class="container">
+        <div class="container page-hero-row">
 
-            <span class="section-label">
-                POY
-            </span>
+            <div>
 
-            <h1>
-                THANH TOÁN
-            </h1>
+                <nav class="breadcrumb" aria-label="Đường dẫn">
+                    <a href="../index.html">Trang chủ</a>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">Thanh toán</span>
+                </nav>
 
-            <p>
-                Đây là bản mô phỏng giao diện — đơn hàng sẽ được lưu tạm trên
-                trình duyệt của bạn cho tới khi hệ thống kết nối với máy chủ thật.
-            </p>
+                <h1>Thanh toán</h1>
+
+                <p>
+                    Giá và phí vận chuyển tính theo giỏ hàng tại thời điểm đặt;
+                    nhận tại cửa hàng thì miễn phí vận chuyển.
+                </p>
+
+            </div>
+
+            <ol class="checkout-steps" aria-label="Các bước mua hàng">
+                <li class="is-done"><span>1</span>Giỏ hàng</li>
+                <li class="is-current" aria-current="step"><span>2</span>Thanh toán</li>
+                <li><span>3</span>Hoàn tất</li>
+            </ol>
 
         </div>
 
@@ -59,7 +71,7 @@
         <div class="state-box empty-state">
             <h3>Giỏ hàng đang trống</h3>
             <p>Vui lòng thêm sản phẩm vào giỏ trước khi thanh toán.</p>
-            <a href="products.html" class="btn btn-dark">KHÁM PHÁ SẢN PHẨM</a>
+            <a href="products.html" class="btn btn-dark">Khám phá sản phẩm</a>
         </div>
 
     </section>
@@ -71,10 +83,33 @@
 
             <form id="checkoutForm" class="checkout-form" novalidate>
 
-                <span class="section-label">THÔNG TIN GIAO HÀNG</span>
+                <h2 class="checkout-heading"><span>1</span>Hình thức nhận hàng</h2>
 
                 <p class="form-error" data-role="error" role="alert" hidden></p>
 
+                <!-- Phase 7: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (khách chọn) -->
+                <div class="payment-methods delivery-types">
+
+                    <label class="payment-method">
+                        <input type="radio" name="deliveryType" value="HOME_DELIVERY" checked>
+                        <span>
+                            <strong>Giao tận nhà</strong>
+                            <small>Giao đến địa chỉ của bạn; phí vận chuyển tính theo giá trị đơn.</small>
+                        </span>
+                    </label>
+
+                    <label class="payment-method" id="pickupMethod">
+                        <input type="radio" name="deliveryType" value="PICKUP">
+                        <span>
+                            <strong>Nhận tại cửa hàng</strong>
+                            <small id="pickupMethodHint">Miễn phí vận chuyển. Chọn cửa hàng gần bạn để đến nhận.</small>
+                        </span>
+                    </label>
+
+                </div>
+
+
+                <h2 class="checkout-heading checkout-section-spacer"><span>2</span>Thông tin người nhận</h2>
 
                 <label for="recipientName">Họ và tên người nhận</label>
                 <input type="text" id="recipientName" maxlength="120" required>
@@ -84,15 +119,26 @@
                 <input type="tel" id="recipientPhone" maxlength="20" required>
                 <small class="field-error" data-field="recipientPhone"></small>
 
-                <label for="shippingAddress">Địa chỉ nhận hàng</label>
-                <textarea id="shippingAddress" rows="3" maxlength="500" required></textarea>
-                <small class="field-error" data-field="shippingAddress"></small>
+                <div class="checkout-delivery-fields" id="homeDeliveryFields">
+                    <label for="shippingAddress">Địa chỉ nhận hàng</label>
+                    <textarea id="shippingAddress" rows="3" maxlength="500" required></textarea>
+                    <small class="field-error" data-field="shippingAddress"></small>
+                </div>
+
+                <div class="checkout-delivery-fields" id="pickupFields" hidden>
+                    <label for="pickupStore">Cửa hàng nhận hàng</label>
+                    <select id="pickupStore">
+                        <option value="">-- Chọn cửa hàng --</option>
+                    </select>
+                    <small class="field-error" data-field="pickupStoreId"></small>
+                    <p class="pickup-store-info" id="pickupStoreInfo" hidden></p>
+                </div>
 
                 <label for="orderNote">Ghi chú (không bắt buộc)</label>
                 <textarea id="orderNote" rows="2" maxlength="300"></textarea>
 
 
-                <span class="section-label checkout-section-spacer">PHƯƠNG THỨC THANH TOÁN</span>
+                <h2 class="checkout-heading checkout-section-spacer"><span>3</span>Phương thức thanh toán</h2>
 
                 <div class="payment-methods">
 
@@ -108,28 +154,53 @@
                         <input type="radio" name="paymentMethod" value="BANK_TRANSFER">
                         <span>
                             <strong>Chuyển khoản ngân hàng</strong>
-                            <small>Chuyển khoản trước, đơn hàng xử lý sau khi xác nhận.</small>
+                            <small>Chuyển khoản trong 24 giờ theo mã QR ở trang đơn hàng; đơn được xử lý sau khi cửa hàng nhận được tiền.</small>
                         </span>
                     </label>
 
-                    <label class="payment-method">
+                    <label class="payment-method" id="installmentMethod">
                         <input type="radio" name="paymentMethod" value="INSTALLMENT">
                         <span>
-                            <strong>Trả góp qua thẻ tín dụng</strong>
-                            <small>Nhân viên sẽ liên hệ để tư vấn kỳ hạn trả góp phù hợp.</small>
+                            <strong>Trả góp 0% qua thẻ tín dụng</strong>
+                            <small id="installmentMethodHint">Lãi suất 0%, không cần trả trước.</small>
                         </span>
                     </label>
 
                 </div>
 
-                <p class="installment-note" id="installmentNote" hidden>
-                    Sau khi đặt hàng, bộ phận chăm sóc khách hàng sẽ liên hệ với bạn
-                    để hoàn tất thủ tục trả góp.
-                </p>
+                <!-- Phase 5: hồ sơ trả góp, chỉ hiện khi chọn "Trả góp" -->
+                <div class="installment-box" id="installmentBox" hidden>
+
+                    <p class="installment-note">
+                        Nhân viên sẽ gọi điện xác minh và duyệt hồ sơ trước khi xác nhận đơn.
+                        Lịch trả góp bắt đầu từ ngày bạn nhận hàng.
+                    </p>
+
+                    <label for="installmentMonths">Kỳ hạn trả góp</label>
+                    <select id="installmentMonths">
+                        <option value="">-- Chọn kỳ hạn --</option>
+                    </select>
+                    <small class="field-error" data-field="installment.months"></small>
+
+                    <p class="installment-preview" id="installmentPreview" hidden></p>
+
+                    <label for="citizenId">Số CCCD</label>
+                    <input type="text" id="citizenId" inputmode="numeric" autocomplete="off" maxlength="10">
+                    <small class="field-error" data-field="installment.citizenId"></small>
+
+                    <label for="cardBank">Ngân hàng phát hành thẻ tín dụng</label>
+                    <select id="cardBank">
+                        <option value="">-- Chọn ngân hàng --</option>
+                    </select>
+                    <small class="field-error" data-field="installment.cardBank"></small>
+
+                    <small class="field-error" data-field="installment"></small>
+
+                </div>
 
 
                 <button type="submit" class="btn btn-dark checkout-submit" id="checkoutSubmitBtn">
-                    ĐẶT HÀNG
+                    Đặt hàng
                 </button>
 
             </form>
@@ -137,7 +208,7 @@
 
             <aside class="checkout-summary">
 
-                <span class="section-label">ĐƠN HÀNG CỦA BẠN</span>
+                <h2 class="checkout-summary-title">Đơn hàng của bạn</h2>
 
                 <div id="checkoutItems" class="checkout-items"></div>
 
@@ -176,6 +247,7 @@
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/checkout.js"></script>
 <script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
 
 </body>
 </html>

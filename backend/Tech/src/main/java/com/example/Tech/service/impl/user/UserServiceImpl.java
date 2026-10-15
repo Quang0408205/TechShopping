@@ -15,6 +15,8 @@ import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.upload.ImageStorageService;
+import com.example.Tech.service.user.CurrentUserLoader;
 import com.example.Tech.service.user.UserService;
 import com.example.Tech.util.AccountUtil;
 import lombok.RequiredArgsConstructor;
@@ -36,19 +38,30 @@ public class UserServiceImpl implements UserService {
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final CustomerProfileMapper customerProfileMapper;
+    private final CurrentUserLoader currentUserLoader;
+    private final ImageStorageService imageStorageService;
 
     @Override
     public UserResponse getMe(Long userId) {
-        User user = loadCurrentUser(userId);
+        User user = currentUserLoader.load(userId);
         return userMapper.toResponse(user, userRoleRepository.findRoleNamesByUserId(userId));
     }
 
     @Override
     @Transactional
     public UserResponse updateMe(Long userId, UserUpdateRequest request) {
-        User user = loadCurrentUser(userId);
+        User user = currentUserLoader.load(userId);
+        String previousAvatar = user.getAvatarUrl();
+        String avatar = request.avatarUrl() == null || request.avatarUrl().isBlank() ? null : request.avatarUrl().trim();
+        // only avatars this server stored; an unchanged old value (set before GĐ5) may stay as it is
+        if (avatar != null && !avatar.equals(previousAvatar) && !imageStorageService.isStoredAvatar(avatar)) {
+            throw BusinessException.invalidField("avatarUrl", "Ảnh đại diện phải được tải lên từ trang Tài khoản");
+        }
         userMapper.updateEntity(user, request);
         User saved = userRepository.saveAndFlush(user);
+        if (previousAvatar != null && !previousAvatar.equals(saved.getAvatarUrl())) {
+            imageStorageService.deleteAfterCommit(previousAvatar);
+        }
         log.info("User id={} updated own account", userId);
         return userMapper.toResponse(saved, userRoleRepository.findRoleNamesByUserId(userId));
     }
@@ -56,7 +69,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void changePassword(Long userId, ChangePasswordRequest request) {
-        User user = loadCurrentUser(userId);
+        User user = currentUserLoader.load(userId);
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
@@ -69,6 +82,8 @@ public class UserServiceImpl implements UserService {
                     "New password must be different from the current password");
         }
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setMustChangePassword(false);
+        user.setPasswordExpiresAt(null);
         userRepository.saveAndFlush(user);
         refreshTokenService.revokeAll(userId);
         log.info("User id={} changed password; all refresh tokens revoked", userId);
@@ -76,7 +91,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public CustomerProfileResponse getMyProfile(Long userId) {
-        loadCurrentUser(userId);
+        currentUserLoader.load(userId);
         return customerProfileRepository.findById(userId)
                 .map(customerProfileMapper::toResponse)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CUSTOMER_PROFILE_NOT_FOUND));
@@ -85,25 +100,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public CustomerProfileResponse updateMyProfile(Long userId, CustomerProfileUpdateRequest request) {
-        User user = loadCurrentUser(userId);
+        User user = currentUserLoader.load(userId);
         CustomerProfile profile = customerProfileRepository.findById(userId)
                 .orElseGet(() -> new CustomerProfile(user));
         customerProfileMapper.updateEntity(profile, request);
         CustomerProfile saved = customerProfileRepository.saveAndFlush(profile);
         log.info("User id={} updated own customer profile", userId);
         return customerProfileMapper.toResponse(saved);
-    }
-
-    /**
-     * The access token may outlive a deleted or deactivated account (up to 30 min),
-     * so the account is re-checked on every call.
-     */
-    private User loadCurrentUser(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_TOKEN));
-        if (!user.isEnabled()) {
-            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
-        }
-        return user;
     }
 }

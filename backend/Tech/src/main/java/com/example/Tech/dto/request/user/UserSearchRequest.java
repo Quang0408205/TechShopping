@@ -12,7 +12,7 @@ public record UserSearchRequest(
         @Size(max = 255, message = "Keyword must be at most 255 characters")
         String keyword,
 
-        @Schema(description = "Role name", example = "CUSTOMER")
+        @Schema(description = "Role name, or INTERNAL for any internal account (STAFF, BRANCH_MANAGER, ADMIN)", example = "CUSTOMER")
         @Size(max = 50, message = "Role must be at most 50 characters")
         String role,
 

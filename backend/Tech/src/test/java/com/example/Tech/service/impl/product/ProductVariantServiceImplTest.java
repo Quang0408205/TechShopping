@@ -15,18 +15,27 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.AttributeValueMapper;
 import com.example.Tech.mapper.product.ProductVariantMapper;
+import com.example.Tech.repository.cart.CartItemRepository;
+import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.VariantAttributeValueRepository;
+import com.example.Tech.repository.promotion.PromotionProductRepository;
+import com.example.Tech.repository.inventory.InventoryRepository;
+import com.example.Tech.repository.inventory.StockMovementRepository;
+import com.example.Tech.service.inventory.StockAvailability;
+import com.example.Tech.service.promotion.PromotionPricingService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,6 +43,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,13 +64,33 @@ class ProductVariantServiceImplTest {
     @Mock
     private VariantAttributeValueRepository variantAttributeValueRepository;
 
+    @Mock
+    private CartItemRepository cartItemRepository;
+
+    @Mock
+    private OrderItemRepository orderItemRepository;
+
+    @Mock
+    private PromotionProductRepository promotionProductRepository;
+
+    @Mock
+    private StockAvailability stockAvailability;
+
+    @Mock
+    private InventoryRepository inventoryRepository;
+
+    @Mock
+    private StockMovementRepository stockMovementRepository;
+
     private ProductVariantServiceImpl variantService;
 
     @BeforeEach
     void setUp() {
+        lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
-                attributeValueRepository, variantAttributeValueRepository,
-                new ProductVariantMapper(new AttributeValueMapper()));
+                attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
+                inventoryRepository, stockMovementRepository, new ProductVariantMapper(new AttributeValueMapper()),
+                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone());
     }
 
     @Test
@@ -277,13 +308,38 @@ class ProductVariantServiceImplTest {
     }
 
     @Test
-    void delete_success() {
+    void delete_removesTheVariantFromCartsFirst() {
         ProductVariant existing = variant();
         when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.of(existing));
+        when(cartItemRepository.deleteAllByVariantId(5L)).thenReturn(2);
 
         variantService.delete(5L);
 
-        verify(variantRepository).delete(existing);
+        InOrder inOrder = inOrder(cartItemRepository, variantRepository);
+        inOrder.verify(cartItemRepository).deleteAllByVariantId(5L);
+        inOrder.verify(variantRepository).delete(existing);
+    }
+
+    @Test
+    void delete_variantInAnOrder_throwsResourceInUseAndDeletesNothing() {
+        when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.of(variant()));
+        when(orderItemRepository.existsByVariantId(5L)).thenReturn(true);
+
+        assertThatThrownBy(() -> variantService.delete(5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.RESOURCE_IN_USE);
+        verify(cartItemRepository, never()).deleteAllByVariantId(any());
+        verify(variantRepository, never()).delete(any(ProductVariant.class));
+    }
+
+    @Test
+    void delete_unknownVariant_touchesNoCart() {
+        when(variantRepository.findByIdAndProductDeletedAtIsNull(5L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> variantService.delete(5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.PRODUCT_VARIANT_NOT_FOUND);
+        verify(cartItemRepository, never()).deleteAllByVariantId(any());
     }
 
     private static Product product() {

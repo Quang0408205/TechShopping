@@ -39,7 +39,9 @@ public class UserMapper {
                 user.getEmail(),
                 user.getUsername(),
                 user.getFullname(),
-                roles
+                roles,
+                user.getAvatarUrl(),
+                user.isMustChangePassword()
         );
     }
 
@@ -55,7 +57,8 @@ public class UserMapper {
                 roles,
                 user.getLastLogin(),
                 user.getCreatedAt(),
-                user.getUpdatedAt()
+                user.getUpdatedAt(),
+                user.isMustChangePassword()
         );
     }
 

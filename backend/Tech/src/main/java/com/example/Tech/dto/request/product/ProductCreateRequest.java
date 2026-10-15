@@ -1,7 +1,9 @@
 package com.example.Tech.dto.request.product;
 
+import com.example.Tech.service.product.ProductImageService;
 import com.example.Tech.util.SlugUtil;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +13,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record ProductCreateRequest(
 
@@ -57,6 +60,15 @@ public record ProductCreateRequest(
         Integer warrantyMonths,
 
         @Schema(description = "Defaults to true when omitted")
-        Boolean isActive
+        Boolean isActive,
+
+        @Schema(description = "Exactly one primary image plus at least one secondary image ("
+                + ProductImageService.MIN_IMAGES_ON_CREATE + "–" + ProductImageService.MAX_IMAGES_PER_PRODUCT
+                + " in total); the list order becomes the display order")
+        @NotNull(message = "Images are required")
+        @Size(min = ProductImageService.MIN_IMAGES_ON_CREATE, max = ProductImageService.MAX_IMAGES_PER_PRODUCT,
+                message = "A product needs one primary and at least one secondary image (at most "
+                        + ProductImageService.MAX_IMAGES_PER_PRODUCT + " images)")
+        List<@NotNull(message = "Image is required") @Valid ProductImageInput> images
 ) {
 }

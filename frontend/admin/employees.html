@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -39,77 +40,156 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
-                Tài khoản STAFF thật được ghép với hồ sơ ở đây theo email để lấy vai trò và chi nhánh;
-                tài khoản thật (đăng nhập, khoá, phân quyền) quản lý ở trang Người dùng.
-            </p>
 
             <div class="admin-filter-bar admin-filter-bar--split">
 
-                <!-- js/admin/employees.js dựng theo vai trò -->
-                <select id="storeFilter" aria-label="Chi nhánh"></select>
+                <form class="admin-filter-bar" id="employeeFilterForm" role="search">
 
-                <!-- Chỉ ADMIN -->
-                <button type="button" class="btn btn-dark" id="toggleCreateFormBtn" hidden>
-                    + THÊM NHÂN VIÊN
+                    <input type="search" id="employeeKeyword" placeholder="Tên, email, tên đăng nhập, SĐT, mã NV…" maxlength="255" aria-label="Từ khoá">
+
+                    <!-- js/admin/employees.js nạp danh sách chi nhánh thật (chỉ ADMIN; quản lý chi nhánh chỉ có chi nhánh mình) -->
+                    <select id="storeFilter" aria-label="Chi nhánh"></select>
+
+                    <select id="employeeStatusFilter" aria-label="Trạng thái">
+                        <option value="true">Đang làm việc</option>
+                        <option value="false">Đã nghỉ</option>
+                        <option value="">Tất cả</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newEmployeeBtn">
+                    + TUYỂN NHÂN SỰ
                 </button>
 
             </div>
 
 
-            <section class="admin-panel" id="createEmployeePanel" hidden>
+            <!-- Thêm / sửa hồ sơ nhân viên -->
+            <section class="admin-panel" id="employeeFormPanel" hidden>
 
                 <div class="admin-panel-header">
-                    <h2>Thêm nhân viên mới</h2>
+                    <h2 id="employeeFormTitle">Tuyển nhân sự</h2>
                 </div>
 
-                <form id="createEmployeeForm" novalidate>
+                <form id="employeeForm" novalidate>
 
-                    <p id="createEmployeeError" class="form-error" role="alert" hidden></p>
+                    <p id="employeeFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <!-- Chỉ khi tuyển: tài khoản mới (data-hire-only) -->
+                        <div class="admin-field" data-hire-only>
+                            <label for="empFullname">Họ tên *</label>
+                            <input type="text" id="empFullname" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empEmail">Email *</label>
+                            <input type="email" id="empEmail" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empUsername">Tên đăng nhập *</label>
+                            <input type="text" id="empUsername" minlength="3" maxlength="50" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label for="empPhone">Số điện thoại</label>
+                            <input type="tel" id="empPhone" maxlength="20" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field" data-hire-only>
+                            <label>Mật khẩu tạm</label>
+                            <p class="admin-field-hint">Mật khẩu tạm mặc định là 1. Nhân viên phải đổi ở lần đăng nhập đầu, quá 7 ngày chưa đổi thì mật khẩu hết hạn.</p>
+                        </div>
+
+                        <!-- Chỉ ADMIN khi tuyển: vai trò -->
+                        <div class="admin-field" data-hire-only data-admin-only>
+                            <label for="empRole">Vai trò *</label>
+                            <select id="empRole">
+                                <option value="STAFF">Nhân viên chi nhánh</option>
+                                <option value="BRANCH_MANAGER">Quản lý chi nhánh</option>
+                            </select>
+                        </div>
+
+                        <!-- Chỉ khi sửa -->
+                        <div class="admin-field admin-field-wide" id="empAccountField" hidden>
+                            <label for="empAccountText">Tài khoản</label>
+                            <input type="text" id="empAccountText" readonly>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="empCode">Mã nhân viên</label>
+                            <input type="text" id="empCode" maxlength="50" placeholder="vd. NV001">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="empSalary">Lương (đ)</label>
+                            <input type="number" id="empSalary" min="0" step="100000">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="empHiringDate">Ngày vào làm</label>
+                            <input type="date" id="empHiringDate">
+                        </div>
+
+                        <!-- Chỉ ADMIN khi tuyển: chi nhánh (quản lý chi nhánh luôn tuyển vào chi nhánh của mình) -->
+                        <div class="admin-field" id="empStoreField" data-admin-only>
+                            <label for="empStoreId">Chi nhánh *</label>
+                            <select id="empStoreId"></select>
+                        </div>
+
+                        <!-- Chỉ khi sửa -->
+                        <label class="admin-field-check" id="empActiveField" hidden>
+                            <input type="checkbox" id="empActive" checked>
+                            Đang làm việc (bỏ chọn = đã nghỉ, kết thúc phân công hiện tại)
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="employeeSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="employeeCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <!-- Gán / chuyển chi nhánh -->
+            <section class="admin-panel" id="assignPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="assignTitle">Gán chi nhánh</h2>
+                </div>
+
+                <form id="assignForm" novalidate>
+
+                    <p id="assignError" class="form-error" role="alert" hidden></p>
+
+                    <p class="admin-field-hint" id="assignHint"></p>
 
                     <div class="admin-form-grid">
 
                         <div class="admin-field">
-                            <label for="newFullname">Họ tên</label>
-                            <input type="text" id="newFullname" maxlength="120" required>
+                            <label for="assignStoreId">Chi nhánh *</label>
+                            <select id="assignStoreId"></select>
                         </div>
 
                         <div class="admin-field">
-                            <label for="newEmail">Email nội bộ</label>
-                            <input type="email" id="newEmail" maxlength="120" required>
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="newPhone">Số điện thoại</label>
-                            <input type="text" id="newPhone" maxlength="20">
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="newPosition">Chức danh</label>
-                            <input type="text" id="newPosition" maxlength="100" placeholder="vd. Nhân viên bán hàng">
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="newRole">Vai trò</label>
-                            <select id="newRole">
-                                <option value="EMPLOYEE">Nhân viên</option>
-                                <option value="BRANCH_MANAGER">Quản lý chi nhánh</option>
-                                <option value="ADMIN">Quản trị viên</option>
-                            </select>
-                        </div>
-
-                        <div class="admin-field">
-                            <label for="newStoreId">Chi nhánh</label>
-                            <select id="newStoreId"></select>
+                            <label for="assignStartDate">Bắt đầu từ</label>
+                            <input type="date" id="assignStartDate">
                         </div>
 
                     </div>
 
                     <div class="admin-form-actions">
-                        <button type="submit" class="btn btn-dark">LƯU</button>
-                        <button type="button" class="btn btn-outline-dark" id="cancelCreateBtn">HỦY</button>
+                        <button type="submit" class="btn btn-dark" id="assignSaveBtn">LƯU PHÂN CÔNG</button>
+                        <button type="button" class="btn btn-outline-dark" id="assignCancelBtn">HỦY</button>
                     </div>
 
                 </form>
@@ -128,19 +208,19 @@
                     <table class="admin-table admin-table--wide">
                         <thead>
                             <tr>
-                                <th>Họ tên</th>
-                                <th>Email</th>
-                                <th>SĐT</th>
-                                <th>Vai trò</th>
-                                <th>Chi nhánh</th>
-                                <th>Chức danh</th>
+                                <th>Nhân viên</th>
+                                <th>Liên hệ</th>
+                                <th id="employeeStoreHeader">Chi nhánh</th>
                                 <th>Ngày vào làm</th>
                                 <th>Trạng thái</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="employeeTableBody"></tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="employeePagination"></div>
 
             </section>
 
@@ -154,7 +234,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
 <script src="../js/admin/employees.js"></script>

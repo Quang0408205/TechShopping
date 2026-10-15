@@ -266,7 +266,7 @@ document.addEventListener(
             button.disabled = loading;
 
             button.textContent =
-                loading ? "ĐANG ĐĂNG KÝ..." : "ĐĂNG KÝ";
+                loading ? "Đang đăng ký..." : "Đăng ký";
 
         }
 

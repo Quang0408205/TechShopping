@@ -37,7 +37,7 @@ document.addEventListener(
                 "Số điện thoại tối đa 20 ký tự.",
 
             avatarUrl:
-                "Đường dẫn ảnh tối đa 2048 ký tự.",
+                "Ảnh đại diện phải được tải lên từ trang này.",
 
             dateOfBirth:
                 "Ngày sinh phải là một ngày trong quá khứ.",
@@ -74,6 +74,20 @@ document.addEventListener(
 
         };
 
+
+        const AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+        const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+
+        const TABS = ["profile", "security", "address"];
+
+        /* Tài khoản đang hiển thị (GET / PUT /users/me), để lưu tên / SĐT mà không đụng tới ảnh và ngược lại */
+        let currentUser = null;
+
+
+        setupTabs();
+
+        setupAvatar();
 
         accountForm.addEventListener("submit", saveAccount);
 
@@ -156,7 +170,12 @@ document.addEventListener(
             setValue("username", user.username);
             setValue("fullname", user.fullname);
             setValue("phone", user.phone);
-            setValue("avatarUrl", user.avatarUrl);
+
+            currentUser = user;
+
+            renderAvatar(user);
+
+            updateSessionUser(user);
 
             document.getElementById("summaryUsername").textContent =
                 user.username;
@@ -205,8 +224,7 @@ document.addEventListener(
 
             const data = {
                 fullname: valueOf("fullname").trim(),
-                phone: valueOf("phone").trim(),
-                avatarUrl: valueOf("avatarUrl").trim()
+                phone: valueOf("phone").trim()
             };
 
 
@@ -218,10 +236,6 @@ document.addEventListener(
 
             if (data.phone.length > 20) {
                 invalid.push("phone");
-            }
-
-            if (data.avatarUrl.length > 2048) {
-                invalid.push("avatarUrl");
             }
 
             if (showInvalid(accountForm, invalid)) {
@@ -241,14 +255,12 @@ document.addEventListener(
                         body: {
                             fullname: data.fullname,
                             phone: data.phone || null,
-                            avatarUrl: data.avatarUrl || null
+                            avatarUrl: currentUser ? currentUser.avatarUrl || null : null
                         }
                     }
                 );
 
                 fillAccount(user);
-
-                updateHeaderName(user);
 
                 showSuccess(accountForm, "Đã lưu thông tin tài khoản.");
 
@@ -257,27 +269,247 @@ document.addEventListener(
         }
 
 
-        /* Tên mới hiển thị ngay trên header và được nhớ trong phiên đăng nhập */
+        /*
+         * Tên / ảnh mới được nhớ trong phiên đăng nhập (poy_auth.user) và hiện ngay trên header + thanh bên,
+         * không cần tải lại trang.
+         */
 
-        function updateHeaderName(user) {
+        function updateSessionUser(user) {
 
             const auth = getAuth();
 
-            if (auth) {
+            if (!auth || !auth.user) {
+                return;
+            }
 
-                auth.user = Object.assign({}, auth.user, { fullname: user.fullname });
+            if (auth.user.fullname === user.fullname && (auth.user.avatarUrl || null) === (user.avatarUrl || null)) {
+                return;
+            }
 
-                saveAuth(auth);
+            auth.user = Object.assign({}, auth.user, { fullname: user.fullname, avatarUrl: user.avatarUrl || null });
 
+            saveAuth(auth);
+
+            renderAuthState();
+
+            if (typeof renderAccountSidebar === "function" && document.querySelector("#accountSidebarRoot .account-sidebar")) {
+                renderAccountSidebar();
+                markActiveTab(currentTab());
+            }
+
+        }
+
+
+        /* ================= KHUNG THEO HASH: #profile / #security / #address ================= */
+
+        function currentTab() {
+
+            const hash = window.location.hash.replace("#", "");
+
+            return TABS.indexOf(hash) !== -1 ? hash : "profile";
+
+        }
+
+
+        function setupTabs() {
+
+            showTab(currentTab());
+
+            window.addEventListener("hashchange", function () {
+                showTab(currentTab());
+            });
+
+        }
+
+
+        function showTab(tab) {
+
+            document.querySelectorAll("[data-account-panel]").forEach(function (panel) {
+                panel.hidden = panel.dataset.accountPanel !== tab;
+            });
+
+            markActiveTab(tab);
+
+        }
+
+
+        function markActiveTab(tab) {
+
+            document.body.dataset.accountPage = tab;
+
+            document.querySelectorAll("#accountSidebarRoot [data-account-page]").forEach(function (link) {
+                link.classList.toggle("active", link.dataset.accountPage === tab);
+                if (link.dataset.accountPage === tab) {
+                    link.setAttribute("aria-current", "page");
+                } else {
+                    link.removeAttribute("aria-current");
+                }
+            });
+
+        }
+
+
+        /* ================= ẢNH ĐẠI DIỆN ================= */
+
+        function renderAvatar(user, previewUrl) {
+
+            const box = document.getElementById("accountAvatar");
+
+            const url = previewUrl || user.avatarUrl;
+
+            box.innerHTML = url && (previewUrl || isSafeImageUrl(url))
+                ? `<img src="${escapeHtml(url)}" alt="">`
+                : `<span>${escapeHtml(userInitials(user.fullname || user.username))}</span>`;
+
+            const img = box.querySelector("img");
+
+            if (img) {
+                img.addEventListener("error", function () {
+                    box.innerHTML = `<span>${escapeHtml(userInitials(user.fullname || user.username))}</span>`;
+                });
+            }
+
+            document.getElementById("avatarName").textContent = user.fullname || user.username || "";
+
+            document.getElementById("avatarRemoveBtn").hidden = !user.avatarUrl;
+
+        }
+
+
+        function setupAvatar() {
+
+            const input = document.getElementById("avatarFile");
+
+            document.getElementById("avatarChangeBtn").addEventListener("click", function () {
+                input.click();
+            });
+
+            input.addEventListener("change", function () {
+
+                const file = input.files && input.files[0];
+
+                input.value = "";
+
+                if (file) {
+                    uploadAvatar(file);
+                }
+
+            });
+
+            document.getElementById("avatarRemoveBtn").addEventListener("click", function () {
+                saveAvatar(null, "Đã xoá ảnh đại diện.");
+            });
+
+        }
+
+
+        function avatarMessage(error, success) {
+
+            const errorBox = document.getElementById("avatarError");
+
+            const successBox = document.getElementById("avatarSuccess");
+
+            errorBox.textContent = error || "";
+
+            errorBox.hidden = !error;
+
+            successBox.textContent = success || "";
+
+            successBox.hidden = !success;
+
+        }
+
+
+        async function uploadAvatar(file) {
+
+            avatarMessage(null, null);
+
+            if (AVATAR_TYPES.indexOf(file.type) === -1) {
+                avatarMessage("Chỉ nhận ảnh JPG, PNG hoặc WebP.");
+                return;
+            }
+
+            if (file.size > AVATAR_MAX_BYTES) {
+                avatarMessage("Ảnh đại diện tối đa 2 MB (ảnh này " + (file.size / 1024 / 1024).toFixed(1).replace(".", ",") + " MB).");
+                return;
             }
 
 
-            document.querySelectorAll(".header .login-btn.user-name")
-                .forEach(function (button) {
+            const preview = URL.createObjectURL(file);
 
-                    button.textContent = user.fullname || user.username;
+            renderAvatar(currentUser || {}, preview);
 
+            const button = document.getElementById("avatarChangeBtn");
+
+            button.disabled = true;
+
+            button.textContent = "Đang tải ảnh…";
+
+
+            try {
+
+                const form = new FormData();
+
+                form.append("file", file);
+
+                const uploaded = await apiRequest("/uploads/avatar", { method: "POST", body: form, auth: true });
+
+                await saveAvatar(uploaded.url, "Đã đổi ảnh đại diện.");
+
+            } catch (error) {
+
+                renderAvatar(currentUser || {});
+
+                if (!handleSessionError(error)) {
+                    avatarMessage(error.code === "IMAGE_TOO_LARGE" ? "Ảnh đại diện tối đa 2 MB." : getErrorMessage(error));
+                }
+
+            } finally {
+
+                URL.revokeObjectURL(preview);
+
+                button.disabled = false;
+
+                button.textContent = "Đổi ảnh";
+
+            }
+
+        }
+
+
+        /* PUT /users/me với tên / SĐT đang lưu (không lấy chữ đang gõ dở trong form) và ảnh mới */
+
+        async function saveAvatar(url, message) {
+
+            if (!currentUser) {
+                return;
+            }
+
+            try {
+
+                const user = await apiRequest("/users/me", {
+                    method: "PUT",
+                    auth: true,
+                    body: { fullname: currentUser.fullname, phone: currentUser.phone || null, avatarUrl: url }
                 });
+
+                currentUser = user;
+
+                renderAvatar(user);
+
+                updateSessionUser(user);
+
+                avatarMessage(null, message);
+
+            } catch (error) {
+
+                renderAvatar(currentUser);
+
+                if (!handleSessionError(error)) {
+                    avatarMessage(getErrorMessage(error));
+                }
+
+            }
 
         }
 

@@ -7,6 +7,10 @@ public record AuthUserResponse(
         String email,
         String username,
         String fullname,
-        List<String> roles
+        List<String> roles,
+        /* kế hoạch v2 GĐ5: the header shows the avatar right after login / refresh */
+        String avatarUrl,
+        /* mật khẩu tạm chưa đổi: frontend chuyển sang màn hình đổi mật khẩu */
+        boolean mustChangePassword
 ) {
 }

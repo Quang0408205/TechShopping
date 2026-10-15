@@ -43,7 +43,10 @@ function renderBarChart(container, data, options) {
 
     const topPadding = 16;
 
-    const minSlotWidth = 74;
+    /* minSlotWidth / labelEvery: chuỗi dài (30 ngày) dùng cột hẹp và chỉ ghi nhãn trục cách quãng */
+    const minSlotWidth = opts.minSlotWidth || 74;
+
+    const labelEvery = opts.labelEvery || 1;
 
 
     /*
@@ -66,7 +69,8 @@ function renderBarChart(container, data, options) {
 
     const bars = data.map(function (d, i) {
 
-        const barHeight = Math.max(2, Math.round((d.value / maxValue) * availableHeight));
+        /* kỳ không có số liệu (0 hoặc âm) không vẽ cột, chỉ còn nhãn trục */
+        const barHeight = d.value > 0 ? Math.max(2, Math.round((d.value / maxValue) * availableHeight)) : 0;
 
         const x = i * slotWidth + (slotWidth - barWidth) / 2;
 
@@ -77,7 +81,7 @@ function renderBarChart(container, data, options) {
                 <rect x="${x}" y="${y}" width="${barWidth}" height="${barHeight}" rx="4" fill="${escapeHtml(barColor)}" class="chart-bar">
                     <title>${escapeHtml(d.title || d.label)}: ${escapeHtml(formatValue(d.value))}</title>
                 </rect>
-                <text x="${x + barWidth / 2}" y="${height - axisHeight + 18}" text-anchor="middle" class="chart-axis-label">${escapeHtml(d.label)}</text>
+                ${i % labelEvery === 0 ? `<text x="${x + barWidth / 2}" y="${height - axisHeight + 18}" text-anchor="middle" class="chart-axis-label">${escapeHtml(d.label)}</text>` : ""}
             </g>
         `;
 
@@ -172,6 +176,110 @@ function renderLineChart(container, data, options) {
             <path d="${pathD}" fill="none" stroke="${escapeHtml(lineColor)}" stroke-width="2.5"></path>
             ${dots}
         </svg>
+    `;
+
+}
+
+
+/*
+ * Biểu đồ tròn dạng vành + chú thích (% và số tiền). data: [{ label, value }].
+ * Phần nhỏ hơn 3% (hoặc từ phần thứ maxSlices trở đi) gộp thành "Khác". Màu lấy từ token,
+ * không gradient; tổng bằng 0 → câu báo thay vì vòng rỗng.
+ */
+
+const PIE_COLORS = ["#111318", "#8a5a22", "#c89b64", "#5b6b7a", "#a8b3bd", "#e3d3bd", "#6e4419"];
+
+function renderPieChart(container, data, options) {
+
+    const opts = options || {};
+
+    const formatValue = opts.formatValue || function (v) { return String(v); };
+
+    const maxSlices = opts.maxSlices || 6;
+
+    const rows = (data || []).filter(function (d) { return d.value > 0; })
+        .sort(function (a, b) { return b.value - a.value; });
+
+    const total = rows.reduce(function (sum, d) { return sum + d.value; }, 0);
+
+    if (total <= 0) {
+
+        container.innerHTML = '<p class="admin-chart-empty">' + escapeHtml(opts.emptyText || "Chưa có dữ liệu để hiển thị.") + "</p>";
+
+        return;
+
+    }
+
+
+    const slices = [];
+
+    let other = 0;
+
+    rows.forEach(function (d, i) {
+
+        if (i < maxSlices - 1 || (i === maxSlices - 1 && rows.length === maxSlices)) {
+
+            if (d.value / total >= 0.03 || i === 0) {
+                slices.push({ label: d.label, value: d.value });
+                return;
+            }
+
+        }
+
+        other += d.value;
+
+    });
+
+    if (other > 0) {
+        slices.push({ label: "Khác", value: other });
+    }
+
+
+    const radius = 70;
+
+    const circumference = 2 * Math.PI * radius;
+
+    let offset = 0;
+
+    const arcs = slices.map(function (slice, i) {
+
+        const length = circumference * slice.value / total;
+
+        const arc = `
+            <circle cx="90" cy="90" r="${radius}" fill="none" stroke="${PIE_COLORS[i % PIE_COLORS.length]}" stroke-width="32"
+                stroke-dasharray="${length.toFixed(2)} ${(circumference - length).toFixed(2)}"
+                stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 90 90)">
+                <title>${escapeHtml(slice.label)}: ${escapeHtml(formatValue(slice.value))}</title>
+            </circle>
+        `;
+
+        offset += length;
+
+        return arc;
+
+    }).join("");
+
+
+    const legend = slices.map(function (slice, i) {
+
+        const percent = (slice.value * 100 / total).toFixed(1).replace(".", ",");
+
+        return `
+            <li>
+                <span class="admin-pie-swatch" style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></span>
+                <span>${escapeHtml(slice.label)}</span>
+                <span class="admin-pie-value">${escapeHtml(formatValue(slice.value))} <small>(${percent}%)</small></span>
+            </li>
+        `;
+
+    }).join("");
+
+
+    container.innerHTML = `
+        <div class="admin-pie">
+            <svg viewBox="0 0 180 180" role="img" aria-label="${escapeHtml(opts.ariaLabel || "Biểu đồ tròn")}">${arcs}</svg>
+            <ul class="admin-pie-legend">${legend}</ul>
+        </div>
     `;
 
 }

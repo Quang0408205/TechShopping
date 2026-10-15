@@ -26,14 +26,17 @@ public class JwtTokenService {
 
     public String issueAccessToken(User user, List<String> roles) {
         Instant now = clock.instant();
-        JwtClaimsSet claims = JwtClaimsSet.builder()
+        JwtClaimsSet.Builder builder = JwtClaimsSet.builder()
                 .issuer(properties.issuer())
                 .subject(String.valueOf(user.getId()))
                 .issuedAt(now)
                 .expiresAt(now.plus(properties.accessTokenTtl()))
                 .claim(JwtConfig.USERNAME_CLAIM, user.getUsername())
-                .claim(JwtConfig.ROLES_CLAIM, List.copyOf(roles))
-                .build();
+                .claim(JwtConfig.ROLES_CLAIM, List.copyOf(roles));
+        if (user.isMustChangePassword()) {
+            builder.claim(JwtConfig.PASSWORD_CHANGE_CLAIM, true);
+        }
+        JwtClaimsSet claims = builder.build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).type("JWT").build();
         return jwtEncoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
     }

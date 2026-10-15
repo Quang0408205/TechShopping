@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -39,54 +40,93 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note">
-                Dữ liệu mẫu: màn hình này chưa nối backend (các module Đơn hàng, Bảo hành,
-                Chi nhánh / Nhân viên, Chatbot được xây ở Phase 4–9). Thay đổi chỉ lưu trên trình duyệt này.
-            </p>
 
             <div class="admin-filter-bar admin-filter-bar--split">
 
-                <span></span>
+                <form class="admin-filter-bar" id="storeFilterForm" role="search">
 
-                <button type="button" class="btn btn-dark" id="toggleCreateFormBtn">
+                    <input type="search" id="storeKeyword" placeholder="Tên, địa chỉ, quận, tỉnh, SĐT…" maxlength="255" aria-label="Từ khoá">
+
+                    <select id="storeStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="true">Đang mở</option>
+                        <option value="false">Tạm đóng</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newStoreBtn">
                     + THÊM CHI NHÁNH
                 </button>
 
             </div>
 
 
-            <section class="admin-panel" id="createStorePanel" hidden>
+            <!-- Thêm / sửa chi nhánh -->
+            <section class="admin-panel" id="storeFormPanel" hidden>
 
                 <div class="admin-panel-header">
-                    <h2>Thêm chi nhánh mới</h2>
+                    <h2 id="storeFormTitle">Thêm chi nhánh mới</h2>
                 </div>
 
-                <form id="createStoreForm" novalidate>
+                <form id="storeForm" novalidate>
 
-                    <p id="createStoreError" class="form-error" role="alert" hidden></p>
+                    <p id="storeFormError" class="form-error" role="alert" hidden></p>
 
                     <div class="admin-form-grid">
 
                         <div class="admin-field">
-                            <label for="newStoreName">Tên chi nhánh</label>
-                            <input type="text" id="newStoreName" maxlength="120" required>
+                            <label for="stName">Tên chi nhánh *</label>
+                            <input type="text" id="stName" maxlength="120" required>
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="stAddress">Số nhà, đường, phường *</label>
+                            <input type="text" id="stAddress" maxlength="255" required placeholder="vd. 12 Nguyễn Trãi, Phường 3">
                         </div>
 
                         <div class="admin-field">
-                            <label for="newStoreAddress">Địa chỉ</label>
-                            <input type="text" id="newStoreAddress" maxlength="255" required>
+                            <label for="stDistrict">Quận / huyện *</label>
+                            <input type="text" id="stDistrict" maxlength="100" required placeholder="vd. Quận 5">
                         </div>
 
                         <div class="admin-field">
-                            <label for="newStorePhone">Số điện thoại</label>
-                            <input type="text" id="newStorePhone" maxlength="20">
+                            <label for="stCity">Tỉnh / thành phố *</label>
+                            <input type="text" id="stCity" maxlength="100" required placeholder="vd. Hồ Chí Minh">
                         </div>
+
+                        <div class="admin-field">
+                            <label for="stPhone">Số điện thoại</label>
+                            <input type="tel" id="stPhone" maxlength="20">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="stEmail">Email</label>
+                            <input type="email" id="stEmail" maxlength="120">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="stLatitude">Vĩ độ</label>
+                            <input type="number" id="stLatitude" step="any" min="-90" max="90" placeholder="vd. 10.7546">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="stLongitude">Kinh độ</label>
+                            <input type="number" id="stLongitude" step="any" min="-180" max="180" placeholder="vd. 106.6665">
+                        </div>
+
+                        <label class="admin-field-check">
+                            <input type="checkbox" id="stActive" checked>
+                            Đang mở (bỏ chọn = tạm đóng)
+                        </label>
 
                     </div>
 
                     <div class="admin-form-actions">
-                        <button type="submit" class="btn btn-dark">LƯU</button>
-                        <button type="button" class="btn btn-outline-dark" id="cancelCreateStoreBtn">HỦY</button>
+                        <button type="submit" class="btn btn-dark" id="storeSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="storeCancelBtn">HỦY</button>
                     </div>
 
                 </form>
@@ -102,19 +142,22 @@
                 </div>
 
                 <div class="admin-table-wrapper">
-                    <table class="admin-table">
+                    <table class="admin-table admin-table--wide">
                         <thead>
                             <tr>
-                                <th>Mã</th>
                                 <th>Chi nhánh</th>
                                 <th>Địa chỉ</th>
-                                <th>Điện thoại</th>
+                                <th>Liên hệ</th>
                                 <th>Nhân viên</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
                             </tr>
                         </thead>
                         <tbody id="storeTableBody"></tbody>
                     </table>
                 </div>
+
+                <div class="admin-pagination" id="storePagination"></div>
 
             </section>
 
@@ -128,7 +171,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
 <script src="../js/admin/stores.js"></script>

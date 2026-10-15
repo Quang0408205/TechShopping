@@ -15,9 +15,10 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
@@ -37,11 +38,6 @@
 
         <main class="admin-content">
 
-            <p class="admin-mock-note admin-live-note">
-                Dữ liệu thật (catalogue /api/v1/products): thêm, sửa, ẩn / hiện và xoá có hiệu lực ngay trên website.
-                Phiên bản, ảnh và thông số kỹ thuật của sản phẩm được quản lý qua API riêng (chưa có màn hình).
-            </p>
-
 
             <div class="admin-filter-bar admin-filter-bar--split">
 
@@ -51,6 +47,10 @@
 
                     <select id="productCategoryFilter" aria-label="Danh mục">
                         <option value="">Mọi danh mục</option>
+                    </select>
+
+                    <select id="productBrandFilter" aria-label="Thương hiệu">
+                        <option value="">Mọi thương hiệu</option>
                     </select>
 
                     <select id="productStatusFilter" aria-label="Trạng thái">
@@ -119,11 +119,6 @@
                         </div>
 
                         <div class="admin-field">
-                            <label for="pfStock">Tồn kho</label>
-                            <input type="number" id="pfStock" min="0" step="1">
-                        </div>
-
-                        <div class="admin-field">
                             <label for="pfWarranty">Bảo hành (tháng)</label>
                             <input type="number" id="pfWarranty" min="0" step="1">
                         </div>
@@ -137,6 +132,32 @@
                             <label for="pfDescription">Mô tả</label>
                             <textarea id="pfDescription" rows="4"></textarea>
                         </div>
+
+                        <!-- Ảnh: thêm mới = gửi cùng sản phẩm khi LƯU; sửa = lưu ngay từng thao tác (js/admin/products.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-image-field" id="pfImages">
+
+                            <legend>Ảnh sản phẩm *</legend>
+
+                            <p class="admin-field-hint" id="pfImagesHint"></p>
+
+                            <p class="form-error" id="pfImagesError" role="alert" hidden></p>
+
+                            <div class="admin-image-list" id="pfImageList" aria-live="polite"></div>
+
+                            <div class="admin-image-add" id="pfImageAdd">
+
+                                <label class="btn btn-outline-dark admin-image-file-btn">
+                                    CHỌN ẢNH TỪ MÁY
+                                    <input type="file" id="pfImageFile" accept="image/jpeg,image/png,image/webp" multiple>
+                                </label>
+
+                                <input type="url" id="pfImageUrl" maxlength="2048" placeholder="Hoặc dán link ảnh https://…" aria-label="Link ảnh">
+
+                                <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
+
+                            </div>
+
+                        </fieldset>
 
                         <label class="admin-field-check admin-field-wide">
                             <input type="checkbox" id="pfActive" checked>
@@ -197,7 +218,6 @@
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
 <script src="../js/core/layout.js"></script>
-<script src="../js/admin/mock-staff-data.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
 <script src="../js/admin/products.js"></script>

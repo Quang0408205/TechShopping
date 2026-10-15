@@ -53,14 +53,15 @@ class AuthDataInitializerTest {
     void run_createsOnlyMissingRoles() {
         when(roleRepository.existsByName("CUSTOMER")).thenReturn(true);
         when(roleRepository.existsByName("STAFF")).thenReturn(false);
+        when(roleRepository.existsByName("BRANCH_MANAGER")).thenReturn(false);
         when(roleRepository.existsByName("ADMIN")).thenReturn(false);
         when(userRoleRepository.existsByRoleName("ADMIN")).thenReturn(true);
 
         initializer(adminProperties()).run(null);
 
         ArgumentCaptor<Role> captor = ArgumentCaptor.forClass(Role.class);
-        verify(roleRepository, times(2)).save(captor.capture());
-        assertThat(captor.getAllValues()).extracting(Role::getName).containsExactly("STAFF", "ADMIN");
+        verify(roleRepository, times(3)).save(captor.capture());
+        assertThat(captor.getAllValues()).extracting(Role::getName).containsExactly("STAFF", "BRANCH_MANAGER", "ADMIN");
         assertThat(captor.getAllValues()).allSatisfy(role -> assertThat(role.getDescription()).isNotBlank());
     }
 

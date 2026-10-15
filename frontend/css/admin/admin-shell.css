@@ -1,0 +1,640 @@
+/* ================= KHU NỘI BỘ: KHUNG MỚI (kế hoạch v2, GĐ4) ================= */
+
+/*
+ * Nạp SAU css/admin/admin.css trên mọi trang admin/. Cùng tông đen / trắng / đồng và font
+ * Be Vietnam Pro của khu khách hàng; nền đặc, không gradient. Sidebar 248px, nội dung tối đa 1440px,
+ * thu gọn menu dưới 1024px. Các token màu (--color-*, --gray-*) vẫn lấy từ css/style.css.
+ */
+
+.admin-body {
+    --admin-sidebar-width: 248px;
+    --admin-topbar-height: 64px;
+    font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 14px;
+    background: #f4f2ef;
+}
+
+
+/* ---------- Sidebar ---------- */
+
+.admin-sidebar {
+    width: var(--admin-sidebar-width);
+    padding: 22px 14px;
+}
+
+.admin-logo {
+    padding: 0 10px 18px;
+}
+
+.admin-logo .logo-main {
+    font-size: 22px;
+    letter-spacing: 0.5px;
+}
+
+.admin-logo .logo-sub {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+    color: var(--color-accent-soft);
+    opacity: 0.75;
+}
+
+.admin-nav-label {
+    padding: 18px 12px 6px;
+    font-size: 11px;
+    letter-spacing: 0.4px;
+    text-transform: none;
+    color: var(--gray-500);
+}
+
+.admin-nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    font-size: 13px;
+}
+
+.admin-nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    opacity: 0.85;
+}
+
+.admin-nav a.active .admin-nav-icon {
+    color: var(--color-accent-soft);
+    opacity: 1;
+}
+
+
+/* ---------- Topbar ---------- */
+
+.admin-topbar {
+    height: var(--admin-topbar-height);
+    padding: 0 28px;
+    background: var(--color-paper);
+}
+
+.admin-page-title {
+    font-size: 17px;
+    letter-spacing: -0.01em;
+}
+
+.admin-sidebar-toggle svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.admin-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--color-accent);
+    color: var(--color-paper);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.admin-user-info {
+    align-items: flex-start;
+}
+
+.admin-logout-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+
+/* ---------- Nội dung ---------- */
+
+.admin-content {
+    max-width: 1440px;
+    padding: 28px;
+}
+
+.admin-panel,
+.admin-stat-card {
+    border-radius: 10px;
+    box-shadow: none;
+    border: 1px solid #e7e3dd;
+}
+
+.admin-panel-header h2 {
+    font-size: 15px;
+}
+
+.admin-stat-value {
+    font-size: 24px;
+    letter-spacing: -0.01em;
+}
+
+/* Bảng: tiêu đề dính khi cuộn trong khung */
+.admin-table-wrapper {
+    max-height: 640px;
+    overflow: auto;
+}
+
+.admin-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #faf9f7;
+}
+
+/* Trạng thái đang tải dạng khung xương (nền đặc, nhấp nháy nhẹ) */
+.admin-skeleton {
+    display: block;
+    height: 14px;
+    margin: 8px 0;
+    border-radius: 4px;
+    background: #ece8e2;
+    animation: admin-skeleton-pulse 1.2s ease-in-out infinite;
+}
+
+.admin-skeleton--card {
+    height: 92px;
+    border-radius: 10px;
+}
+
+@keyframes admin-skeleton-pulse {
+    50% {
+        opacity: 0.45;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .admin-skeleton {
+        animation: none;
+    }
+}
+
+/* Banner tính năng chưa có backend (Hỗ trợ khách hàng, Lịch sử Chatbot) */
+.admin-wip-banner {
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid var(--color-warning);
+    border-radius: 10px;
+    background: var(--color-warning-bg);
+    color: var(--color-warning);
+    font-size: 13px;
+}
+
+
+/* ---------- Tổng quan theo vai trò ---------- */
+
+.admin-dashboard-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.admin-dashboard-head h2 {
+    font-size: 20px;
+    letter-spacing: -0.01em;
+}
+
+.admin-dashboard-head p {
+    color: var(--gray-600);
+    font-size: 13px;
+}
+
+.admin-shortcuts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-shortcuts a {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 14px;
+    border: 1px solid var(--color-ink);
+    border-radius: 999px;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-shortcuts a:hover {
+    background: var(--color-ink);
+    color: var(--color-paper);
+}
+
+.admin-stat-trend {
+    font-weight: 600;
+}
+
+.admin-stat-trend.is-up {
+    color: var(--color-success);
+}
+
+.admin-stat-trend.is-down {
+    color: var(--color-danger);
+}
+
+/* "Việc của tôi hôm nay" */
+.admin-task-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-task-list a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 18px;
+    border: 1px solid #e7e3dd;
+    border-radius: 10px;
+    background: var(--color-paper);
+    color: var(--color-ink);
+}
+
+.admin-task-list a:hover {
+    border-color: var(--color-ink);
+}
+
+.admin-task-label {
+    font-weight: 600;
+}
+
+.admin-task-hint {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--gray-600);
+}
+
+.admin-task-count {
+    min-width: 40px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--gray-100, #f2f2f2);
+    font-size: 16px;
+    font-weight: 800;
+    text-align: center;
+}
+
+.admin-task-count.has-work {
+    background: var(--color-ink);
+    color: var(--color-paper);
+}
+
+/* Đội ngũ của quản lý chi nhánh */
+.admin-team-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-team-list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid #efebe5;
+}
+
+.admin-team-list li:last-child {
+    border-bottom: 0;
+}
+
+.admin-team-list .admin-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+    background: var(--color-ink);
+}
+
+.admin-team-list small {
+    display: block;
+    color: var(--gray-600);
+}
+
+/* Nhân viên chưa có chi nhánh */
+.admin-waiting {
+    max-width: 520px;
+    margin: 60px auto;
+    padding: 32px;
+    border: 1px solid #e7e3dd;
+    border-radius: 12px;
+    background: var(--color-paper);
+    text-align: center;
+}
+
+.admin-waiting h2 {
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.admin-waiting p {
+    color: var(--gray-600);
+}
+
+
+/* ---------- Biểu đồ tròn (admin-charts.js renderPieChart) ---------- */
+
+.admin-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px;
+}
+
+.admin-pie svg {
+    width: 180px;
+    height: 180px;
+    flex-shrink: 0;
+}
+
+.admin-pie-legend {
+    flex: 1;
+    min-width: 200px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 13px;
+}
+
+.admin-pie-legend li {
+    display: grid;
+    grid-template-columns: 12px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    padding: 5px 0;
+}
+
+.admin-pie-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+/* số tiền xuống dòng dưới tên, nên chú thích không bao giờ tràn khung hẹp */
+.admin-pie-value {
+    grid-column: 2;
+    color: var(--gray-700);
+    white-space: nowrap;
+}
+
+.admin-pie-value small {
+    color: var(--gray-500);
+}
+
+
+/* ---------- Báo cáo ---------- */
+
+.admin-report-filters {
+    align-items: flex-end;
+}
+
+.admin-report-filters label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.admin-export-btn {
+    margin-left: auto;
+}
+
+.admin-number {
+    text-align: right;
+    white-space: nowrap;
+}
+
+
+/* ---------- Trang đăng nhập nội bộ ---------- */
+
+.admin-login-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    background: var(--color-paper);
+}
+
+.admin-login-aside {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 48px;
+    background: var(--color-ink);
+    color: var(--gray-300);
+}
+
+.admin-login-aside .logo-main {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--color-paper);
+}
+
+.admin-login-aside .logo-sub {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--color-accent-soft);
+}
+
+.admin-login-aside h2 {
+    margin: 0 0 16px;
+    max-width: 420px;
+    font-size: 30px;
+    line-height: 1.25;
+    color: var(--color-paper);
+}
+
+.admin-login-aside ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 14px;
+}
+
+.admin-login-aside li {
+    padding: 10px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-login-aside li strong {
+    display: block;
+    color: var(--color-paper);
+}
+
+.admin-login-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+}
+
+.admin-login-card {
+    width: 100%;
+    max-width: 400px;
+}
+
+.admin-login-card h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+}
+
+.admin-login-card .login-intro {
+    margin-bottom: 24px;
+    color: var(--gray-600);
+    font-size: 14px;
+}
+
+.admin-login-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.admin-login-card label {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-login-card input {
+    padding: 12px 14px;
+    border: 1px solid #d9d4cc;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.admin-login-card input:focus {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 1px;
+    border-color: var(--color-accent);
+}
+
+.admin-login-card button[type="submit"] {
+    margin-top: 18px;
+    padding: 13px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.admin-login-card .admin-demo-accounts {
+    margin-top: 24px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: #f7f5f2;
+    font-size: 12px;
+    color: var(--gray-600);
+}
+
+.admin-login-card .back-home {
+    display: inline-block;
+    margin-top: 18px;
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+
+/* ---------- Responsive: 1280 / 1024 / 768 ---------- */
+
+@media (max-width: 1280px) {
+
+    .admin-content {
+        padding: 24px;
+    }
+
+}
+
+/* Dưới 1024px: menu trượt từ trái, có nền mờ phía sau */
+@media (max-width: 1023px) {
+
+    .admin-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+    }
+
+    .admin-sidebar.open {
+        transform: translateX(0);
+    }
+
+    /* bóng của menu đang ẩn không được lộ ra mép trái */
+    .admin-sidebar:not(.open) {
+        box-shadow: none;
+    }
+
+    .admin-sidebar-toggle {
+        display: inline-flex;
+    }
+
+    .admin-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 150;
+        background: rgba(17, 19, 24, 0.45);
+    }
+
+    .admin-topbar {
+        padding: 0 16px;
+    }
+
+}
+
+@media (max-width: 768px) {
+
+    .admin-content {
+        padding: 16px;
+    }
+
+    .admin-user-info {
+        display: none;
+    }
+
+    .admin-page-title {
+        font-size: 15px;
+    }
+
+    .admin-login-page {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-login-aside {
+        display: none;
+    }
+
+    .admin-export-btn {
+        margin-left: 0;
+    }
+
+}

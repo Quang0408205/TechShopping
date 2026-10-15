@@ -1,5 +1,7 @@
 package com.example.Tech.dto.response.product;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -23,6 +25,26 @@ public record ProductResponse(
         Integer viewCount,
         Boolean isActive,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+
+        @Schema(description = "Primary image, else the first image by display order; null when the product has none")
+        String primaryImageUrl,
+
+        @Schema(description = "Price shown to customers now: the lower of discountPrice and the active promotion's "
+                + "price, else basePrice. discountPrice stays the raw value edited in the admin form")
+        BigDecimal effectivePrice,
+
+        @Schema(description = "Name of the promotion giving effectivePrice; null when no promotion applies")
+        String activePromotionName,
+
+        @Schema(description = "Rating on Thế Giới Di Động (crawled, display only); null when unknown. rating / "
+                + "totalReviews are this site's own visible reviews")
+        BigDecimal tgddRating,
+
+        @Schema(description = "Number of ratings behind tgddRating on Thế Giới Di Động (0 when unknown)")
+        Integer tgddReviewCount,
+        @Schema(description = "Units customers can still buy: stock of every variant in OPEN stores (inventory per "
+                + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
+        Integer availableQuantity
 ) {
 }

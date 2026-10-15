@@ -16,5 +16,9 @@ public interface CategoryService {
 
     CategoryResponse update(Integer id, CategoryUpdateRequest request);
 
-    void delete(Integer id);
+    /**
+     * 409 RESOURCE_IN_USE (details.reason CHILDREN / PRODUCTS / HISTORY) unless the category is empty, or
+     * withProducts is true and none of its products has orders, stock or reviews: then they are deleted with it.
+     */
+    void delete(Integer id, boolean withProducts);
 }

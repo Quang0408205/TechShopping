@@ -26,6 +26,28 @@ function formatPrice(price) {
 }
 
 
+/*
+ * Điểm hiển thị của một sản phẩm (ProductResponse): đánh giá thật trên web
+ * (rating / totalReviews, chỉ tính đánh giá đang hiện); chưa có thì điểm crawl
+ * từ Thế Giới Di Động (tgddRating / tgddReviewCount); không có cả hai → null.
+ * → { rating, count, source: "site" | "tgdd" }
+ */
+
+function productRatingSummary(product) {
+
+    if (product && product.totalReviews > 0 && Number(product.rating) > 0) {
+        return { rating: Number(product.rating), count: Number(product.totalReviews), source: "site" };
+    }
+
+    if (product && product.tgddReviewCount > 0 && Number(product.tgddRating) > 0) {
+        return { rating: Number(product.tgddRating), count: Number(product.tgddReviewCount), source: "tgdd" };
+    }
+
+    return null;
+
+}
+
+
 /* ================= CHỐNG XSS ================= */
 
 /*
@@ -200,8 +222,8 @@ function getProductDetailUrl(productId) {
 
 /*
  * Ảnh thay thế theo slug danh mục, dùng khi sản phẩm không có ảnh (116 sản
- * phẩm) hoặc tải ảnh lỗi. ProductResponse không có URL ảnh nên mỗi thẻ tải
- * ảnh riêng qua GET /products/{id}/images (xem loadProductImages).
+ * phẩm dữ liệu crawl) hoặc tải ảnh lỗi. Ảnh của thẻ lấy thẳng từ
+ * ProductResponse.primaryImageUrl (IMG-3), không gọi API riêng cho từng thẻ.
  */
 
 const CATEGORY_FALLBACK_IMAGES = {
@@ -249,8 +271,28 @@ function variantLabelOf(variant) {
 
 
 /*
+ * Giá đang bán do backend tính (effectivePrice): giá thấp hơn giữa giá giảm thủ công (discountPrice)
+ * và giá của chương trình khuyến mãi đang diễn ra — đúng giá giỏ hàng / thanh toán sẽ tính.
+ * Không có effectivePrice (dữ liệu cũ) → dùng discountPrice như trước.
+ */
+
+function salePriceOf(source) {
+
+    if (source.effectivePrice !== null && source.effectivePrice !== undefined) {
+        return Number(source.effectivePrice);
+    }
+
+    return source.discountPrice !== null && source.discountPrice !== undefined
+        ? Number(source.discountPrice)
+        : null;
+
+}
+
+
+/*
  * Giá bán của một phiên bản (hoặc của sản phẩm khi không có phiên bản):
- * { price, oldPrice } — oldPrice chỉ có khi giá khuyến mãi thấp hơn giá gốc.
+ * { price, oldPrice, promotionName } — oldPrice chỉ có khi giá bán thấp hơn giá gốc,
+ * promotionName khi giá đó đến từ một chương trình khuyến mãi.
  */
 
 function resolvePrices(product, variant) {
@@ -259,29 +301,26 @@ function resolvePrices(product, variant) {
 
     const original = Number(variant ? variant.price : product.basePrice) || 0;
 
-    const discount =
-        source.discountPrice !== null && source.discountPrice !== undefined
-            ? Number(source.discountPrice)
-            : null;
+    const sale = salePriceOf(source);
+
+    const discounted = sale !== null && sale < original;
 
     return {
-        price: discount !== null && discount < original ? discount : original,
-        oldPrice: discount !== null && discount < original ? original : null
+        price: discounted ? sale : original,
+        oldPrice: discounted ? original : null,
+        promotionName: discounted && source.activePromotionName ? source.activePromotionName : null
     };
 
 }
 
 
-/* Giá hiển thị: giá khuyến mãi nếu có, không thì giá gốc */
+/* Giá hiển thị trên thẻ / danh sách: giá đang bán nếu có, không thì giá gốc */
 
 function getDisplayPrice(product) {
 
-    const price =
-        product.discountPrice !== null && product.discountPrice !== undefined
-            ? product.discountPrice
-            : product.basePrice;
+    const sale = salePriceOf(product);
 
-    return Number(price) || 0;
+    return (sale !== null ? sale : Number(product.basePrice)) || 0;
 
 }
 
@@ -293,14 +332,73 @@ function getDisplayPrice(product) {
  * (A2). Nút .add-cart vẫn mang data-name /
  * data-price vì giỏ hàng còn lưu theo tên cho tới Phase 3.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
- * không cho thêm vào giỏ.
+ * không cho thêm vào giỏ. availableQuantity = 0 (không chi nhánh đang mở nào
+ * còn hàng, kế hoạch v3 GĐ E) → nhãn "Hết hàng", nút bị khoá.
+ * Thiếu trường này (API cũ) thì coi như còn hàng.
+ * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
+ * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
+ * thay thế (bindProductImageFallbacks).
  */
+
+/*
+ * "★ 4.5 (12)" từ đánh giá thật; chưa có thì điểm crawl ghi rõ là tham khảo
+ * "★ 4.6 · 1.234 đánh giá tham khảo" (kiemthu GĐ6); không có cả hai → rỗng
+ */
+
+function productCardRatingHtml(product) {
+
+    const rating = productRatingSummary(product);
+
+    if (!rating) {
+        return "";
+    }
+
+    const score = escapeHtml(rating.rating.toFixed(1));
+
+    const count = escapeHtml(rating.count.toLocaleString("vi-VN"));
+
+    if (rating.source === "tgdd") {
+
+        return `
+            <p class="product-rating product-rating--tgdd" title="Nguồn: dữ liệu tham khảo bên ngoài">
+                ★ ${score} · ${count} đánh giá tham khảo
+            </p>
+        `;
+
+    }
+
+    return `
+        <p class="product-rating" title="${escapeHtml(rating.count + " đánh giá trên POY")}">
+            ★ ${score}
+            <span>(${count})</span>
+        </p>
+    `;
+
+}
+
+
+/* Kế hoạch v3 GĐ E: sản phẩm / phiên bản không còn ở chi nhánh đang mở nào (thiếu trường = API cũ → còn hàng) */
+
+function isSoldOut(item) {
+
+    return item && item.availableQuantity === 0;
+
+}
+
 
 function productCardHtml(product, categorySlug) {
 
     const price = getDisplayPrice(product);
 
+    const fallbackImage = getFallbackImage(categorySlug);
+
+    const imageUrl = isSafeImageUrl(product.primaryImageUrl)
+        ? product.primaryImageUrl.trim()
+        : fallbackImage;
+
     const hasPrice = price > 0;
+
+    const soldOut = hasPrice && isSoldOut(product);
 
     const name = escapeHtml(product.name);
 
@@ -308,17 +406,23 @@ function productCardHtml(product, categorySlug) {
 
     const basePrice = Number(product.basePrice) || 0;
 
-    /* Có giảm giá thật (discountPrice < basePrice): nhãn -x% + giá gốc gạch ngang */
+    /* Có giảm giá thật (giá bán < basePrice): nhãn -x% + giá gốc gạch ngang; di chuột lên nhãn → tên chương trình */
     const hasDiscount = hasPrice && basePrice > price;
+
+    const promotionTitle = hasDiscount && product.activePromotionName
+        ? ` title="${escapeHtml("Khuyến mãi: " + product.activePromotionName)}"`
+        : "";
 
 
     return `
         <div class="product-card" data-product-id="${escapeHtml(product.id)}">
 
             <a href="${detailUrl}" class="product-image">
-                ${hasDiscount ? `<span class="product-badge">-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
+                ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
+                ${soldOut ? `<span class="product-stock-badge">Hết hàng</span>` : ""}
                 <img
-                    data-fallback="${escapeHtml(getFallbackImage(categorySlug))}"
+                    src="${escapeHtml(imageUrl)}"
+                    data-fallback="${escapeHtml(fallbackImage)}"
                     alt="${name}"
                     loading="lazy"
                 >
@@ -334,6 +438,8 @@ function productCardHtml(product, categorySlug) {
                     <a href="${detailUrl}">${name}</a>
                 </h3>
 
+                ${productCardRatingHtml(product)}
+
                 <p class="product-price">
                     ${hasPrice ? formatPrice(price) : "Liên hệ"}
                     ${hasDiscount ? `<span class="product-price-old">${formatPrice(basePrice)}</span>` : ""}
@@ -344,9 +450,9 @@ function productCardHtml(product, categorySlug) {
                     class="add-cart"
                     data-name="${name}"
                     data-price="${price}"
-                    ${hasPrice ? "" : "disabled"}
+                    ${hasPrice && !soldOut ? "" : "disabled"}
                 >
-                    ${hasPrice ? "THÊM VÀO GIỎ" : "LIÊN HỆ ĐỂ ĐẶT HÀNG"}
+                    ${!hasPrice ? "LIÊN HỆ ĐỂ ĐẶT HÀNG" : soldOut ? "TẠM HẾT HÀNG" : "THÊM VÀO GIỎ"}
                 </button>
 
             </div>
@@ -359,7 +465,8 @@ function productCardHtml(product, categorySlug) {
 
 /*
  * renderProductGrid(container, products, categorySlugById):
- * vẽ lưới thẻ, gắn "Thêm vào giỏ" cho các thẻ mới, rồi tải ảnh thật.
+ * vẽ lưới thẻ (ảnh từ primaryImageUrl), gắn "Thêm vào giỏ" cho các thẻ mới
+ * và ảnh thay thế cho ảnh hỏng.
  * categorySlugById: { [categoryId]: slug }, dùng để chọn ảnh thay thế.
  */
 
@@ -391,7 +498,7 @@ function renderProductGrid(container, products, categorySlugById) {
 
     setupAddToCart(container);
 
-    loadProductImages(container);
+    bindProductImageFallbacks(container);
 
     staggerRevealCards(container);
 
@@ -471,8 +578,12 @@ let modalOverlayElement = null;
 
 
 /*
- * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm }):
+ * openConfirmModal({ title, message, confirmLabel, cancelLabel, onConfirm, input }):
  * thay cho confirm() / alert() khi cần người dùng xác nhận (vd. xoá khỏi giỏ).
+ * input (tuỳ chọn) = { label, value, placeholder, maxLength }: thêm một ô nhập,
+ * onConfirm nhận giá trị đã trim; Enter trong ô = xác nhận.
+ * select (tuỳ chọn, thay cho input) = { label, value, options: [{ value, label }] }:
+ * thêm một ô chọn, onConfirm nhận giá trị đang chọn.
  * Mọi chuỗi đều được escape.
  */
 
@@ -480,6 +591,10 @@ function openConfirmModal(options) {
 
     closeModal();
 
+
+    const input = options.input;
+
+    const select = options.select;
 
     const overlay = document.createElement("div");
 
@@ -489,6 +604,27 @@ function openConfirmModal(options) {
         <div class="modal-box" role="dialog" aria-modal="true">
             <h3>${escapeHtml(options.title || "Xác nhận")}</h3>
             <p>${escapeHtml(options.message || "")}</p>
+            ${input ? `
+                <label class="modal-field">
+                    <span>${escapeHtml(input.label || "")}</span>
+                    <input
+                        type="text"
+                        value="${escapeHtml(input.value || "")}"
+                        placeholder="${escapeHtml(input.placeholder || "")}"
+                        ${input.maxLength ? `maxlength="${Number(input.maxLength)}"` : ""}
+                    >
+                </label>
+            ` : ""}
+            ${!input && select ? `
+                <label class="modal-field">
+                    <span>${escapeHtml(select.label || "")}</span>
+                    <select>
+                        ${(select.options || []).map(function (option) {
+                            return `<option value="${escapeHtml(option.value)}" ${String(option.value) === String(select.value) ? "selected" : ""}>${escapeHtml(option.label)}</option>`;
+                        }).join("")}
+                    </select>
+                </label>
+            ` : ""}
             <div class="modal-actions">
                 <button type="button" class="btn btn-outline-dark" data-action="cancel">
                     ${escapeHtml(options.cancelLabel || "Hủy")}
@@ -504,6 +640,25 @@ function openConfirmModal(options) {
 
     modalOverlayElement = overlay;
 
+    const inputElement = overlay.querySelector(".modal-field input");
+
+    const selectElement = overlay.querySelector(".modal-field select");
+
+
+    function confirm() {
+
+        const value = inputElement
+            ? inputElement.value.trim()
+            : (selectElement ? selectElement.value : undefined);
+
+        closeModal();
+
+        if (typeof options.onConfirm === "function") {
+            options.onConfirm(value);
+        }
+
+    }
+
 
     overlay.addEventListener("click", function (event) {
 
@@ -515,15 +670,26 @@ function openConfirmModal(options) {
 
     overlay.querySelector('[data-action="cancel"]').addEventListener("click", closeModal);
 
-    overlay.querySelector('[data-action="confirm"]').addEventListener("click", function () {
+    overlay.querySelector('[data-action="confirm"]').addEventListener("click", confirm);
 
-        closeModal();
+    if (inputElement) {
 
-        if (typeof options.onConfirm === "function") {
-            options.onConfirm();
-        }
+        inputElement.addEventListener("keydown", function (event) {
 
-    });
+            if (event.key === "Enter") {
+                event.preventDefault();
+                confirm();
+            }
+
+        });
+
+        inputElement.focus();
+
+    } else if (selectElement) {
+
+        selectElement.focus();
+
+    }
 
 
     requestAnimationFrame(function () {
@@ -546,6 +712,90 @@ function closeModal() {
 }
 
 
+/*
+ * Hộp thoại hiện MỘT LẦN một giá trị bí mật (mật khẩu tạm của nhân viên mới), có nút sao chép.
+ * Cố ý không đóng khi bấm ra ngoài: đóng rồi thì không xem lại được.
+ * options: { title, message, label, secret, doneLabel, onClose }
+ */
+
+function openSecretModal(options) {
+
+    closeModal();
+
+
+    const overlay = document.createElement("div");
+
+    overlay.className = "modal-overlay";
+
+    overlay.innerHTML = `
+        <div class="modal-box modal-secret" role="dialog" aria-modal="true">
+            <h3>${escapeHtml(options.title || "Thông tin quan trọng")}</h3>
+            <p>${escapeHtml(options.message || "")}</p>
+            <div class="modal-secret-row">
+                <span class="modal-secret-label">${escapeHtml(options.label || "")}</span>
+                <code class="modal-secret-value" id="secretValue">${escapeHtml(options.secret || "")}</code>
+                <button type="button" class="btn btn-outline-dark" id="secretCopyBtn">SAO CHÉP</button>
+            </div>
+            <p class="modal-secret-warning">Mật khẩu này chỉ hiện một lần. Đóng hộp thoại là không xem lại được.</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-dark" id="secretDoneBtn">${escapeHtml(options.doneLabel || "Đã ghi lại")}</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    modalOverlayElement = overlay;
+
+
+    const copyButton = overlay.querySelector("#secretCopyBtn");
+
+    copyButton.addEventListener("click", async function () {
+
+        try {
+
+            await navigator.clipboard.writeText(options.secret || "");
+
+            copyButton.textContent = "ĐÃ SAO CHÉP";
+
+        } catch (error) {
+
+            /* Không có quyền clipboard: chọn sẵn chữ để người dùng tự Ctrl+C */
+            const range = document.createRange();
+
+            range.selectNodeContents(overlay.querySelector("#secretValue"));
+
+            const selection = window.getSelection();
+
+            selection.removeAllRanges();
+
+            selection.addRange(range);
+
+            copyButton.textContent = "ĐÃ CHỌN, NHẤN CTRL+C";
+
+        }
+
+    });
+
+    overlay.querySelector("#secretDoneBtn").addEventListener("click", function () {
+
+        closeModal();
+
+        if (typeof options.onClose === "function") {
+            options.onClose();
+        }
+
+    });
+
+    overlay.querySelector("#secretDoneBtn").focus();
+
+    requestAnimationFrame(function () {
+        overlay.classList.add("show");
+    });
+
+}
+
+
 /* ================= ẢNH SẢN PHẨM ================= */
 
 /* Chỉ nhận URL http/https (ảnh do ADMIN nhập, không tin tuyệt đối) */
@@ -557,70 +807,23 @@ function isSafeImageUrl(url) {
 }
 
 
-function pickProductImage(images) {
-
-    if (!Array.isArray(images) || images.length === 0) {
-        return null;
-    }
-
-    const primary = images.find(function (image) {
-        return image.isPrimary && isSafeImageUrl(image.imageUrl);
-    });
-
-    if (primary) {
-        return primary.imageUrl;
-    }
-
-    const first = images.find(function (image) {
-        return isSafeImageUrl(image.imageUrl);
-    });
-
-    return first ? first.imageUrl : null;
-
-}
-
-
 /*
- * Với mỗi thẻ trong container: GET /products/{id}/images (công khai, không
- * gửi token), lấy ảnh chính hoặc ảnh đầu tiên. Không có ảnh / request lỗi /
- * ảnh hỏng → ảnh thay thế theo danh mục. Thẻ mới render chưa có src (ô ảnh
- * nền xám) để không hiện nhầm ảnh thay thế trong lúc chờ API.
+ * Ảnh thẻ hỏng (link sai, CDN lỗi, ảnh đã xoá) → ảnh thay thế theo danh mục
+ * (data-fallback). Đổi một lần, không lặp nếu chính ảnh thay thế cũng lỗi.
  */
 
-function loadProductImages(container) {
+function bindProductImageFallbacks(container) {
 
-    container.querySelectorAll(".product-card[data-product-id]")
-        .forEach(function (card) {
-
-            const img = card.querySelector(".product-image img");
-
-            if (!img) {
-                return;
-            }
-
+    container.querySelectorAll(".product-card .product-image img[data-fallback]")
+        .forEach(function (img) {
 
             img.addEventListener("error", function () {
 
-                if (img.src !== img.dataset.fallback) {
+                if (img.getAttribute("src") !== img.dataset.fallback) {
                     img.src = img.dataset.fallback;
                 }
 
             });
-
-
-            apiRequest(
-                "/products/" + encodeURIComponent(card.dataset.productId) + "/images"
-            )
-                .then(function (images) {
-
-                    img.src = pickProductImage(images) || img.dataset.fallback;
-
-                })
-                .catch(function () {
-
-                    img.src = img.dataset.fallback;
-
-                });
 
         });
 
@@ -642,6 +845,9 @@ async function fetchCategoryMaps() {
 
     const bySlug = {};
 
+    /* Kế hoạch v3: danh mục ADMIN ẩn → không hiện ở trang khách, sản phẩm của nó cũng không bán */
+    const hiddenIds = {};
+
 
     (page.content || []).forEach(function (category) {
 
@@ -649,9 +855,82 @@ async function fetchCategoryMaps() {
 
         bySlug[category.slug] = category.id;
 
+        if (category.isActive === false) {
+            hiddenIds[category.id] = true;
+        }
+
     });
 
 
-    return { byId: byId, bySlug: bySlug };
+    /* Danh mục đang hiển thị, theo "Thứ tự hiển thị" ADMIN đặt rồi theo tên */
+    const visible = (page.content || [])
+        .filter(function (category) { return category.isActive !== false; })
+        .sort(function (a, b) {
+            return (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.name.localeCompare(b.name, "vi");
+        });
+
+
+    return { byId: byId, bySlug: bySlug, hiddenIds: hiddenIds, visible: visible };
+
+}
+
+
+/* Một lần tải cho cả trang (header + nội dung trang); lỗi thì lần sau tải lại */
+
+let shopCategoriesPromise = null;
+
+function loadShopCategories() {
+
+    if (!shopCategoriesPromise) {
+
+        shopCategoriesPromise = fetchCategoryMaps().catch(function (error) {
+
+            shopCategoriesPromise = null;
+
+            throw error;
+
+        });
+
+    }
+
+    return shopCategoriesPromise;
+
+}
+
+
+/* Khoá trên URL ?category=: khoá cũ (phone, laptop…) nếu có, không thì chính slug */
+
+function categoryKeyOf(slug) {
+
+    return getCategoryFilterKey(slug) || slug;
+
+}
+
+
+function categoryUrlOf(category) {
+
+    return siteUrl("customer/products.html?category=" + encodeURIComponent(categoryKeyOf(category.slug)));
+
+}
+
+
+/* Ảnh của danh mục: ảnh biểu tượng ADMIN nhập → ảnh cắt sẵn của 4 danh mục gốc → ảnh thay thế */
+
+const CATEGORY_CARD_IMAGES = {
+    phone: "assets/images/category-phone.webp",
+    laptop: "assets/images/category-laptop.webp",
+    tablet: "assets/images/category-tablet.webp",
+    accessory: "assets/images/category-accessory.webp"
+};
+
+function categoryImageOf(category) {
+
+    if (isSafeImageUrl(category.iconUrl)) {
+        return category.iconUrl.trim();
+    }
+
+    const key = getCategoryFilterKey(category.slug);
+
+    return key && CATEGORY_CARD_IMAGES[key] ? siteUrl(CATEGORY_CARD_IMAGES[key]) : getFallbackImage(category.slug);
 
 }

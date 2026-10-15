@@ -1,7 +1,7 @@
 <!--
     TOPBAR KHU QUẢN TRỊ NỘI BỘ (admin/)
     Được js/core/layout.js chèn vào <div data-include="admin-topbar"></div>.
-    js/admin/admin-layout.js điền tiêu đề trang, tên / vai trò / chi nhánh và gắn nút đăng xuất.
+    js/admin/admin-layout.js điền tiêu đề trang, ảnh đại diện (chữ cái đầu), tên, vai trò · chi nhánh và gắn nút đăng xuất.
 -->
 <header class="admin-topbar">
 
@@ -13,12 +13,14 @@
         aria-controls="adminSidebar"
         aria-expanded="false"
     >
-        ☰
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
     </button>
 
     <h1 class="admin-page-title" id="adminPageTitle"></h1>
 
     <div class="admin-topbar-user">
+
+        <span class="admin-avatar" id="adminUserAvatar" aria-hidden="true"></span>
 
         <div class="admin-user-info">
             <strong id="adminUserName">—</strong>
@@ -26,7 +28,7 @@
         </div>
 
         <button type="button" class="btn btn-outline-dark admin-logout-btn" id="adminLogoutBtn">
-            ĐĂNG XUẤT
+            Đăng xuất
         </button>
 
     </div>

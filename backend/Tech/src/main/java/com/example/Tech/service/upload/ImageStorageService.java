@@ -1,0 +1,57 @@
+package com.example.Tech.service.upload;
+
+import org.springframework.web.multipart.MultipartFile;
+
+public interface ImageStorageService {
+
+    /** Same limit as spring.servlet.multipart.max-file-size. */
+    long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+
+    /** Public path prefix of uploaded product images (served by UploadConfig). */
+    String PRODUCT_IMAGE_PATH = "/uploads/products/";
+
+    /** Public path prefix of photos attached to product reviews. */
+    String REVIEW_IMAGE_PATH = "/uploads/reviews/";
+
+    /** Avatars are smaller than the other images (kế hoạch v2 GĐ5). */
+    long MAX_AVATAR_BYTES = 2L * 1024 * 1024;
+
+    /** Public path prefix of account avatars. */
+    String AVATAR_IMAGE_PATH = "/uploads/avatars/";
+
+    /** Public path prefix of photos attached to warranty / maintenance / return requests. */
+    String SERVICE_IMAGE_PATH = "/uploads/service/";
+
+    /**
+     * Stores a JPEG, PNG or WebP image (checked by its content, not its name) under a random file name.
+     *
+     * @return the absolute public URL of the stored file
+     */
+    String storeProductImage(MultipartFile file);
+
+    /** Same checks as storeProductImage, stored under the review photo folder. */
+    String storeReviewImage(MultipartFile file);
+
+    /**
+     * True when {@code url} is a review photo this server stored and still has on disk (our prefix, a random
+     * file name of ours, the file exists). Reviews accept only such URLs, never links to other sites.
+     */
+    boolean isStoredReviewImage(String url);
+
+    String storeServiceImage(MultipartFile file);
+
+    /** Same rule as isStoredReviewImage, for the after-sales photo folder. */
+    boolean isStoredServiceImage(String url);
+
+    /** JPEG, PNG or WebP of at most MAX_AVATAR_BYTES, stored under the avatar folder. */
+    String storeAvatar(MultipartFile file);
+
+    /** Same rule as isStoredReviewImage, for the avatar folder: accounts may only point at avatars we stored. */
+    boolean isStoredAvatar(String url);
+
+    /**
+     * Deletes the stored file behind {@code url} when it is one of our uploads; any other URL is ignored.
+     * Inside a transaction the file is deleted only after commit, so a rollback keeps it.
+     */
+    void deleteAfterCommit(String url);
+}

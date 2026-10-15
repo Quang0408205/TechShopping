@@ -36,6 +36,13 @@ public enum ErrorCode {
 
     // Product image
     PRODUCT_IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Product image not found"),
+    PRODUCT_IMAGE_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The product already has the maximum number of images"),
+    LAST_PRODUCT_IMAGE(HttpStatus.CONFLICT, "The last image of a product cannot be deleted"),
+    PRIMARY_IMAGE_REQUIRED(HttpStatus.CONFLICT, "Set another image as primary instead of unsetting the primary image"),
+
+    // Image upload
+    INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "Only JPEG, PNG or WebP images are accepted"),
+    IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Image must be at most 5 MB"),
 
     // Product specification
     PRODUCT_SPECIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Product specification not found"),
@@ -57,6 +64,8 @@ public enum ErrorCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "Invalid login or password"),
     ACCESS_DENIED(HttpStatus.FORBIDDEN, "You do not have permission to perform this action"),
     ACCOUNT_DISABLED(HttpStatus.FORBIDDEN, "Account is disabled"),
+    PASSWORD_CHANGE_REQUIRED(HttpStatus.FORBIDDEN, "Bạn cần đổi mật khẩu tạm trước khi sử dụng hệ thống"),
+    TEMP_PASSWORD_EXPIRED(HttpStatus.FORBIDDEN, "Mật khẩu tạm đã hết hạn, vui lòng liên hệ quản lý để được cấp lại"),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "User not found"),
@@ -69,7 +78,77 @@ public enum ErrorCode {
     // Admin user management
     CANNOT_MODIFY_OWN_ACCOUNT(HttpStatus.CONFLICT, "Administrators cannot deactivate, delete or demote their own account"),
     LAST_ADMIN(HttpStatus.CONFLICT, "The last active administrator cannot be removed"),
-    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted");
+    USER_DELETED(HttpStatus.CONFLICT, "User has been deleted"),
+
+    // Cart
+    CART_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "Product variant is not in the cart"),
+    PRODUCT_NOT_AVAILABLE(HttpStatus.CONFLICT, "Product is not available for purchase"),
+    CART_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "The cart already holds the maximum number of different items"),
+
+    // Order
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "Order not found"),
+    CART_EMPTY(HttpStatus.CONFLICT, "The cart is empty"),
+    INVALID_ORDER_STATUS(HttpStatus.CONFLICT, "The order status does not allow this change"),
+
+    // Promotion
+    PROMOTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chương trình khuyến mãi"),
+    INVALID_PROMOTION_DATE_RANGE(HttpStatus.BAD_REQUEST, "Ngày kết thúc phải sau ngày bắt đầu"),
+    INVALID_PROMOTION_DISCOUNT(HttpStatus.BAD_REQUEST, "Mức giảm giá không hợp lệ"),
+    PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
+            "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này"),
+
+    // Payment / installment
+    INSTALLMENT_NOT_ELIGIBLE(HttpStatus.BAD_REQUEST, "Đơn hàng từ 3.000.000đ trở lên mới được trả góp"),
+    PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Đơn hàng không có khoản thanh toán này"),
+    INVALID_PAYMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái thanh toán không cho phép thao tác này"),
+    PAYMENT_REQUIRED(HttpStatus.CONFLICT, "Đơn chuyển khoản chưa được xác nhận đã nhận tiền"),
+    INSTALLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hợp đồng trả góp"),
+    INVALID_INSTALLMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái hợp đồng trả góp không cho phép thao tác này"),
+    INSTALLMENT_NOT_APPROVED(HttpStatus.CONFLICT, "Hợp đồng trả góp chưa được duyệt"),
+    INSTALLMENT_PERIOD_OUT_OF_ORDER(HttpStatus.CONFLICT, "Phải ghi nhận kỳ trả góp sớm nhất chưa thanh toán"),
+
+    // Store
+    STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chi nhánh"),
+    STORE_IN_USE(HttpStatus.CONFLICT,
+            "Chi nhánh đã có nhân viên, tồn kho hoặc đơn hàng nên không xoá được; hãy tạm đóng chi nhánh"),
+
+    // Employee
+    EMPLOYEE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hồ sơ nhân viên"),
+    EMPLOYEE_ALREADY_EXISTS(HttpStatus.CONFLICT, "Tài khoản này đã có hồ sơ nhân viên"),
+    DUPLICATE_EMPLOYEE_CODE(HttpStatus.CONFLICT, "Mã nhân viên đã được dùng"),
+    NO_ACTIVE_STORE_ASSIGNMENT(HttpStatus.FORBIDDEN, "Tài khoản của bạn chưa được gán vào chi nhánh nào"),
+    ROLE_NOT_ASSIGNABLE(HttpStatus.BAD_REQUEST,
+            "Chỉ được phân quyền Nhân viên chi nhánh hoặc Quản lý chi nhánh"),
+    CUSTOMER_ACCOUNT_NOT_ELIGIBLE(HttpStatus.CONFLICT,
+            "Tài khoản khách hàng không thể chuyển thành tài khoản nội bộ – hãy tuyển nhân viên mới"),
+    STORE_ALREADY_HAS_MANAGER(HttpStatus.CONFLICT, "Chi nhánh này đã có quản lý"),
+    MANAGER_REQUIRES_ASSIGNMENT(HttpStatus.BAD_REQUEST,
+            "Quản lý chi nhánh phải đang được gán vào một chi nhánh"),
+    ADMIN_READ_ONLY(HttpStatus.FORBIDDEN,
+            "Quản trị viên chỉ xem và điều phối; việc xử lý do nhân viên của chi nhánh thực hiện"),
+
+    // Inventory
+    INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),
+    ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước"),
+    /** Plan v3 GĐ E: no open store holds the whole cart (home delivery), the chosen pickup store lacks items, or the cart asks for more than all stores hold. */
+    OUT_OF_STOCK(HttpStatus.CONFLICT, "Không đủ hàng"),
+
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),
+    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Bạn đã đánh giá sản phẩm này; hãy sửa đánh giá cũ"),
+
+    // After-sales (Phase 6)
+    SERVICE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu"),
+    AFTER_SALES_NOT_AVAILABLE(HttpStatus.CONFLICT, "Chỉ gửi yêu cầu bảo hành, bảo trì, đổi trả cho đơn đã giao"),
+    WARRANTY_NOT_VALID(HttpStatus.CONFLICT, "Sản phẩm không còn bảo hành; bạn có thể gửi yêu cầu bảo trì"),
+    SERVICE_REQUEST_ALREADY_OPEN(HttpStatus.CONFLICT, "Sản phẩm này đang có một yêu cầu chưa xử lý xong"),
+    RETURN_NOT_AVAILABLE(HttpStatus.CONFLICT, "Đơn hàng không trả hàng được"),
+    INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này"),
+
+    // Contact form (kiemthu GĐ7)
+    CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn liên hệ"),
+    INVALID_CONTACT_STATUS(HttpStatus.CONFLICT, "Tin nhắn đã xử lý không quay lại trạng thái Mới được"),
+    TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau");
 
     private final HttpStatus status;
     private final String defaultMessage;

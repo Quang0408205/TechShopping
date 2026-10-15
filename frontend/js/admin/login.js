@@ -2,7 +2,7 @@
 
 /*
  * POST /api/v1/auth/login thật (email hoặc tên đăng nhập). Chỉ tài khoản có
- * role STAFF hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
+ * role STAFF, BRANCH_MANAGER hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
  * khẩu vẫn bị từ chối, và refresh token vừa cấp được thu hồi ngay.
  * ?reason=… (staff-auth.js requireStaffLogin) giải thích vì sao bị đưa về đây.
  */
@@ -11,6 +11,7 @@ const STAFF_LOGIN_REASONS = {
     expired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
     locked: "Tài khoản của bạn đã bị khoá hoặc không còn tồn tại. Vui lòng liên hệ quản trị viên.",
     denied: "Tài khoản này không có quyền truy cập khu nội bộ.",
+    passwordChanged: "Đã đổi mật khẩu. Vui lòng đăng nhập lại bằng mật khẩu mới.",
     network: API_ERROR_MESSAGES.NETWORK_ERROR
 };
 
@@ -37,6 +38,14 @@ document.addEventListener(
             if (result.staff) {
 
                 window.location.replace(getRedirectTarget("admin/dashboard.html"));
+
+                return;
+
+            }
+
+            if (result.reason === "password") {
+
+                window.location.replace(siteUrl("admin/change-password.html"));
 
                 return;
 
@@ -98,7 +107,19 @@ document.addEventListener(
                 }
 
 
-                saveStaffSession(authResponse);
+                /* Mật khẩu tạm: backend chỉ cho đổi mật khẩu, nên chưa tải hồ sơ nhân viên */
+                if (authResponse.user.mustChangePassword) {
+
+                    saveAuth(authResponse);
+
+                    window.location.href = siteUrl("admin/change-password.html");
+
+                    return;
+
+                }
+
+
+                await saveStaffSession(authResponse);
 
                 window.location.href = getRedirectTarget("admin/dashboard.html");
 
@@ -126,7 +147,7 @@ document.addEventListener(
 
             button.disabled = isLoading;
 
-            button.textContent = isLoading ? "ĐANG ĐĂNG NHẬP..." : "ĐĂNG NHẬP";
+            button.textContent = isLoading ? "Đang đăng nhập..." : "Đăng nhập";
 
         }
 
