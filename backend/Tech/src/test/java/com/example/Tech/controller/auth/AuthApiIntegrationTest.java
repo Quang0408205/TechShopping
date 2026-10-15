@@ -5,10 +5,12 @@ import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.auth.LoginAttemptLimiter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -24,10 +26,12 @@ import tools.jackson.databind.json.JsonMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -54,6 +58,9 @@ class AuthApiIntegrationTest {
 
     @Autowired
     private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private UserRepository userRepository;
@@ -154,9 +161,56 @@ class AuthApiIntegrationTest {
         postJson("/api/v1/auth/login", Map.of("identifier", "login.test", "password", "wrong-password"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
-        postJson("/api/v1/auth/login", Map.of("identifier", "nobody.here", "password", PASSWORD))
+        postJson("/api/v1/auth/login", Map.of("identifier", "nobody." + UUID.randomUUID(), "password", PASSWORD))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.error.code").value("INVALID_CREDENTIALS"));
+    }
+
+    @Test
+    void fiveWrongPasswords_lockTheAccount_evenForTheRightPassword() throws Exception {
+        data(postJson("/api/v1/auth/register", registerBody("lock.test@example.com", "lock.test"))
+                .andExpect(status().isCreated()));
+        Long userId = userRepository.findByUsername("lock.test").orElseThrow().getId();
+        String subject = LoginAttemptLimiter.subjectOfUser(userId);
+        try {
+            for (int attempt = 1; attempt <= 4; attempt++) {
+                postJson("/api/v1/auth/login", Map.of("identifier", "lock.test", "password", "wrong-password"))
+                        .andExpect(status().isUnauthorized());
+            }
+            postJson("/api/v1/auth/login", Map.of("identifier", "lock.test", "password", "wrong-password"))
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(header().exists("Retry-After"))
+                    .andExpect(jsonPath("$.error.code").value("TOO_MANY_LOGIN_ATTEMPTS"));
+            // locked: the right password and the e-mail form are refused too
+            postJson("/api/v1/auth/login", Map.of("identifier", "lock.test", "password", PASSWORD))
+                    .andExpect(status().isTooManyRequests());
+            postJson("/api/v1/auth/login", Map.of("identifier", "lock.test@example.com", "password", PASSWORD))
+                    .andExpect(status().isTooManyRequests());
+        } finally {
+            redisTemplate.delete(java.util.List.of("auth:login-fail:" + subject, "auth:login-lock:" + subject));
+        }
+        data(postJson("/api/v1/auth/login", Map.of("identifier", "lock.test", "password", PASSWORD))
+                .andExpect(status().isOk()));
+    }
+
+    @Test
+    void goodLogin_resetsTheFailureCounter() throws Exception {
+        data(postJson("/api/v1/auth/register", registerBody("reset.test@example.com", "reset.test"))
+                .andExpect(status().isCreated()));
+        Long userId = userRepository.findByUsername("reset.test").orElseThrow().getId();
+        String subject = LoginAttemptLimiter.subjectOfUser(userId);
+        try {
+            for (int round = 0; round < 3; round++) {
+                for (int attempt = 0; attempt < 4; attempt++) {
+                    postJson("/api/v1/auth/login", Map.of("identifier", "reset.test", "password", "wrong-password"))
+                            .andExpect(status().isUnauthorized());
+                }
+                data(postJson("/api/v1/auth/login", Map.of("identifier", "reset.test", "password", PASSWORD))
+                        .andExpect(status().isOk()));
+            }
+        } finally {
+            redisTemplate.delete(java.util.List.of("auth:login-fail:" + subject, "auth:login-lock:" + subject));
+        }
     }
 
     @Test

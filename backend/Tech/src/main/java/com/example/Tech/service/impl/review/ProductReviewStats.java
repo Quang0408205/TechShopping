@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.review;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.response.review.ReviewSummaryResponse;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.repository.review.ReviewRepository;
@@ -21,6 +22,7 @@ import java.util.List;
 public class ProductReviewStats {
 
     private final ReviewRepository reviewRepository;
+    private final ReadCache cache;
 
     public ReviewSummaryResponse summary(Long productId) {
         long[] counts = countsByStars(productId);
@@ -47,6 +49,7 @@ public class ProductReviewStats {
         }
         product.setRating(average(points, total));
         product.setTotalReviews((int) total);
+        cache.evict(ReadCache.PRODUCT, product.getId());
     }
 
     /** Index = number of stars (1–5). */

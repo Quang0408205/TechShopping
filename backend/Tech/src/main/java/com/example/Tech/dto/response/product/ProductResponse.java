@@ -47,4 +47,12 @@ public record ProductResponse(
                 + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
         Integer availableQuantity
 ) {
+
+    /** The same product with a fresh stock figure (the rest of a cached response may be minutes old). */
+    public ProductResponse withAvailableQuantity(Integer available) {
+        return new ProductResponse(id, name, slug, description, categoryId, categoryName, brandId, brandName,
+                basePrice, discountPrice, stockQuantity, sku, weight, warrantyMonths, rating, totalReviews, viewCount,
+                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName, tgddRating,
+                tgddReviewCount, available);
+    }
 }

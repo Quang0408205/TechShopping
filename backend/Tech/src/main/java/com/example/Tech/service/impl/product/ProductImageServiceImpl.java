@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductImageCreateRequest;
 import com.example.Tech.dto.request.product.ProductImageUpdateRequest;
 import com.example.Tech.dto.response.product.ProductImageResponse;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.List;
 
@@ -30,13 +32,22 @@ public class ProductImageServiceImpl implements ProductImageService {
     private final ProductRepository productRepository;
     private final ProductImageMapper imageMapper;
     private final ImageStorageService imageStorageService;
+    private final ReadCache cache;
 
     @Override
     public List<ProductImageResponse> getByProductId(Long productId) {
-        Product product = findProduct(productId);
-        return imageRepository.findAllByProductIdOrderByDisplayOrderAscIdAsc(product.getId()).stream()
-                .map(imageMapper::toResponse)
-                .toList();
+        return cache.get(ReadCache.IMAGES, productId, new TypeReference<>() { }, () -> {
+            Product product = findProduct(productId);
+            return imageRepository.findAllByProductIdOrderByDisplayOrderAscIdAsc(product.getId()).stream()
+                    .map(imageMapper::toResponse)
+                    .toList();
+        });
+    }
+
+    /** The image list, and the product's primary image shown on its page. */
+    private void evictImages(Long productId) {
+        cache.evict(ReadCache.IMAGES, productId);
+        cache.evict(ReadCache.PRODUCT, productId);
     }
 
     @Override
@@ -67,6 +78,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         }
 
         ProductImage saved = imageRepository.save(image);
+        evictImages(product.getId());
         log.info("Created product image id={} for product id={}", saved.getId(), product.getId());
         return imageMapper.toResponse(saved);
     }
@@ -92,6 +104,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         }
 
         ProductImage saved = imageRepository.saveAndFlush(image);
+        evictImages(image.getProduct().getId());
         if (!saved.getImageUrl().equals(previousUrl)) {
             imageStorageService.deleteAfterCommit(previousUrl);
         }
@@ -114,6 +127,7 @@ public class ProductImageServiceImpl implements ProductImageService {
         }
 
         imageRepository.delete(image);
+        evictImages(image.getProduct().getId());
         if (Boolean.TRUE.equals(image.getPrimary())) {
             images.stream()
                     .filter(other -> !other.getId().equals(id))

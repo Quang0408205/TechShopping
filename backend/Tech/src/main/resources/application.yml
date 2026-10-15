@@ -72,3 +72,19 @@ app:
       per-ip: ${CONTACT_LIMIT_PER_IP:10}
       per-email: ${CONTACT_LIMIT_PER_EMAIL:3}
       window: 1h
+  auth:
+    # Wrong passwords on one account within failure-window lock it for lock-duration; per-IP limits on register / refresh (Redis)
+    rate-limit:
+      max-login-failures: ${LOGIN_MAX_FAILURES:5}
+      failure-window: 15m
+      lock-duration: 15m
+      register-per-ip: ${REGISTER_LIMIT_PER_IP:10}
+      register-window: 1h
+      refresh-per-ip: ${REFRESH_LIMIT_PER_IP:60}
+      refresh-window: 1m
+  cache:
+    # Redis read cache (categories, brands, product pages, reports); off = every request reads the database
+    enabled: ${CACHE_ENABLED:true}
+    catalog-ttl: 1h
+    product-ttl: 10m
+    report-ttl: 5m

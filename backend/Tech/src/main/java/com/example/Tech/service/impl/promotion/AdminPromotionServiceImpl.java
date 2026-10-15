@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.promotion;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.promotion.PromotionProductSelection;
 import com.example.Tech.dto.request.promotion.PromotionRequest;
 import com.example.Tech.dto.request.promotion.PromotionSearchRequest;
@@ -57,6 +58,7 @@ public class AdminPromotionServiceImpl implements AdminPromotionService {
     private final ProductImageRepository imageRepository;
     private final CurrentUserLoader currentUserLoader;
     private final Clock clock;
+    private final ReadCache cache;
 
     @Override
     public PageResponse<PromotionResponse> search(Long adminId, PromotionSearchRequest filter, Pageable pageable) {
@@ -94,6 +96,7 @@ public class AdminPromotionServiceImpl implements AdminPromotionService {
             promotionProductRepository.save(new PromotionProduct(saved, products.get(selection.productId()),
                     selection.discountType(), selection.discountValue()));
         }
+        cache.evictAll(ReadCache.PRODUCT, ReadCache.VARIANTS);
         log.info("Admin id={} created promotion id={} with {} product(s)", adminId, saved.getId(), products.size());
         return toResponse(saved);
     }
@@ -123,6 +126,7 @@ public class AdminPromotionServiceImpl implements AdminPromotionService {
             }
         }
         promotionProductRepository.deleteAll(current.values());
+        cache.evictAll(ReadCache.PRODUCT, ReadCache.VARIANTS);
         log.info("Admin id={} updated promotion id={} ({} product(s), {} removed)",
                 adminId, promotionId, products.size(), current.size());
         return toResponse(promotion);
@@ -135,6 +139,7 @@ public class AdminPromotionServiceImpl implements AdminPromotionService {
         Promotion promotion = promotionRepository.findById(promotionId).orElseThrow(() -> notFound(promotionId));
         // promotion_products rows go with it (ON DELETE CASCADE); placed orders keep their prices
         promotionRepository.delete(promotion);
+        cache.evictAll(ReadCache.PRODUCT, ReadCache.VARIANTS);
         log.info("Admin id={} deleted promotion id={}", adminId, promotionId);
     }
 

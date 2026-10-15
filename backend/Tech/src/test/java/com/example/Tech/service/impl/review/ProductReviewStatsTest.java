@@ -3,6 +3,7 @@ package com.example.Tech.service.impl.review;
 import com.example.Tech.dto.response.review.ReviewSummaryResponse;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.repository.review.ReviewRepository;
+import com.example.Tech.cache.ReadCache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -20,6 +21,9 @@ class ProductReviewStatsTest {
 
     @Mock
     private ReviewRepository reviewRepository;
+
+    @Mock
+    private ReadCache cache;
 
     @InjectMocks
     private ProductReviewStats stats;

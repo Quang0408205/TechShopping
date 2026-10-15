@@ -3,12 +3,16 @@ package com.example.Tech.service.impl.product;
 import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.product.BrandResponse;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import com.example.Tech.entity.product.Category;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
+import com.example.Tech.mapper.product.BrandMapper;
 import com.example.Tech.mapper.product.CategoryMapper;
+import com.example.Tech.repository.product.BrandRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.service.product.CategoryService;
@@ -18,7 +22,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -30,15 +36,28 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final CategoryMapper categoryMapper;
+    private final BrandRepository brandRepository;
+    private final BrandMapper brandMapper;
+    private final ReadCache cache;
 
     @Override
     public PageResponse<CategoryResponse> getAll(Pageable pageable) {
-        return PageResponse.from(categoryRepository.findAll(pageable).map(categoryMapper::toResponse));
+        return cache.get(ReadCache.CATEGORIES, ReadCache.pageKey(pageable), new TypeReference<>() { },
+                () -> PageResponse.from(categoryRepository.findAll(pageable).map(categoryMapper::toResponse)));
     }
 
     @Override
     public CategoryResponse getById(Integer id) {
-        return categoryMapper.toResponse(findCategory(id));
+        return cache.get(ReadCache.CATEGORIES, id, new TypeReference<>() { },
+                () -> categoryMapper.toResponse(findCategory(id)));
+    }
+
+    @Override
+    public List<BrandResponse> getBrands(Integer id) {
+        return cache.get(ReadCache.CATEGORY_BRANDS, id, new TypeReference<>() { }, () -> {
+            findCategory(id);
+            return brandRepository.findOnSaleByCategoryId(id).stream().map(brandMapper::toResponse).toList();
+        });
     }
 
     @Override
@@ -54,6 +73,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setParent(request.parentId() != null ? findCategory(request.parentId()) : null);
 
         Category saved = categoryRepository.save(category);
+        evictCatalog();
         log.info("Created category id={}", saved.getId());
         return categoryMapper.toResponse(saved);
     }
@@ -76,6 +96,7 @@ public class CategoryServiceImpl implements CategoryService {
         category.setParent(parent);
 
         Category saved = categoryRepository.saveAndFlush(category);
+        evictCatalog();
         log.info("Updated category id={}", id);
         return categoryMapper.toResponse(saved);
     }
@@ -113,7 +134,14 @@ public class CategoryServiceImpl implements CategoryService {
         }
         categoryRepository.deleteById(id);
         categoryRepository.flush();
+        evictCatalog();
         log.info("Deleted category id={}", id);
+    }
+
+    /** Category names are inside product responses too; deleting a category may delete its products. */
+    private void evictCatalog() {
+        cache.evictAll(ReadCache.CATEGORIES, ReadCache.CATEGORY_BRANDS, ReadCache.PRODUCT, ReadCache.VARIANTS,
+                ReadCache.IMAGES, ReadCache.SPECS);
     }
 
     private Category findCategory(Integer id) {

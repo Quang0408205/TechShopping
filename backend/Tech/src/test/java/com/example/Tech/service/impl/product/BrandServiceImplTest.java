@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.BrandCreateRequest;
 import com.example.Tech.dto.request.product.BrandUpdateRequest;
 import com.example.Tech.dto.response.product.BrandResponse;
@@ -38,7 +40,8 @@ class BrandServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        brandService = new BrandServiceImpl(brandRepository, productRepository, new BrandMapper());
+        brandService = new BrandServiceImpl(brandRepository, productRepository, new BrandMapper(),
+                new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test

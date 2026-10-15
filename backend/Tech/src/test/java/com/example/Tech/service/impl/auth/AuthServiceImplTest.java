@@ -17,6 +17,7 @@ import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
+import com.example.Tech.service.auth.LoginAttemptLimiter;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,6 +70,9 @@ class AuthServiceImplTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private LoginAttemptLimiter loginAttemptLimiter;
+
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(4);
 
     private AuthServiceImpl authService;
@@ -77,7 +81,7 @@ class AuthServiceImplTest {
     void setUp() {
         authService = new AuthServiceImpl(userRepository, roleRepository, userRoleRepository,
                 customerProfileRepository, passwordEncoder, jwtTokenService, refreshTokenService,
-                new UserMapper(), CLOCK);
+                new UserMapper(), CLOCK, loginAttemptLimiter);
     }
 
     private User existingUser(Long id) {

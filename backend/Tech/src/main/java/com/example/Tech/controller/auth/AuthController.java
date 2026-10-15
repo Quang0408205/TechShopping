@@ -5,11 +5,13 @@ import com.example.Tech.dto.request.auth.RefreshTokenRequest;
 import com.example.Tech.dto.request.auth.RegisterRequest;
 import com.example.Tech.dto.response.auth.AuthResponse;
 import com.example.Tech.dto.response.common.ApiResult;
+import com.example.Tech.service.auth.AuthRequestRateLimiter;
 import com.example.Tech.service.auth.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,15 +28,19 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthRequestRateLimiter requestRateLimiter;
 
     @PostMapping("/register")
     @Operation(summary = "Register a customer account and log in")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Account created; tokens returned"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR"),
-            @ApiResponse(responseCode = "409", description = "DUPLICATE_EMAIL, DUPLICATE_USERNAME")
+            @ApiResponse(responseCode = "409", description = "DUPLICATE_EMAIL, DUPLICATE_USERNAME"),
+            @ApiResponse(responseCode = "429", description = "TOO_MANY_REQUESTS (per client IP)")
     })
-    public ResponseEntity<ApiResult<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<ApiResult<AuthResponse>> register(@Valid @RequestBody RegisterRequest request,
+                                                              HttpServletRequest httpRequest) {
+        requestRateLimiter.acquireRegister(httpRequest.getRemoteAddr());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResult.ok(authService.register(request)));
     }
 
@@ -44,7 +50,8 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "Tokens returned"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR"),
             @ApiResponse(responseCode = "401", description = "INVALID_CREDENTIALS"),
-            @ApiResponse(responseCode = "403", description = "ACCOUNT_DISABLED")
+            @ApiResponse(responseCode = "403", description = "ACCOUNT_DISABLED"),
+            @ApiResponse(responseCode = "429", description = "TOO_MANY_LOGIN_ATTEMPTS (5 wrong passwords lock the account 15 minutes; Retry-After header)")
     })
     public ResponseEntity<ApiResult<AuthResponse>> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(ApiResult.ok(authService.login(request)));
@@ -56,9 +63,12 @@ public class AuthController {
             @ApiResponse(responseCode = "200", description = "New tokens returned"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR"),
             @ApiResponse(responseCode = "401", description = "INVALID_TOKEN"),
-            @ApiResponse(responseCode = "403", description = "ACCOUNT_DISABLED")
+            @ApiResponse(responseCode = "403", description = "ACCOUNT_DISABLED"),
+            @ApiResponse(responseCode = "429", description = "TOO_MANY_REQUESTS (per client IP)")
     })
-    public ResponseEntity<ApiResult<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    public ResponseEntity<ApiResult<AuthResponse>> refresh(@Valid @RequestBody RefreshTokenRequest request,
+                                                             HttpServletRequest httpRequest) {
+        requestRateLimiter.acquireRefresh(httpRequest.getRemoteAddr());
         return ResponseEntity.ok(ApiResult.ok(authService.refresh(request)));
     }
 

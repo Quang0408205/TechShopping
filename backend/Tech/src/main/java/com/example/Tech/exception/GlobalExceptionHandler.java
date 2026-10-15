@@ -5,6 +5,7 @@ import com.example.Tech.dto.response.common.ApiResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.core.PropertyReferenceException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -33,6 +34,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResult<Void>> handleBusiness(BusinessException ex) {
         return build(ex.getErrorCode(), ex.getMessage(), ex.getDetails());
+    }
+
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<ApiResult<Void>> handleTooManyRequests(TooManyRequestsException ex) {
+        ApiError error = new ApiError(ex.getErrorCode().name(), ex.getMessage(), ex.getDetails());
+        return ResponseEntity.status(ex.getErrorCode().getStatus())
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ApiResult.fail(error));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
