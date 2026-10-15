@@ -21,6 +21,7 @@ import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.OrderService;
 import com.example.Tech.service.order.ShippingPolicy;
+import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderPaymentLifecycle orderPaymentLifecycle;
     private final OrderStockLifecycle orderStockLifecycle;
     private final OrderStatusRecorder statusRecorder;
+    private final InteractionRecorder interactionRecorder;
     private final Clock clock;
 
     @Override
@@ -111,6 +113,9 @@ public class OrderServiceImpl implements OrderService {
         Order saved = orderRepository.save(order);
         statusRecorder.record(saved, null, OrderStatus.PENDING, user);
         orderPaymentLifecycle.onOrderPlaced(saved, request.installment());
+        interactionRecorder.recordPurchases(userId, lines.stream()
+                .map(line -> line.getVariant().getProduct().getId())
+                .toList());
         int removed = cartItemRepository.deleteAllByCartId(cart.getId());
         cartRepository.touch(cart.getId());
         log.info("User id={} placed order id={} ({} line(s), total {}); {} cart line(s) removed",

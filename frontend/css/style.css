@@ -586,6 +586,13 @@ img {
     line-height: 1.5;
 }
 
+/* Câu trả lời của trợ lý AI có xuống dòng / gạch đầu dòng */
+.chatbot-message > p:first-child {
+    margin: 0;
+
+    white-space: pre-line;
+}
+
 .chatbot-message-bot {
     align-self: flex-start;
 
@@ -650,6 +657,52 @@ img {
     gap: 4px;
 
     margin-top: 8px;
+}
+
+/* Dòng "Đang tra cứu..." khi trợ lý AI gọi tool */
+.chatbot-status {
+    margin-top: 6px;
+
+    color: var(--gray-600);
+
+    font-size: 12px;
+    font-style: italic;
+}
+
+/* Nút "Xác nhận" cho thao tác trợ lý đề xuất (thêm giỏ, huỷ đơn) */
+.chatbot-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    margin-top: 10px;
+}
+
+.chatbot-action {
+    padding: 8px 12px;
+
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-md);
+
+    background: var(--color-paper);
+    color: var(--color-ink);
+
+    font-size: 12px;
+    font-weight: 600;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.chatbot-action:hover:not(:disabled) {
+    background: var(--color-ink);
+    color: var(--color-paper);
+}
+
+.chatbot-action:disabled {
+    opacity: 0.6;
+
+    cursor: default;
 }
 
 .chatbot-quick-replies {

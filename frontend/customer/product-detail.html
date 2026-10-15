@@ -100,7 +100,7 @@
             <div class="detail-gallery">
 
                 <div class="detail-main-image">
-                    <img id="mainImage" alt="">
+                    <img id="mainImage" alt="" referrerpolicy="no-referrer">
                 </div>
 
                 <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên -->
@@ -232,7 +232,29 @@
         </div>
 
 
-        <!-- ================= CÙNG DANH MỤC (API thật; gợi ý AI để Phase 8) ================= -->
+        <!-- ================= GỢI Ý AI: POST /recommendations (SIMILAR / UPSELL / CROSS_SELL) ================= -->
+
+        <section class="related-zone" id="upsellZone" hidden>
+
+            <div class="section-heading">
+                <span class="section-label">NÂNG TẦM TRẢI NGHIỆM</span>
+                <h2>Có thể nâng cấp lên</h2>
+            </div>
+
+            <div class="product-grid" id="upsellProductsGrid"></div>
+
+        </section>
+
+        <section class="related-zone" id="crossSellZone" hidden>
+
+            <div class="section-heading">
+                <span class="section-label">KẾT HỢP HOÀN HẢO</span>
+                <h2>Thường được mua kèm</h2>
+            </div>
+
+            <div class="product-grid" id="crossSellProductsGrid"></div>
+
+        </section>
 
         <section class="related-zone" id="relatedZone" hidden>
 
@@ -251,7 +273,7 @@
 
             <div class="container buy-bar-inner">
 
-                <img class="buy-bar-image" data-buy-bar-image alt="" width="48" height="48">
+                <img class="buy-bar-image" data-buy-bar-image alt="" width="48" height="48" referrerpolicy="no-referrer">
 
                 <div class="buy-bar-text">
                     <strong data-buy-bar-name></strong>

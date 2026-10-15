@@ -482,7 +482,9 @@ create table user_interactions (
     interaction_id bigserial primary key,
     user_id bigint not null references users(user_id),
     product_id bigint not null references products(product_id),
-    interaction_type varchar(50) not null,
+    interaction_type varchar(50) not null
+        constraint chk_user_interactions_type
+        check (interaction_type in ('VIEW', 'CLICK', 'LIKE', 'ADD_TO_CART', 'PURCHASE')),
     interaction_score int,
     timestamp timestamp default current_timestamp
 );
@@ -515,11 +517,15 @@ create table product_relations (
 -- bảng chat_sessions: quản lý các phiên hội thoại
 create table chat_sessions (
     session_id bigserial primary key,
-    user_id bigint not null references users(user_id),
+    -- null: khách chưa đăng nhập (chỉ hỏi câu chung)
+    user_id bigint references users(user_id),
+    -- trình duyệt giữ token ngẫu nhiên này thay cho session_id tăng dần
+    session_token varchar(64) unique,
     topic varchar(255),
     assigned_to_employee bigint references employees(employee_id),
     status varchar(50) default 'open',
     created_at timestamp default current_timestamp,
+    last_message_at timestamp,
     closed_at timestamp
 );
 
@@ -665,6 +671,11 @@ create index idx_installment_payments_due on installment_payments(status, due_da
 create index idx_user_interactions_user_id on user_interactions(user_id);
 create index idx_user_interactions_product_id on user_interactions(product_id);
 create index idx_user_interactions_timestamp on user_interactions(timestamp);
+create index idx_user_interactions_user_product_type
+    on user_interactions(user_id, product_id, interaction_type, timestamp);
+create index idx_recommendations_user_created on recommendations(user_id, created_at);
+create unique index uq_product_relations_pair_type
+    on product_relations(product_id, related_product_id, relation_type);
 
 -- warranty indexes
 create index idx_warranty_requests_user_id on warranty_requests(user_id);
@@ -692,6 +703,7 @@ create unique index uq_service_request_images_return
 -- chat indexes
 create index idx_chat_sessions_user_id on chat_sessions(user_id);
 create index idx_chat_sessions_status on chat_sessions(status);
+create index idx_chat_sessions_last_message on chat_sessions(last_message_at);
 create index idx_chat_messages_session_id on chat_messages(session_id);
 create index idx_contact_requests_status_created on contact_requests(status, created_at);
 create index idx_contact_requests_user on contact_requests(user_id);
@@ -865,6 +877,43 @@ select 'RETURN' || '-' || rr.return_request_id, 'RETURN', rr.return_request_id, 
        o.store_id, null, rr.status, rr.reason, rr.assigned_to_employee, rr.created_at, rr.updated_at
 from return_requests rr
 join orders o on o.order_id = rr.order_id;
+
+-- =====================================================
+-- kho tri thức RAG cho chatbot (cần image pgvector/pgvector:pg16)
+-- =====================================================
+create extension if not exists vector;
+
+-- bảng kb_chunks: mỗi dòng là một đoạn tài liệu (chunk) + vector embedding của nó
+create table kb_chunks (
+    chunk_id bigserial primary key,
+    doc_type varchar(30) not null,
+    source varchar(255) not null,
+    product_id bigint references products(product_id) on delete cascade,
+    title varchar(500),
+    content text not null,
+    -- metadata để lọc khi truy xuất: {"category": ..., "brand": ..., "price": ...}
+    metadata jsonb not null default '{}',
+    embedding vector(384) not null,
+    created_at timestamp default current_timestamp
+);
+
+create index idx_kb_chunks_doc_type on kb_chunks(doc_type);
+create index idx_kb_chunks_embedding on kb_chunks using hnsw (embedding vector_cosine_ops);
+
+-- tìm kiếm từ khoá (full-text) cho RAG lai: bỏ dấu tiếng Việt, tên sản phẩm (title) nặng hơn nội dung
+create extension unaccent;
+
+create function f_unaccent(text) returns text
+    language sql immutable parallel safe strict
+as $$ select public.unaccent('public.unaccent', $1) $$;
+
+alter table kb_chunks add column search_tsv tsvector
+    generated always as (
+        setweight(to_tsvector('simple', f_unaccent(coalesce(title, ''))), 'A') ||
+        setweight(to_tsvector('simple', f_unaccent(content)), 'D')
+    ) stored;
+
+create index idx_kb_chunks_search on kb_chunks using gin (search_tsv);
 
 -- =====================================================
 -- end of schema

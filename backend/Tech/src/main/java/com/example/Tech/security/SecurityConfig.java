@@ -21,6 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
  *     <li>Auth endpoints, Swagger and uploaded images (GET /uploads/**) are public.</li>
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
  *     <li>GET /api/v1/stores (open stores for the checkout pickup picker) is public (Phase 7).</li>
+ *     <li>POST /api/v1/recommendations and POST /api/v1/chat are public (AI phase); the token is optional.</li>
  *     <li>/api/v1/admin/orders/** (Phase 4), /api/v1/admin/installments/** (Phase 5) and
  *         /api/v1/admin/stores/{id}/inventory/** (Phase 7, store-scoped in the service), service requests (Phase 6),
  *         reports and the dashboard (Phase 10, scoped in the service) require STAFF, BRANCH_MANAGER or ADMIN;
@@ -82,6 +83,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
+                        // recommendations and the chatbot work for guests; a token makes them personal
+                        .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")
+                        .permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/chat/*/messages").permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)

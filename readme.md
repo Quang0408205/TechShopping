@@ -1,7 +1,8 @@
 # TechShopping: hướng dẫn chạy dự án
 
 Hệ thống quản lý và khuyến nghị mua sắm thiết bị công nghệ (thương hiệu **POY**):
-- **backend:** Spring Boot 4 + PostgreSQL 16 + Redis 7;
+- **backend:** Spring Boot 4 + PostgreSQL 16 (pgvector) + Redis 7;
+- **AI Service:** Python 3.11 + FastAPI: khuyến nghị sản phẩm (CBF + ALS + Hybrid) và chatbot (RAG + Function Calling; LLM mặc định Qwen3 chạy miễn phí bằng Ollama, có thể đổi sang Claude);
 - **frontend:** HTML/CSS/JS thuần.
 
 Toàn bộ chạy bằng **Docker**: cài xong chỉ cần mở Docker Desktop là web chạy.
@@ -12,6 +13,7 @@ Toàn bộ chạy bằng **Docker**: cài xong chỉ cần mở Docker Desktop l
 | Khu quản trị nội bộ | http://localhost:5510/admin/login.html |
 | API | http://localhost:8080/api/v1 |
 | Tài liệu API (Swagger) | http://localhost:8080/swagger-ui/index.html |
+| AI Service (chỉ máy local, tài liệu tự sinh) | http://localhost:8000/docs |
 
 ---
 
@@ -150,7 +152,8 @@ docker compose up -d backend
 | Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
 | Khách hàng | **Bảo hành / bảo trì / trả hàng** (Phase 6): ở chi tiết đơn đã giao xem hạn bảo hành từng sản phẩm, gửi bảo hành (còn hạn), bảo trì (mọi sản phẩm, có thể mất phí) hoặc trả hàng hoàn tiền trong 7 ngày (chọn sản phẩm + số lượng, xem số tiền hoàn dự kiến; đơn trả góp liên hệ cửa hàng), kèm tối đa 5 ảnh; trang **Yêu cầu dịch vụ** theo dõi trạng thái, ghi chú / lý do của cửa hàng, huỷ khi còn chờ; trang Dịch vụ có chính sách bảo hành / trả hàng | **Thật** (API) |
 | Khách hàng | **Liên hệ**: form gửi thật (họ tên, email, SĐT tuỳ chọn, chủ đề, nội dung; đã đăng nhập thì điền sẵn và gắn tài khoản; giới hạn số lần gửi theo IP / email), nhận mã tin nhắn | **Thật** (API) |
-| Khách hàng | **Trợ lý tra cứu nhanh** (nút nổi góc trang, không phải AI): trả lời chính sách giao hàng / trả hàng / bảo hành / thanh toán theo đúng quy tắc của hệ thống, link tra cứu đơn, tìm sản phẩm thật theo từ khoá | **Thật** (tra cứu API; chatbot AI ở Phase 9) |
+| Khách hàng | **Khuyến nghị sản phẩm (AI)**: trang Khuyến nghị (Gợi ý dành cho bạn, Tương tự, Phổ biến, Mua kèm, Nâng cấp) và 3 khu ở trang chi tiết sản phẩm (Có thể nâng cấp lên, Thường được mua kèm, Sản phẩm tương tự), mỗi thẻ có **lý do gợi ý**. Hybrid CBF + ALS (α = 0,4), khách chưa đăng nhập nhận sản phẩm phổ biến + mới; hệ thống ghi hành vi xem / bấm / thêm giỏ / mua để học. AI Service ngừng thì backend trả danh sách dự phòng | **Thật** (AI Service) |
+| Khách hàng | **Trợ lý mua sắm AI** (nút nổi góc trang): LLM (mặc định Qwen3 8B chạy trên máy, miễn phí) trả lời bằng tiếng Việt, chữ hiện dần, tra chính sách bằng RAG (pgvector), tìm sản phẩm theo nhu cầu + khoảng giá, xem chi tiết / gợi ý / phụ kiện, tra **đơn hàng, giỏ hàng, yêu cầu bảo hành của chính khách** (dùng token của khách), tìm cửa hàng; thêm giỏ / huỷ đơn có nút Xác nhận; giữ ngữ cảnh hội thoại khi chuyển trang. Chưa cài Ollama hoặc AI Service ngừng thì tự trả lời theo từ khoá như bản cũ | **Thật** (cần Ollama + `qwen3:8b`) |
 | Quản trị | Đăng nhập nội bộ (chỉ STAFF / ADMIN), **Người dùng & phân quyền**, **Sản phẩm** (kèm ảnh: upload từ máy hoặc dán link) | **Thật** (API) |
 | Quản trị | **Đơn hàng** (nhân viên xử lý, ADMIN chỉ xem): tìm theo mã / người nhận / khách, lọc trạng thái và ngày, đổi trạng thái theo đúng luồng, mã vận đơn; khối thanh toán: "Đã nhận tiền" (chuyển khoản, bắt buộc trước khi xác nhận đơn), "Đã hoàn tiền", duyệt / từ chối trả góp (có lý do, đơn tự hủy). Nhân viên chỉ thấy và xử lý đơn của chi nhánh mình; xác nhận đơn trừ tồn kho chi nhánh (thiếu hàng thì không xác nhận được), hủy đơn đã xác nhận thì hoàn kho. ADMIN xem mọi đơn và chỉ điều phối: chuyển đơn đang chờ sang chi nhánh khác | **Thật** (API) |
 | Quản trị | **Trả góp** (nhân viên chi nhánh ghi nhận, ADMIN chỉ xem): danh sách hợp đồng, lọc trạng thái / kỳ quá hạn, lịch các kỳ, ghi nhận lần lượt từng kỳ (kỳ cuối → hoàn tất) | **Thật** (API) |
@@ -163,7 +166,59 @@ docker compose up -d backend
 | Quản trị | **Tổng quan theo vai trò**: ADMIN "Toàn hệ thống" (doanh thu hôm nay / tháng so với cùng kỳ, đơn cần xử lý, yêu cầu dịch vụ, hàng sắp hết, chi nhánh, nhân viên, doanh thu 30 ngày, danh mục, so sánh chi nhánh, lối tắt); Quản lý "Chi nhánh …" (số của chi nhánh + đội ngũ); Nhân viên "Việc của tôi hôm nay" (không có doanh thu, danh sách việc có số đếm và link lọc sẵn) | **Thật** (API) |
 | Quản trị | **Báo cáo doanh thu** (ADMIN mọi chi nhánh, quản lý chi nhánh mình): lọc chi nhánh / ngày / nhóm theo ngày-tháng; thẻ tổng; cột theo thời gian; tròn theo danh mục + phương thức thanh toán; theo chi nhánh; doanh số + hoa hồng theo nhân viên; top 10 sản phẩm; **Xuất Excel** (.xlsx 7 sheet, `GET /api/v1/admin/reports/sales/export`) | **Thật** (API) |
 | Quản trị | **Liên hệ khách hàng** (một hộp thư chung cho nhân viên và quản lý mọi chi nhánh, ADMIN chỉ xem): lọc trạng thái / chủ đề / từ khoá, nhận xử lý, đánh dấu đã xử lý (bắt buộc ghi chú nội bộ), mở lại; số tin chờ xử lý ở Tổng quan | **Thật** (API) |
-| Quản trị | Lịch sử chatbot (ẩn khỏi menu, có banner "đang phát triển") | Dữ liệu mẫu (Phase 9) |
+| Quản trị | **Lịch sử chatbot** (chỉ ADMIN, chỉ xem): các phiên chat gần nhất (khách / khách chưa đăng nhập, câu hỏi đầu, số tin nhắn) và toàn bộ hội thoại để theo dõi chất lượng câu trả lời | **Thật** (API) |
+
+---
+
+## 3b. Phần AI: khuyến nghị + chatbot
+
+> Giải thích đầy đủ (công nghệ, thuật toán, file, API, kiểm thử, xử lý lỗi): **[AI_Service/README.md](AI_Service/README.md)**.
+
+Kiến trúc (báo cáo mục 3.5, 3.6): **Website → Spring Boot → AI Service (FastAPI)**. Trình duyệt không gọi thẳng AI Service; backend gửi kèm header `X-Internal-Key`.
+
+| Thành phần | File chính |
+|---|---|
+| Ghi hành vi (VIEW, CLICK, ADD_TO_CART, PURCHASE → `user_interactions`) | `InteractionController`, `InteractionRecorder` (backend), `trackInteraction` (`frontend/js/core/api.js`) |
+| Khuyến nghị: CBF, ALS, Hybrid, Upsell, Cross-sell | `AI_Service/app/recommender/` (`features.py`, `als.py`, `engine.py`) |
+| API khuyến nghị + danh sách dự phòng | `POST /api/v1/recommendations` (`RecommendationService`), ADMIN huấn luyện lại: `POST /api/v1/admin/recommendations/train` |
+| Chatbot: RAG + Function Calling | `AI_Service/app/chatbot/` (`rag.py`, `tools.py`, `agent.py`), kho tri thức `AI_Service/knowledge/*.md` |
+| API chatbot + lưu hội thoại | `POST /api/v1/chat`, `GET /api/v1/chat/{token}/messages` (`ChatService`), ADMIN: `/api/v1/admin/chat-sessions` |
+
+### Cài lần đầu (sau khi `git pull`)
+
+1. Cài LLM miễn phí **Ollama** (https://ollama.com/download, macOS: `brew install ollama && brew services start ollama`) rồi tải mô hình một lần (khoảng 5.2 GB, cần RAM ≥ 16 GB):
+   ```powershell
+   ollama pull qwen3:8b
+   ```
+   Không cần sửa `.env`. Không cài thì khuyến nghị vẫn chạy, chỉ chatbot tự quay về trả lời theo từ khoá. Muốn dùng Claude (trả phí) thì xem `AI_Service/README.md` mục 8.2.
+2. Chạy migration `ai_recommendation.sql` (mục **Cập nhật database đã có** ở dưới) rồi build:
+   ```powershell
+   docker compose up -d --build
+   ```
+   - Image Postgres đổi sang `pgvector/pgvector:pg16-trixie` (vẫn PostgreSQL 16, cùng volume, **không mất dữ liệu**).
+   - Lần đầu build `ai-service` mất vài phút (PyTorch CPU + mô hình embedding `intfloat/multilingual-e5-small`).
+3. Chuẩn bị dữ liệu AI (chạy trong container, mỗi lệnh chạy lại được nhiều lần):
+   ```powershell
+   docker compose exec ai-service python -m scripts.build_relations          # quan hệ phụ kiện cho "Mua kèm"
+   docker compose exec ai-service python -m scripts.seed_interactions --users 300   # hành vi MÔ PHỎNG (chỉ local)
+   docker compose exec ai-service python -m scripts.build_index              # kho tri thức RAG (khoảng 2 phút)
+   docker compose exec ai-service python -m scripts.evaluate                 # đánh giá Precision/Recall/NDCG@10
+   docker compose exec ai-service python -c "from app.recommender.engine import recommender; print(recommender.train())"
+   docker compose restart ai-service                                         # nạp mô hình vừa huấn luyện
+   ```
+   - `seed_interactions` tạo 300 khách mô phỏng (`sim.customer.NNN@example.test`, không đăng nhập được) và khoảng 21.000 hành vi có cấu trúc để ALS học được; xoá bằng `--reset`. Đây là dữ liệu mô phỏng, ghi rõ trong báo cáo.
+   - Sửa chính sách trong `AI_Service/knowledge/*.md` hoặc catalogue thay đổi → chạy lại `build_index`.
+
+| Biến `.env` | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LLM_PROVIDER` | `openai` | `openai` = Ollama / API kiểu OpenAI (miễn phí); `anthropic` = Claude (trả phí) |
+| `LLM_MODEL` | `qwen3:8b` | Mô hình chatbot (máy yếu: `qwen3:4b`) |
+| `ANTHROPIC_API_KEY` | (trống) | Chỉ cần khi `LLM_PROVIDER=anthropic` |
+| `AI_CHAT_EFFORT` | `low` | Mức suy luận của chatbot (`low` / `medium` / `high`) |
+| `AI_INTERNAL_KEY` | `dev-internal-key` | Khoá chung backend ↔ AI Service; đặt giá trị ngẫu nhiên khi triển khai thật |
+
+- Mô hình khuyến nghị tự huấn luyện lại mỗi 24 giờ; ADMIN huấn luyện ngay bằng `POST /api/v1/admin/recommendations/train` (Swagger).
+- Chatbot giới hạn 60 tin / giờ / tài khoản và 20 tin / giờ / IP cho khách chưa đăng nhập (cần thiết khi chuyển sang Claude có tính phí; với Ollama là để bảo vệ máy chủ).
 
 ---
 
@@ -174,6 +229,7 @@ docker compose up -d backend
 | Bật hệ thống | Mở Docker Desktop: các container tự chạy lại. Nếu lần trước đã tắt bằng `docker compose stop` / `down` thì chạy `docker compose up -d` |
 | Sửa **frontend** (`frontend/`) | Chỉ cần tải lại trang (F5), không cần build lại |
 | Sửa **backend** (`backend/Tech/`) | `docker compose up -d --build backend` |
+| Sửa **AI Service** (`AI_Service/`) | `docker compose up -d --build ai-service` |
 | Xem log backend | `docker compose logs -f backend` |
 | Tắt hệ thống (giữ dữ liệu) | `docker compose stop` hoặc `docker compose down` |
 | Cập nhật code mới | `git pull` rồi chạy các file **mới** trong `database/migrations/` (xem dưới), rồi `docker compose up -d --build` |
@@ -222,6 +278,9 @@ docker compose up -d backend
 > # 14. Mật khẩu tạm: bắt đổi ở lần đăng nhập đầu + hết hạn
 > Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+>
+> Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 > ```
 
 > **Cập nhật catalogue của database đã có** (ví dụ database còn 877 sản phẩm mẫu cũ, hoặc vừa crawl lại): file seed chỉ nạp vào database trống, nên dùng `Raw_data/import_catalog.py` (cần Python 3 và `python -m pip install "psycopg[binary]>=3.2,<4"`, không cần Playwright):
@@ -287,6 +346,7 @@ cd backend\Tech
 |---|---|
 | `backend/Tech/` | Spring Boot API (Java 21) |
 | `frontend/` | Website: `index.html`, `customer/`, `auth/`, `admin/` (khu nội bộ), `css/`, `js/` |
-| `database/` | `techshopping.sql` (cấu trúc 45 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
+| `AI_Service/` | Python/FastAPI: `app/recommender/` (khuyến nghị), `app/chatbot/` (chatbot), `knowledge/` (tài liệu RAG), `scripts/` (dữ liệu, chỉ mục, đánh giá) |
+| `database/` | `techshopping.sql` (cấu trúc 46 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |

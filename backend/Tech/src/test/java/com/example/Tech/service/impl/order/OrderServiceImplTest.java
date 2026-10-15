@@ -26,6 +26,7 @@ import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
 import com.example.Tech.service.promotion.PromotionPricingService;
+import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -95,6 +96,9 @@ class OrderServiceImplTest {
     @Mock
     private OrderStatusRecorder statusRecorder;
 
+    @Mock
+    private InteractionRecorder interactionRecorder;
+
     private OrderServiceImpl orderService;
 
     private User user;
@@ -107,7 +111,8 @@ class OrderServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), CLOCK);
         orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, cartMapper,
-                currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, statusRecorder, CLOCK);
+                currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, statusRecorder,
+                interactionRecorder, CLOCK);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);

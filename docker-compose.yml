@@ -1,6 +1,7 @@
 services:
   postgres:
-    image: postgres:16
+    # PostgreSQL 16 + extension pgvector (Vector Database cho chatbot RAG); dùng chung volume với postgres:16 cũ
+    image: pgvector/pgvector:pg16-trixie
     container_name: techshopping-postgres
     restart: unless-stopped
     environment:
@@ -56,11 +57,46 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      AI_SERVICE_URL: http://ai-service:8000
+      AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
     ports:
       - "8080:8080"
     volumes:
       # Ảnh sản phẩm upload từ trang admin; giữ lại khi build / tạo lại container
       - uploads_data:/app/uploads
+
+  # AI Service (Python/FastAPI): khuyến nghị sản phẩm + chatbot. Chỉ backend gọi vào (header X-Internal-Key).
+  # Lần đầu build lâu (tải PyTorch CPU + mô hình embedding). Sau khi sửa code: docker compose up -d --build ai-service
+  ai-service:
+    build: ./AI_Service
+    container_name: techshopping-ai
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      AI_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/techshopping
+      AI_BACKEND_URL: http://backend:8080/api/v1
+      AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
+      # LLM của chatbot: mặc định Ollama chạy trên máy host (miễn phí); xem AI_Service/README.md mục 8.2
+      LLM_PROVIDER: ${LLM_PROVIDER:-openai}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
+      LLM_API_KEY: ${LLM_API_KEY:-ollama}
+      LLM_MODEL: ${LLM_MODEL:-qwen3:8b}
+      LLM_REASONING_EFFORT: ${LLM_REASONING_EFFORT:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-opus-5-5}
+      AI_CHAT_EFFORT: ${AI_CHAT_EFFORT:-low}
+    extra_hosts:
+      # Linux cần dòng này để host.docker.internal trỏ về máy host (Mac / Windows có sẵn)
+      - "host.docker.internal:host-gateway"
+    ports:
+      # mở ra máy host chỉ để thử /docs khi phát triển
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ai_models:/app/models
+      # bộ câu hỏi + kết quả đánh giá chatbot (scripts/eval_chatbot.py) ghi thẳng vào repo
+      - ./AI_Service/evals:/app/evals
 
   # Static frontend: http://localhost:5510 (5500 = Oracle, 5501 = Live Server, 5502 = Antigravity).
   # ./frontend is mounted, so edits show on reload without rebuilding.
@@ -77,3 +113,4 @@ services:
 volumes:
   postgres_data:
   uploads_data:
+  ai_models:

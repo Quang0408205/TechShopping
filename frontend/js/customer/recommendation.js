@@ -1,18 +1,14 @@
 /* ================= TRANG KHUYẾN NGHỊ ================= */
 
 /*
- * Bố cục 5 khu vực lấy từ bản frontend mới, nhưng dữ liệu là SẢN PHẨM THẬT
- * từ GET /api/v1/products (không dùng catalogue giả mock-data.js).
- *
- * Chưa có hệ thống khuyến nghị (Phase 8, dịch vụ AI riêng), nên mỗi khu vực
- * dùng một quy tắc đơn giản trên API catalogue:
- *   - Gợi ý dành cho bạn: 8 sản phẩm mới nhất;
- *   - Sản phẩm tương tự:  cùng danh mục + thương hiệu với sản phẩm "neo";
- *   - Phổ biến nhất:      4 sản phẩm đầu tiên (chưa có dữ liệu bán / lượt xem);
- *   - Thường được mua kèm: phụ kiện;
- *   - Có thể nâng cấp lên: cùng danh mục, giá cao hơn sản phẩm neo.
- * Sản phẩm neo = sản phẩm đầu tiên của cửa hàng (giống "Lựa chọn hàng đầu").
- * Khi có API khuyến nghị thật, chỉ cần thay các hàm load* bên dưới.
+ * 5 khu vực, dữ liệu từ hệ thống khuyến nghị AI qua POST /api/v1/recommendations:
+ *   - Gợi ý dành cho bạn:   PERSONAL (Hybrid CBF + ALS; khách chưa đăng nhập → phổ biến + mới);
+ *   - Sản phẩm tương tự:    SIMILAR của sản phẩm "neo";
+ *   - Phổ biến nhất:        PERSONAL hỏi như khách (luôn là danh sách phổ biến);
+ *   - Thường được mua kèm:  CROSS_SELL của sản phẩm neo;
+ *   - Có thể nâng cấp lên:  UPSELL của sản phẩm neo.
+ * Sản phẩm neo = sản phẩm khách xem gần nhất (product-detail.js lưu lại), chưa xem gì thì lấy
+ * sản phẩm phổ biến nhất. AI_Service ngừng thì backend trả danh sách dự phòng (source = "FALLBACK").
  */
 
 const RECOMMENDATION_SECTIONS = [
@@ -32,9 +28,7 @@ document.addEventListener(
             categories: fetchCategoryMaps().catch(function () {
                 return { byId: {}, bySlug: {} };
             }),
-            anchor: fetchProductPage("sort=id,asc&size=1").then(function (page) {
-                return page.content[0] || null;
-            })
+            anchor: findAnchorProductId()
         };
 
 
@@ -46,11 +40,23 @@ document.addEventListener(
 );
 
 
-/* GET /products?isActive=true&<query> (công khai, không gửi token) */
+async function findAnchorProductId() {
 
-function fetchProductPage(query) {
+    try {
 
-    return apiRequest("/products?isActive=true&page=0&" + query);
+        const saved = Number(localStorage.getItem(LAST_VIEWED_PRODUCT_KEY));
+
+        if (saved > 0) {
+            return saved;
+        }
+
+    } catch (error) {
+        /* bỏ qua */
+    }
+
+    const popular = await fetchRecommendations("PERSONAL", null, 1, { guest: true });
+
+    return popular.items.length ? popular.items[0].product.id : null;
 
 }
 
@@ -71,7 +77,7 @@ async function renderRecommendationSection(section, context) {
 
     try {
 
-        const products = await section.load(context, section.size);
+        const items = await section.load(context, section.size);
 
         const categories = await context.categories;
 
@@ -80,7 +86,7 @@ async function renderRecommendationSection(section, context) {
 
             /* Khu "nâng cấp" chỉ hiện khi thật sự có sản phẩm */
 
-            if (products.length === 0) {
+            if (items.length === 0) {
                 return;
             }
 
@@ -89,7 +95,12 @@ async function renderRecommendationSection(section, context) {
         }
 
 
-        renderProductGrid(grid, products, categories.byId);
+        if (items.length === 0) {
+            grid.innerHTML = emptyStateHtml("Chưa có gợi ý", "Hãy xem thêm vài sản phẩm để hệ thống hiểu bạn hơn.");
+            return;
+        }
+
+        renderRecommendationGrid(grid, items, categories.byId);
 
     } catch (error) {
 
@@ -111,96 +122,47 @@ async function renderRecommendationSection(section, context) {
 }
 
 
-/* ================= QUY TẮC TỪNG KHU VỰC ================= */
+/* ================= NGUỒN DỮ LIỆU TỪNG KHU VỰC ================= */
 
 async function loadPersonalProducts(context, size) {
 
-    return (await fetchProductPage("sort=id,desc&size=" + size)).content;
+    return (await fetchRecommendations("PERSONAL", null, size)).items;
 
 }
 
 
 async function loadPopularProducts(context, size) {
 
-    return (await fetchProductPage("sort=id,asc&size=" + size)).content;
+    return (await fetchRecommendations("PERSONAL", null, size, { guest: true })).items;
 
 }
 
 
-async function loadSimilarProducts(context, size) {
+async function loadAnchored(type, context, size) {
 
     const anchor = await context.anchor;
 
-    if (!anchor) {
-        return [];
-    }
-
-
-    const notAnchor = function (product) {
-        return product.id !== anchor.id;
-    };
-
-
-    /* Cùng danh mục + thương hiệu trước, thiếu thì bù bằng cùng danh mục */
-
-    let products = [];
-
-    if (anchor.brandId) {
-
-        products = (await fetchProductPage(
-            "categoryId=" + anchor.categoryId + "&brandId=" + anchor.brandId + "&sort=id,asc&size=" + (size + 1)
-        )).content.filter(notAnchor);
-
-    }
-
-
-    if (products.length < size) {
-
-        const ids = products.map(function (product) { return product.id; });
-
-        const sameCategory = (await fetchProductPage(
-            "categoryId=" + anchor.categoryId + "&sort=id,asc&size=" + (size * 2)
-        )).content.filter(function (product) {
-            return notAnchor(product) && ids.indexOf(product.id) === -1;
-        });
-
-        products = products.concat(sameCategory);
-
-    }
-
-
-    return products.slice(0, size);
+    return anchor ? (await fetchRecommendations(type, anchor, size)).items : [];
 
 }
 
 
-async function loadBundleProducts(context, size) {
+function loadSimilarProducts(context, size) {
 
-    const categories = await context.categories;
-
-    const accessoryId = categories.bySlug[PRODUCT_CATEGORY_FILTERS.accessory];
-
-    if (!accessoryId) {
-        return [];
-    }
-
-    return (await fetchProductPage("categoryId=" + accessoryId + "&sort=id,asc&size=" + size)).content;
+    return loadAnchored("SIMILAR", context, size);
 
 }
 
 
-async function loadUpgradeProducts(context, size) {
+function loadBundleProducts(context, size) {
 
-    const anchor = await context.anchor;
+    return loadAnchored("CROSS_SELL", context, size);
 
-    const price = anchor ? getDisplayPrice(anchor) : 0;
+}
 
-    if (!anchor || price <= 0) {
-        return [];
-    }
 
-    return (await fetchProductPage(
-        "categoryId=" + anchor.categoryId + "&minPrice=" + Math.floor(price + 1) + "&sort=basePrice,asc&size=" + size
-    )).content;
+function loadUpgradeProducts(context, size) {
+
+    return loadAnchored("UPSELL", context, size);
 
 }

@@ -7,7 +7,7 @@
  *   GET /products/{id}/variants        → phiên bản (giá, màu, RAM, bộ nhớ)
  *   GET /products/{id}/images          → ảnh (ảnh chính trước)
  *   GET /products/{id}/specifications  → thông số (nếu có)
- *   GET /products?categoryId=&brandId= → "Sản phẩm tương tự"
+ *   POST /recommendations (SIMILAR, UPSELL, CROSS_SELL) → "Sản phẩm tương tự", "Có thể nâng cấp", "Mua kèm"
  *
  * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng không bịa phân
  * bố sao (dòng ★ = đánh giá thật, chưa có thì điểm Thế Giới Di Động), bỏ các vùng
@@ -136,6 +136,9 @@ document.addEventListener(
                 return;
 
             }
+
+
+            trackInteraction(product.id, "VIEW");
 
 
             const results = await extras;
@@ -361,6 +364,8 @@ document.addEventListener(
 
 
             mainImage.alt = product.name;
+            // The product CDN returns 403 when the storefront URL is sent as Referer.
+            mainImage.referrerPolicy = "no-referrer";
 
             mainImage.addEventListener("error", function () {
 
@@ -389,7 +394,7 @@ document.addEventListener(
                         data-url="${escapeHtml(url)}"
                         aria-label="Ảnh ${index + 1}"
                     >
-                        <img src="${escapeHtml(url)}" alt="">
+                        <img src="${escapeHtml(url)}" alt="" referrerpolicy="no-referrer">
                     </button>
                 `;
 
@@ -853,60 +858,46 @@ document.addEventListener(
         }
 
 
-        /* ================= SẢN PHẨM TƯƠNG TỰ ================= */
+        /* ================= GỢI Ý AI: TƯƠNG TỰ / NÂNG CẤP / MUA KÈM ================= */
 
-        /* Ưu tiên cùng danh mục + cùng hãng, thiếu thì bù bằng cùng danh mục */
+        /* Mỗi khu gọi POST /recommendations riêng; lỗi hoặc danh sách rỗng thì ẩn khu đó */
 
-        async function loadRelatedProducts() {
-
-            const zone = document.getElementById("relatedZone");
-
-            const grid = document.getElementById("relatedProductsGrid");
-
-            const related = [];
-
-
-            function collect(page) {
-
-                (page.content || []).forEach(function (item) {
-
-                    const duplicate = related.some(function (r) {
-                        return r.id === item.id;
-                    });
-
-                    if (item.id !== product.id && !duplicate && related.length < RELATED_COUNT) {
-                        related.push(item);
-                    }
-
-                });
-
-            }
-
-
-            const base = "/products?isActive=true&sort=id&page=0&categoryId=" + product.categoryId;
+        function loadRelatedProducts() {
 
             try {
-
-                if (product.brandId) {
-                    collect(await apiRequest(base + "&brandId=" + product.brandId + "&size=" + (RELATED_COUNT + 1)));
-                }
-
-                if (related.length < RELATED_COUNT) {
-                    collect(await apiRequest(base + "&size=" + (RELATED_COUNT * 2 + 1)));
-                }
-
+                localStorage.setItem(LAST_VIEWED_PRODUCT_KEY, String(product.id));
             } catch (error) {
-                /* Không có gợi ý cũng không sao: ẩn khu vực này */
+                /* bỏ qua */
             }
 
+            [
+                ["SIMILAR", "relatedZone", "relatedProductsGrid"],
+                ["UPSELL", "upsellZone", "upsellProductsGrid"],
+                ["CROSS_SELL", "crossSellZone", "crossSellProductsGrid"]
+            ].forEach(function (zone) {
+                loadRecommendationZone(zone[0], zone[1], zone[2]);
+            });
 
-            if (related.length === 0) {
+        }
+
+
+        async function loadRecommendationZone(type, zoneId, gridId) {
+
+            let result;
+
+            try {
+                result = await fetchRecommendations(type, product.id, RELATED_COUNT);
+            } catch (error) {
                 return;
             }
 
-            zone.hidden = false;
+            if (!result || result.items.length === 0) {
+                return;
+            }
 
-            renderProductGrid(grid, related, categoryMaps.byId);
+            document.getElementById(zoneId).hidden = false;
+
+            renderRecommendationGrid(document.getElementById(gridId), result.items, categoryMaps.byId);
 
         }
 

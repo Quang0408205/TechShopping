@@ -165,6 +165,7 @@ function renderCart(summary) {
                     <img
                         src="${escapeHtml(cartItemImageUrl(item))}"
                         alt="${escapeHtml(item.name)}"
+                        referrerpolicy="no-referrer"
                         class="cart-thumb"
                     >
                     <div>

@@ -1,9 +1,14 @@
 /* ================= LỊCH SỬ CHATBOT (admin/chat-history.html) ================= */
 
 /*
- * Chỉ ADMIN, chỉ xem. Nội dung tin nhắn do khách nhập nên luôn escape.
- * Dữ liệu mẫu (B1), nối chat_sessions / chat_messages thật ở Phase 9.
+ * Chỉ ADMIN, chỉ xem: theo dõi chất lượng câu trả lời của trợ lý AI.
+ *   GET /admin/chat-sessions?page=&size=        → danh sách phiên, hoạt động gần nhất trước
+ *   GET /admin/chat-sessions/{id}/messages      → tin nhắn của một phiên
+ * Nội dung tin nhắn do khách nhập / AI sinh ra nên luôn escape.
  */
+
+const CHAT_SESSION_PAGE_SIZE = 30;
+
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -20,7 +25,24 @@ document.addEventListener(
 
         const detailPanel = document.getElementById("chatDetailPanel");
 
-        const sessions = getChatSessions();
+        let sessions = [];
+
+
+        try {
+
+            const page = await apiRequest(
+                "/admin/chat-sessions?page=0&size=" + CHAT_SESSION_PAGE_SIZE, { auth: true }
+            );
+
+            sessions = page.content;
+
+        } catch (error) {
+
+            list.innerHTML = '<p class="admin-intro admin-chat-empty">' + escapeHtml(getErrorMessage(error)) + "</p>";
+
+            return;
+
+        }
 
 
         list.innerHTML = sessions.map(function (session) {
@@ -29,11 +51,10 @@ document.addEventListener(
                 <button type="button" class="chat-session-item" data-id="${escapeHtml(session.id)}">
                     <div class="chat-session-name">${escapeHtml(session.customerName)}</div>
                     <div class="chat-session-meta">
-                        ${escapeHtml(formatDateTimeVi(session.startedAt))} ·
-                        ${session.resolved
-                            ? '<span class="chat-status-done">Đã kết thúc</span>'
-                            : '<span class="chat-status-open">Đang tiếp diễn</span>'}
+                        ${escapeHtml(formatDateTimeVi(session.lastMessageAt || session.createdAt))} ·
+                        ${escapeHtml(session.messageCount)} tin nhắn
                     </div>
+                    <div class="chat-session-meta">${escapeHtml(session.topic || "")}</div>
                 </button>
             `;
 
@@ -43,7 +64,7 @@ document.addEventListener(
         list.querySelectorAll(".chat-session-item").forEach(function (button) {
 
             button.addEventListener("click", function () {
-                selectSession(button.dataset.id);
+                selectSession(Number(button.dataset.id));
             });
 
         });
@@ -54,37 +75,50 @@ document.addEventListener(
         }
 
 
-        function selectSession(id) {
+        async function selectSession(id) {
 
             list.querySelectorAll(".chat-session-item").forEach(function (button) {
-                button.classList.toggle("active", button.dataset.id === id);
+                button.classList.toggle("active", Number(button.dataset.id) === id);
             });
 
 
-            const session = getChatSessionById(id);
+            const session = sessions.find(function (item) {
+                return item.id === id;
+            });
 
-            if (!session) {
+            detailPanel.innerHTML = '<p class="admin-intro">Đang tải...</p>';
 
-                detailPanel.innerHTML = '<p class="admin-intro">Không tìm thấy phiên chat.</p>';
+
+            let messages;
+
+            try {
+
+                messages = await apiRequest("/admin/chat-sessions/" + id + "/messages", { auth: true });
+
+            } catch (error) {
+
+                detailPanel.innerHTML = '<p class="admin-intro">' + escapeHtml(getErrorMessage(error)) + "</p>";
 
                 return;
 
             }
 
 
+            const who = session.customerEmail
+                ? session.customerName + " (" + session.customerEmail + ")"
+                : session.customerName;
+
             detailPanel.innerHTML = `
                 <div class="admin-panel-header">
-                    <h2>${escapeHtml(session.customerName)} · ${escapeHtml(formatDateTimeVi(session.startedAt))}</h2>
-                    <span class="admin-row-count">${session.messages.length} tin nhắn</span>
+                    <h2>${escapeHtml(who)} · ${escapeHtml(formatDateTimeVi(session.createdAt))}</h2>
+                    <span class="admin-row-count">${messages.length} tin nhắn</span>
                 </div>
 
                 <div class="admin-chat-messages">
-                    ${session.messages.map(function (message) {
-                        return `
-                            <div class="admin-chat-message ${message.sender === "user" ? "from-user" : "from-bot"}">
-                                ${escapeHtml(message.text)}
-                            </div>
-                        `;
+                    ${messages.map(function (message) {
+                        /* nội dung sát thẻ div: CSS white-space: pre-line giữ cả khoảng trắng thụt lề */
+                        return `<div class="admin-chat-message ${message.sender === "USER" ? "from-user" : "from-bot"}">${
+                            escapeHtml(message.content)}</div>`;
                     }).join("")}
                 </div>
             `;

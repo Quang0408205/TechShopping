@@ -18,9 +18,11 @@ import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.store.StoreRepository;
+import com.example.Tech.entity.recommendation.InteractionType;
 import com.example.Tech.service.cart.CartService;
 import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.inventory.StockAvailability.StoreStock;
+import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +48,7 @@ public class CartServiceImpl implements CartService {
     private final CartMapper cartMapper;
     private final StockAvailability stockAvailability;
     private final StoreRepository storeRepository;
+    private final InteractionRecorder interactionRecorder;
 
     @Override
     public CartResponse getCart(Long userId) {
@@ -78,6 +81,7 @@ public class CartServiceImpl implements CartService {
         }
         cartItemRepository.upsertQuantity(cartId, variant.getId(), request.quantity(), MAX_LINE_QUANTITY);
         cartRepository.touch(cartId);
+        interactionRecorder.record(userId, variant.getProduct().getId(), InteractionType.ADD_TO_CART);
         log.info("User id={} added {} x variant id={} to cart id={}",
                 userId, request.quantity(), variant.getId(), cartId);
         return toResponse(findCart(userId));
