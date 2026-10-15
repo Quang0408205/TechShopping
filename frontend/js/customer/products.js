@@ -7,10 +7,9 @@
  *       &maxPrice=&page=&size=12&sort=       → lưới sản phẩm + phân trang
  *   ảnh thẻ: primaryImageUrl có sẵn trong danh sách (IMG-3, js/core/ui.js)
  *
- * Bộ lọc thương hiệu theo danh mục: backend không có endpoint "hãng theo
- * danh mục" (và 2.8 không sửa backend), nên gom brandId/brandName từ các
- * sản phẩm của danh mục đó (size=100, Laptop 431 sản phẩm = 5 request),
- * rồi lưu tạm trong bộ nhớ theo categoryId.
+ * Bộ lọc thương hiệu theo danh mục: GET /categories/{id}/brands (máy chủ
+ * trả sẵn hãng có sản phẩm đang bán, có cache), lưu tạm trong bộ nhớ theo
+ * categoryId.
  */
 
 document.addEventListener(
@@ -27,8 +26,6 @@ document.addEventListener(
         const categoryTabs = document.querySelector(".category-tabs");
 
         const PAGE_SIZE = 12;
-
-        const BRAND_SCAN_PAGE_SIZE = 100;
 
         const MAX_KEYWORD_LENGTH = 100;
 
@@ -389,7 +386,7 @@ document.addEventListener(
 
             if (!brandCache[categoryId]) {
 
-                brandCache[categoryId] = scanBrands(categoryId)
+                brandCache[categoryId] = fetchBrands(categoryId)
                     .catch(function (error) {
 
                         delete brandCache[categoryId];
@@ -405,51 +402,13 @@ document.addEventListener(
         }
 
 
-        async function scanBrands(categoryId) {
+        async function fetchBrands(categoryId) {
 
-            function pagePath(page) {
+            /* Máy chủ trả sẵn thương hiệu có sản phẩm đang bán trong danh mục (có cache) */
+            const brands = await apiRequest("/categories/" + categoryId + "/brands");
 
-                return "/products?isActive=true&categoryId=" + categoryId +
-                    "&size=" + BRAND_SCAN_PAGE_SIZE + "&sort=id&page=" + page;
-
-            }
-
-
-            const firstPage = await apiRequest(pagePath(0));
-
-            const pages = [firstPage];
-
-
-            if (firstPage.totalPages > 1) {
-
-                const requests = [];
-
-                for (let page = 1; page < firstPage.totalPages; page++) {
-                    requests.push(apiRequest(pagePath(page)));
-                }
-
-                pages.push.apply(pages, await Promise.all(requests));
-
-            }
-
-
-            const brandsById = new Map();
-
-            pages.forEach(function (page) {
-
-                (page.content || []).forEach(function (product) {
-
-                    if (product.brandId && !brandsById.has(product.brandId)) {
-                        brandsById.set(product.brandId, product.brandName || "");
-                    }
-
-                });
-
-            });
-
-
-            return Array.from(brandsById, function (entry) {
-                return { id: entry[0], name: entry[1] };
+            return (brands || []).map(function (brand) {
+                return { id: brand.id, name: brand.name || "" };
             }).sort(function (a, b) {
                 return a.name.localeCompare(b.name, "vi");
             });

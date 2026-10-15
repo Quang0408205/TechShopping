@@ -19,6 +19,7 @@ import com.example.Tech.repository.user.UserRoleRepository;
 import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
 import com.example.Tech.service.auth.AuthService;
+import com.example.Tech.service.auth.LoginAttemptLimiter;
 import com.example.Tech.util.AccountUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final UserMapper userMapper;
     private final Clock clock;
+    private final LoginAttemptLimiter loginAttemptLimiter;
 
     /** Compared against when the login name is unknown, so both failure paths take about the same time. */
     private final String dummyPasswordHash;
@@ -51,7 +53,8 @@ public class AuthServiceImpl implements AuthService {
     public AuthServiceImpl(UserRepository userRepository, RoleRepository roleRepository,
                            UserRoleRepository userRoleRepository, CustomerProfileRepository customerProfileRepository,
                            PasswordEncoder passwordEncoder, JwtTokenService jwtTokenService,
-                           RefreshTokenService refreshTokenService, UserMapper userMapper, Clock clock) {
+                           RefreshTokenService refreshTokenService, UserMapper userMapper, Clock clock,
+                           LoginAttemptLimiter loginAttemptLimiter) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.userRoleRepository = userRoleRepository;
@@ -61,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
         this.refreshTokenService = refreshTokenService;
         this.userMapper = userMapper;
         this.clock = clock;
+        this.loginAttemptLimiter = loginAttemptLimiter;
         this.dummyPasswordHash = passwordEncoder.encode("timing-protection-dummy-password");
     }
 
@@ -96,14 +100,21 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse login(LoginRequest request) {
         Optional<User> found = findByIdentifier(request.identifier());
+        String subject = found.map(user -> LoginAttemptLimiter.subjectOfUser(user.getId()))
+                .orElseGet(() -> LoginAttemptLimiter.subjectOfUnknown(AccountUtil.normalize(request.identifier())));
+        // A locked account is refused even with the right password
+        loginAttemptLimiter.ensureNotLocked(subject);
         if (found.isEmpty() || AccountUtil.exceedsBcryptLimit(request.password())) {
             passwordEncoder.matches("timing-protection", dummyPasswordHash);
+            loginAttemptLimiter.recordFailure(subject);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
         User user = found.get();
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            loginAttemptLimiter.recordFailure(subject);
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
+        loginAttemptLimiter.reset(subject);
         // Checked only after the password, so the response does not reveal which accounts exist
         ensureEnabled(user);
         ensureTemporaryPasswordValid(user);

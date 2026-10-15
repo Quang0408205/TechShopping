@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductVariantCreateRequest;
 import com.example.Tech.dto.request.product.ProductVariantUpdateRequest;
 import com.example.Tech.dto.response.product.AttributeValueResponse;
@@ -90,7 +92,8 @@ class ProductVariantServiceImplTest {
         variantService = new ProductVariantServiceImpl(variantRepository, productRepository,
                 attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
                 inventoryRepository, stockMovementRepository, new ProductVariantMapper(new AttributeValueMapper()),
-                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone());
+                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone(),
+                new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test

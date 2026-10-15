@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductCreateRequest;
 import com.example.Tech.dto.request.product.ProductImageInput;
 import com.example.Tech.dto.request.product.ProductSearchRequest;
@@ -77,7 +79,8 @@ class ProductServiceImplTest {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         productService = new ProductServiceImpl(productRepository, categoryRepository, brandRepository,
                 imageRepository, new ProductMapper(), new ProductImageMapper(),
-                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone());
+                new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone(),
+                new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test
