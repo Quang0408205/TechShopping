@@ -4,6 +4,7 @@ import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.product.BrandResponse;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import com.example.Tech.service.product.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import java.util.List;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -51,6 +53,16 @@ public class CategoryController {
     })
     public ResponseEntity<ApiResult<CategoryResponse>> getById(@PathVariable Integer id) {
         return ResponseEntity.ok(ApiResult.ok(categoryService.getById(id)));
+    }
+
+    @GetMapping("/{id}/brands")
+    @Operation(summary = "Brands that have products on sale in the category (cached 1 hour)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Brands returned, by name"),
+            @ApiResponse(responseCode = "404", description = "CATEGORY_NOT_FOUND")
+    })
+    public ResponseEntity<ApiResult<List<BrandResponse>>> getBrands(@PathVariable Integer id) {
+        return ResponseEntity.ok(ApiResult.ok(categoryService.getBrands(id)));
     }
 
     @PostMapping

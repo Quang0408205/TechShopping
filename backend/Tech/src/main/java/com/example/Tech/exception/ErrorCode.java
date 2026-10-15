@@ -152,7 +152,10 @@ public enum ErrorCode {
 
     // AI service (recommendations, chatbot)
     AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ AI đang tạm ngưng, vui lòng thử lại sau"),
-    CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện");
+    CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện"),
+
+    // Login lock (Phase 10)
+    TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mật khẩu quá nhiều lần, vui lòng thử lại sau");
 
     private final HttpStatus status;
     private final String defaultMessage;

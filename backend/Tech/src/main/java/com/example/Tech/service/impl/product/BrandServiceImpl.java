@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.product.BrandUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.BrandResponse;
 import com.example.Tech.entity.product.Brand;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
@@ -18,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 @Slf4j
 @Service
@@ -28,15 +30,18 @@ public class BrandServiceImpl implements BrandService {
     private final BrandRepository brandRepository;
     private final ProductRepository productRepository;
     private final BrandMapper brandMapper;
+    private final ReadCache cache;
 
     @Override
     public PageResponse<BrandResponse> getAll(Pageable pageable) {
-        return PageResponse.from(brandRepository.findAll(pageable).map(brandMapper::toResponse));
+        return cache.get(ReadCache.BRANDS, ReadCache.pageKey(pageable), new TypeReference<>() { },
+                () -> PageResponse.from(brandRepository.findAll(pageable).map(brandMapper::toResponse)));
     }
 
     @Override
     public BrandResponse getById(Integer id) {
-        return brandMapper.toResponse(findBrand(id));
+        return cache.get(ReadCache.BRANDS, id, new TypeReference<>() { },
+                () -> brandMapper.toResponse(findBrand(id)));
     }
 
     @Override
@@ -54,6 +59,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setSlug(slug);
 
         Brand saved = brandRepository.save(brand);
+        evictCatalog();
         log.info("Created brand id={}", saved.getId());
         return brandMapper.toResponse(saved);
     }
@@ -75,6 +81,7 @@ public class BrandServiceImpl implements BrandService {
         brand.setSlug(slug);
 
         Brand saved = brandRepository.saveAndFlush(brand);
+        evictCatalog();
         log.info("Updated brand id={}", id);
         return brandMapper.toResponse(saved);
     }
@@ -89,7 +96,13 @@ public class BrandServiceImpl implements BrandService {
         }
         brandRepository.delete(brand);
         brandRepository.flush();
+        evictCatalog();
         log.info("Deleted brand id={}", id);
+    }
+
+    /** Brand names are inside product responses too. */
+    private void evictCatalog() {
+        cache.evictAll(ReadCache.BRANDS, ReadCache.CATEGORY_BRANDS, ReadCache.PRODUCT);
     }
 
     private Brand findBrand(Integer id) {

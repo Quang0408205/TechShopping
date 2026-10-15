@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.CacheProperties;
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductSpecificationCreateRequest;
 import com.example.Tech.dto.request.product.ProductSpecificationUpdateRequest;
 import com.example.Tech.dto.response.product.ProductSpecificationResponse;
@@ -40,7 +42,7 @@ class ProductSpecificationServiceImplTest {
     @BeforeEach
     void setUp() {
         specificationService = new ProductSpecificationServiceImpl(specificationRepository, productRepository,
-                new ProductSpecificationMapper());
+                new ProductSpecificationMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }
 
     @Test

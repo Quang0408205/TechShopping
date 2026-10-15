@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.product;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.product.ProductSpecificationCreateRequest;
 import com.example.Tech.dto.request.product.ProductSpecificationUpdateRequest;
 import com.example.Tech.dto.response.product.ProductSpecificationResponse;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 import java.util.List;
 
@@ -27,13 +29,16 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
     private final ProductSpecificationRepository specificationRepository;
     private final ProductRepository productRepository;
     private final ProductSpecificationMapper specificationMapper;
+    private final ReadCache cache;
 
     @Override
     public List<ProductSpecificationResponse> getByProductId(Long productId) {
-        Product product = findProduct(productId);
-        return specificationRepository.findAllByProductIdOrderBySpecOrderAscIdAsc(product.getId()).stream()
-                .map(specificationMapper::toResponse)
-                .toList();
+        return cache.get(ReadCache.SPECS, productId, new TypeReference<>() { }, () -> {
+            Product product = findProduct(productId);
+            return specificationRepository.findAllByProductIdOrderBySpecOrderAscIdAsc(product.getId()).stream()
+                    .map(specificationMapper::toResponse)
+                    .toList();
+        });
     }
 
     @Override
@@ -50,6 +55,7 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
         specification.setProduct(product);
 
         ProductSpecification saved = specificationRepository.save(specification);
+        cache.evict(ReadCache.SPECS, product.getId());
         log.info("Created product specification id={} for product id={}", saved.getId(), product.getId());
         return specificationMapper.toResponse(saved);
     }
@@ -61,6 +67,7 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
         specificationMapper.updateEntity(specification, request);
 
         ProductSpecification saved = specificationRepository.saveAndFlush(specification);
+        cache.evict(ReadCache.SPECS, specification.getProduct().getId());
         log.info("Updated product specification id={}", id);
         return specificationMapper.toResponse(saved);
     }
@@ -70,6 +77,7 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
     public void delete(Long id) {
         ProductSpecification specification = findSpecification(id);
         specificationRepository.delete(specification);
+        cache.evict(ReadCache.SPECS, specification.getProduct().getId());
         log.info("Deleted product specification id={}", id);
     }
 

@@ -167,6 +167,8 @@ docker compose up -d backend
 | Quản trị | **Báo cáo doanh thu** (ADMIN mọi chi nhánh, quản lý chi nhánh mình): lọc chi nhánh / ngày / nhóm theo ngày-tháng; thẻ tổng; cột theo thời gian; tròn theo danh mục + phương thức thanh toán; theo chi nhánh; doanh số + hoa hồng theo nhân viên; top 10 sản phẩm; **Xuất Excel** (.xlsx 7 sheet, `GET /api/v1/admin/reports/sales/export`) | **Thật** (API) |
 | Quản trị | **Liên hệ khách hàng** (một hộp thư chung cho nhân viên và quản lý mọi chi nhánh, ADMIN chỉ xem): lọc trạng thái / chủ đề / từ khoá, nhận xử lý, đánh dấu đã xử lý (bắt buộc ghi chú nội bộ), mở lại; số tin chờ xử lý ở Tổng quan | **Thật** (API) |
 | Quản trị | **Lịch sử chatbot** (chỉ ADMIN, chỉ xem): các phiên chat gần nhất (khách / khách chưa đăng nhập, câu hỏi đầu, số tin nhắn) và toàn bộ hội thoại để theo dõi chất lượng câu trả lời | **Thật** (API) |
+| Hệ thống | **Khoá đăng nhập** (Phase 10.6): nhập sai mật khẩu 5 lần trong 15 phút thì tài khoản bị khoá đăng nhập 15 phút (kể cả mật khẩu đúng; báo số phút còn lại, header `Retry-After`); mỗi IP đăng ký tối đa 10 lần / giờ, làm mới token 60 lần / phút. Bộ đếm nằm trong Redis; Redis lỗi thì không chặn ai. Đổi giới hạn bằng `LOGIN_MAX_FAILURES`, `REGISTER_LIMIT_PER_IP`, `REFRESH_LIMIT_PER_IP` | **Thật** (API) |
+| Hệ thống | **Redis cache đọc** (Phase 10.5): danh mục / thương hiệu / hãng theo danh mục (`GET /categories/{id}/brands`) 1 giờ; trang chi tiết sản phẩm (sản phẩm, phiên bản, ảnh, thông số) 10 phút; Tổng quan + Báo cáo 5 phút. Tự xoá khi admin sửa danh mục / thương hiệu / sản phẩm / khuyến mãi hoặc có đánh giá mới; không cache danh sách sản phẩm, giỏ, đơn, thanh toán, và tồn kho luôn đọc mới. Tắt bằng `CACHE_ENABLED=false`; Redis lỗi thì đọc thẳng database | **Thật** (API) |
 
 ---
 

@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.report;
 
+import com.example.Tech.cache.ReadCache;
 import com.example.Tech.dto.request.report.ReportGroupBy;
 import com.example.Tech.dto.request.report.SalesReportRequest;
 import com.example.Tech.dto.response.report.DashboardSummaryResponse;
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.core.type.TypeReference;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -57,6 +59,7 @@ public class ReportServiceImpl implements ReportService {
     private final StoreRepository storeRepository;
     private final EmployeeRepository employeeRepository;
     private final Clock clock;
+    private final ReadCache cache;
 
     @Override
     public SalesReportResponse sales(Long userId, SalesReportRequest filter) {
@@ -86,6 +89,16 @@ public class ReportServiceImpl implements ReportService {
                     "Xem theo ngày tối đa %d ngày; hãy chọn xem theo tháng".formatted(MAX_DAYS_BY_DAY));
         }
 
+        // the figures are cached for a few minutes per scope and filter; the checks above run on every call
+        Integer cacheStoreId = storeId;
+        boolean admin = scope.admin();
+        return cache.get(ReadCache.REPORT,
+                "sales:%s:%s:%s:%s:%s".formatted(cacheStoreId, admin, fromDate, toDate, groupBy),
+                new TypeReference<>() { }, () -> buildSales(admin, cacheStoreId, store, fromDate, toDate, groupBy));
+    }
+
+    private SalesReportResponse buildSales(boolean admin, Integer storeId, Store store, LocalDate fromDate,
+                                           LocalDate toDate, ReportGroupBy groupBy) {
         LocalDateTime from = fromDate.atStartOfDay();
         LocalDateTime to = toDate.plusDays(1).atStartOfDay();
         boolean monthly = groupBy == ReportGroupBy.MONTH;
@@ -110,7 +123,7 @@ public class ReportServiceImpl implements ReportService {
                 queries.byPaymentMethod(from, to, storeId).stream()
                         .map(row -> new SalesReportResponse.PaymentSlice(row.paymentMethod(), row.orders(), row.revenue()))
                         .toList(),
-                scope.admin() && storeId == null ? byStore(from, to) : List.of(),
+                admin && storeId == null ? byStore(from, to) : List.of(),
                 byEmployee(from, to, storeId),
                 queries.topProducts(from, to, storeId, TOP_PRODUCTS).stream()
                         .map(row -> new SalesReportResponse.ProductRow(row.productId(), row.productName(),
@@ -136,8 +149,15 @@ public class ReportServiceImpl implements ReportService {
     @Override
     public DashboardSummaryResponse dashboard(Long userId) {
         StoreAccessGuard.OrderScope scope = storeAccessGuard.orderScope(userId);
-        Integer storeId = scope.storeId();
+        boolean revenue = storeAccessGuard.canViewRevenue(userId);
         LocalDate today = LocalDate.now(clock);
+        // cached per scope: every employee of a branch (with the same revenue right) shares one entry
+        return cache.get(ReadCache.REPORT, "dashboard:%s:%s:%s:%s".formatted(scope.storeId(), scope.admin(), revenue, today),
+                new TypeReference<>() { }, () -> buildDashboard(scope, revenue, today));
+    }
+
+    private DashboardSummaryResponse buildDashboard(StoreAccessGuard.OrderScope scope, boolean revenue, LocalDate today) {
+        Integer storeId = scope.storeId();
         LocalDate monthStart = today.withDayOfMonth(1);
         LocalDate previousStart = monthStart.minusMonths(1);
         // same number of days into last month, capped at its length (31 March vs 1–28 February)
@@ -148,7 +168,6 @@ public class ReportServiceImpl implements ReportService {
         Map<String, Long> statuses = queries.orderCountsByStatus(List.of("PENDING", "CONFIRMED", "SHIPPING"), storeId);
         long[] stock = queries.lowAndOutOfStock(storeId, LOW_STOCK_MAX);
 
-        boolean revenue = storeAccessGuard.canViewRevenue(userId);
         return new DashboardSummaryResponse(storeId, storeId == null ? null : findStore(storeId).getName(), today,
                 revenue ? net(deliveredToday, today, today, storeId) : null, deliveredToday.orders(),
                 revenue ? net(deliveredMonth, monthStart, today, storeId) : null, deliveredMonth.orders(),
