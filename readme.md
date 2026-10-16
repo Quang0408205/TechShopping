@@ -149,7 +149,7 @@ docker compose up -d backend
 | Khách hàng | **Đánh giá sản phẩm**: tab "ĐÁNH GIÁ" ở trang chi tiết (điểm trung bình + số đánh giá từng mức sao, toàn số thật), viết / sửa / xoá đánh giá của mình (1–5 sao, nhận xét, tối đa 5 ảnh), nhãn "Đã mua hàng", lọc theo sao / có ảnh, xem ảnh lớn; điểm Thế Giới Di Động hiện riêng để tham khảo; thẻ sản phẩm hiện sao (đánh giá thật, chưa có thì điểm TGDĐ ghi rõ "đánh giá tham khảo") | **Thật** (API) |
 | Khách hàng | Giỏ hàng: phải đăng nhập mới thêm được, lưu trên server theo từng tài khoản, giá và phí vận chuyển do server tính | **Thật** (API) |
 | Khách hàng | Thanh toán (đặt hàng từ giỏ), đơn hàng của tôi, chi tiết đơn, hủy đơn khi còn chờ xác nhận. **Hình thức nhận hàng**: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc **nhận tại cửa hàng** (chọn cửa hàng đang mở, miễn phí vận chuyển) | **Thật** (API) |
-| Khách hàng | **Phương thức thanh toán** (Phase 5, mô phỏng, không qua cổng thanh toán thật): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK demo + mã QR VietQR, nội dung = mã đơn, nhân viên xác nhận đã nhận tiền); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
+| Khách hàng | **Phương thức thanh toán** (Phase 5): COD (ghi nhận đã thu khi giao); chuyển khoản (trang đơn hiện STK + mã QR VietQR của tài khoản đặt trong `.env`, nội dung = mã đơn; tiền về thì **webhook ngân hàng tự xác nhận**, nhân viên vẫn xác nhận tay được; xem mục *Thanh toán chuyển khoản* bên dưới); **trả góp 0%** 3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ (nhập CCCD 10 số + ngân hàng thẻ, chờ duyệt, lịch các kỳ tính từ ngày giao). Đơn đã trả tiền mà bị hủy thì chờ hoàn tiền | **Thật** (API) |
 | Khách hàng | **Bảo hành / bảo trì / trả hàng** (Phase 6): ở chi tiết đơn đã giao xem hạn bảo hành từng sản phẩm, gửi bảo hành (còn hạn), bảo trì (mọi sản phẩm, có thể mất phí) hoặc trả hàng hoàn tiền trong 7 ngày (chọn sản phẩm + số lượng, xem số tiền hoàn dự kiến; đơn trả góp liên hệ cửa hàng), kèm tối đa 5 ảnh; trang **Yêu cầu dịch vụ** theo dõi trạng thái, ghi chú / lý do của cửa hàng, huỷ khi còn chờ; trang Dịch vụ có chính sách bảo hành / trả hàng | **Thật** (API) |
 | Khách hàng | **Liên hệ**: form gửi thật (họ tên, email, SĐT tuỳ chọn, chủ đề, nội dung; đã đăng nhập thì điền sẵn và gắn tài khoản; giới hạn số lần gửi theo IP / email), nhận mã tin nhắn | **Thật** (API) |
 | Khách hàng | **Khuyến nghị sản phẩm (AI)**: trang Khuyến nghị (Gợi ý dành cho bạn, Tương tự, Phổ biến, Mua kèm, Nâng cấp) và 3 khu ở trang chi tiết sản phẩm (Có thể nâng cấp lên, Thường được mua kèm, Sản phẩm tương tự), mỗi thẻ có **lý do gợi ý**. Hybrid CBF + ALS (α = 0,4), khách chưa đăng nhập nhận sản phẩm phổ biến + mới; hệ thống ghi hành vi xem / bấm / thêm giỏ / mua để học. AI Service ngừng thì backend trả danh sách dự phòng | **Thật** (AI Service) |
@@ -280,6 +280,9 @@ Kiến trúc (báo cáo mục 3.5, 3.6): **Website → Spring Boot → AI Servic
 > # 14. Mật khẩu tạm: bắt đổi ở lần đăng nhập đầu + hết hạn
 > Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\temporary_password.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 15. Nhật ký chuyển khoản ngân hàng (webhook + đối soát)
+> Get-Content database\migrations\bank_transactions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\bank_transactions.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 >
 > Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
@@ -294,6 +297,17 @@ Kiến trúc (báo cáo mục 3.5, 3.6): **Website → Spring Boot → AI Servic
 > - Chạy được nhiều lần: mỗi sản phẩm nhận diện bằng mã `TGDD-<id nguồn>`, lần sau chỉ cập nhật (tên, giá, mô tả, thông số, điểm đánh giá TGDĐ, thêm ảnh mới). Điểm TGDĐ ghi vào cột riêng (`tgdd_rating`, `tgdd_review_count`, cần migration số 8), không đụng tới điểm đánh giá thật của khách trên web.
 > - Sản phẩm mẫu cũ có cùng trang TGDĐ được **cập nhật tại chỗ** (giữ id, nên giỏ hàng / đơn hàng / khuyến mãi / tồn kho đang trỏ tới vẫn đúng); sản phẩm cũ không còn trong dữ liệu mới bị **ẩn** (không xoá). Thương hiệu bị tách ("iPhone (Apple)", "MacBook"…) được gộp về tên chuẩn.
 > - Muốn crawl lại từ đầu: `python -m pip install -r requirements.txt`, `python -m playwright install chromium`, rồi `python Raw_data/crawler.py` và `python Raw_data/clean_data.py` trước khi import.
+
+### Thanh toán chuyển khoản: QR thật + webhook
+
+Tiền khách chuyển vào **một tài khoản của công ty** (không phải tài khoản từng chi nhánh); doanh thu theo chi nhánh vẫn lấy từ đơn đã giao (`sales_records`), không phụ thuộc tài khoản nhận tiền.
+
+1. **Migration** số 15 (`database/migrations/bank_transactions.sql`, bảng `bank_transactions`): chạy cho cả `techshopping` và `techshopping_test`.
+2. **`.env`** (không commit): `PAYMENT_BANK_NAME`, `PAYMENT_BANK_BIN` (mã VietQR của ngân hàng), `PAYMENT_BANK_ACCOUNT_NUMBER`, `PAYMENT_BANK_ACCOUNT_NAME` (không dấu, in hoa), `PAYMENT_WEBHOOK_SECRET` (chuỗi ngẫu nhiên dài), `PAYMENT_SIMULATOR_ENABLED` (chỉ bật khi trình diễn). Để trống thì QR dùng tài khoản DEMO và webhook tắt; backend ghi cảnh báo khi khởi động. Sau khi sửa: `docker compose up -d backend`.
+3. **Webhook** `POST /api/v1/payments/webhook` (không cần đăng nhập, xác thực bằng khoá `Authorization: Apikey <khoá>` hoặc `X-Webhook-Secret`; định dạng dữ liệu giống SePay: `id`, `transferType` = `in`, `transferAmount`, `content`, `accountNumber`, `transactionDate`). Đọc mã đơn (`DH` + 8 số) trong nội dung: khớp mã + đúng số tiền thì đơn tự thành *đã nhận tiền*; mã giao dịch `id` trùng thì chỉ lưu một lần. Trường hợp khác (sai số tiền, đơn đã huỷ / đã trả, không có mã, sai tài khoản) được giữ lại ở trang **Đối soát chuyển khoản** (`admin/bank-transactions.html`, chỉ ADMIN) để *Gán vào đơn* hoặc *Bỏ qua* (bắt buộc lý do).
+4. **Trình diễn / bảo vệ khoá luận**: đặt `PAYMENT_SIMULATOR_ENABLED=true`, trang Đối soát có ô *Giả lập ngân hàng báo tiền về* (nhập mã đơn + số tiền), đi qua đúng đoạn xử lý của webhook thật. Nối dịch vụ thật (SePay, Casso…) chỉ cần trỏ webhook của họ về địa chỉ trên (cần địa chỉ công khai, ví dụ ngrok) và đặt cùng khoá.
+
+> ⚠️ Số tài khoản và khoá webhook chỉ để trong `.env`. Che số tài khoản khi chụp màn hình QR đưa vào báo cáo.
 
 > ⚠️ **Không** dùng `docker compose down -v` trừ khi muốn **xoá sạch database**: `-v` xoá luôn volume dữ liệu (mọi tài khoản, đơn hàng…). Lần `up` tiếp theo sẽ tạo lại database với 4.288 sản phẩm đã crawl.
 

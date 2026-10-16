@@ -237,7 +237,9 @@ function toPaymentView(payment) {
             amount: Number(transfer.amount) || 0,
             transferContent: transfer.transferContent || "",
             qrImageUrl: isSafeImageUrl(transfer.qrImageUrl) ? transfer.qrImageUrl.trim() : null,
-            payBefore: transfer.payBefore
+            payBefore: transfer.payBefore,
+            /* chế độ demo: trang thanh toán tự báo đã nhận tiền sau 1 phút hiện QR */
+            demoAutoPay: transfer.demoAutoPay === true
         } : null
     };
 
@@ -330,6 +332,15 @@ function formatOrderDate(value) {
 function getOrderDetailUrl(orderId, justPlaced) {
 
     return siteUrl("customer/order-detail.html?id=" + encodeURIComponent(orderId) + (justPlaced ? "&justPlaced=1" : ""));
+
+}
+
+
+/* Trang thanh toán chuyển khoản (QR + nội dung), tự cập nhật khi nhận được tiền */
+
+function getPaymentUrl(orderId) {
+
+    return siteUrl("customer/payment.html?id=" + encodeURIComponent(orderId));
 
 }
 

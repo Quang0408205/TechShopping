@@ -58,7 +58,8 @@ app:
     # Origin the browser uses to reach this API; stored image URLs start with it
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
   payment:
-    # Demo shop account shown for bank transfers (payments are simulated: staff confirms the money)
+    # Shop account shown for bank transfers and used for the VietQR image. Set the real one in .env (never commit it);
+    # empty = the demo account
     bank-transfer:
       bank-name: ${PAYMENT_BANK_NAME:Vietcombank}
       # VietQR bank id for the QR image (970436 = Vietcombank)
@@ -67,6 +68,11 @@ app:
       account-name: ${PAYMENT_BANK_ACCOUNT_NAME:CONG TY POY}
       # Shown to the customer as "pay before"; unpaid orders are not cancelled automatically
       deadline-hours: 24
+    # Bank webhook (POST /api/v1/payments/webhook): the provider sends this key as "Authorization: Apikey <key>" or
+    # X-Webhook-Secret. Empty = webhook off. simulator-enabled: lets an ADMIN fake a transfer (demo only)
+    webhook:
+      secret: ${PAYMENT_WEBHOOK_SECRET:}
+      simulator-enabled: ${PAYMENT_SIMULATOR_ENABLED:false}
   sales:
     # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
     commission-rate: ${SALES_COMMISSION_RATE:0.01}

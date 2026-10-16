@@ -56,17 +56,6 @@ document.addEventListener(
 
         cancelButton.addEventListener("click", confirmCancel);
 
-        document.getElementById("orderTransferBlock").addEventListener("click", copyTransferValue);
-
-        /* Không tải được ảnh QR (không có mạng / dịch vụ VietQR lỗi): chỉ còn thông tin chữ */
-        document.getElementById("orderTransferQr").addEventListener("error", function () {
-
-            this.hidden = true;
-
-            document.getElementById("orderTransferQrError").hidden = false;
-
-        });
-
 
         await loadOrder();
 
@@ -181,28 +170,6 @@ document.addEventListener(
         }
 
 
-        async function copyTransferValue(event) {
-
-            const button = event.target.closest("button[data-copy]");
-
-            if (!button) {
-                return;
-            }
-
-            try {
-
-                await navigator.clipboard.writeText(button.dataset.copy);
-
-                showToast("Đã sao chép " + button.dataset.copyLabel + ".", "success");
-
-            } catch (error) {
-
-                showToast("Trình duyệt không cho sao chép, vui lòng chép thủ công.", "error");
-
-            }
-
-        }
-
     }
 );
 
@@ -227,6 +194,8 @@ function renderOrder(order) {
 
     renderTimeline(order);
 
+
+    document.getElementById("orderItemCount").textContent = "(" + order.items.length + ")";
 
     document.getElementById("orderItemsList").innerHTML =
         order.items.map(function (item) {
@@ -450,31 +419,18 @@ function renderTransfer(order) {
     }
 
 
-    const qr = document.getElementById("orderTransferQr");
-
-    document.getElementById("orderTransferQrError").hidden = true;
-
-    qr.hidden = !transfer.qrImageUrl;
-
-    if (transfer.qrImageUrl && qr.getAttribute("src") !== transfer.qrImageUrl) {
-        qr.src = transfer.qrImageUrl;
-    }
-
+    /* QR + sao chép nằm ở trang thanh toán riêng; ở đây chỉ nhắc số tiền / nội dung */
+    document.getElementById("orderTransferPayLink").href = getPaymentUrl(order.id);
 
     document.getElementById("orderTransferFacts").innerHTML = [
-        factHtml("Ngân hàng", escapeHtml(transfer.bankName)),
-        factHtml("Số tài khoản", escapeHtml(transfer.accountNumber) + copyButtonHtml(transfer.accountNumber, "số tài khoản")),
-        factHtml("Chủ tài khoản", escapeHtml(transfer.accountName)),
         factHtml("Số tiền", `<strong>${formatPrice(transfer.amount)}</strong>`),
-        factHtml("Nội dung", `<strong>${escapeHtml(transfer.transferContent)}</strong>`
-            + copyButtonHtml(transfer.transferContent, "nội dung chuyển khoản"))
+        factHtml("Nội dung", `<strong>${escapeHtml(transfer.transferContent)}</strong>`)
     ].join("");
 
 
     document.getElementById("orderTransferDeadline").textContent = transfer.payBefore
-        ? "Vui lòng chuyển khoản trước " + formatOrderDateTime(transfer.payBefore)
-            + " và ghi đúng nội dung để cửa hàng đối chiếu."
-        : "Vui lòng ghi đúng nội dung để cửa hàng đối chiếu.";
+        ? "Vui lòng chuyển khoản trước " + formatOrderDateTime(transfer.payBefore) + "."
+        : "";
 
 }
 

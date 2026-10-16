@@ -219,11 +219,32 @@
     gap: 50px;
 }
 
+/* Nhiều sản phẩm: danh sách cuộn trong khung, cột bên phải đứng yên khi cuộn */
+.order-items-card {
+    border: 1px solid #eee;
+}
+
+.order-items-title {
+    padding: 14px 20px;
+
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.order-items-title span {
+    color: #888;
+    font-weight: 500;
+}
+
 .order-detail-items {
     display: flex;
     flex-direction: column;
 
-    gap: 20px;
+    max-height: 520px;
+    overflow-y: auto;
 }
 
 .order-item-row {
@@ -232,12 +253,22 @@
 
     gap: 16px;
 
-    padding-bottom: 20px;
+    padding: 16px 20px;
 
     border-bottom: 1px solid #eee;
 }
 
+.order-item-row:last-child {
+    border-bottom: 0;
+}
+
+.order-item-row > strong {
+    white-space: nowrap;
+}
+
 .order-item-row img {
+    flex-shrink: 0;
+
     width: 60px;
     height: 60px;
 
@@ -275,6 +306,20 @@
     flex-direction: column;
 
     gap: 25px;
+
+    align-self: start;
+}
+
+@media (min-width: 1001px) {
+
+    .order-detail-side {
+        position: sticky;
+        top: 130px;
+
+        max-height: calc(100vh - 150px);
+        overflow-y: auto;
+    }
+
 }
 
 .order-detail-block {
@@ -587,23 +632,16 @@
 }
 
 .order-transfer {
-    border: 2px solid #111;
-    background: #fff;
+    border: 1px solid #e0a100;
+    background: #fffdf5;
 }
 
-.order-transfer-qr {
+.order-transfer-pay {
     display: block;
 
-    width: 100%;
-    max-width: 260px;
+    margin-top: 14px;
 
-    margin: 0 auto 16px;
-}
-
-.order-transfer-qr-error {
-    margin-bottom: 12px;
-
-    color: var(--color-warning) !important;
+    text-align: center;
 }
 
 .order-transfer-deadline {

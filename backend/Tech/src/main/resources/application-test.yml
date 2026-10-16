@@ -29,3 +29,9 @@ app:
   cache:
     # tests share one database and Redis: a cache would show one test the data of another
     enabled: ${CACHE_ENABLED:false}
+
+  payment:
+    # Test-only values: the webhook and the transfer simulator work without .env
+    webhook:
+      secret: test-only-webhook-secret
+      simulator-enabled: true

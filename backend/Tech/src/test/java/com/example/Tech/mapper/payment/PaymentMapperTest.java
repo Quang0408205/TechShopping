@@ -1,6 +1,7 @@
 package com.example.Tech.mapper.payment;
 
 import com.example.Tech.config.BankTransferProperties;
+import com.example.Tech.config.PaymentWebhookProperties;
 import com.example.Tech.dto.response.payment.InstallmentResponse;
 import com.example.Tech.dto.response.payment.PaymentResponse;
 import com.example.Tech.entity.order.Order;
@@ -24,7 +25,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PaymentMapperTest {
 
     private final PaymentMapper mapper = new PaymentMapper(
-            new BankTransferProperties("Vietcombank", "970436", "0123456789", "CONG TY POY", 24));
+            new BankTransferProperties("Vietcombank", "970436", "0123456789", "CONG TY POY", 24),
+            new PaymentWebhookProperties("secret", false));
 
     @Test
     void pendingBankTransfer_hasTheTransferInstructionsAndAVietQrImage() {
@@ -41,6 +43,20 @@ class PaymentMapperTest {
         assertThat(response.bankTransfer().qrImageUrl()).isEqualTo(
                 "https://img.vietqr.io/image/970436-0123456789-compact2.png"
                         + "?amount=25990000&addInfo=DH00000042&accountName=CONG%20TY%20POY");
+        assertThat(response.bankTransfer().demoAutoPay()).isFalse();
+    }
+
+    @Test
+    void demoMode_isFlaggedOnTheTransfer_withTheSameBankQr() {
+        PaymentMapper demo = new PaymentMapper(
+                new BankTransferProperties("Vietcombank", "970436", "0123456789", "CONG TY POY", 24),
+                new PaymentWebhookProperties("secret", true));
+
+        PaymentResponse response = demo.toResponse(
+                payment(PaymentMethod.BANK_TRANSFER, PaymentStatus.PENDING, "25990000.00"), order(42L, PaymentMethod.BANK_TRANSFER, "25990000.00"));
+
+        assertThat(response.bankTransfer().demoAutoPay()).isTrue();
+        assertThat(response.bankTransfer().qrImageUrl()).startsWith("https://img.vietqr.io/image/970436-0123456789");
     }
 
     @Test

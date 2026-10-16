@@ -4,7 +4,9 @@ import com.example.Tech.dto.request.order.OrderCreateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
+import com.example.Tech.dto.response.payment.BankWebhookResponse;
 import com.example.Tech.service.order.OrderService;
+import com.example.Tech.service.payment.BankTransactionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orderService;
+    private final BankTransactionService bankTransactionService;
 
     @PostMapping
     @Operation(summary = "Place an order from my cart (items, prices and shipping come from the server cart)")
@@ -84,6 +87,18 @@ public class OrderController {
     public ResponseEntity<ApiResult<OrderResponse>> cancelMyOrder(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                                   @PathVariable Long id) {
         return ResponseEntity.ok(ApiResult.ok(orderService.cancelMyOrder(userId(jwt), id)));
+    }
+
+    @PostMapping("/{id}/payment/demo-confirm")
+    @Operation(summary = "Demo: take the bank transfer of my order as received",
+            description = "Only when PAYMENT_SIMULATOR_ENABLED=true; the payment page calls it after showing the QR for a minute")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Paid (or already paid / cancelled: duplicate = true)"),
+            @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND (also another user's order), SIMULATOR_DISABLED")
+    })
+    public ResponseEntity<ApiResult<BankWebhookResponse>> demoConfirmTransfer(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                                              @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResult.ok(bankTransactionService.demoConfirm(userId(jwt), id)));
     }
 
     /** The access token subject is the user id (see JwtTokenService). */

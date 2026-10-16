@@ -16,6 +16,9 @@ public record BankTransferResponse(
         @Schema(description = "VietQR image (img.vietqr.io) with the account, amount and content filled in")
         String qrImageUrl,
         @Schema(description = "Order date + the configured deadline (24 h); informative only")
-        LocalDateTime payBefore
+        LocalDateTime payBefore,
+        @Schema(description = "Demo mode (PAYMENT_SIMULATOR_ENABLED): the payment page reports the order paid after a "
+                + "minute on screen (POST /orders/{id}/payment/demo-confirm)")
+        boolean demoAutoPay
 ) {
 }

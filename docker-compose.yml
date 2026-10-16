@@ -57,6 +57,13 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_USERNAME: ${ADMIN_USERNAME:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      # Shop bank account for the transfer QR + the bank webhook (see .env.example); empty = demo account / webhook off
+      PAYMENT_BANK_NAME: ${PAYMENT_BANK_NAME:-}
+      PAYMENT_BANK_BIN: ${PAYMENT_BANK_BIN:-}
+      PAYMENT_BANK_ACCOUNT_NUMBER: ${PAYMENT_BANK_ACCOUNT_NUMBER:-}
+      PAYMENT_BANK_ACCOUNT_NAME: ${PAYMENT_BANK_ACCOUNT_NAME:-}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
+      PAYMENT_SIMULATOR_ENABLED: ${PAYMENT_SIMULATOR_ENABLED:-false}
       AI_SERVICE_URL: http://ai-service:8000
       AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
     ports:

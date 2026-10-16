@@ -83,7 +83,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
-                        // recommendations and the chatbot work for guests; a token makes them personal
+                        // bank webhook: no token, the shared key is checked by the controller
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()                        // recommendations and the chatbot work for guests; a token makes them personal
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/chat/*/messages").permitAll()

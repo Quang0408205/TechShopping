@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title id="pageTitle">Thanh toán đơn hàng - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/orders.css">
+    <link rel="stylesheet" href="../css/customer/payment.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+    <section class="section pay-section">
+
+        <div class="container pay-container">
+
+            <div id="payLoading" class="state-box">
+                <p>Đang tải thông tin thanh toán…</p>
+            </div>
+
+            <div id="payError" hidden></div>
+
+            <div id="payNotFound" class="state-box empty-state" hidden>
+                <h3>Không tìm thấy đơn hàng</h3>
+                <p>Đơn hàng này không tồn tại hoặc không thuộc tài khoản của bạn.</p>
+                <a href="orders.html" class="btn btn-dark">VỀ DANH SÁCH ĐƠN HÀNG</a>
+            </div>
+
+
+            <!-- Đang chờ tiền -->
+            <div id="payWaiting" class="pay-card" hidden>
+
+                <header class="pay-head">
+                    <p class="pay-success-line">Đặt hàng thành công, còn một bước nữa</p>
+                    <h1>Thanh toán đơn <span id="payOrderCode"></span></h1>
+                    <p class="pay-amount" id="payAmount"></p>
+                    <p class="pay-deadline" id="payDeadline"></p>
+                </header>
+
+                <div class="pay-body">
+
+                    <div class="pay-qr-box">
+                        <img id="payQr" class="pay-qr" alt="Mã QR chuyển khoản" hidden>
+                        <p id="payQrError" class="pay-qr-error" hidden>
+                            Không tải được mã QR, vui lòng chuyển khoản theo thông tin bên cạnh.
+                        </p>
+                        <p class="pay-qr-hint">Mở app ngân hàng, chọn quét mã QR</p>
+                    </div>
+
+                    <div class="pay-info">
+
+                        <dl class="pay-facts" id="payFacts"></dl>
+
+                        <p class="pay-note">
+                            Giữ nguyên số tiền và nội dung chuyển khoản. Hệ thống sẽ tự xác nhận khi nhận được tiền.
+                        </p>
+
+                        <p class="pay-waiting"><i class="pay-dot"></i> Đang chờ nhận tiền…</p>
+
+                        <a href="order-detail.html" id="payViewOrder" class="pay-link">Xem chi tiết đơn hàng</a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Đã nhận tiền -->
+            <div id="payDone" class="pay-card pay-card--state" hidden>
+                <div class="pay-state-icon pay-state-icon--ok">✓</div>
+                <h2>Đã nhận được thanh toán</h2>
+                <p id="payDoneText"></p>
+                <a href="order-detail.html" id="payDoneLink" class="btn btn-dark">XEM ĐƠN HÀNG</a>
+            </div>
+
+
+            <!-- Đơn không còn chờ tiền (đã hủy, đã đổi cách thanh toán…) -->
+            <div id="payClosed" class="pay-card pay-card--state" hidden>
+                <div class="pay-state-icon">!</div>
+                <h2 id="payClosedTitle"></h2>
+                <p id="payClosedText"></p>
+                <a href="order-detail.html" id="payClosedLink" class="btn btn-dark">XEM ĐƠN HÀNG</a>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/payment.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
+
+</body>
+</html>

@@ -296,6 +296,30 @@ create table payments (
     updated_at timestamp default current_timestamp
 );
 
+-- bảng bank_transactions: biến động số dư từ webhook ngân hàng (tự xác nhận đơn chuyển khoản + đối soát)
+create table bank_transactions (
+    bank_transaction_id bigserial primary key,
+    external_id varchar(100) not null,
+    provider varchar(30) not null default 'WEBHOOK',
+    amount decimal(15, 2) not null,
+    content varchar(500),
+    account_number varchar(30),
+    transferred_at timestamp,
+    received_at timestamp not null default current_timestamp,
+    status varchar(20) not null,
+    reason varchar(255),
+    order_id bigint references orders(order_id),
+    resolved_by bigint references users(user_id),
+    resolved_at timestamp,
+    note varchar(500),
+    constraint uq_bank_transactions_external unique (external_id),
+    constraint chk_bank_transactions_status check (status in ('MATCHED', 'UNMATCHED', 'REVIEW', 'RESOLVED', 'IGNORED')),
+    constraint chk_bank_transactions_amount check (amount > 0)
+);
+
+create index idx_bank_transactions_status_received on bank_transactions(status, received_at);
+create index idx_bank_transactions_order on bank_transactions(order_id);
+
 -- =====================================================
 -- nhóm 5: bảo hành, bảo trì và đổi trả
 -- =====================================================

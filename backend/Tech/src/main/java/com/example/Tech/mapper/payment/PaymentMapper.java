@@ -1,6 +1,7 @@
 package com.example.Tech.mapper.payment;
 
 import com.example.Tech.config.BankTransferProperties;
+import com.example.Tech.config.PaymentWebhookProperties;
 import com.example.Tech.dto.response.payment.BankTransferResponse;
 import com.example.Tech.dto.response.payment.InstallmentPeriodResponse;
 import com.example.Tech.dto.response.payment.InstallmentResponse;
@@ -32,6 +33,7 @@ public class PaymentMapper {
     private static final String VIETQR_IMAGE_URL = "https://img.vietqr.io/image/%s-%s-compact2.png?amount=%s&addInfo=%s&accountName=%s";
 
     private final BankTransferProperties bankTransfer;
+    private final PaymentWebhookProperties webhook;
 
     public PaymentResponse toResponse(Payment payment, Order order) {
         boolean awaitingTransfer = payment.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
@@ -85,7 +87,8 @@ public class PaymentMapper {
                 payment.getAmount(),
                 code,
                 qrImageUrl,
-                order.getOrderDate() != null ? order.getOrderDate().plusHours(bankTransfer.deadlineHours()) : null);
+                order.getOrderDate() != null ? order.getOrderDate().plusHours(bankTransfer.deadlineHours()) : null,
+                webhook.simulatorEnabled());
     }
 
     private static InstallmentPeriodResponse toPeriodResponse(InstallmentPayment period, LocalDate today) {

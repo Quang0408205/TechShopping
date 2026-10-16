@@ -763,7 +763,10 @@ document.addEventListener(
 
             setCartCount(0);
 
-            window.location.href = getOrderDetailUrl(order.id, true);
+            /* Chuyển khoản đang chờ tiền → trang thanh toán riêng; còn lại → chi tiết đơn */
+            window.location.href = order.payment && order.payment.bankTransfer
+                ? getPaymentUrl(order.id)
+                : getOrderDetailUrl(order.id, true);
 
 
             async function handlePlaceOrderError(error) {
