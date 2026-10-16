@@ -9,11 +9,13 @@ import com.example.Tech.entity.product.ProductSpecification;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.ProductSpecificationMapper;
+import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductSpecificationRepository;
 import com.example.Tech.service.product.ProductSpecificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -26,10 +28,23 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ProductSpecificationServiceImpl implements ProductSpecificationService {
 
+    private static final int MAX_COMMON_NAMES = 30;
+
     private final ProductSpecificationRepository specificationRepository;
     private final ProductRepository productRepository;
+    private final CategoryRepository categoryRepository;
     private final ProductSpecificationMapper specificationMapper;
     private final ReadCache cache;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<String> getCommonNames(Integer categoryId, int limit) {
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new ResourceNotFoundException(ErrorCode.CATEGORY_NOT_FOUND, categoryId);
+        }
+        return specificationRepository.findCommonNamesByCategoryId(categoryId,
+                PageRequest.of(0, Math.max(1, Math.min(limit, MAX_COMMON_NAMES))));
+    }
 
     @Override
     public List<ProductSpecificationResponse> getByProductId(Long productId) {

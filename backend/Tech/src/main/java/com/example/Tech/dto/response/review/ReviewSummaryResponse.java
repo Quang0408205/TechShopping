@@ -5,8 +5,7 @@ import java.util.List;
 
 /**
  * Real figures of a product's visible reviews: average (2 decimals, 0 when none), total, the count for every star
- * level from 5 down to 1 (zeros included) and how many have photos. The crawled Thế Giới Di Động rating is not part
- * of it (ProductResponse.tgddRating).
+ * level from 5 down to 1 (zeros included) and how many have photos.
  */
 public record ReviewSummaryResponse(
         Long productId,

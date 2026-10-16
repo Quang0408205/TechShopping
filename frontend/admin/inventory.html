@@ -59,11 +59,28 @@
 
                 </form>
 
+                <button type="button" class="btn btn-outline-dark" id="stockImportBtn">
+                    NHẬP KHO TỪ EXCEL
+                </button>
+
                 <button type="button" class="btn btn-dark" id="newStockInBtn">
                     + NHẬP KHO
                 </button>
 
             </div>
+
+
+            <!-- Nhập kho bằng Excel vào chi nhánh đang chọn (js/admin/excel-import.js) -->
+            <section class="admin-panel" id="stockImportPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="stockImportTitle">Nhập kho từ Excel</h2>
+                    <button type="button" class="btn btn-outline-dark" id="stockImportClose">ĐÓNG</button>
+                </div>
+
+                <div id="stockImportRoot"></div>
+
+            </section>
 
 
             <!-- Nhập kho: chi nhánh + phiên bản + số lượng (+ nhà cung cấp, ghi chú), áp dụng ngay -->
@@ -163,6 +180,7 @@
 <script src="../js/core/layout.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/excel-import.js"></script>
 <script src="../js/admin/inventory.js"></script>
 
 </body>

@@ -320,7 +320,7 @@ document.addEventListener(
         }
 
 
-        /* Đánh giá thật trên web; chưa có thì điểm trên Thế Giới Di Động (ghi rõ nguồn); không có → ẩn */
+        /* Đánh giá thật trên web; chưa có → "Chưa có đánh giá" (bấm vẫn mở tab Đánh giá để viết) */
 
         function renderRatingLink() {
 
@@ -328,13 +328,11 @@ document.addEventListener(
 
             const rating = productRatingSummary(product);
 
-            link.hidden = !rating;
+            link.hidden = false;
 
-            if (rating) {
-                link.textContent = "★ " + rating.rating.toFixed(1) +
-                    " (" + rating.count.toLocaleString("vi-VN") + " đánh giá" +
-                    (rating.source === "tgdd" ? " trên Thế Giới Di Động" : "") + ")";
-            }
+            link.textContent = rating
+                ? "★ " + rating.rating.toFixed(1) + " (" + rating.count.toLocaleString("vi-VN") + " đánh giá)"
+                : "Chưa có đánh giá";
 
         }
 

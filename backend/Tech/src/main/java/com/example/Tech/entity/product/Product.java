@@ -73,14 +73,6 @@ public class Product {
     @Column(name = "total_reviews")
     private Integer totalReviews = 0;
 
-    /** Rating crawled from Thế Giới Di Động (Raw_data/import_catalog.py); display only, null when unknown. */
-    @Column(name = "tgdd_rating", precision = 3, scale = 2)
-    private BigDecimal tgddRating;
-
-    /** Number of ratings behind tgddRating on Thế Giới Di Động. */
-    @Column(name = "tgdd_review_count", nullable = false)
-    private Integer tgddReviewCount = 0;
-
     @Column(name = "view_count")
     private Integer viewCount = 0;
 

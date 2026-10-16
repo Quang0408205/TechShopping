@@ -203,9 +203,10 @@ class ReviewApiIntegrationTest {
     @Test
     void invalidReviews() throws Exception {
         send(post("/api/v1/reviews"), tokenA, body(product, 5, COMMENT, null)).andExpect(status().isCreated());
-        send(post("/api/v1/reviews"), tokenA, body(product, 3, COMMENT, null))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("ALREADY_REVIEWED"));
+        // a second review of the same product is allowed (the 1-minute gap is off in the test profile)
+        send(post("/api/v1/reviews"), tokenA, body(product, 3, COMMENT, null)).andExpect(status().isCreated());
+        assertThat(data(send(get("/api/v1/reviews/mine").param("productId", String.valueOf(product.getId())),
+                tokenA, null).andExpect(status().isOk()))).hasSize(2);
         send(post("/api/v1/reviews"), tokenB, body(product, 5, COMMENT, List.of("https://evil.example/a.jpg")))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.details.imageUrls").exists());
@@ -231,7 +232,8 @@ class ReviewApiIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokenB))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("INVALID_IMAGE_FILE"));
-        assertThat(productRepository.findById(product.getId()).orElseThrow().getTotalReviews()).isEqualTo(1);
+        // only the two reviews of account A count; every refused one left nothing behind
+        assertThat(productRepository.findById(product.getId()).orElseThrow().getTotalReviews()).isEqualTo(2);
     }
 
     @Test

@@ -27,20 +27,15 @@ function formatPrice(price) {
 
 
 /*
- * Điểm hiển thị của một sản phẩm (ProductResponse): đánh giá thật trên web
- * (rating / totalReviews, chỉ tính đánh giá đang hiện); chưa có thì điểm crawl
- * từ Thế Giới Di Động (tgddRating / tgddReviewCount); không có cả hai → null.
- * → { rating, count, source: "site" | "tgdd" }
+ * Điểm của một sản phẩm (ProductResponse): chỉ đánh giá thật trên web
+ * (rating / totalReviews, tính các đánh giá đang hiện); chưa có → null.
+ * → { rating, count }
  */
 
 function productRatingSummary(product) {
 
     if (product && product.totalReviews > 0 && Number(product.rating) > 0) {
-        return { rating: Number(product.rating), count: Number(product.totalReviews), source: "site" };
-    }
-
-    if (product && product.tgddReviewCount > 0 && Number(product.tgddRating) > 0) {
-        return { rating: Number(product.tgddRating), count: Number(product.tgddReviewCount), source: "tgdd" };
+        return { rating: Number(product.rating), count: Number(product.totalReviews) };
     }
 
     return null;
@@ -340,32 +335,19 @@ function getDisplayPrice(product) {
  * thay thế (bindProductImageFallbacks).
  */
 
-/*
- * "★ 4.5 (12)" từ đánh giá thật; chưa có thì điểm crawl ghi rõ là tham khảo
- * "★ 4.6 · 1.234 đánh giá tham khảo" (kiemthu GĐ6); không có cả hai → rỗng
- */
+/* "★ 4.5 (12)" từ đánh giá thật; chưa có đánh giá nào → "Chưa có đánh giá" */
 
 function productCardRatingHtml(product) {
 
     const rating = productRatingSummary(product);
 
     if (!rating) {
-        return "";
+        return '<p class="product-rating product-rating--none">Chưa có đánh giá</p>';
     }
 
     const score = escapeHtml(rating.rating.toFixed(1));
 
     const count = escapeHtml(rating.count.toLocaleString("vi-VN"));
-
-    if (rating.source === "tgdd") {
-
-        return `
-            <p class="product-rating product-rating--tgdd" title="Nguồn: dữ liệu tham khảo bên ngoài">
-                ★ ${score} · ${count} đánh giá tham khảo
-            </p>
-        `;
-
-    }
 
     return `
         <p class="product-rating" title="${escapeHtml(rating.count + " đánh giá trên POY")}">

@@ -30,7 +30,7 @@ def main():
     with connect(readonly=False) as conn:
         products = conn.execute("""
             select p.product_id, p.name, c.name as category, coalesce(b.name, '') as brand,
-                   coalesce(p.tgdd_review_count, 0) as reviews
+                   coalesce(p.total_reviews, 0) as reviews
             from products p join categories c using (category_id) left join brands b using (brand_id)
             where p.deleted_at is null and coalesce(p.is_active, true)
         """).fetchall()

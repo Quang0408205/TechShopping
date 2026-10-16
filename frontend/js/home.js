@@ -31,8 +31,9 @@ let homeCategoriesPromise = null;
 /* ================= KHỐI "MUA SẮM THEO DANH MỤC" (kế hoạch v3) ================= */
 
 /*
- * Một thẻ cho mỗi danh mục ĐANG HIỂN THỊ (theo thứ tự ADMIN đặt): thẻ đầu to, thẻ thứ hai rộng, các thẻ
- * sau xếp hàng. Lỗi tải danh mục → giữ 4 thẻ viết sẵn trong index.html.
+ * Một thẻ bằng nhau cho mỗi danh mục ĐANG HIỂN THỊ (theo thứ tự ADMIN đặt), xếp một hàng cuộn ngang
+ * (4 thẻ / khung trên máy tính) với nút ← →. Ảnh: ảnh ADMIN tải lên → ảnh cắt sẵn của danh mục gốc →
+ * ảnh sản phẩm đầu tiên của danh mục. Lỗi tải danh mục → giữ 4 thẻ viết sẵn trong index.html.
  */
 
 const HOME_CATEGORY_NOTES = {
@@ -47,6 +48,8 @@ async function renderHomeCategories() {
     if (!grid) {
         return;
     }
+
+    setupCategoryCarousel(grid);
 
     let categories;
 
@@ -64,17 +67,15 @@ async function renderHomeCategories() {
         return;
     }
 
-    grid.innerHTML = categories.map(function (category, index) {
-
-        const size = index === 0 ? " category-card--large" : index === 1 ? " category-card--wide" : "";
+    grid.innerHTML = categories.map(function (category) {
 
         const note = HOME_CATEGORY_NOTES[getCategoryFilterKey(category.slug)];
 
         return `
-            <a href="${escapeHtml(categoryUrlOf(category))}" class="category-card${size}">
+            <a href="${escapeHtml(categoryUrlOf(category))}" class="category-card" data-category-id="${escapeHtml(String(category.id))}">
                 <div class="category-text">
                     <h3>${escapeHtml(category.name)}</h3>
-                    ${index < 2 && note ? `<p>${escapeHtml(note)}</p>` : ""}
+                    ${note ? `<p>${escapeHtml(note)}</p>` : ""}
                     <span class="category-more">Khám phá</span>
                 </div>
                 <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
@@ -82,6 +83,89 @@ async function renderHomeCategories() {
         `;
 
     }).join("");
+
+    grid.scrollLeft = 0;
+
+    grid.dispatchEvent(new Event("scroll"));
+
+    categories.filter(function (category) {
+        return !hasOwnCategoryImage(category);
+    }).forEach(useFirstProductImage);
+
+}
+
+
+/* Ảnh ADMIN tải lên hoặc ảnh cắt sẵn của 4 danh mục gốc */
+
+function hasOwnCategoryImage(category) {
+
+    return isSafeImageUrl(category.iconUrl) || Boolean(CATEGORY_CARD_IMAGES[getCategoryFilterKey(category.slug)]);
+
+}
+
+
+/* Danh mục chưa có ảnh: dùng ảnh chính của sản phẩm đầu tiên đang bán trong danh mục (lỗi thì giữ ảnh thay thế) */
+
+async function useFirstProductImage(category) {
+
+    try {
+
+        const page = await apiRequest("/products?" + new URLSearchParams({
+            isActive: "true", categoryId: String(category.id), size: "1", sort: "id,asc"
+        }).toString());
+
+        const product = (page.content || [])[0];
+
+        const img = document.querySelector('.category-card[data-category-id="' + category.id + '"] img');
+
+        if (img && product && isSafeImageUrl(product.primaryImageUrl)) {
+            img.src = product.primaryImageUrl.trim();
+        }
+
+    } catch (error) {
+        /* giữ ảnh thay thế */
+    }
+
+}
+
+
+/* Nút ← → cuộn đúng một khung; tự khoá ở đầu / cuối, ẩn khi mọi thẻ đã vừa khung */
+
+function setupCategoryCarousel(grid) {
+
+    const prev = document.getElementById("categoryPrev");
+
+    const next = document.getElementById("categoryNext");
+
+    if (!prev || !next) {
+        return;
+    }
+
+    const update = function () {
+
+        const max = grid.scrollWidth - grid.clientWidth;
+
+        prev.parentElement.hidden = max <= 1;
+
+        prev.disabled = grid.scrollLeft <= 1;
+
+        next.disabled = grid.scrollLeft >= max - 1;
+
+    };
+
+    const step = function (direction) {
+        grid.scrollBy({ left: direction * grid.clientWidth, behavior: "smooth" });
+    };
+
+    prev.addEventListener("click", function () { step(-1); });
+
+    next.addEventListener("click", function () { step(1); });
+
+    grid.addEventListener("scroll", update, { passive: true });
+
+    window.addEventListener("resize", update);
+
+    update();
 
 }
 

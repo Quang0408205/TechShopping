@@ -93,6 +93,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let imageLoadCounter = 0;
 
+    const extras = createProductExtras();
+
+    document.getElementById("pfCategory").addEventListener("change", function () {
+        extras.changeCategory(numberOrNull("pfCategory"));
+    });
+
 
     try {
 
@@ -159,6 +165,35 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     document.getElementById("newProductBtn").addEventListener("click", function () {
         openForm(null);
+    });
+
+    /* Nhập Excel (kế hoạch v4 bước 6): POST /admin/products/import?dryRun= */
+    const importPanel = document.getElementById("productImportPanel");
+
+    mountExcelImport(document.getElementById("productImportRoot"), {
+        hint: "Mỗi dòng sheet SanPham là một phiên bản; các dòng cùng Mã SP là một sản phẩm. Mã đã có thì cập nhật, mã mới thì thêm. "
+            + "Bấm KIỂM TRA trước: có lỗi thì không ghi gì. Xem sheet HuongDan trong file mẫu.",
+        templatePath: "/admin/products/import/template",
+        templateName: "mau-nhap-san-pham.xlsx",
+        importPath: function () { return "/admin/products/import"; },
+        labels: {
+            productsCreated: "Sản phẩm thêm mới", productsUpdated: "Sản phẩm cập nhật",
+            variantsCreated: "Phiên bản thêm mới", variantsUpdated: "Phiên bản cập nhật",
+            imagesAdded: "Ảnh thêm", specsWritten: "Thông số ghi", brandsCreated: "Thương hiệu mới"
+        },
+        onApplied: function () {
+            currentPage = 0;
+            loadProducts();
+        }
+    });
+
+    document.getElementById("productImportBtn").addEventListener("click", function () {
+        importPanel.hidden = false;
+        importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.getElementById("productImportClose").addEventListener("click", function () {
+        importPanel.hidden = true;
     });
 
     document.getElementById("productCancelBtn").addEventListener("click", closeForm);
@@ -440,6 +475,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         resetImages(product);
 
+        extras.reset(product, product ? product.categoryId : null);
+
         panel.hidden = false;
 
         field("pfName").focus();
@@ -465,6 +502,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         draftImages = [];
 
         liveImages = [];
+
+        extras.clear();
 
     }
 
@@ -514,8 +553,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return { error: "Vui lòng chọn danh mục." };
         }
 
-        if (body.basePrice === null || !(body.basePrice >= 0)) {
-            return { error: "Giá gốc phải là số không âm." };
+        if (body.basePrice === null || !(body.basePrice > 0)) {
+            return { error: "Giá gốc phải lớn hơn 0." };
         }
 
         if (body.discountPrice !== null && !(body.discountPrice >= 0 && body.discountPrice <= body.basePrice)) {
@@ -556,7 +595,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         }
 
-        return { body: body };
+        const extra = extras.read();
+
+        if (extra.error) {
+            return { error: extra.error };
+        }
+
+        return { body: body, extra: extra };
 
     }
 
@@ -593,7 +638,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const wasEditing = editingProduct !== null;
 
-            showToast((wasEditing ? "Đã lưu " : "Đã thêm ") + saved.name + ".", "success");
+            /* Phiên bản + thông số ghi sau sản phẩm; lỗi phần này không huỷ sản phẩm đã lưu */
+            const problems = await extras.save(saved.id, result.extra);
+
+            if (problems.length > 0) {
+                showToast("Đã lưu sản phẩm nhưng còn lỗi — " + problems.join("; "), "error");
+            } else {
+                showToast((wasEditing ? "Đã lưu " : "Đã thêm ") + saved.name + ".", "success");
+            }
 
             closeForm();
 

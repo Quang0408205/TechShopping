@@ -39,7 +39,7 @@ def load_catalog(conn):
         select p.product_id, c.name as category, coalesce(b.name, 'Unknown') as brand,
                coalesce((select min(coalesce(v.discount_price, v.price)) from product_variants v
                          where v.product_id = p.product_id), p.discount_price, p.base_price)::float as price,
-               coalesce(p.tgdd_review_count, 0) as reviews
+               coalesce(p.total_reviews, 0) as reviews
         from products p join categories c using (category_id) left join brands b using (brand_id)
         where p.deleted_at is null and coalesce(p.is_active, true)
     """).fetchall()

@@ -53,12 +53,13 @@ public class ReviewController {
     }
 
     @PostMapping
-    @Operation(summary = "Write a review (1–5 stars, 10–2000 characters, up to 5 photos); one per account and product")
+    @Operation(summary = "Write a review (1–5 stars, 10–2000 characters, up to 5 photos); any number per account, at least a minute apart")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Review created and shown at once"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (details per field)"),
             @ApiResponse(responseCode = "404", description = "PRODUCT_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "ALREADY_REVIEWED, PRODUCT_NOT_AVAILABLE")
+            @ApiResponse(responseCode = "409", description = "PRODUCT_NOT_AVAILABLE"),
+            @ApiResponse(responseCode = "429", description = "REVIEW_TOO_SOON (another review of this account in the last minute)")
     })
     public ResponseEntity<ApiResult<ReviewResponse>> create(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,

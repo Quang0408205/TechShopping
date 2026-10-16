@@ -28,5 +28,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
 
     boolean existsBySkuVariant(String skuVariant);
 
+    /** Excel imports: variants are matched by their SKU, with the product loaded. */
+    @EntityGraph(attributePaths = "product")
+    Optional<ProductVariant> findBySkuVariant(String skuVariant);
+
     boolean existsBySkuVariantAndIdNot(String skuVariant, Long id);
 }

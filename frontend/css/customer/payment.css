@@ -121,15 +121,6 @@
     color: #fff;
 }
 
-.pay-note {
-    margin: 16px 0 0;
-    padding: 10px 12px;
-    background: #fff8e6;
-    font-size: 13px;
-    line-height: 1.5;
-    color: #6b4a00;
-}
-
 .pay-waiting {
     display: flex;
     align-items: center;

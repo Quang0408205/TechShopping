@@ -21,6 +21,7 @@ import com.example.Tech.service.upload.ImageStorageService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -54,6 +55,10 @@ public class ReviewServiceImpl implements ReviewService {
     private final CurrentUserLoader currentUserLoader;
     private final ImageStorageService imageStorageService;
     private final ProductReviewStats productReviewStats;
+
+    /** Smallest gap between two reviews of one account (0 = off, as in the test profile). */
+    @Value("${app.review.min-interval-seconds:60}")
+    private long minIntervalSeconds;
 
     @Override
     public PageResponse<ReviewResponse> listForProduct(Long productId, ReviewSearchRequest filter, Pageable pageable) {
@@ -100,8 +105,10 @@ public class ReviewServiceImpl implements ReviewService {
         List<String> imageUrls = checkedImageUrls(request.imageUrls());
 
         lock(product);
-        if (reviewRepository.existsByUser_IdAndProduct_Id(userId, product.getId())) {
-            throw new BusinessException(ErrorCode.ALREADY_REVIEWED);
+        // any number of reviews per account, but not two within minIntervalSeconds (anti flood)
+        if (minIntervalSeconds > 0 && reviewRepository.existsByUser_IdAndCreatedAtAfter(userId,
+                LocalDateTime.now().minusSeconds(minIntervalSeconds))) {
+            throw new BusinessException(ErrorCode.REVIEW_TOO_SOON);
         }
         Review review = new Review();
         review.setUser(user);

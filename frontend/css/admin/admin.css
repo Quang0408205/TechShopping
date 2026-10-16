@@ -1242,6 +1242,28 @@ button.admin-badge {
     font-size: 12px;
 }
 
+/* Ảnh danh mục: xem trước + ô link + nút tải lên trên một hàng */
+.admin-tax-image {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-tax-image input[type="url"] {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-tax-image-preview {
+    width: 48px;
+    height: 48px;
+
+    object-fit: contain;
+
+    border: 1px solid var(--gray-300, #ddd);
+    background: #fff;
+}
+
 .admin-image-file-btn:focus-within {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
@@ -1659,4 +1681,149 @@ button.admin-badge {
 .admin-filter-bar #requestKeyword {
     width: 340px;
     max-width: 100%;
+}
+
+
+/* ================= FORM SẢN PHẨM: PHIÊN BẢN + THÔNG SỐ (js/admin/product-extras.js) ================= */
+
+.admin-extra-field {
+    border: 1px solid var(--gray-300, #ddd);
+    padding: 14px 16px 16px;
+}
+
+.admin-extra-row {
+    display: grid;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.admin-extra-row input {
+    width: 100%;
+    min-width: 0;
+}
+
+.admin-variant-row {
+    grid-template-columns: minmax(160px, 2fr) repeat(3, minmax(70px, 1fr)) repeat(2, minmax(100px, 1.2fr)) minmax(90px, 1fr) 32px;
+}
+
+.admin-extra-head {
+    margin-bottom: 4px;
+
+    color: var(--gray-600, #666);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.admin-spec-row {
+    grid-template-columns: 56px minmax(140px, 1fr) minmax(200px, 2.4fr) 32px;
+}
+
+.admin-spec-move {
+    display: flex;
+    gap: 4px;
+}
+
+.admin-spec-move button,
+.admin-extra-remove {
+    width: 26px;
+    height: 30px;
+
+    border: 1px solid var(--gray-300, #ddd);
+    background: #fff;
+
+    cursor: pointer;
+}
+
+.admin-extra-remove:hover {
+    border-color: var(--color-danger, #c0392b);
+    color: var(--color-danger, #c0392b);
+}
+
+.admin-extra-add {
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+@media (max-width: 900px) {
+
+    .admin-extra-head {
+        display: none;
+    }
+
+    .admin-variant-row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+
+        padding-bottom: 10px;
+        border-bottom: 1px dashed var(--gray-300, #ddd);
+    }
+
+    .admin-variant-row input[name="variantName"] {
+        grid-column: 1 / -1;
+    }
+
+    .admin-spec-row {
+        grid-template-columns: 56px minmax(0, 1fr) 32px;
+    }
+
+    .admin-spec-row input[name="specValue"] {
+        grid-column: 2 / 3;
+    }
+
+}
+
+
+/* ================= NHẬP EXCEL (js/admin/excel-import.js) ================= */
+
+.excel-import-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.excel-import-file {
+    position: relative;
+    display: inline-flex;
+}
+
+.excel-import-file input[type="file"] {
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    padding: 0;
+
+    opacity: 0;
+    cursor: pointer;
+}
+
+.excel-import-file:focus-within {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+}
+
+.excel-import-name {
+    min-width: 0;
+
+    color: var(--gray-600, #666);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.excel-import-summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+
+    margin: 6px 0 0;
+    padding: 0;
+
+    list-style: none;
+    font-size: 13px;
+}
+
+.excel-import-errors td:nth-child(2) {
+    white-space: nowrap;
 }

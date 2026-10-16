@@ -41,6 +41,9 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsBySku(String sku);
 
+    /** Excel import: products are matched by their SKU ("Mã SP"), soft-deleted ones included. */
+    Optional<Product> findBySku(String sku);
+
     boolean existsBySkuAndIdNot(String sku, Long id);
 
     // Soft-deleted products still reference their category/brand through the FK

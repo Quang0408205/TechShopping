@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,9 +21,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     @EntityGraph(attributePaths = {"user", "product", "hiddenBy"})
     Page<Review> findAll(Specification<Review> spec, Pageable pageable);
 
-    Optional<Review> findByUser_IdAndProduct_Id(Long userId, Long productId);
-
-    boolean existsByUser_IdAndProduct_Id(Long userId, Long productId);
+    /** An account may review a product many times; this only spaces reviews out (ReviewServiceImpl.create). */
+    boolean existsByUser_IdAndCreatedAtAfter(Long userId, LocalDateTime after);
 
     List<Review> findAllByProduct_IdAndHiddenFalseOrderByCreatedAtDesc(Long productId);
 

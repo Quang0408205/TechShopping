@@ -24,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -90,12 +91,11 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    void create_locksTheProductBeforeTheDuplicateCheck_savesPhotosInOrder_thenRecomputesTheRating() {
+    void create_locksTheProduct_savesPhotosInOrder_thenRecomputesTheRating() {
         ReviewResponse response = service.create(5L, new ReviewRequest(7L, 4, "  " + COMMENT + "  ", List.of(PHOTO, PHOTO_2)));
 
         InOrder order = inOrder(productRepository, reviewRepository, reviewImageRepository, productReviewStats);
         order.verify(productRepository).findAllByIdInForUpdate(List.of(7L));
-        order.verify(reviewRepository).existsByUser_IdAndProduct_Id(5L, 7L);
         order.verify(reviewRepository).save(any(Review.class));
         order.verify(reviewImageRepository).saveAll(any());
         order.verify(reviewRepository).flush();
@@ -109,10 +109,11 @@ class ReviewServiceImplTest {
     }
 
     @Test
-    void create_secondReviewOfTheSameProduct_isRefused_andNothingIsSaved() {
-        when(reviewRepository.existsByUser_IdAndProduct_Id(5L, 7L)).thenReturn(true);
+    void create_withinAMinuteOfTheLastReview_isRefused_andNothingIsSaved() {
+        ReflectionTestUtils.setField(service, "minIntervalSeconds", 60L);
+        when(reviewRepository.existsByUser_IdAndCreatedAtAfter(eq(5L), any())).thenReturn(true);
 
-        assertCode(() -> service.create(5L, new ReviewRequest(7L, 5, COMMENT, null)), ErrorCode.ALREADY_REVIEWED);
+        assertCode(() -> service.create(5L, new ReviewRequest(7L, 5, COMMENT, null)), ErrorCode.REVIEW_TOO_SOON);
         verify(reviewRepository, never()).save(any());
         verify(productReviewStats, never()).refresh(any());
     }

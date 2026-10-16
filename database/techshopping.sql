@@ -100,8 +100,6 @@ create table products (
     warranty_months int default 12,
     rating decimal(3, 2) default 0,          -- điểm trung bình đánh giá thật (bảng reviews, đang hiện)
     total_reviews int default 0,             -- số đánh giá thật đang hiện
-    tgdd_rating decimal(3, 2),               -- điểm trên Thế Giới Di Động (crawl, chỉ hiển thị)
-    tgdd_review_count int not null default 0, -- số lượt đánh giá trên Thế Giới Di Động (crawl)
     view_count int default 0,
     is_active boolean default true,
     created_at timestamp default current_timestamp,
@@ -640,8 +638,7 @@ create table reviews (
     hidden_by bigint references users(user_id),
     hidden_at timestamp,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp,
-    unique (user_id, product_id)
+    updated_at timestamp default current_timestamp
 );
 
 -- bảng review_images: ảnh khách gửi kèm đánh giá (tối đa 5 ảnh, kiểm tra ở ứng dụng)
@@ -751,6 +748,7 @@ create index idx_promotion_products_product on promotion_products(product_id);
 -- review indexes
 create index idx_reviews_product_id on reviews(product_id, created_at desc);
 create index idx_reviews_hidden_by on reviews(hidden_by);
+create index idx_reviews_user_created on reviews(user_id, created_at desc);
 
 -- =====================================================
 -- constraints bổ sung

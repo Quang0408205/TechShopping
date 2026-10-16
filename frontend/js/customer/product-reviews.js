@@ -5,11 +5,11 @@
  *   GET    /products/{id}/reviews?rating=&withImages=&page=&size=   công khai, chỉ đánh giá đang hiện, mới nhất trước
  *   GET    /products/{id}/reviews/summary                           trung bình, tổng, số đánh giá từng mức 5→1, có ảnh
  *   GET    /reviews/mine?productId=                                 đánh giá của tôi (kể cả bị ẩn, kèm lý do)
- *   POST   /reviews {productId, rating, comment, imageUrls}         viết (mỗi tài khoản 1 đánh giá / sản phẩm)
+ *   POST   /reviews {productId, rating, comment, imageUrls}         viết (nhiều đánh giá / tài khoản, cách nhau ≥ 1 phút)
  *   PUT    /reviews/{id}, DELETE /reviews/{id}                      sửa / xoá đánh giá của mình
  *   POST   /uploads/review-images (multipart "file") → { url }      ảnh đánh giá (JPG / PNG / WebP ≤ 5 MB)
- * Chỉ hiển thị số thật (không bịa phân bố sao). Điểm Thế Giới Di Động (product.tgddRating) hiện riêng, ghi rõ
- * nguồn, không tính vào điểm trên POY. Mọi chữ qua escapeHtml, mọi ảnh qua isSafeImageUrl.
+ * Chỉ hiển thị số thật (không bịa phân bố sao). Đánh giá của mình có nhãn "Của bạn" + Sửa / Xoá ngay trong
+ * danh sách; đánh giá bị ẩn chỉ mình thấy, ở khối phía trên. Mọi chữ qua escapeHtml, mọi ảnh qua isSafeImageUrl.
  *
  * initProductReviews(product, { onSummaryChange(summary) }) — gọi từ product-detail.js khi đã có sản phẩm.
  */
@@ -56,17 +56,18 @@ function initProductReviews(product, options) {
 
     let listCounter = 0;
 
-    let myReview = null;
+    /* Đánh giá của tôi cho sản phẩm này (kể cả bị ẩn); editingReview = đang sửa, writing = đang viết mới */
+    let myReviews = [];
 
-    let editing = false;
+    let editingReview = null;
+
+    let writing = false;
 
     /* Form đang mở: { rating, images: [url], uploading: số ảnh đang tải, session } */
     let form = null;
 
     let formSession = 0;
 
-
-    renderTgddLine();
 
     filtersBox.addEventListener("click", function (event) {
 
@@ -91,6 +92,16 @@ function initProductReviews(product, options) {
     });
 
     listBox.addEventListener("click", openViewerFromClick);
+
+    listBox.addEventListener("click", function (event) {
+
+        const target = event.target.closest("[data-action]");
+
+        if (target) {
+            handleOwnAction(target);
+        }
+
+    });
 
     mineBox.addEventListener("click", handleMineClick);
 
@@ -140,28 +151,33 @@ function initProductReviews(product, options) {
 
     async function loadMine() {
 
-        myReview = null;
+        myReviews = [];
 
         if (isLoggedIn()) {
 
             try {
 
-                const mine = await apiRequest("/reviews/mine?productId=" + encodeURIComponent(product.id), { auth: true });
-
-                myReview = (mine || [])[0] || null;
+                myReviews = await apiRequest("/reviews/mine?productId=" + encodeURIComponent(product.id), { auth: true }) || [];
 
             } catch (error) {
 
                 /* Hết phiên: coi như chưa đăng nhập (ô "Đăng nhập để đánh giá") */
-                myReview = null;
+                myReviews = [];
 
             }
 
         }
 
-        editing = false;
+        editingReview = null;
+
+        writing = false;
 
         renderMine();
+
+        /* Nhãn "Của bạn" + nút Sửa / Xoá trong danh sách đã tải */
+        if (page >= 0) {
+            renderList();
+        }
 
     }
 
@@ -258,23 +274,6 @@ function initProductReviews(product, options) {
     }
 
 
-    function renderTgddLine() {
-
-        const line = document.getElementById("reviewTgdd");
-
-        const hasTgdd = product.tgddReviewCount > 0 && Number(product.tgddRating) > 0;
-
-        line.hidden = !hasTgdd;
-
-        if (hasTgdd) {
-            line.textContent = "Trên Thế Giới Di Động: ★ " + Number(product.tgddRating).toFixed(1) + " ("
-                + Number(product.tgddReviewCount).toLocaleString("vi-VN")
-                + " đánh giá) — số liệu tham khảo, không tính vào điểm trên POY.";
-        }
-
-    }
-
-
     function renderFilters() {
 
         const counts = {};
@@ -310,7 +309,7 @@ function initProductReviews(product, options) {
 
         } else {
 
-            listBox.innerHTML = items.map(reviewHtml).join("");
+            listBox.innerHTML = items.map(function (review) { return reviewHtml(review); }).join("");
 
         }
 
@@ -319,15 +318,31 @@ function initProductReviews(product, options) {
     }
 
 
-    function reviewHtml(review, ownCard) {
+    function findMine(id) {
+
+        return myReviews.find(function (review) { return String(review.id) === String(id); }) || null;
+
+    }
+
+
+    function reviewHtml(review) {
 
         const images = (review.imageUrls || []).filter(isSafeImageUrl);
 
+        const own = Boolean(findMine(review.id));
+
+        const id = escapeHtml(String(review.id));
+
         return `
-            <article class="review-item${ownCard === true ? " review-item--mine" : ""}" data-review-id="${escapeHtml(String(review.id))}">
+            <article class="review-item${own ? " review-item--mine" : ""}" data-review-id="${id}">
                 <header class="review-item-head">
                     <strong class="review-author">${escapeHtml(review.authorName)}</strong>
+                    ${own ? '<span class="review-badge review-badge--mine">Của bạn</span>' : ""}
                     ${review.verifiedPurchase ? '<span class="review-badge">✓ Đã mua hàng</span>' : ""}
+                    ${own ? `<span class="review-own-actions">
+                        <button type="button" class="review-own-btn" data-action="edit" data-id="${id}">Sửa</button>
+                        <button type="button" class="review-own-btn review-delete" data-action="delete" data-id="${id}">Xoá</button>
+                    </span>` : ""}
                 </header>
                 <div class="review-item-meta">
                     <span class="review-stars" aria-label="${review.rating} trên 5 sao">${starsHtml(review.rating)}</span>
@@ -367,25 +382,27 @@ function initProductReviews(product, options) {
 
         }
 
-        if (myReview && !editing) {
-
-            form = null;
-
-            mineBox.innerHTML = `
-                <h3 class="review-mine-title">Đánh giá của bạn</h3>
-                ${myReview.hidden ? `<p class="review-hidden-note" role="status">Đánh giá của bạn đang bị ẩn khỏi trang sản phẩm. Lý do: ${escapeHtml(myReview.hiddenReason || "")}</p>` : ""}
-                ${reviewHtml(myReview, true)}
-                <div class="review-mine-actions">
-                    <button type="button" class="btn btn-outline-dark" data-action="edit">SỬA ĐÁNH GIÁ</button>
-                    <button type="button" class="btn btn-outline-dark review-delete" data-action="delete">XOÁ</button>
-                </div>
-            `;
-
+        if (editingReview || writing) {
+            openForm(editingReview);
             return;
-
         }
 
-        openForm(editing ? myReview : null);
+        form = null;
+
+        /* Đánh giá bị ẩn không có trong danh sách công khai: chỉ mình thấy, ở đây */
+        const hidden = myReviews.filter(function (review) { return review.hidden; });
+
+        mineBox.innerHTML = `
+            <div class="review-write-bar">
+                <p>${myReviews.length > 0
+                    ? "Bạn đã viết " + myReviews.length + " đánh giá cho sản phẩm này. Có thể viết thêm."
+                    : "Bạn đã dùng sản phẩm này? Hãy chia sẻ cảm nhận với mọi người."}</p>
+                <button type="button" class="btn btn-dark" data-action="write">VIẾT ĐÁNH GIÁ</button>
+            </div>
+            ${hidden.map(function (review) {
+                return `<p class="review-hidden-note" role="status">Đánh giá dưới đây đang bị ẩn khỏi trang sản phẩm. Lý do: ${escapeHtml(review.hiddenReason || "")}</p>${reviewHtml(review)}`;
+            }).join("")}
+        `;
 
     }
 
@@ -428,7 +445,7 @@ function initProductReviews(product, options) {
 
                 <div class="review-mine-actions">
                     <button type="submit" class="btn btn-dark" data-role="submit">${review ? "LƯU THAY ĐỔI" : "GỬI ĐÁNH GIÁ"}</button>
-                    ${review ? '<button type="button" class="btn btn-outline-dark" data-action="cancel-edit">HỦY</button>' : ""}
+                    <button type="button" class="btn btn-outline-dark" data-action="cancel-edit">HỦY</button>
                 </div>
             </form>
         `;
@@ -509,7 +526,9 @@ function initProductReviews(product, options) {
         }
 
         if (target.classList.contains("review-photo")) {
-            openViewer(myReview ? myReview.imageUrls : [], Number(target.dataset.viewer));
+            const card = target.closest("[data-review-id]");
+            const review = card && findMine(card.dataset.reviewId);
+            openViewer(review ? review.imageUrls : [], Number(target.dataset.viewer));
             return;
         }
 
@@ -524,21 +543,51 @@ function initProductReviews(product, options) {
 
         if (action === "login") {
             redirectToLogin("review");
-        } else if (action === "edit") {
-            editing = true;
-            renderMine();
-            document.getElementById("reviewComment").focus();
+        } else if (action === "edit" || action === "delete" || action === "write") {
+            handleOwnAction(target);
         } else if (action === "cancel-edit") {
-            editing = false;
+            editingReview = null;
+            writing = false;
             renderMine();
-        } else if (action === "delete") {
-            confirmDelete();
         } else if (action === "add-photo") {
             document.getElementById("reviewImageInput").click();
         } else if (action === "remove-photo") {
             form.images.splice(Number(target.dataset.index), 1);
             renderFormPhotos();
         }
+
+    }
+
+
+    /* Viết mới / Sửa / Xoá (nút ở khối trên hoặc trên thẻ đánh giá của mình trong danh sách) */
+
+    function handleOwnAction(target) {
+
+        const action = target.dataset.action;
+
+        if (action === "delete") {
+            const review = findMine(target.dataset.id);
+            if (review) {
+                confirmDelete(review);
+            }
+            return;
+        }
+
+        if (action === "write") {
+            editingReview = null;
+            writing = true;
+        } else if (action === "edit" && findMine(target.dataset.id)) {
+            editingReview = findMine(target.dataset.id);
+            writing = false;
+        } else {
+            return;
+        }
+
+        renderMine();
+
+        mineBox.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        document.getElementById("reviewComment").focus({ preventScroll: true });
 
     }
 
@@ -669,14 +718,14 @@ function initProductReviews(product, options) {
 
         submit.disabled = true;
 
-        const wasEditing = Boolean(editing && myReview);
+        const wasEditing = Boolean(editingReview);
 
         try {
 
             const body = { productId: product.id, rating: form.rating, comment: comment, imageUrls: form.images };
 
             if (wasEditing) {
-                await apiRequest("/reviews/" + myReview.id, { method: "PUT", body: body, auth: true });
+                await apiRequest("/reviews/" + editingReview.id, { method: "PUT", body: body, auth: true });
             } else {
                 await apiRequest("/reviews", { method: "POST", body: body, auth: true });
             }
@@ -695,8 +744,8 @@ function initProductReviews(product, options) {
                 return;
             }
 
-            /* Đã có đánh giá (vd. viết ở tab khác) / đánh giá vừa bị xoá: tải lại khối của tôi */
-            if (error.code === "ALREADY_REVIEWED" || error.code === "REVIEW_NOT_FOUND") {
+            /* Đánh giá đang sửa vừa bị xoá (vd. ở tab khác): tải lại đánh giá của tôi */
+            if (error.code === "REVIEW_NOT_FOUND") {
                 showToast(getErrorMessage(error), "error");
                 loadMine();
                 return;
@@ -724,10 +773,10 @@ function initProductReviews(product, options) {
     }
 
 
-    function confirmDelete() {
+    function confirmDelete(review) {
 
         openConfirmModal({
-            title: "Xoá đánh giá của bạn?",
+            title: "Xoá đánh giá này?",
             message: "Đánh giá và ảnh kèm theo sẽ bị xoá; bạn có thể viết đánh giá mới sau.",
             confirmLabel: "XOÁ",
             cancelLabel: "Quay lại",
@@ -735,7 +784,7 @@ function initProductReviews(product, options) {
 
                 try {
 
-                    await apiRequest("/reviews/" + myReview.id, { method: "DELETE", auth: true });
+                    await apiRequest("/reviews/" + review.id, { method: "DELETE", auth: true });
 
                     showToast("Đã xoá đánh giá của bạn.", "success");
 

@@ -43,6 +43,7 @@ public enum ErrorCode {
     // Image upload
     INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "Only JPEG, PNG or WebP images are accepted"),
     IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Image must be at most 5 MB"),
+    EXCEL_INVALID_FILE(HttpStatus.BAD_REQUEST, "File phải là bảng tính Excel .xlsx đúng theo file mẫu"),
 
     // Product specification
     PRODUCT_SPECIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Product specification not found"),
@@ -140,7 +141,7 @@ public enum ErrorCode {
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),
-    ALREADY_REVIEWED(HttpStatus.CONFLICT, "Bạn đã đánh giá sản phẩm này; hãy sửa đánh giá cũ"),
+    REVIEW_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS, "Bạn vừa gửi đánh giá, vui lòng đợi 1 phút rồi gửi tiếp"),
 
     // After-sales (Phase 6)
     SERVICE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu"),

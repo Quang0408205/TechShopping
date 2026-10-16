@@ -37,12 +37,6 @@ public record ProductResponse(
         @Schema(description = "Name of the promotion giving effectivePrice; null when no promotion applies")
         String activePromotionName,
 
-        @Schema(description = "Rating on Thế Giới Di Động (crawled, display only); null when unknown. rating / "
-                + "totalReviews are this site's own visible reviews")
-        BigDecimal tgddRating,
-
-        @Schema(description = "Number of ratings behind tgddRating on Thế Giới Di Động (0 when unknown)")
-        Integer tgddReviewCount,
         @Schema(description = "Units customers can still buy: stock of every variant in OPEN stores (inventory per "
                 + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
         Integer availableQuantity
@@ -52,7 +46,6 @@ public record ProductResponse(
     public ProductResponse withAvailableQuantity(Integer available) {
         return new ProductResponse(id, name, slug, description, categoryId, categoryName, brandId, brandName,
                 basePrice, discountPrice, stockQuantity, sku, weight, warrantyMonths, rating, totalReviews, viewCount,
-                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName, tgddRating,
-                tgddReviewCount, available);
+                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName, available);
     }
 }

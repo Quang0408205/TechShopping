@@ -780,13 +780,6 @@ body.buy-bar-open .chatbot-widget {
     text-align: right;
 }
 
-.review-tgdd {
-    margin-bottom: 20px;
-
-    font-size: 12px;
-    color: var(--gray-600);
-}
-
 .review-mine {
     margin: 24px 0 28px;
 }
@@ -799,7 +792,8 @@ body.buy-bar-open .chatbot-widget {
     color: var(--color-ink);
 }
 
-.review-login {
+.review-login,
+.review-write-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -812,7 +806,8 @@ body.buy-bar-open .chatbot-widget {
     border-radius: var(--radius-md);
 }
 
-.review-login p {
+.review-login p,
+.review-write-bar p {
     margin: 0;
 }
 
@@ -1190,4 +1185,29 @@ body.buy-bar-open .chatbot-widget {
         padding: 16px;
     }
 
+}
+
+/* Đánh giá của mình trong danh sách: nhãn + nút Sửa / Xoá (nhiều đánh giá mỗi tài khoản) */
+.review-badge--mine {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.review-own-actions {
+    display: flex;
+    gap: 6px;
+
+    margin-left: auto;
+}
+
+.review-own-btn {
+    padding: 3px 10px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-full);
+    background: #fff;
+
+    font-family: inherit;
+    font-size: 12px;
+    cursor: pointer;
 }

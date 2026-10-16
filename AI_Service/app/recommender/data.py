@@ -25,7 +25,7 @@ def load_products() -> pd.DataFrame:
                (select string_agg(v.storage, '|') from product_variants v
                 where v.product_id = p.product_id) as variant_storage,
                coalesce(p.is_active, true) as is_active,
-               coalesce(p.tgdd_review_count, 0) as tgdd_review_count,
+               coalesce(p.total_reviews, 0) as review_count,
                coalesce(p.rating, 0) as rating,
                coalesce(p.updated_at, p.created_at) as updated_at,
                p.created_at

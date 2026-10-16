@@ -37,7 +37,7 @@ public class RecommendationService {
     public static final String SOURCE_AI = "AI";
     public static final String SOURCE_FALLBACK = "FALLBACK";
 
-    private static final Sort POPULAR_FIRST = Sort.by(Sort.Order.desc("tgddReviewCount"), Sort.Order.desc("id"));
+    private static final Sort POPULAR_FIRST = Sort.by(Sort.Order.desc("totalReviews"), Sort.Order.desc("id"));
 
     private final AiRecommendationClient aiClient;
     private final ProductService productService;

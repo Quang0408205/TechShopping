@@ -1518,7 +1518,7 @@ h4 {
 }
 
 .product-rating span,
-.product-rating--tgdd {
+.product-rating--none {
     color: var(--text-muted);
     font-weight: 400;
 }

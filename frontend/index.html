@@ -209,14 +209,23 @@
                 <h2>Mua sắm theo danh mục</h2>
             </div>
 
-            <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
+            <div class="category-heading-actions">
+
+                <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
+
+                <div class="category-nav">
+                    <button type="button" class="category-nav-btn" id="categoryPrev" aria-label="Danh mục trước">←</button>
+                    <button type="button" class="category-nav-btn" id="categoryNext" aria-label="Danh mục tiếp theo">→</button>
+                </div>
+
+            </div>
 
         </div>
 
 
         <div class="category-grid">
 
-            <a href="customer/products.html?category=phone" class="category-card category-card--large">
+            <a href="customer/products.html?category=phone" class="category-card">
                 <div class="category-text">
                     <h3>Điện thoại</h3>
                     <p>iPhone, Samsung Galaxy, Xiaomi, OPPO</p>
@@ -225,7 +234,7 @@
                 <img src="assets/images/category-phone.webp" alt="" width="503" height="600" loading="lazy">
             </a>
 
-            <a href="customer/products.html?category=laptop" class="category-card category-card--wide">
+            <a href="customer/products.html?category=laptop" class="category-card">
                 <div class="category-text">
                     <h3>Laptop</h3>
                     <p>MacBook, Asus, Dell, Lenovo, HP</p>

@@ -85,6 +85,9 @@ app:
     timeout: 3s
     # One chatbot answer can take several model + tool calls
     chat-timeout: 90s
+  review:
+    # An account may write any number of reviews, but two must be at least this many seconds apart (0 = off)
+    min-interval-seconds: ${REVIEW_MIN_INTERVAL_SECONDS:60}
   contact:
     # Contact form: at most per-ip sends per client IP and per-email per email address in each window (Redis)
     rate-limit:

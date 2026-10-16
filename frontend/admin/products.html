@@ -63,11 +63,28 @@
 
                 </form>
 
+                <button type="button" class="btn btn-outline-dark" id="productImportBtn">
+                    NHẬP TỪ EXCEL
+                </button>
+
                 <button type="button" class="btn btn-dark" id="newProductBtn">
                     + THÊM SẢN PHẨM
                 </button>
 
             </div>
+
+
+            <!-- Nhập sản phẩm bằng Excel (js/admin/excel-import.js) -->
+            <section class="admin-panel" id="productImportPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Nhập sản phẩm từ Excel</h2>
+                    <button type="button" class="btn btn-outline-dark" id="productImportClose">ĐÓNG</button>
+                </div>
+
+                <div id="productImportRoot"></div>
+
+            </section>
 
 
             <!-- Thêm / sửa sản phẩm -->
@@ -100,7 +117,7 @@
 
                         <div class="admin-field">
                             <label for="pfBasePrice">Giá gốc (đ) *</label>
-                            <input type="number" id="pfBasePrice" min="0" step="1000" required>
+                            <input type="number" id="pfBasePrice" min="1" step="1000" required>
                         </div>
 
                         <div class="admin-field">
@@ -156,6 +173,35 @@
                                 <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
 
                             </div>
+
+                        </fieldset>
+
+                        <!-- Phiên bản + thông số: ghi khi bấm LƯU (js/admin/product-extras.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfVariants">
+
+                            <legend>Phiên bản *</legend>
+
+                            <p class="admin-field-hint">Mỗi dòng là một phiên bản khách chọn khi mua (vd 8GB/256GB - Đen). Cần ít nhất 1 phiên bản, giá lớn hơn 0. Phiên bản đã bán hoặc còn tồn kho không xoá được.</p>
+
+                            <div class="admin-extra-head admin-variant-row" aria-hidden="true">
+                                <span>Tên phiên bản *</span><span>RAM</span><span>Bộ nhớ</span><span>Màu</span><span>Giá *</span><span>Giá KM</span><span>SKU</span><span></span>
+                            </div>
+
+                            <div id="pfVariantRows"></div>
+
+                            <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfVariantAdd">+ THÊM PHIÊN BẢN</button>
+
+                        </fieldset>
+
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfSpecs">
+
+                            <legend>Thông số kỹ thuật</legend>
+
+                            <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
+
+                            <div id="pfSpecRows"></div>
+
+                            <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfSpecAdd">+ THÊM THÔNG SỐ</button>
 
                         </fieldset>
 
@@ -220,6 +266,8 @@
 <script src="../js/core/layout.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/excel-import.js"></script>
+<script src="../js/admin/product-extras.js"></script>
 <script src="../js/admin/products.js"></script>
 
 </body>
