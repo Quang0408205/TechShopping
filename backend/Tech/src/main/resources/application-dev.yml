@@ -22,6 +22,9 @@ app:
     # Dev only: the frontend may be served on any local port (Live Server, static-server.mjs...).
     # On the main dev machine 5500 is taken by Oracle's TNS listener and 5501 by Antigravity,
     # so fixed ports kept breaking. Prod uses exact origins only (CORS_ALLOWED_ORIGINS).
+    # The public address when the site is shared (ngrok): requests through nginx carry Origin: https://<domain>
+    # and the backend only sees plain http, so without this every POST (register, login...) answers 403 Invalid CORS request.
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:}
     allowed-origin-patterns:
       - http://localhost:[*]
       - http://127.0.0.1:[*]

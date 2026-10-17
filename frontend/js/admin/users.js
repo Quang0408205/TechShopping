@@ -2,7 +2,8 @@
 
 /*
  * API thật (chỉ ADMIN, backend kiểm tra lại quyền ở mọi request):
- *   GET    /admin/users?keyword=&role=&isActive=&page=&size=   tìm kiếm, phân trang
+ *   GET    /admin/users?keyword=&role=&isActive=&createdFrom=&createdTo=&page=&size=&sort=   tìm kiếm, lọc ngày tạo, phân trang
+ *   POST   /admin/users/admins  { email, username, fullname, phone }   tạo ADMIN, mật khẩu tạm ngẫu nhiên (hiện một lần)
  *   PATCH  /admin/users/{id}/status  { active }                khoá / mở khoá
  *   PUT    /admin/users/{id}/roles   { roles: ["STAFF" | "BRANCH_MANAGER"] }   đổi vai trò nội bộ
  *   DELETE /admin/users/{id}                                   xoá mềm (204)
@@ -46,6 +47,24 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const roleFilterSelect = document.getElementById("userRoleFilter");
 
+    const fromDateInput = document.getElementById("userFromDate");
+
+    const toDateInput = document.getElementById("userToDate");
+
+    const sortSelect = document.getElementById("userSort");
+
+    const quickDates = document.getElementById("userQuickDates");
+
+    const filterError = document.getElementById("userFilterError");
+
+    const adminCreateBtn = document.getElementById("adminCreateBtn");
+
+    const adminCreatePanel = document.getElementById("adminCreatePanel");
+
+    const adminCreateForm = document.getElementById("adminCreateForm");
+
+    const adminCreateError = document.getElementById("adminCreateError");
+
     let currentTab = "CUSTOMER";
 
     let currentPage = 0;
@@ -84,6 +103,39 @@ document.addEventListener("DOMContentLoaded", async function () {
         currentPage = 0;
         loadUsers();
     });
+
+    [fromDateInput, toDateInput, sortSelect].forEach(function (control) {
+        control.addEventListener("change", function () {
+            currentPage = 0;
+            loadUsers();
+        });
+    });
+
+    quickDates.addEventListener("click", function (event) {
+
+        const button = event.target.closest("[data-range]");
+
+        if (!button) {
+            return;
+        }
+
+        const range = quickDateRange(button.dataset.range);
+
+        fromDateInput.value = range[0];
+
+        toDateInput.value = range[1];
+
+        currentPage = 0;
+
+        loadUsers();
+
+    });
+
+    adminCreateBtn.addEventListener("click", openAdminCreatePanel);
+
+    document.getElementById("adminCreateCancelBtn").addEventListener("click", closeAdminCreatePanel);
+
+    adminCreateForm.addEventListener("submit", submitAdminCreate);
 
 
     roleForm.addEventListener("submit", saveRoles);
@@ -161,6 +213,11 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         roleFilterSelect.hidden = tab === "CUSTOMER";
 
+        /* Tạo ADMIN chỉ ở tab Nội bộ */
+        adminCreateBtn.hidden = tab === "CUSTOMER";
+
+        closeAdminCreatePanel();
+
         closeRolePanel();
 
         currentPage = 0;
@@ -174,13 +231,39 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     async function loadUsers() {
 
+        const fromDate = fromDateInput.value;
+
+        const toDate = toDateInput.value;
+
+        if (fromDate && toDate && fromDate > toDate) {
+
+            filterError.textContent = "Ngày bắt đầu phải trước hoặc trùng ngày kết thúc.";
+
+            filterError.hidden = false;
+
+            return;
+
+        }
+
+        filterError.hidden = true;
+
+        markQuickDates();
+
         const requestId = ++requestCounter;
 
         const params = new URLSearchParams({
             page: String(currentPage),
             size: String(USER_PAGE_SIZE),
-            sort: "id,asc"
+            sort: sortSelect.value
         });
+
+        if (fromDate) {
+            params.set("createdFrom", fromDate);
+        }
+
+        if (toDate) {
+            params.set("createdTo", toDate);
+        }
 
         const keyword = document.getElementById("userKeyword").value.trim();
 
@@ -231,7 +314,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function renderTable(page) {
 
-        document.getElementById("userRowCount").textContent = page.totalElements + " tài khoản";
+        document.getElementById("userRowCount").textContent = page.totalElements + " tài khoản" + createdRangeText();
 
         tbody.innerHTML = currentUsers.map(renderRow).join("") ||
             adminEmptyRow(8, "Không có tài khoản nào phù hợp bộ lọc");
@@ -299,6 +382,216 @@ document.addEventListener("DOMContentLoaded", async function () {
             <span>Trang ${page.page + 1} / ${page.totalPages}</span>
             <button type="button" class="btn btn-outline-dark" data-page="${page.page + 1}" ${page.page + 1 >= page.totalPages ? "disabled" : ""}>SAU ›</button>
         `;
+
+    }
+
+
+    /* ================= LỌC NGÀY TẠO ================= */
+
+    /* " · tạo từ 10/10/2026 đến 17/10/2026" khi đang lọc ngày */
+
+    function createdRangeText() {
+
+        const fromDate = fromDateInput.value;
+
+        const toDate = toDateInput.value;
+
+        if (!fromDate && !toDate) {
+            return "";
+        }
+
+        const show = function (iso) {
+            return iso.split("-").reverse().join("/");
+        };
+
+        if (fromDate && toDate) {
+            return fromDate === toDate ? " · tạo ngày " + show(fromDate) : " · tạo từ " + show(fromDate) + " đến " + show(toDate);
+        }
+
+        return fromDate ? " · tạo từ " + show(fromDate) : " · tạo đến " + show(toDate);
+
+    }
+
+
+    function markQuickDates() {
+
+        quickDates.querySelectorAll("[data-range]").forEach(function (button) {
+
+            const range = quickDateRange(button.dataset.range);
+
+            const pressed = range[0] === fromDateInput.value && range[1] === toDateInput.value;
+
+            button.setAttribute("aria-pressed", String(pressed));
+
+        });
+
+    }
+
+
+    /* [từ, đến] dạng yyyy-mm-dd theo giờ máy; "all" = bỏ trống */
+
+    function quickDateRange(range) {
+
+        const today = new Date();
+
+        if (range === "today") {
+            return [isoDate(today), isoDate(today)];
+        }
+
+        if (range === "7d") {
+            return [isoDate(new Date(today.getFullYear(), today.getMonth(), today.getDate() - 6)), isoDate(today)];
+        }
+
+        if (range === "month") {
+            return [isoDate(new Date(today.getFullYear(), today.getMonth(), 1)), isoDate(today)];
+        }
+
+        return ["", ""];
+
+    }
+
+
+    function isoDate(date) {
+
+        return date.getFullYear() + "-" + String(date.getMonth() + 1).padStart(2, "0") + "-" + String(date.getDate()).padStart(2, "0");
+
+    }
+
+
+    /* ================= TẠO QUẢN TRỊ VIÊN ================= */
+
+    function openAdminCreatePanel() {
+
+        closeRolePanel();
+
+        adminCreateForm.reset();
+
+        adminCreateError.hidden = true;
+
+        adminCreatePanel.hidden = false;
+
+        adminCreatePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        document.getElementById("newAdminFullname").focus();
+
+    }
+
+
+    function closeAdminCreatePanel() {
+
+        adminCreatePanel.hidden = true;
+
+    }
+
+
+    function submitAdminCreate(event) {
+
+        event.preventDefault();
+
+        const body = {
+            fullname: document.getElementById("newAdminFullname").value.trim(),
+            email: document.getElementById("newAdminEmail").value.trim(),
+            username: document.getElementById("newAdminUsername").value.trim(),
+            phone: document.getElementById("newAdminPhone").value.trim() || null
+        };
+
+        let problem = "";
+
+        if (!body.fullname) {
+            problem = "Vui lòng nhập họ tên.";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+            problem = "Email chưa đúng định dạng.";
+        } else if (body.username.length < 3 || body.username.length > 50 || !/^[A-Za-z0-9._-]+$/.test(body.username)) {
+            problem = "Tên đăng nhập từ 3 đến 50 ký tự, chỉ gồm chữ, số, dấu chấm, gạch dưới và gạch ngang.";
+        }
+
+        if (problem) {
+
+            adminCreateError.textContent = problem;
+
+            adminCreateError.hidden = false;
+
+            return;
+
+        }
+
+        adminCreateError.hidden = true;
+
+        /* Việc quan trọng: gõ lại tên đăng nhập mới tạo */
+        openConfirmModal({
+            title: "Tạo quản trị viên " + body.username + "?",
+            message: "Tài khoản này có toàn quyền trên hệ thống (người dùng, sản phẩm, khuyến mãi, chi nhánh…). Chỉ tạo cho người thật sự cần.",
+            confirmLabel: "TẠO",
+            cancelLabel: "Quay lại",
+            input: {
+                label: "Gõ lại tên đăng nhập \"" + body.username + "\" để xác nhận",
+                placeholder: body.username,
+                maxLength: 50
+            },
+            onConfirm: function (typed) {
+
+                if ((typed || "").trim().toLowerCase() !== body.username.toLowerCase()) {
+
+                    showToast("Tên đăng nhập gõ vào không khớp, chưa tạo gì.", "error");
+
+                    return;
+
+                }
+
+                createAdmin(body);
+
+            }
+        });
+
+    }
+
+
+    async function createAdmin(body) {
+
+        const saveButton = document.getElementById("adminCreateSaveBtn");
+
+        saveButton.disabled = true;
+
+        try {
+
+            const created = await apiRequest("/admin/users/admins", { method: "POST", body: body, auth: true });
+
+            closeAdminCreatePanel();
+
+            /* Hiện đúng tài khoản vừa tạo ở danh sách quản trị viên */
+            roleFilterSelect.value = "ADMIN";
+
+            document.getElementById("userKeyword").value = created.user.username;
+
+            fromDateInput.value = "";
+
+            toDateInput.value = "";
+
+            currentPage = 0;
+
+            loadUsers();
+
+            /* Mật khẩu tạm chỉ hiện đúng một lần, kèm nút sao chép */
+            openSecretModal({
+                title: "Đã tạo quản trị viên " + created.user.fullname,
+                message: "Tài khoản @" + created.user.username + " đã được tạo. Gửi mật khẩu tạm cho người đó: họ phải đổi mật khẩu ở lần đăng nhập đầu" +
+                    (created.passwordExpiresAt ? ", trước " + new Date(created.passwordExpiresAt).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }) : "") + ".",
+                label: "Mật khẩu tạm",
+                secret: created.temporaryPassword
+            });
+
+        } catch (error) {
+
+            handleError(error, function (message) {
+                adminCreateError.textContent = message;
+                adminCreateError.hidden = false;
+            });
+
+        } finally {
+
+            saveButton.disabled = false;
+
+        }
 
     }
 

@@ -46,6 +46,12 @@ public final class UserFilterSpecifications {
                         ? cb.or(cb.isNull(root.get("active")), cb.isTrue(root.get("active")))
                         : cb.isFalse(root.get("active")));
             }
+            if (filter.createdFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), filter.createdFrom().atStartOfDay()));
+            }
+            if (filter.createdTo() != null) {
+                predicates.add(cb.lessThan(root.get("createdAt"), filter.createdTo().plusDays(1).atStartOfDay()));
+            }
             if (filter.role() != null && !filter.role().isBlank()) {
                 Subquery<Long> withRole = query.subquery(Long.class);
                 Root<UserRole> userRole = withRole.from(UserRole.class);

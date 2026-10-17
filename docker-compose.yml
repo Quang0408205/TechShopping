@@ -68,6 +68,8 @@ services:
       PAYMENT_SIMULATOR_ENABLED: ${PAYMENT_SIMULATOR_ENABLED:-false}
       # Địa chỉ web công khai (vd. https://ten-cua-ban.ngrok-free.app): được ghi vào link ảnh tải lên
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
+      # Cho trình duyệt gọi API từ địa chỉ công khai (POST kèm Origin: https://<tên-miền>), không thì 403 Invalid CORS request
+      CORS_ALLOWED_ORIGINS: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
       AI_SERVICE_URL: http://ai-service:8000
       AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
     ports:

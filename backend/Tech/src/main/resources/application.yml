@@ -17,8 +17,8 @@ spring:
         max-page-size: 100
   mvc:
     async:
-      # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer may take a while
-      request-timeout: 120s
+      # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer with product search took ~2 minutes on a 4 GB GPU
+      request-timeout: 300s
   servlet:
     multipart:
       # Product image uploads (ImageStorageService.MAX_IMAGE_BYTES)
@@ -84,7 +84,7 @@ app:
     # Recommendations fall back to popular / same-category products after this
     timeout: 3s
     # One chatbot answer can take several model + tool calls
-    chat-timeout: 90s
+    chat-timeout: 240s
   review:
     # An account may write any number of reviews, but two must be at least this many seconds apart (0 = off)
     min-interval-seconds: ${REVIEW_MIN_INTERVAL_SECONDS:60}

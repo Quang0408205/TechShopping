@@ -15,7 +15,9 @@ import com.example.Tech.mapper.user.UserMapper;
 import com.example.Tech.repository.employee.EmployeeAssignmentRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleName;
+import com.example.Tech.repository.user.RoleRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import com.example.Tech.security.RefreshTokenService;
 import com.example.Tech.service.employee.StaffRoles;
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
@@ -68,6 +70,12 @@ class AdminUserServiceImplTest {
     @Mock
     private RefreshTokenService refreshTokenService;
 
+    @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     private AdminUserServiceImpl service;
 
     private User admin;
@@ -76,7 +84,7 @@ class AdminUserServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new AdminUserServiceImpl(userRepository, assignmentRepository, staffRoles, userRoleRepository,
-                refreshTokenService, new UserMapper(), CLOCK);
+                refreshTokenService, new UserMapper(), roleRepository, passwordEncoder, CLOCK);
         admin = user(ADMIN_ID, "admin");
         target = user(USER_ID, "an.nguyen");
     }
@@ -149,7 +157,7 @@ class AdminUserServiceImplTest {
         when(userRoleRepository.findRoleNamesByUserIds(any(Collection.class))).thenReturn(List.of(
                 roleName(ADMIN_ID, "ADMIN"), roleName(USER_ID, "CUSTOMER"), roleName(USER_ID, "STAFF")));
 
-        PageResponse<UserResponse> page = service.search(ADMIN_ID, new UserSearchRequest(null, null, null, null), pageable);
+        PageResponse<UserResponse> page = service.search(ADMIN_ID, new UserSearchRequest(null, null, null, null, null, null), pageable);
 
         assertThat(page.totalElements()).isEqualTo(2);
         assertThat(page.content().get(0).roles()).containsExactly("ADMIN");

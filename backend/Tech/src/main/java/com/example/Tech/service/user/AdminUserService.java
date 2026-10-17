@@ -1,9 +1,11 @@
 package com.example.Tech.service.user;
 
 import com.example.Tech.dto.request.user.UserRolesUpdateRequest;
+import com.example.Tech.dto.request.user.AdminCreateRequest;
 import com.example.Tech.dto.request.user.UserSearchRequest;
 import com.example.Tech.dto.request.user.UserStatusUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.user.AdminCreatedResponse;
 import com.example.Tech.dto.response.user.UserResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -22,6 +24,12 @@ public interface AdminUserService {
 
     /** Replaces the whole role set. */
     UserResponse updateRoles(Long adminId, Long userId, UserRolesUpdateRequest request);
+
+    /**
+     * Creates an ADMIN account with a random temporary password (returned once, must be changed at the first login,
+     * expires after 7 days). Only an administrator may call it; no employee record or store is created.
+     */
+    AdminCreatedResponse createAdmin(Long adminId, AdminCreateRequest request);
 
     /** Soft delete (deleted_at + is_active = false) and revoke every refresh token. Idempotent. */
     void delete(Long adminId, Long userId);
