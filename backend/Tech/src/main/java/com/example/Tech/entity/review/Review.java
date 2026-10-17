@@ -70,6 +70,10 @@ public class Review {
     @Column(name = "hidden_at")
     private LocalDateTime hiddenAt;
 
+    /** "Phân loại hàng": the variant of the author's latest delivered order of this product, stored when writing. */
+    @Column(name = "variant_label")
+    private String variantLabel;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ProductResponse(
         Long id,
@@ -39,13 +40,24 @@ public record ProductResponse(
 
         @Schema(description = "Units customers can still buy: stock of every variant in OPEN stores (inventory per "
                 + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
-        Integer availableQuantity
+        Integer availableQuantity,
+
+        @Schema(description = "Variants as card choices, cheapest first; only filled by GET /products (null elsewhere)")
+        List<ProductVariantOption> variants
 ) {
+
+    /** The same product carrying the variant choices of a list card. */
+    public ProductResponse withVariants(List<ProductVariantOption> options) {
+        return new ProductResponse(id, name, slug, description, categoryId, categoryName, brandId, brandName,
+                basePrice, discountPrice, stockQuantity, sku, weight, warrantyMonths, rating, totalReviews, viewCount,
+                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName,
+                availableQuantity, options);
+    }
 
     /** The same product with a fresh stock figure (the rest of a cached response may be minutes old). */
     public ProductResponse withAvailableQuantity(Integer available) {
         return new ProductResponse(id, name, slug, description, categoryId, categoryName, brandId, brandName,
                 basePrice, discountPrice, stockQuantity, sku, weight, warrantyMonths, rating, totalReviews, viewCount,
-                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName, available);
+                isActive, createdAt, updatedAt, primaryImageUrl, effectivePrice, activePromotionName, available, variants);
     }
 }

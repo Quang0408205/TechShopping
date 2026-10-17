@@ -217,16 +217,20 @@ function renderCart(summary) {
                 Giỏ hàng có sản phẩm đã ngừng bán hoặc không đủ hàng. Vui lòng xóa hoặc giảm số lượng các sản phẩm này trước khi thanh toán.
             </p>
             <button type="button" class="btn btn-dark" id="checkoutButton" disabled>
-                Tiến hành thanh toán
+                Đặt mua
             </button>
         `
         : `
+            <button type="button" class="order-info-row" id="orderInfoRow" aria-label="Thông tin nhận hàng">
+                <span>${orderInfoSummaryHtml(readOrderInfo())}</span>
+                <span aria-hidden="true">›</span>
+            </button>
             <a
                 href="${escapeHtml(siteUrl("customer/checkout.html"))}"
                 class="btn btn-dark"
                 id="checkoutButton"
             >
-                Tiến hành thanh toán
+                Đặt mua
             </a>
         `;
 
@@ -335,6 +339,50 @@ function bindCartEvents(items) {
             loadCart();
 
         }
+
+    }
+
+
+    /*
+     * Thông tin nhận hàng: bấm dòng thông tin để mở / sửa popup; "Đặt mua" chỉ chuyển sang bước thanh toán
+     * khi đã có thông tin hợp lệ, chưa có thì mở popup trước rồi mới chuyển.
+     */
+
+    const infoRow = container.querySelector("#orderInfoRow");
+
+    const checkoutButton = container.querySelector("#checkoutButton");
+
+    if (infoRow) {
+
+        infoRow.addEventListener("click", function () {
+
+            openOrderInfoModal({
+                onSave: function (info) {
+                    infoRow.firstElementChild.innerHTML = orderInfoSummaryHtml(info);
+                }
+            });
+
+        });
+
+    }
+
+    if (checkoutButton && checkoutButton.tagName === "A") {
+
+        checkoutButton.addEventListener("click", function (event) {
+
+            if (readOrderInfo()) {
+                return;
+            }
+
+            event.preventDefault();
+
+            openOrderInfoModal({
+                onSave: function () {
+                    window.location.href = checkoutButton.href;
+                }
+            });
+
+        });
 
     }
 

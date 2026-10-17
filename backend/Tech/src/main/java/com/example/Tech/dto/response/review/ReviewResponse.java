@@ -27,6 +27,15 @@ public record ReviewResponse(
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         boolean hidden,
-        String hiddenReason
+        String hiddenReason,
+
+        @Schema(description = "The variant the author bought (latest delivered order); null when unknown")
+        String variantLabel,
+
+        @Schema(description = "How many accounts marked the review as helpful")
+        long likeCount,
+
+        @Schema(description = "The caller has marked it helpful (always false without a token)")
+        boolean likedByMe
 ) {
 }

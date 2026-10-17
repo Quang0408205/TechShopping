@@ -290,6 +290,9 @@ Kiến trúc (báo cáo mục 3.5, 3.6): **Website → Spring Boot → AI Servic
 > #     chạy lại được; sau đó dọn Redis cache:* và chạy lại dữ liệu AI (build_relations, build_index, huấn luyện)
 > Get-Content database\migrations\merge_product_variants.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\merge_product_variants.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
+> # 18. Đánh giá: "Phân loại hàng" + nút "Hữu ích" (review_likes)
+> Get-Content database\migrations\review_likes_variant.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
+> Get-Content database\migrations\review_likes_variant.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
 >
 > Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 > Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test
@@ -373,3 +376,37 @@ cd backend\Tech
 | `database/` | `techshopping.sql` (cấu trúc 46 bảng), `migrations/` (cập nhật database cũ), `docker-init/` (tạo DB test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx cho frontend |
 | `Raw_data/` | Crawl catalogue TGDĐ: `crawler.py` → `tgdd_all_products.csv`, `clean_data.py` → `tgdd_products_cleaned.csv`, `import_catalog.py` nạp vào database (`legacy_seed_products.csv` = 877 sản phẩm mẫu cũ, để ghép theo trang TGDĐ) |
+
+## Triển khai thử nghiệm (cho mọi người test, 0đ): máy của bạn + ngrok
+
+Cả hệ thống chạy bằng Docker trên máy bạn (kể cả chatbot AI bằng Ollama), ngrok chỉ mở **một cổng** (nginx, cổng 5510) ra internet. nginx phục vụ giao diện và chuyển tiếp `/api`, `/uploads` sang backend, nên người dùng chỉ thấy một địa chỉ. Web chỉ truy cập được **khi máy đang bật** và script `start-public.ps1` đang chạy.
+
+**Làm một lần**
+1. Tạo tài khoản ngrok (miễn phí), cài: `winget install ngrok.ngrok` (hoặc tải ở ngrok.com), rồi `ngrok config add-authtoken <token>`.
+2. Ở dashboard.ngrok.com → Domains, nhận **một tên miền tĩnh miễn phí** dạng `ten-cua-ban.ngrok-free.app`.
+3. Chuẩn bị `.env` (copy từ `.env.example`): `JWT_SECRET` dài và ngẫu nhiên, `ADMIN_*` (mật khẩu mạnh), `PAYMENT_SIMULATOR_ENABLED=true` (người thử không chuyển tiền thật; QR vẫn hiện và đơn tự xác nhận sau 1 phút), `PAYMENT_BANK_*` có thể để trống (tài khoản demo). Không commit `.env`.
+4. Đặt địa chỉ công khai (ghi vào `.env`, đổi link ảnh đã tải lên, tạo lại backend):
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File deploy\set-public-url.ps1 -Url https://ten-cua-ban.ngrok-free.app
+   ```
+
+**Mỗi lần mở cho mọi người thử**
+```powershell
+# Docker Desktop và Ollama (ollama serve / app Ollama) đang chạy
+powershell -ExecutionPolicy Bypass -File deploy\start-public.ps1 -Domain ten-cua-ban.ngrok-free.app
+```
+Gửi link `https://ten-cua-ban.ngrok-free.app` (quản trị: `/admin/login.html`). Lần đầu mở, ngrok bản miễn phí hiện trang cảnh báo, bấm **Visit Site** một lần. Đóng cửa sổ script (Ctrl+C) là ngừng cho truy cập từ ngoài.
+
+**Trước khi mở cho người ngoài**
+- Xoá khách mô phỏng của AI để số liệu thật không lẫn: `docker compose exec ai-service python -m scripts.seed_interactions --reset`.
+- Đổi mật khẩu mọi tài khoản demo / mật khẩu tạm `1`; không để mật khẩu mặc định ở tài khoản ADMIN.
+- Cổng 5432 / 6379 / 8080 / 8000 vẫn mở trên máy bạn (mạng nội bộ) nhưng ngrok chỉ chuyển tiếp 5510, nên internet không chạm tới.
+- Gói miễn phí của ngrok có giới hạn lưu lượng hàng tháng: xem ở dashboard.ngrok.com trước buổi test đông người.
+- Tắt chế độ ngủ của Windows khi mở web (`start-public.ps1` tự đặt không ngủ khi cắm sạc, trả lại 30 phút khi tắt). Chatbot trả lời ~60 giây mỗi câu.
+
+**Lấy dữ liệu để bảo vệ**
+```powershell
+docker exec techshopping-postgres pg_dump -U postgres -Fc -f /tmp/techshopping.dump techshopping
+docker cp techshopping-postgres:/tmp/techshopping.dump .\techshopping_$(Get-Date -Format yyyy-MM-dd).dump
+```
+Báo cáo doanh thu, đối soát chuyển khoản, đánh giá và lịch sử chatbot xem ngay trong trang quản trị.

@@ -282,6 +282,49 @@ class ReviewApiIntegrationTest {
         assertThat(mine.get(0).get("hiddenReason").asString()).isEqualTo("Nội dung không liên quan");
     }
 
+    @Test
+    void variantLabelFromTheDeliveredOrder_andHelpfulLikes() throws Exception {
+        JsonNode byA = data(send(post("/api/v1/reviews"), tokenA, body(product, 4, COMMENT, null)).andExpect(status().isCreated()));
+        JsonNode byB = data(send(post("/api/v1/reviews"), tokenB, body(product, 5, COMMENT, null)).andExpect(status().isCreated()));
+        // only the buyer has a "Phân loại hàng" (the variant of the delivered order; no storage / colour here → its name)
+        assertThat(byA.get("variantLabel").isNull()).isTrue();
+        assertThat(byB.get("variantLabel").asString()).isEqualTo("Mặc định");
+        long idB = byB.get("id").asLong();
+
+        send(put("/api/v1/reviews/" + idB + "/like"), null, null).andExpect(status().isUnauthorized());
+        send(put("/api/v1/reviews/" + idB + "/like"), tokenA, null)
+                .andExpect(jsonPath("$.data.likeCount").value(1)).andExpect(jsonPath("$.data.likedByMe").value(true));
+        // liking twice keeps one like
+        send(put("/api/v1/reviews/" + idB + "/like"), tokenA, null).andExpect(jsonPath("$.data.likeCount").value(1));
+
+        assertThat(likeOf(listUrl(), null, "Khách Hàng B")).containsExactly(1L, 0L);
+        assertThat(likeOf(listUrl(), tokenA, "Khách Hàng B")).containsExactly(1L, 1L);
+        assertThat(likeOf(listUrl(), tokenB, "Khách Hàng B")).containsExactly(1L, 0L);
+        assertThat(likeOf(listUrl(), tokenA, "Khách Hàng A")).containsExactly(0L, 0L);
+
+        send(delete("/api/v1/reviews/" + idB + "/like"), tokenA, null)
+                .andExpect(jsonPath("$.data.likeCount").value(0)).andExpect(jsonPath("$.data.likedByMe").value(false));
+        send(delete("/api/v1/reviews/" + idB + "/like"), tokenA, null).andExpect(jsonPath("$.data.likeCount").value(0));
+
+        // a hidden review cannot be liked
+        Review hidden = reviewRepository.findById(idB).orElseThrow();
+        hidden.setHidden(true);
+        hidden.setHiddenReason("Spam");
+        entityManager.flush();
+        send(put("/api/v1/reviews/" + idB + "/like"), tokenA, null).andExpect(status().isNotFound());
+        send(put("/api/v1/reviews/999999999/like"), tokenA, null).andExpect(status().isNotFound());
+    }
+
+    /** [likeCount, likedByMe] of the named author's review in the public list, read with the given token (or none). */
+    private List<Long> likeOf(String url, String token, String author) throws Exception {
+        for (JsonNode row : data(send(get(url), token, null).andExpect(status().isOk())).get("content")) {
+            if (author.equals(row.get("authorName").asString())) {
+                return List.of(row.get("likeCount").asLong(), row.get("likedByMe").asBoolean() ? 1L : 0L);
+            }
+        }
+        throw new AssertionError("no review by " + author);
+    }
+
     private String listUrl() {
         return "/api/v1/products/" + product.getId() + "/reviews";
     }

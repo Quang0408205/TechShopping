@@ -124,8 +124,8 @@
 /* ---------- Nội dung ---------- */
 
 .admin-content {
-    max-width: 1440px;
     padding: 28px;
+    min-width: 0;
 }
 
 .admin-panel,

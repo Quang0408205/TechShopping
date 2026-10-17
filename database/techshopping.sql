@@ -637,8 +637,17 @@ create table reviews (
     hidden_reason text,
     hidden_by bigint references users(user_id),
     hidden_at timestamp,
+    variant_label varchar(255),              -- "Phân loại hàng" của người viết (từ đơn đã giao), ghi lúc viết
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
+);
+
+-- bảng review_likes: nút "Hữu ích", mỗi tài khoản một lượt cho mỗi đánh giá
+create table review_likes (
+    review_id bigint not null references reviews(review_id) on delete cascade,
+    user_id bigint not null references users(user_id),
+    created_at timestamp default current_timestamp,
+    primary key (review_id, user_id)
 );
 
 -- bảng review_images: ảnh khách gửi kèm đánh giá (tối đa 5 ảnh, kiểm tra ở ứng dụng)
@@ -748,6 +757,7 @@ create index idx_promotion_products_product on promotion_products(product_id);
 -- review indexes
 create index idx_reviews_product_id on reviews(product_id, created_at desc);
 create index idx_reviews_hidden_by on reviews(hidden_by);
+create index idx_review_likes_user on review_likes(user_id);
 create index idx_reviews_user_created on reviews(user_id, created_at desc);
 
 -- =====================================================

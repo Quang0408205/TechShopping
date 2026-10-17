@@ -3,6 +3,7 @@ package com.example.Tech.service.review;
 import com.example.Tech.dto.request.review.ReviewRequest;
 import com.example.Tech.dto.request.review.ReviewSearchRequest;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.review.ReviewLikeResponse;
 import com.example.Tech.dto.response.review.ReviewResponse;
 import com.example.Tech.dto.response.review.ReviewSummaryResponse;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +16,8 @@ import java.util.List;
  */
 public interface ReviewService {
 
-    /** Visible reviews of a product (public), newest first. */
-    PageResponse<ReviewResponse> listForProduct(Long productId, ReviewSearchRequest filter, Pageable pageable);
+    /** Visible reviews of a product (public), newest first; viewerId (null when anonymous) fills likedByMe. */
+    PageResponse<ReviewResponse> listForProduct(Long productId, ReviewSearchRequest filter, Pageable pageable, Long viewerId);
 
     /** Real figures of the product's visible reviews (public). */
     ReviewSummaryResponse summary(Long productId);
@@ -30,4 +31,10 @@ public interface ReviewService {
     ReviewResponse update(Long userId, Long reviewId, ReviewRequest request);
 
     void delete(Long userId, Long reviewId);
+
+    /** Marks a visible review as helpful (idempotent: liking twice keeps one like). */
+    ReviewLikeResponse like(Long userId, Long reviewId);
+
+    /** Takes the like back (idempotent). */
+    ReviewLikeResponse unlike(Long userId, Long reviewId);
 }

@@ -173,6 +173,8 @@ document.addEventListener(
 
         prefillFromAccount();
 
+        applyStoredOrderInfo();
+
 
         if (summary.hasUnavailableItems) {
 
@@ -216,6 +218,74 @@ document.addEventListener(
 
 
         form.addEventListener("submit", handleSubmit);
+
+
+        /*
+         * Thông tin nhận hàng đã nhập ở popup trong giỏ hàng (order-info.js): đổ vào các ô của form
+         * (vẫn là nguồn khi đặt hàng) rồi chỉ hiện bản tóm tắt + nút Sửa. Cửa hàng đã lưu mà nay đóng /
+         * thiếu hàng thì không dùng bản lưu: hiện form để khách chọn lại.
+         */
+
+        function applyStoredOrderInfo() {
+
+            const stored = readOrderInfo();
+
+            const card = document.getElementById("orderInfoCard");
+
+            const fields = document.getElementById("orderInfoFields");
+
+            if (!stored) {
+                return;
+            }
+
+            if (stored.deliveryType === "PICKUP") {
+
+                const store = findPickupStore(stored.pickupStoreId);
+
+                if (pickupRadio.disabled || !store || storeLacksItems(store)) {
+                    return;
+                }
+
+            }
+
+            document.getElementById("recipientName").value = stored.recipientName;
+
+            document.getElementById("recipientPhone").value = stored.recipientPhone;
+
+            document.getElementById("shippingAddress").value = stored.shippingAddress || "";
+
+            form.querySelector('input[name="deliveryType"][value="' + stored.deliveryType + '"]').checked = true;
+
+            if (stored.deliveryType === "PICKUP") {
+                pickupSelect.value = String(stored.pickupStoreId);
+            }
+
+            updateDeliveryFields();
+
+            renderPickupInfo();
+
+            document.getElementById("orderInfoCardText").innerHTML = orderInfoSummaryHtml(stored);
+
+            card.hidden = false;
+
+            fields.hidden = true;
+
+        }
+
+
+        document.getElementById("orderInfoEdit").addEventListener("click", function () {
+
+            openOrderInfoModal({
+                onSave: function () {
+
+                    applyStoredOrderInfo();
+
+                    clearMessages();
+
+                }
+            });
+
+        });
 
 
         /* Chỉ điền vào ô còn trống, không ghi đè thứ người dùng đã gõ */

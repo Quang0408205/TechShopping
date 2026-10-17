@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="../css/style.css">
 
     <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/cart.css">
     <link rel="stylesheet" href="../css/customer/checkout.css">
 
     <link
@@ -87,6 +88,17 @@
 
                 <p class="form-error" data-role="error" role="alert" hidden></p>
 
+                <!-- Đã nhập thông tin nhận hàng ở popup trong giỏ hàng: chỉ hiện bản tóm tắt + nút Sửa (ô nhập vẫn nằm bên dưới, ẩn) -->
+                <div class="order-info-card" id="orderInfoCard" hidden>
+                    <h2 class="checkout-heading"><span>1</span>Thông tin nhận hàng</h2>
+                    <button type="button" class="order-info-row" id="orderInfoEdit" aria-label="Sửa thông tin nhận hàng">
+                        <span id="orderInfoCardText"></span>
+                        <span>Sửa ›</span>
+                    </button>
+                </div>
+
+                <div id="orderInfoFields">
+
                 <!-- Phase 7: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (khách chọn) -->
                 <div class="payment-methods delivery-types">
 
@@ -132,6 +144,8 @@
                     </select>
                     <small class="field-error" data-field="pickupStoreId"></small>
                     <p class="pickup-store-info" id="pickupStoreInfo" hidden></p>
+                </div>
+
                 </div>
 
                 <label for="orderNote">Ghi chú (không bắt buộc)</label>
@@ -245,6 +259,7 @@
 <script src="../js/core/order-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
+<script src="../js/customer/order-info.js"></script>
 <script src="../js/customer/checkout.js"></script>
 <script src="../js/customer/chatbot.js"></script>
 <script src="../js/customer/ui-effects.js"></script>

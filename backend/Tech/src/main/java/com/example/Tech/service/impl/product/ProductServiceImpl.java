@@ -7,10 +7,12 @@ import com.example.Tech.dto.request.product.ProductSearchRequest;
 import com.example.Tech.dto.request.product.ProductUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
+import com.example.Tech.dto.response.product.ProductVariantOption;
 import com.example.Tech.entity.product.Brand;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductImage;
+import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
@@ -21,6 +23,7 @@ import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductFilterSpecifications;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.service.product.ProductService;
 import com.example.Tech.service.promotion.EffectivePrice;
 import com.example.Tech.service.promotion.PromotionPricingService;
@@ -38,6 +41,7 @@ import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +57,7 @@ public class ProductServiceImpl implements ProductService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ProductImageRepository imageRepository;
+    private final ProductVariantRepository variantRepository;
     private final ProductMapper productMapper;
     private final ProductImageMapper imageMapper;
     private final PromotionPricingService pricingService;
@@ -70,8 +75,39 @@ public class ProductServiceImpl implements ProductService {
         Map<Long, String> imageUrls = primaryImageUrls(page.getContent().stream().map(Product::getId).toList());
         Map<Long, EffectivePrice> prices = pricingService.resolveProducts(page.getContent(), LocalDateTime.now(clock));
         Map<Long, Integer> available = stockAvailability.byProduct(page.getContent().stream().map(Product::getId).toList());
+        Map<Long, List<ProductVariantOption>> variants = variantOptions(page.getContent());
         return PageResponse.from(page.map(product -> productMapper.toResponse(product, imageUrls.get(product.getId()),
-                prices.get(product.getId()), available.getOrDefault(product.getId(), 0))));
+                prices.get(product.getId()), available.getOrDefault(product.getId(), 0))
+                .withVariants(variants.getOrDefault(product.getId(), List.of()))));
+    }
+
+    /** Card choices for a page of products: three queries in all (variants, promotions, stock), cheapest first. */
+    private Map<Long, List<ProductVariantOption>> variantOptions(List<Product> products) {
+        if (products.isEmpty()) {
+            return Map.of();
+        }
+        List<ProductVariant> variants = variantRepository.findAllByProductIdInOrderByIdAsc(
+                products.stream().map(Product::getId).toList());
+        Map<Long, EffectivePrice> prices = pricingService.resolveVariants(variants, LocalDateTime.now(clock));
+        Map<Long, Integer> stock = stockAvailability.byVariant(variants.stream().map(ProductVariant::getId).toList());
+        Map<Long, List<ProductVariantOption>> options = new HashMap<>();
+        for (ProductVariant variant : variants) {
+            EffectivePrice price = prices.get(variant.getId());
+            options.computeIfAbsent(variant.getProduct().getId(), id -> new ArrayList<>())
+                    .add(new ProductVariantOption(variant.getId(), optionLabel(variant), variant.getColor(),
+                            price.unitPrice(), variant.getPrice(), stock.getOrDefault(variant.getId(), 0)));
+        }
+        options.values().forEach(list -> list.sort(Comparator.comparing(ProductVariantOption::effectivePrice)));
+        return options;
+    }
+
+    private static String optionLabel(ProductVariant variant) {
+        for (String text : new String[] {variant.getStorage(), variant.getRam(), variant.getVariantName()}) {
+            if (text != null && !text.isBlank()) {
+                return text.trim();
+            }
+        }
+        return "";
     }
 
     @Override

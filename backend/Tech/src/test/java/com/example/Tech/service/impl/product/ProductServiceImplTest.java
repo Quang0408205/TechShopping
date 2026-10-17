@@ -20,6 +20,7 @@ import com.example.Tech.mapper.product.ProductMapper;
 import com.example.Tech.repository.product.BrandRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
+import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
 import com.example.Tech.service.inventory.StockAvailability;
@@ -67,6 +68,9 @@ class ProductServiceImplTest {
     private ProductImageRepository imageRepository;
 
     @Mock
+    private ProductVariantRepository variantRepository;
+
+    @Mock
     private PromotionProductRepository promotionProductRepository;
 
     @Mock
@@ -78,7 +82,7 @@ class ProductServiceImplTest {
     void setUp() {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
         productService = new ProductServiceImpl(productRepository, categoryRepository, brandRepository,
-                imageRepository, new ProductMapper(), new ProductImageMapper(),
+                imageRepository, variantRepository, new ProductMapper(), new ProductImageMapper(),
                 new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone(),
                 new ReadCache(null, null, new CacheProperties(false, null, null, null)));
     }

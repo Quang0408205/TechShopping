@@ -368,9 +368,190 @@ function isSoldOut(item) {
 }
 
 
+/*
+ * Phiên bản trên thẻ (API GET /products trả product.variants, rẻ nhất trước): gộp theo nhãn
+ * (dung lượng / RAM), mỗi nút đại diện phiên bản rẻ nhất còn hàng của nhãn đó. Chọn nút →
+ * đổi giá, nhãn giảm giá, trạng thái hết hàng và phiên bản sẽ thêm vào giỏ.
+ * Thiếu product.variants (gợi ý AI, API cũ) → không hiện nút; chỉ 1 phiên bản vẫn hiện 1 nút (đang chọn).
+ */
+
+const CARD_VARIANT_CHIPS_MAX = 4;
+
+function cardVariantChoices(product) {
+
+    const options = Array.isArray(product.variants) ? product.variants : [];
+
+    const groups = [];
+
+    options.forEach(function (option) {
+
+        const label = option.label || "";
+
+        const current = groups.find(function (group) { return group.label === label; });
+
+        if (!current) {
+            groups.push(option);
+            return;
+        }
+
+        /* cùng nhãn: ưu tiên bản còn hàng, rồi bản rẻ hơn */
+        const better = (isSoldOut(current) && !isSoldOut(option))
+            || (isSoldOut(current) === isSoldOut(option)
+                && Number(option.effectivePrice) < Number(current.effectivePrice));
+
+        if (better) {
+            groups[groups.indexOf(current)] = option;
+        }
+
+    });
+
+    return groups;
+
+}
+
+
+function cardVariantsHtml(choices, selectedId) {
+
+    if (choices.length < 1) {
+        return "";
+    }
+
+    const chips = choices.slice(0, CARD_VARIANT_CHIPS_MAX).map(function (choice) {
+
+        const selected = choice.id === selectedId;
+
+        return `
+            <button
+                type="button"
+                class="variant-chip${selected ? " is-selected" : ""}${isSoldOut(choice) ? " is-sold-out" : ""}"
+                data-variant-id="${escapeHtml(choice.id)}"
+                aria-pressed="${selected}"
+            >${escapeHtml(choice.label)}</button>
+        `;
+
+    }).join("");
+
+    const more = choices.length > CARD_VARIANT_CHIPS_MAX
+        ? `<a class="variant-chip variant-chip--more" href="#" data-more-variants>+${choices.length - CARD_VARIANT_CHIPS_MAX}</a>`
+        : "";
+
+    return `<div class="product-variants" role="group" aria-label="Chọn phiên bản">${chips}${more}</div>`;
+
+}
+
+
+/* Khối giá của thẻ; dùng cả lúc vẽ lần đầu lẫn khi đổi phiên bản */
+
+function cardPriceHtml(price, basePrice) {
+
+    if (!(price > 0)) {
+        return "Liên hệ";
+    }
+
+    return formatPrice(price)
+        + (basePrice > price ? `<span class="product-price-old">${formatPrice(basePrice)}</span>` : "");
+
+}
+
+
+function bindCardVariantChips(container) {
+
+    container.querySelectorAll(".product-card").forEach(function (card) {
+
+        const chips = card.querySelectorAll(".variant-chip[data-variant-id]");
+
+        if (chips.length === 0) {
+            return;
+        }
+
+        const choices = JSON.parse(card.dataset.variants || "[]");
+
+        chips.forEach(function (chip) {
+
+            chip.addEventListener("click", function () {
+
+                const choice = choices.find(function (item) { return String(item.id) === chip.dataset.variantId; });
+
+                if (!choice) {
+                    return;
+                }
+
+                chips.forEach(function (other) {
+                    const on = other === chip;
+                    other.classList.toggle("is-selected", on);
+                    other.setAttribute("aria-pressed", String(on));
+                });
+
+                const price = Number(choice.effectivePrice) || 0;
+                const listPrice = Number(choice.price) || 0;
+                const soldOut = price > 0 && isSoldOut(choice);
+                const hasDiscount = price > 0 && listPrice > price;
+
+                card.dataset.variantId = String(choice.id);
+
+                card.querySelector(".product-price").innerHTML = cardPriceHtml(price, listPrice);
+
+                const image = card.querySelector(".product-image");
+                const badge = image.querySelector(".product-badge");
+
+                if (hasDiscount) {
+                    const text = "-" + Math.round(100 - (price / listPrice) * 100) + "%";
+                    if (badge) {
+                        badge.textContent = text;
+                    } else {
+                        image.insertAdjacentHTML("afterbegin", `<span class="product-badge">${text}</span>`);
+                    }
+                } else if (badge) {
+                    badge.remove();
+                }
+
+                const stockBadge = image.querySelector(".product-stock-badge");
+
+                if (soldOut && !stockBadge) {
+                    image.insertAdjacentHTML("afterbegin", `<span class="product-stock-badge">Hết hàng</span>`);
+                } else if (!soldOut && stockBadge) {
+                    stockBadge.remove();
+                }
+
+                const button = card.querySelector(".add-cart");
+
+                button.dataset.price = String(price);
+                button.disabled = !(price > 0) || soldOut;
+                button.textContent = !(price > 0) ? "LIÊN HỆ ĐỂ ĐẶT HÀNG" : soldOut ? "TẠM HẾT HÀNG" : "THÊM VÀO GIỎ";
+
+            });
+
+        });
+
+        /* "+N": xem đủ phiên bản ở trang chi tiết */
+        const more = card.querySelector("[data-more-variants]");
+
+        if (more) {
+            more.setAttribute("href", card.querySelector(".product-image").getAttribute("href"));
+        }
+
+    });
+
+}
+
+
 function productCardHtml(product, categorySlug) {
 
-    const price = getDisplayPrice(product);
+    const choices = cardVariantChoices(product);
+
+    /* mặc định: phiên bản rẻ nhất còn hàng; thẻ giữ giá sản phẩm khi chưa có phiên bản nào */
+    const firstChoice = choices.find(function (choice) { return !isSoldOut(choice); }) || choices[0] || null;
+
+    const shown = choices.length >= 1 && firstChoice
+        ? Object.assign({}, product, {
+            effectivePrice: firstChoice.effectivePrice,
+            basePrice: firstChoice.price,
+            discountPrice: null,
+            availableQuantity: firstChoice.availableQuantity
+        })
+        : product;
+
+    const price = getDisplayPrice(shown);
 
     const fallbackImage = getFallbackImage(categorySlug);
 
@@ -380,24 +561,28 @@ function productCardHtml(product, categorySlug) {
 
     const hasPrice = price > 0;
 
-    const soldOut = hasPrice && isSoldOut(product);
+    const soldOut = hasPrice && isSoldOut(shown);
 
     const name = escapeHtml(product.name);
 
     const detailUrl = escapeHtml(getProductDetailUrl(product.id));
 
-    const basePrice = Number(product.basePrice) || 0;
+    const basePrice = Number(shown.basePrice) || 0;
+
+    const variantsAttrs = choices.length >= 1 && firstChoice
+        ? ` data-variant-id="${escapeHtml(firstChoice.id)}" data-variants="${escapeHtml(JSON.stringify(choices))}"`
+        : "";
 
     /* Có giảm giá thật (giá bán < basePrice): nhãn -x% + giá gốc gạch ngang; di chuột lên nhãn → tên chương trình */
     const hasDiscount = hasPrice && basePrice > price;
 
-    const promotionTitle = hasDiscount && product.activePromotionName
+    const promotionTitle = hasDiscount && product.activePromotionName && shown === product
         ? ` title="${escapeHtml("Khuyến mãi: " + product.activePromotionName)}"`
         : "";
 
 
     return `
-        <div class="product-card" data-product-id="${escapeHtml(product.id)}">
+        <div class="product-card" data-product-id="${escapeHtml(product.id)}"${variantsAttrs}>
 
             <a href="${detailUrl}" class="product-image">
                 ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
@@ -423,10 +608,9 @@ function productCardHtml(product, categorySlug) {
 
                 ${productCardRatingHtml(product)}
 
-                <p class="product-price">
-                    ${hasPrice ? formatPrice(price) : "Liên hệ"}
-                    ${hasDiscount ? `<span class="product-price-old">${formatPrice(basePrice)}</span>` : ""}
-                </p>
+                ${cardVariantsHtml(choices, firstChoice ? firstChoice.id : null)}
+
+                <p class="product-price">${cardPriceHtml(price, basePrice)}</p>
 
                 <button
                     type="button"
@@ -478,6 +662,8 @@ function renderProductGrid(container, products, categorySlugById) {
         return productCardHtml(product, slugs[product.categoryId]);
     }).join("");
 
+
+    bindCardVariantChips(container);
 
     setupAddToCart(container);
 

@@ -83,7 +83,8 @@ public class ProductMapper {
                 primaryImageUrl,
                 price.unitPrice(),
                 price.activePromotionName(),
-                availableQuantity
+                availableQuantity,
+                null
         );
     }
 }

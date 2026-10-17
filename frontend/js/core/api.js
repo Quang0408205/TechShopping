@@ -8,7 +8,16 @@
  *   { success, timestamp, data, error: { code, message, details } }
  */
 
-const API_BASE_URL = "http://localhost:8080/api/v1";
+/*
+ * Trên máy lập trình (localhost / 127.0.0.1) gọi thẳng backend :8080 (CORS dev cho mọi cổng localhost).
+ * Khi triển khai (tên miền khác, vd. ngrok) nginx chuyển tiếp /api sang backend nên dùng đường dẫn tương đối:
+ * cùng một nguồn, không cần CORS (docker/nginx/default.conf).
+ */
+
+const API_BASE_URL =
+    location.hostname === "localhost" || location.hostname === "127.0.0.1"
+        ? "http://localhost:8080/api/v1"
+        : "/api/v1";
 
 /*
  * Đường dẫn gốc của website (thư mục chứa index.html), tính từ vị trí file này

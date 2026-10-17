@@ -95,6 +95,13 @@ function initProductReviews(product, options) {
 
     listBox.addEventListener("click", function (event) {
 
+        const like = event.target.closest("[data-like]");
+
+        if (like) {
+            toggleLike(like);
+            return;
+        }
+
         const target = event.target.closest("[data-action]");
 
         if (target) {
@@ -207,7 +214,8 @@ function initProductReviews(product, options) {
 
         try {
 
-            const result = await apiRequest(base + "?" + params.toString());
+            /* có phiên đăng nhập → gửi token để biết đánh giá nào mình đã bấm "Hữu ích" */
+            const result = await apiRequest(base + "?" + params.toString(), isLoggedIn() ? { auth: true } : undefined);
 
             if (requestId !== listCounter) {
                 return;
@@ -255,22 +263,6 @@ function initProductReviews(product, options) {
             ? total.toLocaleString("vi-VN") + " đánh giá trên POY"
             : "Chưa có đánh giá nào trên POY";
 
-        const stars = summary ? summary.stars : [5, 4, 3, 2, 1].map(function (s) { return { stars: s, count: 0 }; });
-
-        document.getElementById("reviewBars").innerHTML = stars.map(function (row) {
-
-            const percent = total > 0 ? Math.round((row.count / total) * 100) : 0;
-
-            return `
-                <li>
-                    <span class="review-bar-label">${row.stars} ★</span>
-                    <span class="review-bar-track"><span class="review-bar-fill" style="width: ${percent}%"></span></span>
-                    <span class="review-bar-count">${row.count.toLocaleString("vi-VN")}</span>
-                </li>
-            `;
-
-        }).join("");
-
     }
 
 
@@ -283,8 +275,8 @@ function initProductReviews(product, options) {
         });
 
         const buttons = [{ key: "all", label: "Tất cả", count: summary ? summary.totalReviews : 0 }]
-            .concat([5, 4, 3, 2, 1].map(function (s) { return { key: String(s), label: s + " ★", count: counts[s] || 0 }; }))
-            .concat([{ key: "images", label: "Có ảnh", count: summary ? summary.withImages : 0 }]);
+            .concat([5, 4, 3, 2, 1].map(function (s) { return { key: String(s), label: s + " Sao", count: counts[s] || 0 }; }))
+            .concat([{ key: "images", label: "Có hình ảnh", count: summary ? summary.withImages : 0 }]);
 
         const active = filter.withImages ? "images" : (filter.rating ? String(filter.rating) : "all");
 
@@ -325,6 +317,65 @@ function initProductReviews(product, options) {
     }
 
 
+    /* "Hữu ích": PUT / DELETE /reviews/{id}/like; chưa đăng nhập → sang trang đăng nhập rồi quay lại */
+
+    async function toggleLike(button) {
+
+        if (!isLoggedIn()) {
+
+            redirectToLogin("review");
+
+            return;
+
+        }
+
+        const review = items.find(function (item) { return String(item.id) === button.dataset.like; });
+
+        if (!review || button.disabled) {
+            return;
+        }
+
+        button.disabled = true;
+
+        try {
+
+            const result = await apiRequest("/reviews/" + encodeURIComponent(review.id) + "/like", {
+                method: review.likedByMe ? "DELETE" : "PUT",
+                auth: true
+            });
+
+            review.likedByMe = result.likedByMe;
+
+            review.likeCount = result.likeCount;
+
+            button.classList.toggle("is-liked", result.likedByMe);
+
+            button.setAttribute("aria-pressed", String(result.likedByMe));
+
+            button.innerHTML = '<span aria-hidden="true">👍</span> Hữu ích' + (result.likeCount > 0 ? " (" + result.likeCount + ")" : "");
+
+        } catch (error) {
+
+            showToast(getErrorMessage(error), "error");
+
+        } finally {
+
+            button.disabled = false;
+
+        }
+
+    }
+
+
+    function avatarLetter(name) {
+
+        const first = Array.from(String(name || "").trim())[0];
+
+        return first ? first.toUpperCase() : "?";
+
+    }
+
+
     function reviewHtml(review) {
 
         const images = (review.imageUrls || []).filter(isSafeImageUrl);
@@ -335,6 +386,8 @@ function initProductReviews(product, options) {
 
         return `
             <article class="review-item${own ? " review-item--mine" : ""}" data-review-id="${id}">
+                <span class="review-avatar" aria-hidden="true">${escapeHtml(avatarLetter(review.authorName))}</span>
+                <div class="review-body">
                 <header class="review-item-head">
                     <strong class="review-author">${escapeHtml(review.authorName)}</strong>
                     ${own ? '<span class="review-badge review-badge--mine">Của bạn</span>' : ""}
@@ -344,9 +397,10 @@ function initProductReviews(product, options) {
                         <button type="button" class="review-own-btn review-delete" data-action="delete" data-id="${id}">Xoá</button>
                     </span>` : ""}
                 </header>
+                <span class="review-stars" aria-label="${review.rating} trên 5 sao">${starsHtml(review.rating)}</span>
                 <div class="review-item-meta">
-                    <span class="review-stars" aria-label="${review.rating} trên 5 sao">${starsHtml(review.rating)}</span>
                     <span>${escapeHtml(formatReviewDate(review.createdAt))}</span>
+                    ${review.variantLabel ? `<span class="review-variant">Phân loại hàng: ${escapeHtml(review.variantLabel)}</span>` : ""}
                     ${review.edited ? '<span class="review-edited">(đã chỉnh sửa)</span>' : ""}
                 </div>
                 <p class="review-comment">${escapeHtml(review.comment)}</p>
@@ -357,6 +411,10 @@ function initProductReviews(product, options) {
                         }).join("")}
                     </div>
                 ` : ""}
+                <button type="button" class="review-like${review.likedByMe ? " is-liked" : ""}" data-like="${id}" aria-pressed="${Boolean(review.likedByMe)}">
+                    <span aria-hidden="true">👍</span> Hữu ích${review.likeCount > 0 ? " (" + review.likeCount + ")" : ""}
+                </button>
+                </div>
             </article>
         `;
 

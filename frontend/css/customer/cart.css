@@ -355,3 +355,219 @@
     }
 
 }
+
+
+/* ================= POPUP THÔNG TIN NHẬN HÀNG (js/customer/order-info.js; dùng ở giỏ hàng + thanh toán) ================= */
+
+.order-info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+
+    width: 100%;
+    margin-bottom: var(--space-2);
+    padding: 12px 14px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--color-ink);
+
+    font: inherit;
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.order-info-row:hover,
+.order-info-row:focus-visible {
+    border-color: var(--color-ink);
+}
+
+.order-info-row > span:first-child {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    min-width: 0;
+
+    font-size: 13px;
+}
+
+.order-info-row strong {
+    font-size: 14px;
+}
+
+.order-info-row span span,
+.order-info-row .order-info-empty {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-info-row .order-info-empty {
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+.order-info-modal {
+    max-width: 560px;
+    max-height: calc(100vh - 40px);
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.order-info-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 16px 20px;
+
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.order-info-head h3 {
+    margin: 0;
+}
+
+.order-info-close {
+    border: 0;
+    background: none;
+
+    font-size: 26px;
+    line-height: 1;
+
+    cursor: pointer;
+}
+
+.order-info-body {
+    padding: 20px;
+
+    overflow-y: auto;
+}
+
+.order-info-body .order-info-loading {
+    margin: 0;
+}
+
+.order-info-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    margin-bottom: 16px;
+}
+
+.order-info-tabs button {
+    padding: 10px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background: #fff;
+    color: var(--color-ink);
+
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+}
+
+.order-info-tabs button.is-active {
+    border-color: var(--color-ink);
+    box-shadow: inset 0 0 0 1px var(--color-ink);
+}
+
+.order-info-tabs button:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+}
+
+.order-info-field {
+    display: block;
+
+    margin-bottom: 14px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.order-info-field b {
+    color: var(--color-danger, #d93025);
+}
+
+.order-info-field input,
+.order-info-field textarea {
+    display: block;
+
+    width: 100%;
+    margin-top: 6px;
+    padding: 12px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+
+    font: inherit;
+    font-weight: 400;
+}
+
+.order-info-count {
+    margin: 0 0 8px;
+
+    font-weight: 700;
+}
+
+.order-info-stores {
+    max-height: 240px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+
+    overflow-y: auto;
+}
+
+.order-info-store {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+
+    padding: 10px 12px;
+
+    border-bottom: 1px solid var(--gray-200);
+
+    cursor: pointer;
+}
+
+.order-info-store:last-child {
+    border-bottom: 0;
+}
+
+.order-info-store span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    font-size: 13px;
+}
+
+.order-info-store small {
+    color: var(--text-muted);
+}
+
+.order-info-store.is-disabled {
+    color: var(--text-muted);
+
+    cursor: not-allowed;
+}
+
+.order-info-submit {
+    width: 100%;
+    margin-top: 16px;
+}
+
+.order-info-card {
+    margin-bottom: var(--space-3);
+}

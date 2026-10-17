@@ -12,6 +12,7 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.review.ReviewImageRepository;
+import com.example.Tech.repository.review.ReviewLikeRepository;
 import com.example.Tech.repository.review.ReviewRepository;
 import com.example.Tech.service.upload.ImageStorageService;
 import com.example.Tech.service.user.CurrentUserLoader;
@@ -51,6 +52,9 @@ class ReviewServiceImplTest {
 
     @Mock
     private ReviewImageRepository reviewImageRepository;
+
+    @Mock
+    private ReviewLikeRepository reviewLikeRepository;
 
     @Mock
     private ProductRepository productRepository;

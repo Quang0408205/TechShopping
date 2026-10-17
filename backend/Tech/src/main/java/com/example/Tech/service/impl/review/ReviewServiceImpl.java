@@ -3,18 +3,22 @@ package com.example.Tech.service.impl.review;
 import com.example.Tech.dto.request.review.ReviewRequest;
 import com.example.Tech.dto.request.review.ReviewSearchRequest;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.review.ReviewLikeResponse;
 import com.example.Tech.dto.response.review.ReviewResponse;
 import com.example.Tech.dto.response.review.ReviewSummaryResponse;
 import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.product.Product;
+import com.example.Tech.entity.product.ProductVariant;
 import com.example.Tech.entity.review.Review;
 import com.example.Tech.entity.review.ReviewImage;
+import com.example.Tech.entity.review.ReviewLike;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.review.ReviewImageRepository;
+import com.example.Tech.repository.review.ReviewLikeRepository;
 import com.example.Tech.repository.review.ReviewRepository;
 import com.example.Tech.service.review.ReviewService;
 import com.example.Tech.service.upload.ImageStorageService;
@@ -31,12 +35,14 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -50,6 +56,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final ReviewImageRepository reviewImageRepository;
+    private final ReviewLikeRepository reviewLikeRepository;
     private final ProductRepository productRepository;
     private final OrderItemRepository orderItemRepository;
     private final CurrentUserLoader currentUserLoader;
@@ -61,7 +68,8 @@ public class ReviewServiceImpl implements ReviewService {
     private long minIntervalSeconds;
 
     @Override
-    public PageResponse<ReviewResponse> listForProduct(Long productId, ReviewSearchRequest filter, Pageable pageable) {
+    public PageResponse<ReviewResponse> listForProduct(Long productId, ReviewSearchRequest filter, Pageable pageable,
+                                                       Long viewerId) {
         Product product = findProduct(productId);
         Short rating = filter.rating() == null ? null : filter.rating().shortValue();
         Page<Review> page = reviewRepository.findVisible(product.getId(), rating,
@@ -69,8 +77,10 @@ public class ReviewServiceImpl implements ReviewService {
                 PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         Map<Long, List<String>> images = imageUrlsByReview(page.getContent());
         Set<Long> buyers = buyerIds(product.getId(), page.getContent());
+        LikeState likes = likeState(page.getContent(), viewerId);
         return PageResponse.from(page.map(review -> toResponse(review, product,
-                images.getOrDefault(review.getId(), List.of()), buyers.contains(review.getUser().getId()), false)));
+                images.getOrDefault(review.getId(), List.of()), buyers.contains(review.getUser().getId()), false,
+                likes)));
     }
 
     @Override
@@ -83,9 +93,10 @@ public class ReviewServiceImpl implements ReviewService {
         currentUserLoader.load(userId);
         List<Review> reviews = reviewRepository.findMine(userId, productId);
         Map<Long, List<String>> images = imageUrlsByReview(reviews);
+        LikeState likes = likeState(reviews, userId);
         return reviews.stream()
                 .map(review -> toResponse(review, review.getProduct(), images.getOrDefault(review.getId(), List.of()),
-                        isBuyer(review.getProduct().getId(), userId), true))
+                        isBuyer(review.getProduct().getId(), userId), true, likes))
                 .toList();
     }
 
@@ -115,6 +126,7 @@ public class ReviewServiceImpl implements ReviewService {
         review.setProduct(product);
         review.setRating(request.rating().shortValue());
         review.setComment(comment);
+        review.setVariantLabel(boughtVariantLabel(product.getId(), userId));
         reviewRepository.save(review);
         saveImages(review, imageUrls);
         reviewRepository.flush();
@@ -122,7 +134,8 @@ public class ReviewServiceImpl implements ReviewService {
 
         log.info("User id={} reviewed product id={} with {} stars ({} photos)",
                 userId, product.getId(), request.rating(), imageUrls.size());
-        return toResponse(review, product, imageUrls, isBuyer(product.getId(), userId), true);
+        return toResponse(review, product, imageUrls, isBuyer(product.getId(), userId), true,
+                likeState(List.of(review), userId));
     }
 
     @Override
@@ -150,7 +163,8 @@ public class ReviewServiceImpl implements ReviewService {
         oldImages.stream().map(ReviewImage::getImageUrl).filter(url -> !imageUrls.contains(url))
                 .forEach(imageStorageService::deleteAfterCommit);
         log.info("User id={} edited review id={}", userId, reviewId);
-        return toResponse(review, product, imageUrls, isBuyer(product.getId(), userId), true);
+        return toResponse(review, product, imageUrls, isBuyer(product.getId(), userId), true,
+                likeState(List.of(review), userId));
     }
 
     @Override
@@ -170,6 +184,69 @@ public class ReviewServiceImpl implements ReviewService {
 
         images.forEach(image -> imageStorageService.deleteAfterCommit(image.getImageUrl()));
         log.info("User id={} deleted review id={} of product id={}", userId, reviewId, product.getId());
+    }
+
+    @Override
+    @Transactional
+    public ReviewLikeResponse like(Long userId, Long reviewId) {
+        currentUserLoader.load(userId);
+        findVisible(reviewId);
+        ReviewLike.Key key = new ReviewLike.Key(reviewId, userId);
+        if (!reviewLikeRepository.existsById(key)) {
+            reviewLikeRepository.saveAndFlush(new ReviewLike(reviewId, userId));
+        }
+        return new ReviewLikeResponse(reviewLikeRepository.countByReviewId(reviewId), true);
+    }
+
+    @Override
+    @Transactional
+    public ReviewLikeResponse unlike(Long userId, Long reviewId) {
+        currentUserLoader.load(userId);
+        findVisible(reviewId);
+        ReviewLike.Key key = new ReviewLike.Key(reviewId, userId);
+        if (reviewLikeRepository.existsById(key)) {
+            reviewLikeRepository.deleteById(key);
+            reviewLikeRepository.flush();
+        }
+        return new ReviewLikeResponse(reviewLikeRepository.countByReviewId(reviewId), false);
+    }
+
+    /** A hidden or missing review behaves as missing: nobody can like it. */
+    private Review findVisible(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .filter(review -> !Boolean.TRUE.equals(review.getHidden()))
+                .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+    }
+
+    /** "Phân loại hàng" = storage, RAM, colour of the variant in the author's latest delivered order, else its name. */
+    private String boughtVariantLabel(Long productId, Long userId) {
+        List<ProductVariant> bought = orderItemRepository.findVariantsOfProductByUser(productId, userId,
+                OrderStatus.DELIVERED, PageRequest.of(0, 1));
+        if (bought.isEmpty()) {
+            return null;
+        }
+        ProductVariant variant = bought.get(0);
+        String parts = Stream.of(variant.getStorage(), variant.getRam(), variant.getColor())
+                .filter(part -> part != null && !part.isBlank()).map(String::trim)
+                .collect(Collectors.joining(", "));
+        return parts.isEmpty() ? variant.getVariantName() : parts;
+    }
+
+    /** Like counts of these reviews and which of them the viewer (nullable) has liked, two queries. */
+    private LikeState likeState(Collection<Review> reviews, Long viewerId) {
+        if (reviews.isEmpty()) {
+            return new LikeState(Map.of(), Set.of());
+        }
+        List<Long> ids = reviews.stream().map(Review::getId).toList();
+        Map<Long, Long> counts = new HashMap<>();
+        for (Object[] row : reviewLikeRepository.countByReviewIds(ids)) {
+            counts.put((Long) row[0], (Long) row[1]);
+        }
+        Set<Long> liked = viewerId == null ? Set.of() : new HashSet<>(reviewLikeRepository.findLikedReviewIds(viewerId, ids));
+        return new LikeState(counts, liked);
+    }
+
+    private record LikeState(Map<Long, Long> counts, Set<Long> liked) {
     }
 
     private Product findProduct(Long productId) {
@@ -251,7 +328,7 @@ public class ReviewServiceImpl implements ReviewService {
 
     /** withHiddenReason: only for the author (GET /reviews/mine, their own writes); public lists never show it. */
     private static ReviewResponse toResponse(Review review, Product product, List<String> imageUrls,
-                                             boolean verifiedPurchase, boolean withHiddenReason) {
+                                             boolean verifiedPurchase, boolean withHiddenReason, LikeState likes) {
         User author = review.getUser();
         String authorName = author.getFullname() == null || author.getFullname().isBlank()
                 ? author.getUsername() : author.getFullname();
@@ -268,7 +345,10 @@ public class ReviewServiceImpl implements ReviewService {
                 review.getCreatedAt(),
                 review.getUpdatedAt(),
                 Boolean.TRUE.equals(review.getHidden()),
-                withHiddenReason ? review.getHiddenReason() : null);
+                withHiddenReason ? review.getHiddenReason() : null,
+                review.getVariantLabel(),
+                likes.counts().getOrDefault(review.getId(), 0L),
+                likes.liked().contains(review.getId()));
     }
 
     private static BusinessException validation(String field, String message) {

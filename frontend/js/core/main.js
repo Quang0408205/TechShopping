@@ -447,7 +447,12 @@ function setupAddToCart(root) {
 
                 const list = Array.isArray(variants) ? variants : [];
 
-                const variant = list.find(function (item) { return !isSoldOut(item); }) || list[0] || null;
+                /* phiên bản chọn trên thẻ (nút phiên bản) nếu có, không thì bản đầu tiên còn hàng */
+                const chosen = card.dataset.variantId
+                    ? list.find(function (item) { return String(item.id) === card.dataset.variantId; })
+                    : null;
+
+                const variant = chosen || list.find(function (item) { return !isSoldOut(item); }) || list[0] || null;
 
                 if (variant && isSoldOut(variant)) {
 

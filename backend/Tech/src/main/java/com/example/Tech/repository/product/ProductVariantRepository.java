@@ -26,6 +26,9 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @EntityGraph(attributePaths = "product")
     List<ProductVariant> findAllByProductIdOrderByIdAsc(Long productId);
 
+    /** Product cards: the variants of a page of products, one query. */
+    List<ProductVariant> findAllByProductIdInOrderByIdAsc(java.util.Collection<Long> productIds);
+
     boolean existsBySkuVariant(String skuVariant);
 
     /** Excel imports: variants are matched by their SKU, with the product loaded. */
