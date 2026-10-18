@@ -62,11 +62,15 @@ public class CustomerProfile {
     @Column(name = "default_shipping_address", columnDefinition = "text")
     private String defaultShippingAddress;
 
-    @Column(name = "loyalty_points")
+    @Column(name = "loyalty_points", nullable = false)
     private Integer loyaltyPoints = 0;
 
-    @Column(name = "total_spent", precision = 15, scale = 2)
+    @Column(name = "total_spent", precision = 15, scale = 2, nullable = false)
     private BigDecimal totalSpent = BigDecimal.ZERO;
+
+    /** Plan v5 GĐ6: highest tier reached (never goes down); code of loyalty_tiers. */
+    @Column(name = "tier_code", length = 20, nullable = false)
+    private String tierCode = "MEMBER";
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

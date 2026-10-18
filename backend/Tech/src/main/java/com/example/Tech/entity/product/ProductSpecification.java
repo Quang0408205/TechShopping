@@ -29,6 +29,10 @@ public class ProductSpecification {
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
+    /** null = specification of the whole product; set = of that variant only (overrides the common line of the same name). */
+    @Column(name = "variant_id")
+    private Long variantId;
+
     @Column(name = "spec_name", length = 100, nullable = false)
     private String specName;
 

@@ -1,32 +1,134 @@
-/* ================= DANH SÁCH ĐƠN HÀNG ================= */
+/* ================= LỊCH SỬ MUA HÀNG (làm mới ở kế hoạch v5 GĐ6) ================= */
+
+.orders-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.orders-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    overflow-x: auto;
+    border: 1px solid #ece7de;
+    border-radius: 999px;
+    background: #fff;
+    scrollbar-width: none;
+}
+
+.orders-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.orders-tabs button {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #3a3a40;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.orders-tabs button:hover {
+    background: var(--surface-warm, #f5f1ea);
+}
+
+.orders-tabs button.is-active {
+    background: #111;
+    color: #fff;
+}
+
+.orders-tabs [data-count]:empty {
+    display: none;
+}
+
+.orders-tabs [data-count] {
+    min-width: 20px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: #ece8e1;
+    color: #3a3a40;
+    font-size: 11px;
+    text-align: center;
+}
+
+.orders-tabs .is-active [data-count] {
+    background: #e8b27a;
+    color: #111;
+}
+
+.orders-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 240px;
+    max-width: 320px;
+    padding: 0 14px;
+    border: 1px solid #ddd6ca;
+    border-radius: 999px;
+    background: #fff;
+    color: #8b8b93;
+}
+
+.orders-search:focus-within {
+    border-color: #111;
+}
+
+.orders-search input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 0;
+    border: 0;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 14px;
+}
 
 .orders-list {
     display: flex;
     flex-direction: column;
-
-    gap: 20px;
+    gap: 14px;
 }
 
 .order-card {
     display: block;
-
-    padding: 25px 30px;
-
-    border: 1px solid #ddd;
-
-    transition: 0.3s;
+    overflow: hidden;
+    border: 1px solid #ece7de;
+    border-radius: var(--radius-lg, 12px);
+    background: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
 .order-card:hover {
-    border-color: #111;
+    border-color: #d8cfc0;
+    box-shadow: 0 14px 30px -24px rgba(17, 19, 24, 0.55);
+}
+
+.order-card--cancelled {
+    background: #fcfbf9;
 }
 
 .order-card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    margin-bottom: 18px;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #f0ebe3;
+    color: inherit;
 }
 
 .order-card-header strong {
@@ -35,29 +137,67 @@
 
 .order-card-date {
     display: block;
-
-    margin-top: 4px;
-
+    margin-top: 2px;
     color: #888;
-    font-size: 11px;
+    font-size: 12px;
 }
 
-.order-card-items {
+.order-card-lines {
     display: flex;
-    align-items: center;
-
+    flex-direction: column;
     gap: 10px;
-
-    margin-bottom: 18px;
+    padding: 14px 20px;
+    color: inherit;
 }
 
-.order-card-items img {
-    width: 48px;
-    height: 48px;
+.order-card-line {
+    display: grid;
+    grid-template-columns: 56px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+}
 
-    object-fit: cover;
+.order-card-line img {
+    width: 56px;
+    height: 56px;
+    border: 1px solid #f0ebe3;
+    border-radius: 8px;
+    background: #f7f5f1;
+    object-fit: contain;
+}
 
-    background: #f4f4f4;
+.order-card-line-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.order-card-line-text strong {
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.order-card-line-text small {
+    color: #777;
+    font-size: 12px;
+}
+
+.order-card-line-price {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.order-card--cancelled .order-card-line img {
+    opacity: 0.6;
+}
+
+.order-card-more {
+    color: #777;
+    font-size: 12px;
 }
 
 .order-card-count {
@@ -67,17 +207,99 @@
 
 .order-card-footer {
     display: flex;
-    justify-content: space-between;
-
-    padding-top: 15px;
-
-    border-top: 1px solid #eee;
-
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+    padding: 14px 20px;
+    border-top: 1px solid #f0ebe3;
+    background: #fbfaf7;
     font-size: 13px;
 }
 
-.order-card-footer strong {
-    font-size: 16px;
+.order-card-total {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+}
+
+.order-card-points {
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f6ead9;
+    color: #8a5a22;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.order-card-sum {
+    margin-left: auto;
+    color: #555;
+}
+
+.order-card-sum strong {
+    margin-left: 6px;
+    color: #111;
+    font-size: 17px;
+}
+
+.order-card-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.order-card-actions .btn {
+    min-height: 0;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.order-card-actions .btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+@media (max-width: 640px) {
+
+    .orders-search {
+        max-width: none;
+    }
+
+    .order-card-header,
+    .order-card-lines,
+    .order-card-footer {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .order-card-line {
+        grid-template-columns: 48px minmax(0, 1fr);
+    }
+
+    .order-card-line img {
+        width: 48px;
+        height: 48px;
+    }
+
+    .order-card-line-price {
+        grid-column: 2;
+    }
+
+    .order-card-sum {
+        margin-left: 0;
+    }
+
+    .order-card-actions {
+        width: 100%;
+    }
+
+    .order-card-actions .btn {
+        flex: 1;
+        text-align: center;
+    }
+
 }
 
 
@@ -537,13 +759,6 @@
     color: var(--gray-700);
 }
 
-.order-card-footer {
-    align-items: center;
-}
-
-.order-card-footer .payment-badge {
-    margin-left: 10px;
-}
 
 .order-payment-status {
     margin-top: 8px;
@@ -732,5 +947,27 @@
 
 .installment-period--overdue td {
     color: var(--color-danger);
+    font-weight: 600;
+}
+
+
+/* Kế hoạch v5 GĐ4: dòng voucher trong tổng tiền của đơn */
+.checkout-total-voucher[hidden] {
+    display: none;
+}
+
+.checkout-total-voucher strong {
+    color: var(--color-success);
+}
+
+
+/* Kế hoạch v5 GĐ6: điểm được cộng của đơn đã giao */
+.order-points-earned {
+    margin: 12px 0 0;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f6ead9;
+    color: #8a5a22;
+    font-size: 13px;
     font-weight: 600;
 }

@@ -24,6 +24,6 @@ public interface ProductSpecificationRepository extends JpaRepository<ProductSpe
 
     /** Specification names used most often in a category (template for the admin product form). */
     @Query("select s.specName from ProductSpecification s where s.product.category.id = :categoryId "
-            + "and s.product.deletedAt is null group by s.specName order by count(s) desc, s.specName")
+            + "and s.product.deletedAt is null and s.variantId is null group by s.specName order by count(s) desc, s.specName")
     List<String> findCommonNamesByCategoryId(@Param("categoryId") Integer categoryId, Pageable pageable);
 }

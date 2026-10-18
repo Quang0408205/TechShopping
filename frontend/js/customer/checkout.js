@@ -23,6 +23,9 @@
  *   người nhận / hình thức nhận (+ địa chỉ hoặc cửa hàng) / ghi chú / phương thức
  *   thanh toán (+ hồ sơ trả góp); server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang
  *   trang chi tiết đơn.
+ * - Kế hoạch v5 GĐ5: "Thẻ quốc tế" (Stripe, chế độ Test) chỉ hiện khi GET /payments/card-options
+ *   bật; đơn vượt hạn mức thẻ thì khoá. Đặt xong (chuyển khoản / thẻ) → trang thanh toán; thẻ thì
+ *   trang đó tự mở Stripe. Có đơn còn chờ tiền (khách bấm Back) → khung nhắc phía trên.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
@@ -81,6 +84,8 @@ document.addEventListener(
 
         const PICKUP_HINT = "Miễn phí vận chuyển. Chọn cửa hàng gần bạn để đến nhận.";
 
+        const area = setupVnAddress(document.getElementById("shippingProvince"), document.getElementById("shippingWard"));
+
 
         const FIELD_MESSAGES = {
             recipientName:
@@ -89,6 +94,12 @@ document.addEventListener(
                 "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).",
             shippingAddress:
                 "Vui lòng nhập địa chỉ nhận hàng đầy đủ.",
+            shippingProvince:
+                "Vui lòng chọn tỉnh / thành phố trong danh sách.",
+            shippingWard:
+                "Vui lòng chọn phường / xã trong danh sách.",
+            shippingStreet:
+                "Vui lòng nhập số nhà, tên đường.",
             pickupStoreId:
                 "Vui lòng chọn cửa hàng đang mở để nhận hàng.",
             "installment.months":
@@ -103,6 +114,27 @@ document.addEventListener(
         const NO_STORE_HOLDS_CART_MESSAGE =
             "Hiện không chi nhánh nào có đủ hàng cho cả giỏ của bạn. Hãy giảm số lượng hoặc đặt riêng từng sản phẩm.";
 
+
+        const cardRadio = form.querySelector('input[name="paymentMethod"][value="CARD"]');
+
+        const cardMethod = document.getElementById("cardMethod");
+
+        const cardHint = document.getElementById("cardMethodHint");
+
+        const CARD_HINT = "Thanh toán ngay trên trang bảo mật của Stripe.";
+
+
+        /* Khách bấm Back từ trang thanh toán: nhắc đơn đang chờ tiền; huỷ xong → về giỏ (đã có lại sản phẩm) */
+        showAwaitingPaymentNotice(document.getElementById("awaitingPayment"), function () {
+            window.location.href = "cart.html";
+        });
+
+        /* Kế hoạch v5 GĐ6: điểm tích luỹ của khách; lỗi → null (ẩn ô dùng điểm) */
+        const loyaltyPromise = apiRequest("/loyalty/me", { auth: true }).catch(function () { return null; });
+
+        /* Thẻ quốc tế: lỗi → null (ẩn lựa chọn) */
+        const cardOptionsPromise = apiRequest("/payments/card-options", { auth: true })
+            .catch(function () { return null; });
 
         /* Tải song song với giỏ hàng; lỗi → null (khoá lựa chọn trả góp) */
         const optionsPromise = apiRequest("/payments/installment-options", { auth: true })
@@ -153,6 +185,18 @@ document.addEventListener(
 
         const installmentOptions = await optionsPromise;
 
+        const cardOptions = await cardOptionsPromise;
+
+        const loyalty = await loyaltyPromise;
+
+        /* số điểm khách đang có (giảm khi server báo số dư mới) */
+        let pointsBalance = loyalty ? Number(loyalty.points) || 0 : 0;
+
+        /* số điểm sẽ dùng cho đơn này (0 khi không tick) */
+        let pointsToUse = 0;
+
+        document.getElementById("usePoints").addEventListener("change", renderTotals);
+
         let pickupStores = await storesPromise;
 
         let storeStock = await stockPromise;
@@ -162,10 +206,15 @@ document.addEventListener(
         /* Giỏ trên server gần nhất (phí ship trong đó luôn là phí giao tận nhà) */
         let lastCart = summary;
 
+        /* Voucher đang áp (VoucherOptionResponse của POST /vouchers/apply) hoặc null */
+        let appliedVoucher = null;
+
 
         content.hidden = false;
 
         fillInstallmentChoices();
+
+        setupCardMethod();
 
         fillPickupStores();
 
@@ -220,6 +269,25 @@ document.addEventListener(
         form.addEventListener("submit", handleSubmit);
 
 
+        document.getElementById("voucherApplyBtn").addEventListener("click", function () {
+            applyVoucherCode(document.getElementById("voucherCodeInput").value, false);
+        });
+
+        /* Enter trong ô mã: áp dụng, không gửi form đặt hàng */
+        document.getElementById("voucherCodeInput").addEventListener("keydown", function (event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                applyVoucherCode(document.getElementById("voucherCodeInput").value, false);
+            }
+        });
+
+        document.getElementById("voucherRemoveBtn").addEventListener("click", removeVoucher);
+
+        document.getElementById("voucherPickBtn").addEventListener("click", openVoucherModal);
+
+        loadVoucherCount();
+
+
         /*
          * Thông tin nhận hàng đã nhập ở popup trong giỏ hàng (order-info.js): đổ vào các ô của form
          * (vẫn là nguồn khi đặt hàng) rồi chỉ hiện bản tóm tắt + nút Sửa. Cửa hàng đã lưu mà nay đóng /
@@ -252,7 +320,9 @@ document.addEventListener(
 
             document.getElementById("recipientPhone").value = stored.recipientPhone;
 
-            document.getElementById("shippingAddress").value = stored.shippingAddress || "";
+            document.getElementById("shippingStreet").value = stored.shippingStreet || "";
+
+            area.setValue(stored.shippingProvince, stored.shippingWard);
 
             form.querySelector('input[name="deliveryType"][value="' + stored.deliveryType + '"]').checked = true;
 
@@ -316,12 +386,11 @@ document.addEventListener(
 
                 const profile = results[1].value;
 
-                const address = profile.defaultShippingAddress ||
-                    [profile.address, profile.ward, profile.district, profile.city]
-                        .filter(function (part) { return part && String(part).trim(); })
-                        .join(", ");
+                fillIfEmpty("shippingStreet", profile.address);
 
-                fillIfEmpty("shippingAddress", address);
+                if (!document.getElementById("shippingProvince").value.trim()) {
+                    area.setValue(profile.city, profile.ward);
+                }
 
             }
 
@@ -353,6 +422,7 @@ document.addEventListener(
                         <div class="checkout-item-info">
                             <p class="checkout-item-name">${escapeHtml(item.name)}</p>
                             <p class="checkout-item-variant">${escapeHtml(item.variantLabel ? item.variantLabel + " × " : "× ")}${item.quantity}</p>
+                            ${item.comboDiscount > 0 ? `<span class="combo-tag" title="${escapeHtml(item.comboNames.join(", "))}">Combo −${escapeHtml(formatPrice(item.comboDiscount))}</span>` : ""}
                         </div>
                         <span class="checkout-item-price">${formatPrice(item.lineTotal)}</span>
                     </div>
@@ -362,6 +432,10 @@ document.addEventListener(
 
 
             document.getElementById("checkoutSubtotal").textContent = formatPrice(cartSummary.subtotal);
+
+            document.getElementById("checkoutComboRow").hidden = !(cartSummary.comboDiscount > 0);
+
+            document.getElementById("checkoutComboDiscount").textContent = "−" + formatPrice(cartSummary.comboDiscount);
 
             renderTotals();
 
@@ -374,14 +448,316 @@ document.addEventListener(
 
             const shippingFee = selectedDeliveryType() === "PICKUP" ? 0 : lastCart.shippingFee;
 
-            currentTotal = lastCart.total - lastCart.shippingFee + shippingFee;
+            /* voucher chỉ giảm tiền hàng, không giảm phí ship (giống server) */
+            const voucherDiscount = appliedVoucher ? Number(appliedVoucher.discount) || 0 : 0;
+
+            /* điểm: tối đa 10% tiền hàng sau voucher (giống LoyaltyPolicy ở server) */
+            const goodsAfterVoucher = lastCart.total - lastCart.shippingFee - voucherDiscount;
+
+            const usable = Math.max(0, Math.min(pointsBalance, Math.floor(goodsAfterVoucher * 10 / 100 / 1000)));
+
+            renderPointsBox(usable);
+
+            pointsToUse = document.getElementById("usePoints").checked ? usable : 0;
+
+            currentTotal = lastCart.total - lastCart.shippingFee + shippingFee - voucherDiscount - pointsToUse * 1000;
+
+            document.getElementById("checkoutPointsRow").hidden = pointsToUse <= 0;
+
+            document.getElementById("checkoutPointsDiscount").textContent = "−" + formatPrice(pointsToUse * 1000);
 
             document.getElementById("checkoutShipping").textContent =
                 shippingFee === 0 ? "Miễn phí" : formatPrice(shippingFee);
 
+            document.getElementById("checkoutVoucherRow").hidden = voucherDiscount <= 0;
+
+            document.getElementById("checkoutVoucherCode").textContent = appliedVoucher ? appliedVoucher.code : "";
+
+            document.getElementById("checkoutVoucherDiscount").textContent = "−" + formatPrice(voucherDiscount);
+
             document.getElementById("checkoutTotal").textContent = formatPrice(currentTotal);
 
             applyInstallmentEligibility();
+
+            applyCardEligibility();
+
+        }
+
+
+        /* Ô "Dùng điểm": ẩn khi chưa có điểm; dùng được 0 điểm (đơn quá nhỏ) → khoá kèm lý do */
+        function renderPointsBox(usable) {
+
+            const box = document.getElementById("checkoutPoints");
+
+            const checkbox = document.getElementById("usePoints");
+
+            box.hidden = !loyalty || pointsBalance <= 0;
+
+            if (box.hidden) {
+                checkbox.checked = false;
+                return;
+            }
+
+            checkbox.disabled = usable <= 0;
+
+            if (usable <= 0) {
+                checkbox.checked = false;
+            }
+
+            box.classList.toggle("is-disabled", usable <= 0);
+
+            document.getElementById("pointsUsable").textContent = new Intl.NumberFormat("vi-VN").format(usable);
+
+            document.getElementById("pointsHint").textContent = usable > 0
+                ? "Bạn có " + new Intl.NumberFormat("vi-VN").format(pointsBalance) + " điểm · dùng tối đa 10% giá trị hàng"
+                : "Bạn có " + new Intl.NumberFormat("vi-VN").format(pointsBalance) + " điểm · đơn này chưa đủ giá trị để dùng điểm";
+
+            document.getElementById("pointsValue").textContent = usable > 0 ? "−" + formatPrice(usable * 1000) : "";
+
+        }
+
+
+        /* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+
+        function showVoucherMessage(text, kind) {
+
+            const box = document.getElementById("voucherMessage");
+
+            box.textContent = text || "";
+
+            box.className = "checkout-voucher-message" + (kind ? " is-" + kind : "");
+
+            box.hidden = !text;
+
+        }
+
+
+        function renderVoucherState() {
+
+            document.getElementById("voucherApplied").hidden = !appliedVoucher;
+
+            document.getElementById("voucherInputRow").hidden = Boolean(appliedVoucher);
+
+            if (appliedVoucher) {
+
+                document.getElementById("voucherAppliedCode").textContent = appliedVoucher.code;
+
+                document.getElementById("voucherAppliedName").textContent =
+                    appliedVoucher.name + " · −" + formatPrice(Number(appliedVoucher.discount));
+
+            }
+
+            renderTotals();
+
+        }
+
+
+        /* POST /vouchers/apply: server tính trên giỏ hiện tại; quiet = kiểm tra lại sau khi giỏ đổi */
+
+        async function applyVoucherCode(code, quiet) {
+
+            const value = String(code || "").trim().toUpperCase();
+
+            if (!value) {
+                showVoucherMessage("Vui lòng nhập mã voucher.", "error");
+                return false;
+            }
+
+            const applyButton = document.getElementById("voucherApplyBtn");
+
+            applyButton.disabled = true;
+
+            try {
+
+                const option = await apiRequest("/vouchers/apply", { method: "POST", body: { code: value }, auth: true });
+
+                appliedVoucher = option;
+
+                document.getElementById("voucherCodeInput").value = "";
+
+                showVoucherMessage(quiet ? "" : "Đã áp dụng voucher, giảm " + formatPrice(Number(option.discount)) + ".", quiet ? "" : "success");
+
+                renderVoucherState();
+
+                return true;
+
+            } catch (error) {
+
+                appliedVoucher = null;
+
+                renderVoucherState();
+
+                showVoucherMessage(error.code === "VOUCHER_NOT_FOUND" || error.code === "VOUCHER_NOT_APPLICABLE"
+                    ? error.message
+                    : getErrorMessage(error), "error");
+
+                return false;
+
+            } finally {
+
+                applyButton.disabled = false;
+
+            }
+
+        }
+
+
+        function removeVoucher() {
+
+            appliedVoucher = null;
+
+            showVoucherMessage("", "");
+
+            renderVoucherState();
+
+        }
+
+
+        function voucherConditionText(option) {
+
+            const parts = ["Giảm " + Number(option.discountPercent).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + "%"];
+
+            if (option.maxDiscount) {
+                parts.push("tối đa " + formatPrice(Number(option.maxDiscount)));
+            }
+
+            if (Number(option.minOrderAmount) > 0) {
+                parts.push("đơn từ " + formatPrice(Number(option.minOrderAmount)));
+            }
+
+            return parts.join(" · ");
+
+        }
+
+
+        async function loadVoucherCount() {
+
+            try {
+
+                const list = await apiRequest("/vouchers/available", { auth: true }) || [];
+
+                const usable = list.filter(function (option) { return option.applicable; }).length;
+
+                document.getElementById("voucherPickCount").textContent = list.length
+                    ? usable + "/" + list.length + " mã dùng được ›"
+                    : "Chưa có mã nào ›";
+
+            } catch (error) {
+
+                document.getElementById("voucherPickCount").textContent = "›";
+
+            }
+
+        }
+
+
+        /* Danh sách voucher đang chạy: dùng được → nút "Dùng"; chưa đủ điều kiện → mờ + lý do (vd "Mua thêm …") */
+
+        async function openVoucherModal() {
+
+            closeModal();
+
+            const overlay = document.createElement("div");
+
+            overlay.className = "modal-overlay";
+
+            overlay.innerHTML = `
+                <div class="modal-box voucher-modal" role="dialog" aria-modal="true" aria-labelledby="voucherModalTitle">
+                    <div class="order-info-head">
+                        <h3 id="voucherModalTitle">Chọn voucher</h3>
+                        <button type="button" class="order-info-close" data-action="close" aria-label="Đóng">×</button>
+                    </div>
+                    <div class="voucher-modal-body" id="voucherModalBody">
+                        <p class="order-info-loading">Đang tải...</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(overlay);
+
+            modalOverlayElement = overlay;
+
+            requestAnimationFrame(function () {
+                overlay.classList.add("show");
+            });
+
+            overlay.addEventListener("click", function (event) {
+
+                if (event.target === overlay || event.target.closest('[data-action="close"]')) {
+                    closeModal();
+                    return;
+                }
+
+                const use = event.target.closest("[data-use-voucher]");
+
+                if (use) {
+
+                    closeModal();
+
+                    applyVoucherCode(use.dataset.useVoucher, false);
+
+                }
+
+            });
+
+            const body = overlay.querySelector("#voucherModalBody");
+
+            let list;
+
+            try {
+
+                list = await apiRequest("/vouchers/available", { auth: true }) || [];
+
+            } catch (error) {
+
+                body.innerHTML = `<p class="voucher-modal-empty">${escapeHtml(getErrorMessage(error))}</p>`;
+
+                return;
+
+            }
+
+            if (modalOverlayElement !== overlay) {
+                return;
+            }
+
+            if (list.length === 0) {
+
+                body.innerHTML = `<p class="voucher-modal-empty">Hiện chưa có voucher nào đang áp dụng.</p>`;
+
+                return;
+
+            }
+
+            body.innerHTML = list.map(function (option) {
+
+                const scope = option.allCategories ? "Mọi sản phẩm" : "Áp dụng: " + (option.categoryNames || []).join(", ");
+
+                const current = appliedVoucher && appliedVoucher.code === option.code;
+
+                const action = option.applicable
+                    ? `<button type="button" class="btn btn-dark" data-use-voucher="${escapeHtml(option.code)}" ${current ? "disabled" : ""}>${current ? "ĐANG DÙNG" : "DÙNG"}</button>`
+                    : "";
+
+                return `
+                    <div class="voucher-card${option.applicable ? "" : " is-disabled"}">
+                        <div class="voucher-card-badge">
+                            <strong>${escapeHtml(Number(option.discountPercent).toLocaleString("vi-VN", { maximumFractionDigits: 2 }))}%</strong>
+                            <span>GIẢM</span>
+                        </div>
+                        <div class="voucher-card-info">
+                            <strong>${escapeHtml(option.name)}</strong>
+                            <span class="voucher-card-code">${escapeHtml(option.code)}</span>
+                            <span>${escapeHtml(voucherConditionText(option))}</span>
+                            <span class="voucher-card-muted">${escapeHtml(scope)} · HSD ${escapeHtml(new Date(option.endsAt).toLocaleDateString("vi-VN"))}</span>
+                            ${option.applicable
+                                ? `<span class="voucher-card-good">Giảm ${escapeHtml(formatPrice(Number(option.discount)))} cho giỏ này</span>`
+                                : `<span class="voucher-card-why">${escapeHtml(option.message || "Chưa dùng được")}</span>`}
+                        </div>
+                        ${action}
+                    </div>
+                `;
+
+            }).join("");
 
         }
 
@@ -686,6 +1062,46 @@ document.addEventListener(
         }
 
 
+        /* Hiện "Thẻ quốc tế" khi server bật Stripe; chế độ Test → nhãn + gợi ý thẻ thử */
+        function setupCardMethod() {
+
+            if (!cardOptions || !cardOptions.enabled) {
+                return;
+            }
+
+            cardMethod.hidden = false;
+
+            document.getElementById("cardTestBadge").hidden = !cardOptions.testMode;
+
+            applyCardEligibility();
+
+        }
+
+
+        /* Stripe nhận tối đa 99.999.999đ / lần: vượt thì khoá lựa chọn (server cũng kiểm tra) */
+        function applyCardEligibility() {
+
+            if (!cardOptions || !cardOptions.enabled) {
+                return;
+            }
+
+            const tooLarge = currentTotal > Number(cardOptions.maxAmount);
+
+            cardRadio.disabled = tooLarge;
+
+            cardMethod.classList.toggle("is-disabled", tooLarge);
+
+            cardHint.textContent = tooLarge
+                ? "Đơn trên " + formatPrice(Number(cardOptions.maxAmount)) + " không thanh toán bằng thẻ được."
+                : (cardOptions.testMode ? CARD_HINT + " Chế độ thử: dùng thẻ 4242 4242 4242 4242, không trừ tiền thật." : CARD_HINT);
+
+            if (tooLarge && cardRadio.checked) {
+                form.querySelector('input[name="paymentMethod"][value="COD"]').checked = true;
+            }
+
+        }
+
+
         function selectedPaymentMethod() {
 
             return form.querySelector('input[name="paymentMethod"]:checked').value;
@@ -702,11 +1118,15 @@ document.addEventListener(
             clearMessages();
 
 
+            const picked = area.getValue();
+
             const data = {
                 recipientName: valueOf("recipientName").trim(),
                 recipientPhone: valueOf("recipientPhone").trim(),
                 deliveryType: selectedDeliveryType(),
-                shippingAddress: valueOf("shippingAddress").trim(),
+                shippingProvince: picked.province,
+                shippingWard: picked.ward,
+                shippingStreet: valueOf("shippingStreet").trim(),
                 pickupStoreId: pickupSelect.value ? Number(pickupSelect.value) : null,
                 note: valueOf("orderNote").trim(),
                 paymentMethod: selectedPaymentMethod()
@@ -729,8 +1149,14 @@ document.addEventListener(
                     invalid.push("pickupStoreId");
                 }
 
-            } else if (!data.shippingAddress) {
-                invalid.push("shippingAddress");
+            } else {
+
+                ["shippingProvince", "shippingWard", "shippingStreet"].forEach(function (field) {
+                    if (!data[field]) {
+                        invalid.push(field);
+                    }
+                });
+
             }
 
 
@@ -810,10 +1236,14 @@ document.addEventListener(
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
                     deliveryType: data.deliveryType,
-                    shippingAddress: pickup ? null : data.shippingAddress,
+                    shippingAddress: pickup ? null : joinVnAddress(data.shippingStreet, data.shippingWard, data.shippingProvince),
+                    shippingProvince: pickup ? null : data.shippingProvince,
+                    shippingWard: pickup ? null : data.shippingWard,
                     pickupStoreId: pickup ? data.pickupStoreId : null,
                     note: data.note || null,
-                    paymentMethod: data.paymentMethod
+                    paymentMethod: data.paymentMethod,
+                    voucherCode: appliedVoucher ? appliedVoucher.code : null,
+                    pointsToUse: pointsToUse > 0 ? pointsToUse : null
                 };
 
                 if (installment) {
@@ -833,10 +1263,12 @@ document.addEventListener(
 
             setCartCount(0);
 
-            /* Chuyển khoản đang chờ tiền → trang thanh toán riêng; còn lại → chi tiết đơn */
-            window.location.href = order.payment && order.payment.bankTransfer
-                ? getPaymentUrl(order.id)
-                : getOrderDetailUrl(order.id, true);
+            /* Chuyển khoản / thẻ đang chờ tiền → trang thanh toán riêng (thẻ: trang đó tự mở Stripe); còn lại → chi tiết đơn */
+            window.location.href = order.payment && order.payment.card
+                ? getPaymentUrl(order.id) + "&start=card"
+                : order.payment && order.payment.bankTransfer
+                    ? getPaymentUrl(order.id)
+                    : getOrderDetailUrl(order.id, true);
 
 
             async function handlePlaceOrderError(error) {
@@ -858,6 +1290,46 @@ document.addEventListener(
                     Object.keys(error.details).forEach(function (field) {
                         showFieldError(field, FIELD_MESSAGES[field] || error.details[field]);
                     });
+
+                }
+
+                /* Điểm vừa đổi (đơn khác vừa dùng / tổng đổi): tải lại số dư, bỏ tick, báo lý do */
+                if (error.code === "VALIDATION_ERROR" && error.details && error.details.pointsToUse) {
+
+                    const fresh = await apiRequest("/loyalty/me", { auth: true }).catch(function () { return null; });
+
+                    if (fresh) {
+                        pointsBalance = Number(fresh.points) || 0;
+                    }
+
+                    document.getElementById("usePoints").checked = false;
+
+                    renderTotals();
+
+                    restoreButton();
+
+                    showFormError("Không dùng được điểm: " + error.details.pointsToUse + ". Vui lòng kiểm tra lại tổng tiền rồi đặt hàng.");
+
+                    return;
+
+                }
+
+                /* Voucher vừa hết lượt / hết hạn / không còn đủ điều kiện: bỏ voucher, báo lý do của server */
+                if (error.code === "VOUCHER_NOT_APPLICABLE" || error.code === "VOUCHER_NOT_FOUND") {
+
+                    appliedVoucher = null;
+
+                    renderVoucherState();
+
+                    showVoucherMessage(error.message, "error");
+
+                    restoreButton();
+
+                    showFormError("Voucher không còn dùng được: " + error.message + " Vui lòng kiểm tra lại tổng tiền rồi đặt hàng.");
+
+                    loadVoucherCount();
+
+                    return;
 
                 }
 
@@ -886,7 +1358,14 @@ document.addEventListener(
                         setCartCount(fresh.totalQuantity);
 
                         if (fresh.items.length > 0) {
+
                             renderSummary(fresh);
+
+                            /* giỏ đổi → số tiền giảm của voucher có thể đổi theo */
+                            if (appliedVoucher) {
+                                await applyVoucherCode(appliedVoucher.code, true);
+                            }
+
                         }
 
                         if (fresh.hasUnavailableItems) {

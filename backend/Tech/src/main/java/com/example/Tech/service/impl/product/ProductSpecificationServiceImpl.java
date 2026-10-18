@@ -6,11 +6,14 @@ import com.example.Tech.dto.request.product.ProductSpecificationUpdateRequest;
 import com.example.Tech.dto.response.product.ProductSpecificationResponse;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductSpecification;
+import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.product.ProductSpecificationMapper;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.product.ProductVariantRepository;
+import com.example.Tech.service.product.ProductFilterService;
 import com.example.Tech.repository.product.ProductSpecificationRepository;
 import com.example.Tech.service.product.ProductSpecificationService;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +35,11 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
 
     private final ProductSpecificationRepository specificationRepository;
     private final ProductRepository productRepository;
+    private final ProductVariantRepository variantRepository;
     private final CategoryRepository categoryRepository;
     private final ProductSpecificationMapper specificationMapper;
     private final ReadCache cache;
+    private final ProductFilterService filterService;
 
     @Override
     @Transactional(readOnly = true)
@@ -66,11 +71,18 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
     public ProductSpecificationResponse create(ProductSpecificationCreateRequest request) {
         Product product = findProduct(request.productId());
 
+        if (request.variantId() != null
+                && !variantRepository.existsByIdAndProductId(request.variantId(), product.getId())) {
+            throw new BusinessException(ErrorCode.INVALID_PRODUCT_VARIANT_DATA,
+                    "Phiên bản %d không thuộc sản phẩm %d".formatted(request.variantId(), product.getId()));
+        }
+
         ProductSpecification specification = specificationMapper.toEntity(request);
         specification.setProduct(product);
 
         ProductSpecification saved = specificationRepository.save(specification);
         cache.evict(ReadCache.SPECS, product.getId());
+        filterService.reindex(product.getId());
         log.info("Created product specification id={} for product id={}", saved.getId(), product.getId());
         return specificationMapper.toResponse(saved);
     }
@@ -83,6 +95,7 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
 
         ProductSpecification saved = specificationRepository.saveAndFlush(specification);
         cache.evict(ReadCache.SPECS, specification.getProduct().getId());
+        filterService.reindex(specification.getProduct().getId());
         log.info("Updated product specification id={}", id);
         return specificationMapper.toResponse(saved);
     }
@@ -93,6 +106,7 @@ public class ProductSpecificationServiceImpl implements ProductSpecificationServ
         ProductSpecification specification = findSpecification(id);
         specificationRepository.delete(specification);
         cache.evict(ReadCache.SPECS, specification.getProduct().getId());
+        filterService.reindex(specification.getProduct().getId());
         log.info("Deleted product specification id={}", id);
     }
 

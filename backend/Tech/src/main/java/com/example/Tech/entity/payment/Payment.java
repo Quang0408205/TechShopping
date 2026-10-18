@@ -79,6 +79,10 @@ public class Payment {
     @JoinColumn(name = "installment_payment_id", unique = true)
     private InstallmentPayment installmentPayment;
 
+    /** CARD: the latest Stripe Checkout session opened for this payment. */
+    @Column(name = "checkout_session_id", length = 100)
+    private String checkoutSessionId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

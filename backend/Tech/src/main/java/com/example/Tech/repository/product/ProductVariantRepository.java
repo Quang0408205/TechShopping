@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long>,
         JpaSpecificationExecutor<ProductVariant> {
 
+    boolean existsByIdAndProductId(Long id, Long productId);
+
+
     /** All-stores inventory page (InventoryFilterSpecifications.stockedVariants): product loaded with the rows. */
     @Override
     @EntityGraph(attributePaths = "product")

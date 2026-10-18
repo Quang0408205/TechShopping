@@ -54,7 +54,7 @@ Có bốn vai trò cố định. Tài khoản nội bộ có **đúng một** va
 | Doanh thu (Tổng quan, Báo cáo, Excel) | — | ❌ | Chi nhánh mình | Mọi chi nhánh |
 | Tuyển dụng | — | — | Chỉ nhân viên, vào chi nhánh mình | Nhân viên / quản lý, mọi chi nhánh; tạo ADMIN |
 | Đổi STAFF ↔ BRANCH_MANAGER, khoá tài khoản | — | — | — | ✅ |
-| Sản phẩm, danh mục, thương hiệu, khuyến mãi, chi nhánh, đánh giá, người dùng | — | — | — | ✅ |
+| Sản phẩm, danh mục, thương hiệu, khuyến mãi, voucher, combo, chi nhánh, đánh giá, người dùng | — | — | — | ✅ |
 
 Quy tắc chung:
 - Đổi vai trò, chuyển chi nhánh, cho nghỉ hoặc khoá tài khoản đều thu hồi phiên đăng nhập của người đó.
@@ -67,9 +67,12 @@ Quy tắc chung:
 
 ### Khu khách hàng
 - **Tài khoản:** đăng ký, đăng nhập, hồ sơ, ảnh đại diện, đổi mật khẩu, địa chỉ. Nhập sai mật khẩu nhiều lần thì bị khoá đăng nhập tạm thời.
-- **Sản phẩm:** trang chủ, danh sách có tab danh mục, lọc thương hiệu và khoảng giá, tìm kiếm, phân trang; thẻ sản phẩm hiện nút **phiên bản** (dung lượng / RAM) và đổi giá theo phiên bản; chi tiết có ảnh, thông số kỹ thuật, giá và tên khuyến mãi đang chạy.
+- **Sản phẩm:** trang chủ, danh sách có tab danh mục, lọc thương hiệu và khoảng giá, tìm kiếm, phân trang, bộ lọc thông số theo danh mục (RAM, bộ nhớ, chip, pin, CPU, card đồ hoạ, kích thước…) và theo nhu cầu (gaming, học tập – văn phòng, đồ hoạ…); thẻ sản phẩm hiện nút **phiên bản** (dung lượng / RAM) và đổi giá theo phiên bản; chi tiết có ảnh, thông số kỹ thuật, giá và tên khuyến mãi đang chạy; chọn màu thì ảnh chính và dãy ảnh nhỏ đổi sang bộ ảnh của màu đó.
 - **Giỏ hàng và đặt hàng:** giỏ lưu trên server theo tài khoản; thông tin nhận hàng nhập trong một cửa sổ ngay ở giỏ hàng (giao tận nhà hoặc nhận tại cửa hàng), sau đó sang bước thanh toán.
-- **Thanh toán:** COD, chuyển khoản qua mã QR VietQR có trang thanh toán riêng, trả góp 0% (3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ).
+- **Tài khoản:** thẻ thành viên theo màu hạng (điểm, tiến độ lên hạng), thống kê đơn và chi tiêu, tab "Hạng & điểm" (các hạng, cách tính điểm, lịch sử điểm), hồ sơ, địa chỉ, bảo mật; trên điện thoại menu là hàng tab cuộn ngang.
+- **Điểm tích luỹ và hạng thành viên:** 1 điểm cho mỗi 10.000đ tiền hàng thực trả khi đơn đã giao, nhân hệ số của hạng (Thành viên / Bạc từ 50 triệu / Vàng từ 150 triệu / Kim cương từ 300 triệu tổng chi tiêu; ADMIN chỉnh được); dùng ở trang đặt hàng 1 điểm = 1.000đ, tối đa 10% giá trị hàng; huỷ đơn hoàn điểm đã dùng, trả hàng hoàn điểm đã dùng và trừ điểm đã tích tương ứng; hạng đã đạt không bị hạ.
+- **Lịch sử mua hàng:** lọc theo trạng thái (kể cả đơn đã huỷ), tìm theo mã đơn hoặc tên sản phẩm; nút "Mua lại" đưa sản phẩm của đơn đã giao / đã huỷ vào giỏ với giá hiện tại và báo sản phẩm nào không còn bán.
+- **Thanh toán:** COD, chuyển khoản qua mã QR VietQR có trang thanh toán riêng (sao chép số tài khoản / số tiền / nội dung, logo ngân hàng, đếm ngược hạn), thẻ quốc tế qua Stripe Checkout ở chế độ thử, trả góp 0% (3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ). Đơn chuyển khoản / thẻ chưa trả có nút **Huỷ thanh toán**: đơn bị huỷ, voucher được trả lượt và đúng các sản phẩm của đơn quay lại giỏ. Khách bấm Back sau khi đặt đơn thì giỏ hàng và trang đặt hàng nhắc "Đơn DH… đang chờ thanh toán" kèm hai lựa chọn tiếp tục thanh toán hoặc huỷ đơn lấy lại giỏ.
 - **Đơn hàng:** theo dõi trạng thái, huỷ khi còn chờ xác nhận, xem lịch trả góp.
 - **Hậu mãi:** gửi yêu cầu bảo hành (còn hạn), bảo trì hoặc trả hàng hoàn tiền trong 7 ngày kèm ảnh, theo dõi trạng thái ở trang Yêu cầu dịch vụ.
 - **Đánh giá:** 1–5 sao, nhận xét, tối đa 5 ảnh, viết nhiều đánh giá cho một sản phẩm; hiện nhãn "Đã mua hàng", **phân loại hàng** đã mua, nút **Hữu ích**, lọc theo số sao hoặc có ảnh. Điểm sản phẩm chỉ tính từ đánh giá thật.
@@ -84,6 +87,9 @@ Quy tắc chung:
 - **Tồn kho:** tồn theo chi nhánh, cảnh báo sắp hết / hết hàng, nhập kho, lịch sử nhập xuất, nhập kho từ Excel.
 - **Sản phẩm, Danh mục, Thương hiệu (ADMIN):** thêm sửa, ảnh tải lên, phiên bản và thông số theo danh mục, nhập sản phẩm từ Excel (kiểm tra trước, có lỗi thì không ghi gì).
 - **Khuyến mãi (ADMIN):** chương trình theo thời gian, giảm theo phần trăm hoặc số tiền, mức riêng từng sản phẩm; giỏ hàng lấy giá thấp hơn.
+- **Voucher (ADMIN):** mã giảm % cho đơn hàng, có mức giảm tối đa, đơn tối thiểu, phạm vi toàn bộ hoặc theo danh mục, tổng lượt và lượt mỗi khách; ở trang thanh toán khách nhập mã hoặc chọn từ danh sách (mã chưa đủ điều kiện hiện lý do). Voucher tính trên giá đã khuyến mãi, không giảm phí ship; đơn huỷ trước khi giao được trả lại lượt, trả hàng hoàn đúng số tiền đã trả.
+- **Combo mua kèm (ADMIN):** một sản phẩm chính cùng các món mua kèm, mỗi món có mức giảm riêng (theo % hoặc số tiền), có thời hạn và bật / tạm dừng như voucher; trang Combo gợi ý món kèm từ quan hệ "thường mua cùng" của phần AI. Trang chi tiết sản phẩm có khối "Mua kèm tiết kiệm" (tick món, chọn phiên bản, giá sau giảm, thêm cả combo vào giỏ). Giỏ đủ món thì tự giảm, kể cả khi thêm riêng lẻ; bỏ sản phẩm chính thì món kèm về giá thường. Mỗi sản phẩm chính cho giảm một món kèm cùng loại; thứ tự giảm: khuyến mãi sản phẩm, combo, voucher, điểm; miễn phí giao hàng tính trên tiền hàng trước mọi khoản giảm. Giỏ, thanh toán và chi tiết đơn có nhãn combo + dòng "Giảm combo"; trả hàng hoàn đúng số tiền đã trả; báo cáo doanh thu có bảng theo combo.
+- **Hạng thành viên (ADMIN):** sửa ngưỡng tổng chi tiêu và hệ số nhân điểm của 4 hạng; hạ ngưỡng thì khách đủ điều kiện được nâng hạng ngay.
 - **Chi nhánh, Nhân viên:** quản lý chi nhánh, tuyển và gán nhân sự, lịch sử phân công.
 - **Người dùng và phân quyền (ADMIN):** tách tab Khách hàng / Nội bộ, lọc theo vai trò, trạng thái và ngày tạo, khoá / mở khoá, đổi vai trò, xoá mềm, tạo ADMIN.
 - **Báo cáo doanh thu:** theo chi nhánh, ngày, danh mục, phương thức thanh toán, nhân viên (kèm hoa hồng), top sản phẩm; xuất Excel; báo cáo hàng nhập kho.
@@ -99,6 +105,10 @@ Quy tắc chung:
 **Giá.** Giá hiển thị và giá tính tiền do server quyết định: giá thấp hơn giữa giá giảm thủ công và giá của chương trình khuyến mãi đang chạy. Phí vận chuyển tính theo giá trị đơn (miễn phí từ một mức nhất định hoặc khi nhận tại cửa hàng). Đơn đã đặt giữ nguyên giá.
 
 **Thanh toán chuyển khoản.** Tiền về **một** tài khoản của công ty; doanh thu theo chi nhánh vẫn lấy từ đơn đã giao. Trang thanh toán hiện mã QR VietQR với nội dung là mã đơn (`DH` + 8 số). Khi ngân hàng báo tiền về qua webhook (định dạng giống SePay, xác thực bằng khoá bí mật), hệ thống đọc mã đơn trong nội dung: khớp mã và đúng số tiền thì đơn tự thành "đã nhận tiền"; giao dịch lạ (sai số tiền, đơn đã huỷ, không có mã…) được giữ ở trang Đối soát để ADMIN gán hoặc bỏ qua. Ở chế độ trình diễn, hệ thống tự xác nhận sau khi QR hiện một phút và ADMIN có thể giả lập tiền về.
+
+**Ảnh đại diện.** Khi có khoá Cloudinary, ảnh đại diện được tải lên Cloudinary và được cắt vuông quanh khuôn mặt, nén ngay lúc tải; ảnh cũ bị xoá khi đổi. Không có khoá thì ảnh đại diện lưu trên máy chủ như ảnh sản phẩm, đánh giá và hậu mãi (các ảnh này luôn lưu trên máy chủ). Tài khoản chỉ được dùng ảnh do chính hệ thống lưu.
+
+**Thanh toán thẻ (Stripe, chế độ thử).** Stripe không mở tài khoản người bán ở Việt Nam và không chuyển tiền về ngân hàng Việt Nam, nên hình thức "Thẻ quốc tế" chỉ dùng khoá thử (thẻ 4242…, không trừ tiền thật); không có khoá thì hình thức này ẩn. Đặt đơn xong, backend tạo một phiên Stripe Checkout bằng VND với mã đơn và đưa khách sang trang của Stripe; bấm lại nút thanh toán dùng lại phiên còn mở thay vì tạo phiên mới. Stripe chỉ được đưa khách về trang thanh toán của chính cửa hàng (địa chỉ phải thuộc nguồn được phép). Khi khách quay về, backend hỏi Stripe phiên đã trả chưa nên vẫn chạy trên máy cá nhân không có webhook; khi web được chia sẻ qua tên miền công khai, webhook Stripe (kiểm chữ ký, chống gửi lại sau 5 phút) xác nhận cả khi khách đóng trình duyệt. Chỉ ghi nhận đã trả khi đúng số tiền và đơn vị tiền; đơn bị huỷ thì phiên Stripe bị đóng, nếu tiền vẫn về thì khoản thanh toán chuyển sang chờ hoàn tiền.
 
 **Trả góp.** Đơn từ 3.000.000đ chọn kỳ hạn 3 / 6 / 9 / 12 tháng, nhập CCCD và ngân hàng thẻ; nhân viên duyệt hoặc từ chối; lịch các kỳ tính từ ngày giao và được ghi nhận lần lượt.
 
@@ -118,8 +128,8 @@ Quy tắc chung:
 
 ## 5. Dữ liệu
 
-- **Cấu trúc:** `database/techshopping.sql` gồm khoảng 50 bảng chia theo nhóm: sản phẩm (danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thông số), người dùng và vai trò, giỏ hàng, đơn hàng (kèm lịch sử trạng thái), thanh toán và trả góp, chuyển khoản, chi nhánh / nhân viên / tồn kho, khuyến mãi, hậu mãi, đánh giá, liên hệ, hành vi và chatbot. Các thay đổi sau này nằm ở `database/migrations/` (thứ tự chạy ghi trong `database/migrations/README.md`).
-- **Catalogue thật:** sản phẩm crawl từ Thế Giới Di Động (`Raw_data/`), làm sạch rồi nạp vào database; mã sản phẩm dạng `TGDD-<id nguồn>`, nên nạp lại chỉ cập nhật. Các sản phẩm chỉ khác RAM / bộ nhớ được gộp thành một sản phẩm nhiều phiên bản.
+- **Cấu trúc:** `database/techshopping.sql` gồm khoảng 50 bảng chia theo nhóm: sản phẩm (danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thông số), người dùng và vai trò, giỏ hàng, đơn hàng (kèm lịch sử trạng thái), thanh toán và trả góp, chuyển khoản, chi nhánh / nhân viên / tồn kho, khuyến mãi, voucher, combo, hậu mãi, đánh giá, liên hệ, hành vi và chatbot. Các thay đổi sau này nằm ở `database/migrations/` (thứ tự chạy ghi trong `database/migrations/README.md`).
+- **Catalogue thật:** sản phẩm crawl từ Thế Giới Di Động (`Raw_data/`), làm sạch rồi nạp vào database; mã sản phẩm dạng `TGDD-<id nguồn>`, nên nạp lại chỉ cập nhật. Các sản phẩm chỉ khác RAM / bộ nhớ được gộp thành một sản phẩm nhiều phiên bản. Với các danh mục cào theo từng trang sản phẩm (màn hình, máy tính để bàn, máy tính bảng, đồng hồ), mỗi sản phẩm có đủ tổ hợp phiên bản × màu và ảnh riêng theo màu (`product_images.color`, rỗng = ảnh chung).
 - **Dữ liệu mẫu:** khi database Docker được tạo lần đầu, hệ thống nạp thêm khách hàng, đơn hàng và đánh giá mẫu có dấu `SAMPLE-DATA` để minh hoạ. Hành vi người dùng cho phần khuyến nghị có thể được **mô phỏng** (khách `sim.customer.NNN@example.test`, không đăng nhập được) để mô hình học được; dữ liệu này được ghi rõ trong báo cáo và xoá được.
 - **Ảnh tải lên** (sản phẩm, danh mục, đánh giá, ảnh đại diện, ảnh hậu mãi) lưu trên đĩa của backend; đường dẫn lưu trong database.
 
@@ -134,15 +144,15 @@ Quy tắc chung:
 | `AI_Service/` | Python/FastAPI: `app/recommender/` (khuyến nghị), `app/chatbot/` (chatbot), `knowledge/` (tài liệu RAG), `scripts/` (dữ liệu, chỉ mục, đánh giá) |
 | `database/` | `techshopping.sql` (cấu trúc), `migrations/` (cập nhật database cũ), `docker-init/` (tạo database test, dữ liệu mẫu) |
 | `docker/` | Cấu hình nginx (giao diện + chuyển tiếp API) |
-| `Raw_data/` | Crawl và làm sạch catalogue Thế Giới Di Động, nạp vào database |
+| `Raw_data/` | Crawl (cả phiên bản × màu + ảnh theo màu) và làm sạch catalogue Thế Giới Di Động, nạp vào database |
 | `docker-compose.yml` | Mô tả các dịch vụ và mạng nội bộ |
 
 ---
 
 ## 7. Kiểm thử
 
-- **Backend:** hơn 700 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
-- **Giao diện:** các kịch bản chạy trên trình duyệt Edge không giao diện (điều khiển qua Chrome DevTools Protocol) cho từng khu vực: trang khách, giỏ hàng và thanh toán, từng trang quản trị, bố cục ở nhiều kích thước màn hình, an toàn trước chèn mã độc.
+- **Backend:** hơn 760 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
+- **Giao diện:** các kịch bản chạy trên trình duyệt Edge không giao diện (điều khiển qua Chrome DevTools Protocol) cho từng khu vực: trang khách, giỏ hàng và thanh toán (kể cả thẻ quốc tế với một Stripe giả chạy cục bộ), từng trang quản trị, bố cục ở nhiều kích thước màn hình, an toàn trước chèn mã độc.
 - **Ma trận quyền:** một kịch bản gọi hàng chục hành động quan trọng bằng năm kiểu người gọi (chưa đăng nhập, khách, nhân viên, quản lý, ADMIN) và so với luật phân quyền.
 - **Chatbot và khuyến nghị:** có bộ câu hỏi đánh giá chatbot và đo Precision / Recall / NDCG cho khuyến nghị.
 

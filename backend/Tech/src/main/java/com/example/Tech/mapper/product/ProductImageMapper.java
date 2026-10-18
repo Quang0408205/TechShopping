@@ -18,6 +18,7 @@ public class ProductImageMapper {
         image.setImageUrl(request.imageUrl().trim());
         image.setAltText(request.altText());
         image.setDisplayOrder(request.displayOrder());
+        image.setColor(cleanColor(request.color()));
         return image;
     }
 
@@ -27,6 +28,7 @@ public class ProductImageMapper {
         image.setImageUrl(input.imageUrl().trim());
         image.setAltText(input.altText());
         image.setDisplayOrder(displayOrder);
+        image.setColor(cleanColor(input.color()));
         image.setPrimary(Boolean.TRUE.equals(input.isPrimary()));
         return image;
     }
@@ -35,6 +37,11 @@ public class ProductImageMapper {
         image.setImageUrl(request.imageUrl().trim());
         image.setAltText(request.altText());
         image.setDisplayOrder(request.displayOrder());
+        image.setColor(cleanColor(request.color()));
+    }
+
+    private static String cleanColor(String color) {
+        return color == null || color.isBlank() ? null : color.trim();
     }
 
     public ProductImageResponse toResponse(ProductImage image) {
@@ -45,6 +52,7 @@ public class ProductImageMapper {
                 image.getAltText(),
                 image.getDisplayOrder(),
                 image.getPrimary(),
+                image.getColor(),
                 image.getUploadedAt()
         );
     }

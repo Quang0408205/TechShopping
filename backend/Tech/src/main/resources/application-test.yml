@@ -29,6 +29,8 @@ app:
       # every test / E2E request comes from 127.0.0.1: only the per-account lock is exercised
       register-per-ip: 100000
       refresh-per-ip: 100000
+  search:
+    suggest-per-ip: 100000
   cache:
     # tests share one database and Redis: a cache would show one test the data of another
     enabled: ${CACHE_ENABLED:false}
@@ -38,3 +40,7 @@ app:
     webhook:
       secret: test-only-webhook-secret
       simulator-enabled: true
+    stripe:
+      # Test-only fake keys: backend tests mock Stripe; the E2E tests point api-base to a local fake Stripe
+      secret-key: sk_test_only_fake_key
+      webhook-secret: whsec_test_only_secret

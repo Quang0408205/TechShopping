@@ -20,6 +20,8 @@ import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.entity.recommendation.InteractionType;
 import com.example.Tech.service.cart.CartService;
+import com.example.Tech.service.combo.ComboCalculator;
+import com.example.Tech.service.combo.ComboPricingService;
 import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.inventory.StockAvailability.StoreStock;
 import com.example.Tech.service.recommendation.InteractionRecorder;
@@ -49,6 +51,7 @@ public class CartServiceImpl implements CartService {
     private final StockAvailability stockAvailability;
     private final StoreRepository storeRepository;
     private final InteractionRecorder interactionRecorder;
+    private final ComboPricingService comboPricingService;
 
     @Override
     public CartResponse getCart(Long userId) {
@@ -193,12 +196,18 @@ public class CartServiceImpl implements CartService {
         Map<Long, String> imageByProduct = loadImages(items);
         Map<Long, Integer> units = stockAvailability.byVariant(
                 items.stream().map(item -> item.getVariant().getId()).toList());
+        // combos are worked out on the lines that can be bought now, so an unavailable main product gives no discount
+        ComboCalculator.Result combos = comboPricingService.priceCart(items.stream()
+                .filter(item -> units.getOrDefault(item.getVariant().getId(), 0) >= item.getQuantity())
+                .toList());
         List<CartItemResponse> responses = items.stream()
                 .map(item -> cartMapper.toItemResponse(item,
                         imageByProduct.get(item.getVariant().getProduct().getId()),
-                        units.getOrDefault(item.getVariant().getId(), 0)))
+                        units.getOrDefault(item.getVariant().getId(), 0))
+                        .withCombo(combos.discountOf(item.getId()),
+                                List.copyOf(combos.lineCombos().getOrDefault(item.getId(), java.util.Set.of()))))
                 .toList();
-        return cartMapper.toResponse(cart, responses);
+        return cartMapper.toResponse(cart, responses, combos);
     }
 
     /** One image per product (the first of the best-first order), in one query. */

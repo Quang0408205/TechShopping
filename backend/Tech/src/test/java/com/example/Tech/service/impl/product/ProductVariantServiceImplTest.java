@@ -55,6 +55,9 @@ import static org.mockito.Mockito.when;
 class ProductVariantServiceImplTest {
 
     @Mock
+    private com.example.Tech.service.product.ProductFilterService filterService;
+
+    @Mock
     private ProductVariantRepository variantRepository;
 
     @Mock
@@ -93,7 +96,7 @@ class ProductVariantServiceImplTest {
                 attributeValueRepository, variantAttributeValueRepository, cartItemRepository, orderItemRepository,
                 inventoryRepository, stockMovementRepository, new ProductVariantMapper(new AttributeValueMapper()),
                 new PromotionPricingService(promotionProductRepository), stockAvailability, Clock.systemDefaultZone(),
-                new ReadCache(null, null, new CacheProperties(false, null, null, null)));
+                new ReadCache(null, null, new CacheProperties(false, null, null, null)), filterService);
     }
 
     @Test

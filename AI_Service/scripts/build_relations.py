@@ -22,6 +22,8 @@ RULES = {
     "Máy Tính Bảng": ("apple pencil", "bàn phím", "sạc", "cáp", "pin sạc dự phòng", "tai nghe", "airpods"),
     "Laptop": ("chuột", "bàn phím", "balo laptop", "túi chống sốc laptop", "tai nghe", "router", "sạc nhanh"),
     "Đồng Hồ Thông Minh": ("sạc", "tai nghe", "airpods", "pin sạc dự phòng"),
+    "Màn Hình Máy Tính": ("cáp", "chuột", "bàn phím", "tai nghe", "loa"),
+    "Máy Tính Để Bàn": ("chuột", "bàn phím", "tai nghe", "loa", "router"),
 }
 APPLE_ONLY = re.compile(r"iphone|lightning|apple pencil|magic keyboard|magic mouse|magsafe iphone", re.IGNORECASE)
 

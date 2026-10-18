@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.order;
 
+import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.payment.InstallmentBank;
@@ -24,10 +25,13 @@ import com.example.Tech.mapper.cart.CartMapper;
 import com.example.Tech.repository.cart.CartItemRepository;
 import com.example.Tech.repository.cart.CartRepository;
 import com.example.Tech.repository.order.OrderRepository;
+import com.example.Tech.repository.payment.PaymentRepository;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.repository.promotion.PromotionProductRepository;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
+import com.example.Tech.service.voucher.VoucherService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -56,6 +60,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -99,6 +104,15 @@ class OrderServiceImplTest {
     @Mock
     private InteractionRecorder interactionRecorder;
 
+    @Mock
+    private VoucherService voucherService;
+
+    @Mock
+    private PaymentRepository paymentRepository;
+
+    @Mock
+    private LoyaltyService loyaltyService;
+
     private OrderServiceImpl orderService;
 
     private User user;
@@ -109,10 +123,14 @@ class OrderServiceImplTest {
     @BeforeEach
     void setUp() {
         lenient().when(promotionProductRepository.findActiveForProducts(any(), any())).thenReturn(List.of());
+        lenient().when(loyaltyService.applyToOrder(any(), any(), any())).thenReturn(BigDecimal.ZERO);
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), CLOCK);
         orderService = new OrderServiceImpl(orderRepository, cartRepository, cartItemRepository, cartMapper,
                 currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, statusRecorder,
-                interactionRecorder, CLOCK);
+                interactionRecorder, voucherService, new com.example.Tech.service.combo.ComboPricingService(
+                        mock(com.example.Tech.repository.combo.ComboRepository.class), cartMapper, CLOCK),
+                loyaltyService, paymentRepository,
+                new BankTransferProperties(null, null, null, null, 24), CLOCK);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);
@@ -198,6 +216,30 @@ class OrderServiceImplTest {
         verify(orderStockLifecycle).assignBranch(order, DeliveryType.PICKUP, 5, Map.of(12L, 1), Map.of(12L, WHITE_LABEL));
         assertThat(order.getShippingCost()).isEqualByComparingTo("0");
         assertThat(order.getTotalAmount()).isEqualByComparingTo("2000000");
+    }
+
+    @Test
+    void placeOrder_keepsTheProvinceAndWard_forHomeDeliveryOnly() {
+        cartWith(line(white, 1));
+        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        orderService.placeOrder(USER_ID, new OrderCreateRequest("Nguyễn Văn An", "0901234567",
+                "12 Nguyễn Trãi, Phường Chợ Quán, Thành phố Hồ Chí Minh", null, PaymentMethod.COD, null,
+                DeliveryType.HOME_DELIVERY, null, " Thành phố Hồ Chí Minh ", " Phường Chợ Quán "));
+
+        Order home = savedOrder();
+        assertThat(home.getShippingProvince()).isEqualTo("Thành phố Hồ Chí Minh");
+        assertThat(home.getShippingWard()).isEqualTo("Phường Chợ Quán");
+
+        cartWith(line(white, 1));
+        orderService.placeOrder(USER_ID, new OrderCreateRequest("Nguyễn Văn An", "0901234567", null, null,
+                PaymentMethod.COD, null, DeliveryType.PICKUP, 5, "Thành phố Hồ Chí Minh", "Phường Chợ Quán"));
+
+        ArgumentCaptor<Order> orders = ArgumentCaptor.forClass(Order.class);
+        verify(orderRepository, times(2)).save(orders.capture());
+        Order pickup = orders.getAllValues().get(1);
+        assertThat(pickup.getShippingProvince()).isNull();
+        assertThat(pickup.getShippingWard()).isNull();
     }
 
     @Test

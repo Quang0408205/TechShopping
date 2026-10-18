@@ -2,12 +2,17 @@ package com.example.Tech.repository.order;
 
 import com.example.Tech.dto.request.order.AdminOrderSearchRequest;
 import com.example.Tech.entity.order.Order;
+import com.example.Tech.entity.order.OrderItem;
+import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.user.User;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -56,6 +61,36 @@ public final class OrderFilterSpecifications {
             }
             if (filter.storeId() != null) {
                 predicates.add(cb.equal(root.get("store").get("id"), filter.storeId()));
+            }
+            return cb.and(predicates.toArray(Predicate[]::new));
+        };
+    }
+
+    /**
+     * Plan v5 GĐ6, purchase history: the customer's own orders, optionally limited to some statuses and to a keyword
+     * (order code / id, or a product name in the order).
+     */
+    public static Specification<Order> history(Long userId, Collection<OrderStatus> statuses, String keyword) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("user").get("id"), userId));
+            if (statuses != null && !statuses.isEmpty()) {
+                predicates.add(root.get("status").in(statuses));
+            }
+            if (keyword != null && !keyword.isBlank()) {
+                String text = keyword.trim();
+                Subquery<Long> withProduct = query.subquery(Long.class);
+                Root<OrderItem> item = withProduct.from(OrderItem.class);
+                withProduct.select(item.get("id")).where(
+                        cb.equal(item.get("order"), root),
+                        cb.like(cb.lower(item.get("variant").get("product").get("name")),
+                                contains(text.toLowerCase(Locale.ROOT)), LIKE_ESCAPE));
+                List<Predicate> anyOf = new ArrayList<>(List.of(cb.exists(withProduct)));
+                Matcher code = ORDER_CODE.matcher(text);
+                if (code.matches()) {
+                    anyOf.add(cb.equal(root.get("id"), Long.valueOf(code.group(1))));
+                }
+                predicates.add(cb.or(anyOf.toArray(Predicate[]::new)));
             }
             return cb.and(predicates.toArray(Predicate[]::new));
         };

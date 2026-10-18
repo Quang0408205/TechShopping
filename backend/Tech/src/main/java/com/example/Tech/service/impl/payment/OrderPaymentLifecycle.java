@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.payment;
 
+import com.example.Tech.config.StripeProperties;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.order.PaymentMethod;
@@ -17,9 +18,12 @@ import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.payment.InstallmentPaymentRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
 import com.example.Tech.service.payment.InstallmentPolicy;
+import com.example.Tech.service.payment.StripeGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,9 +42,14 @@ public class OrderPaymentLifecycle {
     private final PaymentRepository paymentRepository;
     private final InstallmentOrderRepository installmentOrderRepository;
     private final InstallmentPaymentRepository installmentPaymentRepository;
+    private final StripeProperties stripe;
+    private final StripeGateway stripeGateway;
 
     /** Checks that installment data comes with INSTALLMENT and only with it; called before the cart is read. */
     public void validateSelection(PaymentMethod method, InstallmentRequest installment) {
+        if (method == PaymentMethod.CARD && !stripe.enabled()) {
+            throw new BusinessException(ErrorCode.CARD_PAYMENT_DISABLED);
+        }
         if (method != PaymentMethod.INSTALLMENT) {
             if (installment != null) {
                 throw BusinessException.invalidField("installment", "Chỉ gửi thông tin trả góp khi chọn thanh toán trả góp");
@@ -55,14 +64,20 @@ public class OrderPaymentLifecycle {
         }
     }
 
-    /** Installment needs an order total of at least {@link InstallmentPolicy#MIN_ORDER_TOTAL}. */
+    /**
+     * Installment needs an order total of at least {@link InstallmentPolicy#MIN_ORDER_TOTAL}; a card payment at most
+     * {@link StripeProperties#MAX_AMOUNT_VND}.
+     */
     public void checkEligible(PaymentMethod method, BigDecimal orderTotal) {
         if (method == PaymentMethod.INSTALLMENT && !InstallmentPolicy.isEligible(orderTotal)) {
             throw new BusinessException(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
         }
+        if (method == PaymentMethod.CARD && orderTotal.compareTo(BigDecimal.valueOf(StripeProperties.MAX_AMOUNT_VND)) > 0) {
+            throw new BusinessException(ErrorCode.CARD_AMOUNT_TOO_LARGE);
+        }
     }
 
-    /** COD / BANK_TRANSFER: one PENDING main payment of the total; INSTALLMENT: a plan waiting for approval. */
+    /** COD / BANK_TRANSFER / CARD: one PENDING main payment of the total; INSTALLMENT: a plan waiting for approval. */
     public void onOrderPlaced(Order order, InstallmentRequest installment) {
         if (order.getPaymentMethod() == PaymentMethod.INSTALLMENT) {
             InstallmentOrder plan = new InstallmentOrder();
@@ -81,16 +96,17 @@ public class OrderPaymentLifecycle {
         paymentRepository.save(payment);
     }
 
-    /** PENDING → CONFIRMED: a bank transfer must be paid, an installment plan approved. */
+    /** PENDING → CONFIRMED: a bank transfer / card payment must be paid, an installment plan approved. */
     public void checkCanConfirm(Order order) {
         String code = OrderMapper.code(order.getId());
-        if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER) {
+        if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER || order.getPaymentMethod() == PaymentMethod.CARD) {
             boolean paid = paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId())
                     .map(payment -> payment.getStatus() == PaymentStatus.PAID)
                     .orElse(false);
             if (!paid) {
-                throw new BusinessException(ErrorCode.PAYMENT_REQUIRED,
-                        "Đơn %s chưa được xác nhận đã nhận tiền chuyển khoản".formatted(code));
+                throw new BusinessException(ErrorCode.PAYMENT_REQUIRED, (order.getPaymentMethod() == PaymentMethod.CARD
+                        ? "Đơn %s chưa được thanh toán bằng thẻ" : "Đơn %s chưa được xác nhận đã nhận tiền chuyển khoản")
+                        .formatted(code));
             }
         } else if (order.getPaymentMethod() == PaymentMethod.INSTALLMENT) {
             boolean approved = installmentOrderRepository.findByOrderId(order.getId())
@@ -128,6 +144,9 @@ public class OrderPaymentLifecycle {
         paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId()).ifPresent(payment -> {
             if (payment.getStatus() == PaymentStatus.PENDING) {
                 payment.setStatus(PaymentStatus.CANCELLED);
+                if (payment.getCheckoutSessionId() != null) {
+                    expireCheckoutAfterCommit(payment.getCheckoutSessionId());
+                }
             } else if (payment.getStatus() == PaymentStatus.PAID) {
                 payment.setStatus(PaymentStatus.REFUND_PENDING);
                 log.info("Order id={} cancelled after payment id={} was paid: waiting for a refund",
@@ -216,6 +235,30 @@ public class OrderPaymentLifecycle {
         if (next.getPaymentNumber() == periods.size()) {
             plan.setStatus(InstallmentStatus.COMPLETED);
             log.info("Installment plan id={} completed", plan.getId());
+        }
+    }
+
+    /**
+     * Closes the Stripe page of a cancelled order once the cancellation is saved, so it can no longer be paid. Best
+     * effort: if Stripe cannot be reached, a late payment arrives as REFUND_PENDING (CardPaymentService).
+     */
+    private void expireCheckoutAfterCommit(String sessionId) {
+        Runnable expire = () -> {
+            try {
+                stripeGateway.expireSession(sessionId);
+            } catch (RuntimeException e) {
+                log.warn("Could not expire Stripe session {}: {}", sessionId, e.getMessage());
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    expire.run();
+                }
+            });
+        } else {
+            expire.run();
         }
     }
 

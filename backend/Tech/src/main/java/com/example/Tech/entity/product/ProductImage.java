@@ -38,6 +38,10 @@ public class ProductImage {
     @Column(name = "alt_text", length = 255)
     private String altText;
 
+    /** Colour this image belongs to (the variant colour name); null = shared by every colour. */
+    @Column(name = "color", length = 50)
+    private String color;
+
     @Column(name = "display_order")
     private Integer displayOrder;
 

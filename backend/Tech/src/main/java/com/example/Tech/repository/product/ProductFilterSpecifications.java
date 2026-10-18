@@ -1,8 +1,11 @@
 package com.example.Tech.repository.product;
 
 import com.example.Tech.dto.request.product.ProductSearchRequest;
+import com.example.Tech.entity.product.Brand;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.util.SlugUtil;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -28,9 +31,12 @@ public final class ProductFilterSpecifications {
             predicates.add(cb.isNull(root.get("deletedAt")));
 
             if (filter.keyword() != null && !filter.keyword().isBlank()) {
+                // plan v5 GĐ3: the brand name counts too ("samsung 256" finds a Galaxy whose name has no "Samsung")
+                Join<Product, Brand> brand = root.join("brand", JoinType.LEFT);
                 // Every word must match, in any order: "iphone 256gb" finds "iPhone 18 Pro 256GB"
                 for (String word : WHITESPACE.split(filter.keyword().trim().toLowerCase(Locale.ROOT))) {
-                    Predicate byName = cb.like(cb.lower(root.get("name")), contains(word), LIKE_ESCAPE);
+                    Predicate byName = cb.or(cb.like(cb.lower(root.get("name")), contains(word), LIKE_ESCAPE),
+                            cb.like(cb.lower(brand.get("name")), contains(word), LIKE_ESCAPE));
                     // Slugs have no diacritics, so "dien thoai" also finds "Điện thoại"
                     String slugWord = SlugUtil.toSlug(word);
                     predicates.add(slugWord.isEmpty()
@@ -58,8 +64,42 @@ public final class ProductFilterSpecifications {
             if (filter.maxPrice() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("basePrice"), filter.maxPrice()));
             }
+            addSpecFilters(filter, root, query, cb, predicates);
             return cb.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    /** filter=group:value (same group = OR, groups = AND) and need=slug (any), each as an EXISTS on the index tables. */
+    private static void addSpecFilters(ProductSearchRequest filter, jakarta.persistence.criteria.Root<Product> root,
+                                       jakarta.persistence.criteria.CriteriaQuery<?> query,
+                                       jakarta.persistence.criteria.CriteriaBuilder cb, List<Predicate> predicates) {
+        java.util.Map<String, List<String>> groups = new java.util.LinkedHashMap<>();
+        if (filter.filter() != null) {
+            for (String item : filter.filter()) {
+                int colon = item == null ? -1 : item.indexOf(':');
+                if (colon > 0 && colon < item.length() - 1) {
+                    groups.computeIfAbsent(item.substring(0, colon).trim(), key -> new ArrayList<>())
+                            .add(item.substring(colon + 1).trim());
+                }
+            }
+        }
+        for (var entry : groups.entrySet()) {
+            var sub = query.subquery(Long.class);
+            var value = sub.from(com.example.Tech.entity.product.ProductFilterValue.class);
+            sub.select(value.<Long>get("id")).where(
+                    cb.equal(value.get("productId"), root.get("id")),
+                    cb.equal(value.get("groupKey"), entry.getKey()),
+                    value.get("label").in(entry.getValue()));
+            predicates.add(cb.exists(sub));
+        }
+        if (filter.need() != null && !filter.need().isEmpty()) {
+            var sub = query.subquery(Long.class);
+            var link = sub.from(com.example.Tech.entity.product.ProductNeed.class);
+            sub.select(link.<Long>get("id")).where(
+                    cb.equal(link.get("productId"), root.get("id")),
+                    link.get("need").get("slug").in(filter.need()));
+            predicates.add(cb.exists(sub));
+        }
     }
 
     private static String contains(String text) {

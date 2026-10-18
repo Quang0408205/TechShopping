@@ -638,3 +638,204 @@
     }
 
 }
+
+
+/* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+
+.admin-voucher-code {
+    font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    letter-spacing: 0.04em;
+}
+
+.admin-voucher-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 6px 16px;
+
+    margin-top: 8px;
+    padding: 12px;
+
+    border: 1px solid var(--admin-border, #e4e4e7);
+    border-radius: 10px;
+}
+
+.admin-voucher-categories[hidden] {
+    display: none;
+}
+
+.admin-voucher-preview {
+    margin: 0;
+
+    color: var(--admin-text-muted, #52525b);
+    font-size: 13px;
+}
+
+/* các thao tác của một voucher xuống dòng thay vì làm bảng cuộn ngang */
+#voucherTableBody .admin-actions-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+
+    min-width: 150px;
+}
+
+
+/* Kế hoạch v5 GĐ6: ô nhập trong bảng hạng thành viên (admin/loyalty.html) */
+#tierTableBody input {
+    width: 100%;
+    max-width: 200px;
+    padding: 8px 10px;
+    border: 1px solid #d9d4cb;
+    border-radius: 6px;
+    background: #fff;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+#tierTableBody .tier-multiplier {
+    max-width: 90px;
+}
+
+#tierTableBody input[readonly] {
+    background: #f4f2ee;
+    color: #777;
+}
+
+#tierTableBody input:focus {
+    border-color: #111;
+    outline: none;
+}
+
+#tierTableBody .tier-example {
+    color: #8a5a22;
+    font-weight: 600;
+}
+
+
+/* ================= COMBO (kế hoạch v5 GĐ10) ================= */
+
+.admin-combo-main,
+.admin-combo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 8px 10px;
+
+    border: 1px solid var(--admin-border, #e4e4e7);
+    border-radius: 10px;
+}
+
+.admin-combo-main[hidden] {
+    display: none;
+}
+
+.admin-combo-main img,
+.admin-combo-item img,
+.admin-combo-result img,
+.admin-combo-noimg {
+    flex: none;
+
+    width: 40px;
+    height: 40px;
+
+    object-fit: contain;
+
+    border-radius: 6px;
+    background: #f4f4f5;
+}
+
+.admin-combo-items {
+    display: grid;
+    gap: 8px;
+
+    margin-bottom: 12px;
+}
+
+.admin-combo-item strong {
+    flex: 1;
+    min-width: 0;
+
+    font-size: 14px;
+}
+
+.admin-combo-item select {
+    width: 160px;
+}
+
+.admin-combo-item input[type="number"] {
+    width: 120px;
+}
+
+.admin-combo-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 6px;
+
+    margin-top: 8px;
+}
+
+.admin-combo-results[hidden] {
+    display: none;
+}
+
+.admin-combo-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 6px 10px;
+
+    text-align: left;
+    font: inherit;
+
+    border: 1px solid var(--admin-border, #e4e4e7);
+    border-radius: 10px;
+    background: #fff;
+
+    cursor: pointer;
+}
+
+.admin-combo-result:hover {
+    border-color: #18181b;
+}
+
+.admin-combo-result small {
+    display: block;
+
+    color: var(--admin-text-muted, #52525b);
+}
+
+.admin-combo-suggest {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+
+    margin-top: 12px;
+}
+
+.admin-combo-addons {
+    min-width: 220px;
+    font-size: 13px;
+}
+
+#comboTableBody .admin-actions-cell {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+
+    min-width: 130px;
+}
+
+@media (max-width: 640px) {
+
+    .admin-combo-item {
+        flex-wrap: wrap;
+    }
+
+    .admin-combo-item strong {
+        flex-basis: calc(100% - 52px);
+    }
+
+}

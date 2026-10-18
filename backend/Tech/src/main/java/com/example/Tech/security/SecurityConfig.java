@@ -84,7 +84,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
                         // bank webhook: no token, the shared key is checked by the controller
-                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()                        // recommendations and the chatbot work for guests; a token makes them personal
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+                        // Stripe webhook: no token, the Stripe-Signature header is checked by CardPaymentService
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/stripe/webhook").permitAll()                        // recommendations and the chatbot work for guests; a token makes them personal
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/chat/*/messages").permitAll()

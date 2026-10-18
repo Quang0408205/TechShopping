@@ -36,6 +36,25 @@ create table user_roles (
     primary key (user_id, role_id)
 );
 
+-- bảng loyalty_tiers (kế hoạch v5): 4 hạng thành viên, ADMIN sửa ngưỡng tổng chi tiêu + hệ số nhân điểm
+create table loyalty_tiers (
+    tier_code varchar(20) primary key,
+    name varchar(50) not null,
+    min_spent decimal(15, 2) not null,
+    point_multiplier decimal(4, 2) not null,
+    sort_order int not null unique,
+    updated_at timestamp not null default current_timestamp,
+    constraint chk_loyalty_tiers_code check (tier_code in ('MEMBER', 'SILVER', 'GOLD', 'DIAMOND')),
+    constraint chk_loyalty_tiers_min check (min_spent >= 0),
+    constraint chk_loyalty_tiers_multiplier check (point_multiplier >= 1 and point_multiplier <= 5)
+);
+
+insert into loyalty_tiers (tier_code, name, min_spent, point_multiplier, sort_order) values
+    ('MEMBER', 'Thành viên', 0, 1.00, 1),
+    ('SILVER', 'Bạc', 50000000, 1.20, 2),
+    ('GOLD', 'Vàng', 150000000, 1.50, 3),
+    ('DIAMOND', 'Kim cương', 300000000, 2.00, 4);
+
 -- bảng customer_profiles: lưu thông tin chi tiết của khách hàng
 create table customer_profiles (
     customer_id bigint primary key references users(user_id) on delete cascade,
@@ -47,8 +66,9 @@ create table customer_profiles (
     ward varchar(100),
     postal_code varchar(20),
     default_shipping_address text,
-    loyalty_points int default 0,
-    total_spent decimal(15, 2) default 0.00,
+    loyalty_points int not null default 0,
+    total_spent decimal(15, 2) not null default 0.00,
+    tier_code varchar(20) not null default 'MEMBER' references loyalty_tiers(tier_code),
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
@@ -115,8 +135,11 @@ create table product_images (
     alt_text varchar(255),
     display_order int,
     is_primary boolean default false,
-    uploaded_at timestamp default current_timestamp
+    uploaded_at timestamp default current_timestamp,
+    color varchar(50)
 );
+
+create index idx_product_images_product_color on product_images (product_id, color);
 
 -- bảng product_specifications: lưu thông số kỹ thuật của sản phẩm
 create table product_specifications (
@@ -124,7 +147,8 @@ create table product_specifications (
     product_id bigint not null references products(product_id) on delete cascade,
     spec_name varchar(100) not null,
     spec_value text not null,
-    spec_order int
+    spec_order int,
+    variant_id bigint
 );
 
 -- bảng product_variants: quản lý các phiên bản sản phẩm
@@ -142,6 +166,42 @@ create table product_variants (
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
+
+-- thông số riêng của phiên bản (NULL = thông số chung của sản phẩm); product_variants đứng sau product_specifications nên FK thêm ở đây
+alter table product_specifications add constraint product_specifications_variant_id_fkey
+    foreign key (variant_id) references product_variants(variant_id) on delete cascade;
+create index idx_product_specifications_variant on product_specifications (variant_id) where variant_id is not null;
+
+-- bộ lọc thông số nâng cao + nhu cầu (migration 25 filters_needs.sql)
+create table product_filter_values (
+    filter_id bigserial primary key,
+    product_id bigint not null references products(product_id) on delete cascade,
+    group_key varchar(30) not null,
+    label varchar(60) not null,
+    sort_order int not null default 0,
+    constraint uq_product_filter_values unique (product_id, group_key, label)
+);
+
+create index idx_product_filter_values_lookup on product_filter_values (group_key, label, product_id);
+
+create table needs (
+    need_id serial primary key,
+    category_id int not null references categories(category_id) on delete cascade,
+    slug varchar(60) not null,
+    name varchar(100) not null,
+    display_order int not null default 0,
+    constraint uq_needs_category_slug unique (category_id, slug)
+);
+
+create table product_needs (
+    product_need_id bigserial primary key,
+    product_id bigint not null references products(product_id) on delete cascade,
+    need_id int not null references needs(need_id) on delete cascade,
+    constraint uq_product_needs unique (product_id, need_id)
+);
+
+create index idx_product_needs_need on product_needs (need_id, product_id);
+
 
 -- bảng attributes: quản lý thuộc tính sản phẩm
 create table attributes (
@@ -206,6 +266,8 @@ create table orders (
     recipient_name varchar(120) not null,
     recipient_phone varchar(20) not null,
     shipping_address text not null,
+    shipping_province varchar(100),
+    shipping_ward varchar(100),
     billing_address text,
     shipping_cost decimal(15, 2) default 0,
     tax_amount decimal(15, 2) default 0,
@@ -218,6 +280,13 @@ create table orders (
     cancelled_at timestamp,
     store_id int,
     delivery_type varchar(20) not null default 'HOME_DELIVERY',
+    voucher_id bigint,
+    voucher_code varchar(30),
+    voucher_discount decimal(15, 2) not null default 0,
+    combo_discount decimal(15, 2) not null default 0,
+    points_used int not null default 0,
+    points_discount decimal(15, 2) not null default 0,
+    points_earned int not null default 0,
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
@@ -230,7 +299,10 @@ create table order_items (
     quantity int not null,
     unit_price decimal(15, 2) not null,
     discount_amount decimal(15, 2) default 0,
-    subtotal decimal(15, 2) not null
+    subtotal decimal(15, 2) not null,
+    voucher_discount decimal(15, 2) not null default 0,
+    combo_discount decimal(15, 2) not null default 0,
+    points_discount decimal(15, 2) not null default 0
 );
 
 -- bảng order_status_history: lịch sử đổi trạng thái đơn hàng, ghi bằng code java mỗi lần orders.status đổi
@@ -290,6 +362,7 @@ create table payments (
     refunded_at timestamp,
     refunded_by bigint references users(user_id),
     installment_payment_id bigint unique references installment_payments(installment_payment_id),
+    checkout_session_id varchar(100),
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
@@ -622,6 +695,94 @@ create table promotion_products (
     primary key (promotion_id, product_id)
 );
 
+-- bảng vouchers (kế hoạch v5): mã giảm % cho đơn hàng, đơn tối thiểu, giảm tối đa, lượt dùng, phạm vi danh mục
+create table vouchers (
+    voucher_id bigserial primary key,
+    code varchar(30) not null unique,
+    name varchar(150) not null,
+    description text,
+    discount_percent decimal(5, 2) not null,
+    max_discount decimal(15, 2),
+    min_order_amount decimal(15, 2) not null default 0,
+    starts_at timestamp not null,
+    ends_at timestamp not null,
+    usage_limit int,
+    per_customer_limit int not null default 1,
+    used_count int not null default 0,
+    all_categories boolean not null default true,
+    is_active boolean not null default true,
+    created_by bigint not null references users(user_id),
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
+);
+
+-- bảng voucher_categories: danh mục áp dụng khi vouchers.all_categories = false
+create table voucher_categories (
+    voucher_id bigint not null references vouchers(voucher_id) on delete cascade,
+    category_id int not null references categories(category_id) on delete cascade,
+    primary key (voucher_id, category_id)
+);
+
+-- bảng voucher_usages: mỗi đơn dùng voucher một dòng; đơn huỷ trước khi giao → released_at (trả lượt)
+create table voucher_usages (
+    usage_id bigserial primary key,
+    voucher_id bigint not null references vouchers(voucher_id),
+    user_id bigint not null references users(user_id),
+    order_id bigint not null unique references orders(order_id) on delete cascade,
+    discount_amount decimal(15, 2) not null,
+    used_at timestamp not null default current_timestamp,
+    released_at timestamp
+);
+
+-- bảng combos (kế hoạch v5 GĐ10): mua kèm giảm giá = 1 sản phẩm chính + món mua kèm, tự áp khi giỏ đủ món
+create table combos (
+    combo_id bigserial primary key,
+    name varchar(150) not null,
+    description text,
+    main_product_id bigint not null references products(product_id),
+    starts_at timestamp not null,
+    ends_at timestamp not null,
+    is_active boolean not null default true,
+    created_by bigint not null references users(user_id),
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
+);
+
+-- bảng combo_items: món mua kèm + mức giảm riêng (PERCENT hoặc AMOUNT trên mỗi sản phẩm)
+create table combo_items (
+    combo_id bigint not null references combos(combo_id) on delete cascade,
+    product_id bigint not null references products(product_id),
+    discount_type varchar(10) not null,
+    discount_value decimal(15, 2) not null,
+    primary key (combo_id, product_id)
+);
+
+-- bảng order_combos: combo đã áp cho đơn (tên chụp lại) để báo cáo theo combo
+create table order_combos (
+    order_combo_id bigserial primary key,
+    order_id bigint not null references orders(order_id) on delete cascade,
+    combo_id bigint not null references combos(combo_id),
+    combo_name varchar(150) not null,
+    units int not null,
+    discount_amount decimal(15, 2) not null
+);
+
+-- bảng loyalty_transactions (kế hoạch v5): lịch sử điểm tích luỹ (+ / −) kèm số dư sau giao dịch
+create table loyalty_transactions (
+    loyalty_transaction_id bigserial primary key,
+    user_id bigint not null references users(user_id) on delete cascade,
+    order_id bigint references orders(order_id) on delete cascade,
+    return_request_id bigint references return_requests(return_request_id) on delete set null,
+    type varchar(20) not null,
+    points int not null,
+    balance_after int not null,
+    note varchar(255),
+    created_at timestamp not null default current_timestamp,
+    constraint chk_loyalty_transactions_type check (type in ('EARN', 'REDEEM', 'REDEEM_BACK', 'REVOKE', 'ADJUST'))
+);
+create index idx_loyalty_transactions_user on loyalty_transactions(user_id, loyalty_transaction_id desc);
+create index idx_loyalty_transactions_order on loyalty_transactions(order_id);
+
 -- =====================================================
 -- nhóm 10: đánh giá sản phẩm
 -- =====================================================
@@ -682,6 +843,7 @@ create index idx_orders_user_id on orders(user_id);
 create index idx_orders_order_date on orders(order_date);
 create index idx_orders_status on orders(status);
 create index idx_orders_store on orders(store_id);
+create index idx_orders_shipping_province on orders(shipping_province);
 create index idx_order_status_history_order on order_status_history(order_id, changed_at);
 create index idx_order_status_history_changed_by on order_status_history(changed_by);
 -- báo cáo (Phase 10): doanh thu theo ngày giao, tiền hoàn theo ngày hoàn, doanh số theo chi nhánh / nhân viên
@@ -694,6 +856,7 @@ create index idx_sales_records_employee_recorded on sales_records(employee_id, r
 create index idx_payments_order_id on payments(order_id);
 create index idx_payments_status on payments(status);
 create unique index uq_payments_order_main on payments(order_id) where installment_payment_id is null;
+create unique index uq_payments_checkout_session on payments(checkout_session_id) where checkout_session_id is not null;
 create index idx_installment_orders_status on installment_orders(status);
 create index idx_installment_payments_due on installment_payments(status, due_date);
 
@@ -753,6 +916,13 @@ create unique index uq_employee_assignments_active
 -- promotion indexes
 create index idx_promotions_active_window on promotions(is_active, start_date, end_date);
 create index idx_promotion_products_product on promotion_products(product_id);
+create index idx_combos_main on combos(main_product_id, is_active, starts_at, ends_at);
+create index idx_combo_items_product on combo_items(product_id);
+create index idx_order_combos_order on order_combos(order_id);
+create index idx_order_combos_combo on order_combos(combo_id);
+create index idx_vouchers_window on vouchers(is_active, starts_at, ends_at);
+create index idx_voucher_usages_voucher_user on voucher_usages(voucher_id, user_id);
+create index idx_orders_voucher on orders(voucher_id);
 
 -- review indexes
 create index idx_reviews_product_id on reviews(product_id, created_at desc);
@@ -772,7 +942,7 @@ alter table order_items add constraint chk_order_item_quantity_positive check (q
 alter table installment_payments add constraint chk_installment_amount_positive check (amount > 0);
 alter table payments add constraint chk_payments_status
     check (status in ('PENDING', 'PAID', 'REFUND_PENDING', 'REFUNDED', 'CANCELLED'));
-alter table payments add constraint chk_payments_method check (payment_method in ('COD', 'BANK_TRANSFER', 'INSTALLMENT'));
+alter table payments add constraint chk_payments_method check (payment_method in ('COD', 'BANK_TRANSFER', 'INSTALLMENT', 'CARD'));
 alter table payments add constraint chk_payments_amount_positive check (amount > 0);
 alter table installment_orders add constraint chk_installment_orders_status
     check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
@@ -797,6 +967,23 @@ alter table promotion_products add constraint chk_promotion_products_percentage_
 alter table promotion_products add constraint chk_promotion_products_pair
     check ((discount_type is null) = (discount_value is null));
 alter table orders add constraint fk_orders_store foreign key (store_id) references stores(store_id);
+alter table orders add constraint fk_orders_voucher foreign key (voucher_id) references vouchers(voucher_id);
+alter table orders add constraint chk_orders_voucher_discount check (voucher_discount >= 0);
+alter table order_items add constraint chk_order_items_voucher_discount check (voucher_discount >= 0);
+alter table orders add constraint chk_orders_combo_discount check (combo_discount >= 0);
+alter table order_items add constraint chk_order_items_combo_discount check (combo_discount >= 0);
+alter table combos add constraint chk_combos_window check (ends_at > starts_at);
+alter table combo_items add constraint chk_combo_items_type check (discount_type in ('PERCENT', 'AMOUNT'));
+alter table combo_items add constraint chk_combo_items_value check (discount_value > 0 and (discount_type <> 'PERCENT' or discount_value <= 100));
+alter table customer_profiles add constraint chk_customer_profiles_points check (loyalty_points >= 0);
+alter table orders add constraint chk_orders_points check (points_used >= 0 and points_discount >= 0 and points_earned >= 0);
+alter table order_items add constraint chk_order_items_points_discount check (points_discount >= 0);
+alter table vouchers add constraint chk_vouchers_percent check (discount_percent > 0 and discount_percent <= 100);
+alter table vouchers add constraint chk_vouchers_window check (ends_at > starts_at);
+alter table vouchers add constraint chk_vouchers_amounts check ((max_discount is null or max_discount > 0) and min_order_amount >= 0);
+alter table vouchers add constraint chk_vouchers_limits
+    check ((usage_limit is null or usage_limit > 0) and per_customer_limit > 0 and used_count >= 0);
+alter table vouchers add constraint chk_vouchers_code check (code ~ '^[A-Z0-9_-]{3,30}$');
 alter table orders add constraint chk_orders_delivery_type check (delivery_type in ('HOME_DELIVERY', 'PICKUP'));
 alter table inventory add constraint chk_inventory_quantity_non_negative check (quantity >= 0);
 alter table stock_movements add constraint chk_stock_movements_type

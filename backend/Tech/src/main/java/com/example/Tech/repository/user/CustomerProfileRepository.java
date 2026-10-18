@@ -1,11 +1,14 @@
 package com.example.Tech.repository.user;
 
 import com.example.Tech.entity.user.CustomerProfile;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 
 public interface CustomerProfileRepository extends JpaRepository<CustomerProfile, Long> {
 
@@ -17,4 +20,15 @@ public interface CustomerProfileRepository extends JpaRepository<CustomerProfile
     @Query(value = "update customer_profiles set total_spent = coalesce(total_spent, 0) + :amount, "
             + "updated_at = current_timestamp where customer_id = :userId", nativeQuery = true)
     int addToTotalSpent(Long userId, BigDecimal amount);
+
+    /** Row lock while the points balance or the tier changes (two orders never spend the same points). */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from CustomerProfile c where c.customerId = :userId")
+    Optional<CustomerProfile> findByIdForUpdate(Long userId);
+
+    /** Accounts created before profiles existed get an empty one (concurrent calls are safe). */
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query(value = "insert into customer_profiles (customer_id) values (:userId) on conflict (customer_id) do nothing",
+            nativeQuery = true)
+    int insertIfMissing(Long userId);
 }

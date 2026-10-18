@@ -5,6 +5,8 @@
  * (js/core/cart-store.js → /api/v1/cart). Chưa đăng nhập → mời đăng nhập.
  * Dòng đã ngừng bán: không tính tiền, chỉ còn nút xoá, và chặn thanh toán
  * cho tới khi xoá hết. Mọi dữ liệu đưa vào innerHTML đều escape.
+ * Kế hoạch v5 GĐ5: có đơn chuyển khoản / thẻ còn chờ tiền → khung nhắc phía trên giỏ
+ * (awaiting-payment.js); "Huỷ đơn & lấy lại giỏ" xong thì tải lại giỏ.
  */
 
 document.addEventListener(
@@ -16,6 +18,14 @@ document.addEventListener(
         }
 
         loadCart();
+
+        showAwaitingPaymentNotice(document.getElementById("awaitingPayment"), function () {
+
+            document.getElementById("awaitingPayment").hidden = true;
+
+            loadCart();
+
+        });
 
     }
 );
@@ -173,6 +183,7 @@ function renderCart(summary) {
                             ${escapeHtml(item.name)}
                         </a>
                         <span class="cart-variant">${escapeHtml(item.variantLabel)}</span>
+                        ${item.available && item.comboDiscount > 0 ? comboTagHtml(item) : ""}
                     </div>
                 </td>
 
@@ -269,6 +280,15 @@ function renderCart(summary) {
                         ${formatPrice(summary.subtotal)}
                     </strong>
                 </div>
+                ${summary.comboDiscount > 0 ? `
+                <div class="cart-total-row cart-total-combo">
+                    <span>
+                        Giảm combo
+                    </span>
+                    <strong>
+                        −${formatPrice(summary.comboDiscount)}
+                    </strong>
+                </div>` : ""}
                 <div class="cart-total-row">
                     <span>
                         Phí vận chuyển
@@ -277,7 +297,7 @@ function renderCart(summary) {
                         ${summary.shippingFee === 0 ? "Miễn phí" : formatPrice(summary.shippingFee)}
                     </strong>
                 </div>
-                <div class="cart-total-row">
+                <div class="cart-total-row cart-total-final">
                     <span>
                         Tổng cộng
                     </span>
@@ -292,6 +312,14 @@ function renderCart(summary) {
 
 
     bindCartEvents(summary.items);
+
+}
+
+
+/* Nhãn "Combo" dưới tên món mua kèm được giảm (kế hoạch v5 GĐ10) */
+function comboTagHtml(item) {
+
+    return `<span class="combo-tag" title="${escapeHtml(item.comboNames.join(", "))}">Combo −${escapeHtml(formatPrice(item.comboDiscount))}</span>`;
 
 }
 

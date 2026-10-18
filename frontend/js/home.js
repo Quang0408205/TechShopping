@@ -33,7 +33,7 @@ let homeCategoriesPromise = null;
 /*
  * Một thẻ bằng nhau cho mỗi danh mục ĐANG HIỂN THỊ (theo thứ tự ADMIN đặt), xếp một hàng cuộn ngang
  * (4 thẻ / khung trên máy tính) với nút ← →. Ảnh: ảnh ADMIN tải lên → ảnh cắt sẵn của danh mục gốc →
- * ảnh sản phẩm đầu tiên của danh mục. Lỗi tải danh mục → giữ 4 thẻ viết sẵn trong index.html.
+ * biểu tượng cùng bộ (categoryVisualHtml, js/core/ui.js). Lỗi tải danh mục → giữ 4 thẻ viết sẵn trong index.html.
  */
 
 const HOME_CATEGORY_NOTES = {
@@ -78,7 +78,7 @@ async function renderHomeCategories() {
                     ${note ? `<p>${escapeHtml(note)}</p>` : ""}
                     <span class="category-more">Khám phá</span>
                 </div>
-                <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
+                ${categoryVisualHtml(category)}
             </a>
         `;
 
@@ -87,44 +87,6 @@ async function renderHomeCategories() {
     grid.scrollLeft = 0;
 
     grid.dispatchEvent(new Event("scroll"));
-
-    categories.filter(function (category) {
-        return !hasOwnCategoryImage(category);
-    }).forEach(useFirstProductImage);
-
-}
-
-
-/* Ảnh ADMIN tải lên hoặc ảnh cắt sẵn của 4 danh mục gốc */
-
-function hasOwnCategoryImage(category) {
-
-    return isSafeImageUrl(category.iconUrl) || Boolean(CATEGORY_CARD_IMAGES[getCategoryFilterKey(category.slug)]);
-
-}
-
-
-/* Danh mục chưa có ảnh: dùng ảnh chính của sản phẩm đầu tiên đang bán trong danh mục (lỗi thì giữ ảnh thay thế) */
-
-async function useFirstProductImage(category) {
-
-    try {
-
-        const page = await apiRequest("/products?" + new URLSearchParams({
-            isActive: "true", categoryId: String(category.id), size: "1", sort: "id,asc"
-        }).toString());
-
-        const product = (page.content || [])[0];
-
-        const img = document.querySelector('.category-card[data-category-id="' + category.id + '"] img');
-
-        if (img && product && isSafeImageUrl(product.primaryImageUrl)) {
-            img.src = product.primaryImageUrl.trim();
-        }
-
-    } catch (error) {
-        /* giữ ảnh thay thế */
-    }
 
 }
 

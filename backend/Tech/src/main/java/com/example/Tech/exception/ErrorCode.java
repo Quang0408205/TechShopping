@@ -43,6 +43,7 @@ public enum ErrorCode {
     // Image upload
     INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "Only JPEG, PNG or WebP images are accepted"),
     IMAGE_TOO_LARGE(HttpStatus.CONTENT_TOO_LARGE, "Image must be at most 5 MB"),
+    IMAGE_STORAGE_UNAVAILABLE(HttpStatus.BAD_GATEWAY, "Không lưu được ảnh lên kho ảnh, vui lòng thử lại"),
     EXCEL_INVALID_FILE(HttpStatus.BAD_REQUEST, "File phải là bảng tính Excel .xlsx đúng theo file mẫu"),
 
     // Product specification
@@ -98,6 +99,16 @@ public enum ErrorCode {
     PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
             "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này"),
 
+    // Vouchers (plan v5)
+    VOUCHER_NOT_FOUND(HttpStatus.NOT_FOUND, "Mã voucher không tồn tại"),
+    VOUCHER_NOT_APPLICABLE(HttpStatus.BAD_REQUEST, "Voucher không áp dụng được cho đơn hàng này"),
+    DUPLICATE_VOUCHER(HttpStatus.CONFLICT, "Mã voucher đã tồn tại"),
+    VOUCHER_IN_USE(HttpStatus.CONFLICT, "Voucher đã có đơn hàng sử dụng, không đổi được mã hoặc xoá"),
+
+    // Combos (plan v5 GĐ10)
+    COMBO_NOT_FOUND(HttpStatus.NOT_FOUND, "Combo không tồn tại"),
+    COMBO_IN_USE(HttpStatus.CONFLICT, "Combo đã có đơn hàng áp dụng, chỉ có thể tạm ngưng"),
+
     // Payment / installment
     INSTALLMENT_NOT_ELIGIBLE(HttpStatus.BAD_REQUEST, "Đơn hàng từ 3.000.000đ trở lên mới được trả góp"),
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Đơn hàng không có khoản thanh toán này"),
@@ -108,6 +119,10 @@ public enum ErrorCode {
     WEBHOOK_NOT_CONFIGURED(HttpStatus.SERVICE_UNAVAILABLE, "Webhook ngân hàng chưa được cấu hình"),
     SIMULATOR_DISABLED(HttpStatus.NOT_FOUND, "Chức năng giả lập chuyển khoản đang tắt"),
     PAYMENT_REQUIRED(HttpStatus.CONFLICT, "Đơn chuyển khoản chưa được xác nhận đã nhận tiền"),
+    CARD_PAYMENT_DISABLED(HttpStatus.BAD_REQUEST, "Thanh toán thẻ quốc tế đang tạm tắt, vui lòng chọn hình thức khác"),
+    CARD_AMOUNT_TOO_LARGE(HttpStatus.BAD_REQUEST, "Đơn hàng vượt hạn mức thanh toán thẻ, vui lòng chọn hình thức khác"),
+    PAYMENT_GATEWAY_ERROR(HttpStatus.BAD_GATEWAY, "Không kết nối được cổng thanh toán thẻ, vui lòng thử lại"),
+    STRIPE_SIGNATURE_INVALID(HttpStatus.BAD_REQUEST, "Chữ ký webhook Stripe không hợp lệ"),
     INSTALLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hợp đồng trả góp"),
     INVALID_INSTALLMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái hợp đồng trả góp không cho phép thao tác này"),
     INSTALLMENT_NOT_APPROVED(HttpStatus.CONFLICT, "Hợp đồng trả góp chưa được duyệt"),

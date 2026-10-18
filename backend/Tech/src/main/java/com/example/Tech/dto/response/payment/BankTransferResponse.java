@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 /** What the customer needs to make the transfer; only present while the transfer is awaited. */
 public record BankTransferResponse(
         String bankName,
+        @Schema(description = "VietQR bank id (970436 = Vietcombank); the page shows the bank logo from it")
+        String bankBin,
         String accountNumber,
         String accountName,
         BigDecimal amount,

@@ -489,6 +489,45 @@ img {
     background: var(--color-accent-strong);
 }
 
+/* Bong bóng Zalo (ui-effects.js), xếp ngay trên nút trợ lý AI; bảng chat AI mở ra sẽ che nó */
+.zalo-bubble {
+    position: fixed;
+
+    right: 24px;
+    bottom: 96px;
+    z-index: 2400;
+
+    width: 60px;
+    height: 60px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #0068ff;
+    color: #fff;
+
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+
+    box-shadow: var(--shadow-lg);
+
+    transition: transform var(--duration-base) var(--ease-standard), background-color var(--duration-base) var(--ease-standard);
+}
+
+.zalo-bubble:hover {
+    background: #0055d4;
+    transform: translateY(-2px);
+}
+
+.zalo-bubble:focus-visible {
+    outline: 3px solid var(--color-accent-soft);
+    outline-offset: 2px;
+}
+
 .chatbot-panel {
     position: absolute;
 
@@ -784,6 +823,16 @@ img {
         font-size: 20px;
     }
 
+    .zalo-bubble {
+        right: 16px;
+        bottom: 80px;
+
+        width: 54px;
+        height: 54px;
+
+        font-size: 13px;
+    }
+
     .chatbot-panel {
         position: fixed;
 
@@ -958,4 +1007,126 @@ img {
 
 .state-box p:last-child {
     margin-bottom: 0;
+}
+
+
+/* ================= CHẤM MÀU PHIÊN BẢN (ui.js variantColorDotHtml, kế hoạch v5 GĐ2) ================= */
+
+.color-dot {
+    display: inline-block;
+    flex-shrink: 0;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+    border: 1px solid rgba(17, 19, 24, 0.18);
+}
+
+.color-dot.is-unknown {
+    background: repeating-linear-gradient(45deg, #d4d4d8 0 3px, #f4f4f5 3px 6px);
+}
+
+.product-colors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    margin: 6px 0 2px;
+}
+
+.product-colors .color-dot {
+    width: 14px;
+    height: 14px;
+}
+
+.product-color {
+    display: inline-flex;
+}
+
+.product-color-more {
+    font-size: 12px;
+    color: #6b6f78;
+}
+
+
+/* ================= Ô CHỌN TỈNH / PHƯỜNG (js/core/vn-address.js) ================= */
+
+.vn-combo {
+    position: relative;
+}
+
+.vn-combo input:disabled {
+    background: var(--gray-100);
+    cursor: not-allowed;
+}
+
+.vn-combo-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+
+    max-height: 240px;
+    margin: 0;
+    padding: 4px;
+    overflow-y: auto;
+
+    list-style: none;
+
+    background: var(--color-paper);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.vn-combo-list li {
+    padding: 8px 10px;
+
+    border-radius: var(--radius-sm);
+
+    font-size: 13px;
+    font-weight: 400;
+
+    cursor: pointer;
+}
+
+.vn-combo-list li[role="option"]:hover,
+.vn-combo-list li.is-active {
+    background: var(--color-accent-soft);
+}
+
+.vn-combo-list .vn-combo-empty {
+    color: #6b6f78;
+    cursor: default;
+}
+
+.vn-address-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 560px) {
+    .vn-address-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Kế hoạch v5 GĐ10: nhãn "Combo −Xđ" dưới món mua kèm được giảm (giỏ, thanh toán, chi tiết đơn) */
+.combo-tag {
+    display: inline-block;
+
+    margin-top: 4px;
+    padding: 2px 8px;
+
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+
+    color: var(--color-success, #15803d);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-success, #15803d) 12%, transparent);
 }

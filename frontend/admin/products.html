@@ -172,6 +172,11 @@
 
                                 <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
 
+                                <label class="admin-image-color-pick">
+                                    Màu của ảnh thêm mới
+                                    <select id="pfImageColor" aria-label="Màu của ảnh thêm mới"><option value="">Chung (mọi màu)</option></select>
+                                </label>
+
                             </div>
 
                         </fieldset>
@@ -181,11 +186,7 @@
 
                             <legend>Phiên bản *</legend>
 
-                            <p class="admin-field-hint">Mỗi dòng là một phiên bản khách chọn khi mua (vd 8GB/256GB - Đen). Cần ít nhất 1 phiên bản, giá lớn hơn 0. Phiên bản đã bán hoặc còn tồn kho không xoá được.</p>
-
-                            <div class="admin-extra-head admin-variant-row" aria-hidden="true">
-                                <span>Tên phiên bản *</span><span>RAM</span><span>Bộ nhớ</span><span>Màu</span><span>Giá *</span><span>Giá KM</span><span>SKU</span><span></span>
-                            </div>
+                            <p class="admin-field-hint">Mỗi thẻ là một phiên bản (RAM + bộ nhớ, giá) khách chọn khi mua; trong thẻ khai báo các màu và thông số riêng của phiên bản. Cần ít nhất 1 phiên bản, giá lớn hơn 0. Màu hoặc phiên bản đã bán / còn tồn kho không xoá được.</p>
 
                             <div id="pfVariantRows"></div>
 
@@ -195,13 +196,24 @@
 
                         <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfSpecs">
 
-                            <legend>Thông số kỹ thuật</legend>
+                            <legend>Thông số kỹ thuật chung</legend>
 
                             <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
 
                             <div id="pfSpecRows"></div>
 
                             <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfSpecAdd">+ THÊM THÔNG SỐ</button>
+
+                        </fieldset>
+
+                        <!-- Nhu cầu của danh mục (vd Laptop: Gaming, Đồ hoạ); ghi khi bấm LƯU (js/admin/product-extras.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfNeeds" hidden>
+
+                            <legend>Nhu cầu</legend>
+
+                            <p class="admin-field-hint">Chọn các nhu cầu phù hợp với sản phẩm; khách lọc theo nhu cầu ở trang Sản phẩm. Một sản phẩm có thể có nhiều nhu cầu.</p>
+
+                            <div id="pfNeedList" class="admin-need-list"></div>
 
                         </fieldset>
 

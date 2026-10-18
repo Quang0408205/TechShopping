@@ -4,7 +4,7 @@
  * Khách nhập hình thức nhận hàng + người nhận trong một popup ngay ở giỏ hàng; thông tin lưu ở
  * sessionStorage theo tài khoản (đóng tab là mất), trang thanh toán đọc lại và cho sửa bằng chính
  * popup này. Quy tắc kiểm tra giống checkout.js / server. Dữ liệu từ API đều escape khi đưa vào HTML.
- * Giao tận nhà: địa chỉ; nhận tại cửa hàng: chọn 1 cửa hàng đang mở (GET /stores), cửa hàng không đủ
+ * Giao tận nhà: Tỉnh / Thành + Phường / Xã (vn-address.js) + Số nhà; nhận tại cửa hàng: chọn 1 cửa hàng đang mở (GET /stores), cửa hàng không đủ
  * hàng cho cả giỏ (GET /cart/store-availability) bị khoá.
  */
 
@@ -67,9 +67,10 @@ function isOrderInfoComplete(info) {
         return false;
     }
 
+    /* giao tận nhà: đủ Tỉnh + Phường / Xã + Số nhà (bản lưu kiểu cũ chỉ có 1 dòng địa chỉ → nhập lại) */
     return info.deliveryType === "PICKUP"
         ? Boolean(info.pickupStoreId)
-        : Boolean(info.shippingAddress);
+        : Boolean(info.shippingProvince && info.shippingWard && info.shippingStreet && info.shippingAddress);
 
 }
 
@@ -152,7 +153,10 @@ async function loadOrderInfoDefaults() {
 
     const user = getCurrentUser() || {};
 
-    const defaults = { deliveryType: "HOME_DELIVERY", recipientName: user.fullname || "", recipientPhone: "", shippingAddress: "", pickupStoreId: null };
+    const defaults = {
+        deliveryType: "HOME_DELIVERY", recipientName: user.fullname || "", recipientPhone: "",
+        shippingProvince: "", shippingWard: "", shippingStreet: "", pickupStoreId: null
+    };
 
     const results = await Promise.allSettled([
         apiRequest("/users/me", { auth: true }),
@@ -166,12 +170,14 @@ async function loadOrderInfoDefaults() {
 
     if (results[1].status === "fulfilled" && results[1].value) {
 
+        /* hồ sơ: city = Tỉnh / Thành, ward = Phường / Xã, address = Số nhà, đường */
         const profile = results[1].value;
 
-        defaults.shippingAddress = profile.defaultShippingAddress
-            || [profile.address, profile.ward, profile.district, profile.city]
-                .filter(function (part) { return part && String(part).trim(); })
-                .join(", ");
+        defaults.shippingProvince = profile.city || "";
+
+        defaults.shippingWard = profile.ward || "";
+
+        defaults.shippingStreet = profile.address || "";
 
     }
 
@@ -275,10 +281,22 @@ async function openOrderInfoModal(options) {
             </label>
 
             <div id="orderInfoHome">
+                <div class="vn-address-row">
+                    <label class="order-info-field">
+                        <span>Tỉnh / Thành phố <b>*</b></span>
+                        <div><input type="text" id="orderInfoProvince" maxlength="100" value="${escapeHtml(info.shippingProvince || "")}"></div>
+                        <small class="field-error" data-error="province"></small>
+                    </label>
+                    <label class="order-info-field">
+                        <span>Phường / Xã <b>*</b></span>
+                        <div><input type="text" id="orderInfoWard" maxlength="100" value="${escapeHtml(info.shippingWard || "")}"></div>
+                        <small class="field-error" data-error="ward"></small>
+                    </label>
+                </div>
                 <label class="order-info-field">
-                    <span>Địa chỉ nhận hàng <b>*</b></span>
-                    <textarea id="orderInfoAddress" rows="3" maxlength="500" autocomplete="street-address">${escapeHtml(info.shippingAddress)}</textarea>
-                    <small class="field-error" data-error="address"></small>
+                    <span>Số nhà, tên đường <b>*</b></span>
+                    <input type="text" id="orderInfoStreet" maxlength="255" placeholder="Ví dụ: 12 Nguyễn Trãi" autocomplete="street-address" value="${escapeHtml(info.shippingStreet || "")}">
+                    <small class="field-error" data-error="street"></small>
                 </label>
             </div>
 
@@ -310,6 +328,8 @@ async function openOrderInfoModal(options) {
     const storeCount = form.querySelector("#orderInfoStoreCount");
 
     const search = form.querySelector("#orderInfoStoreSearch");
+
+    const area = setupVnAddress(form.querySelector("#orderInfoProvince"), form.querySelector("#orderInfoWard"));
 
 
     function showType() {
@@ -390,11 +410,15 @@ async function openOrderInfoModal(options) {
 
         event.preventDefault();
 
+        const picked = area.getValue();
+
         const result = {
             deliveryType: deliveryType,
             recipientName: form.querySelector("#orderInfoName").value.trim(),
             recipientPhone: form.querySelector("#orderInfoPhone").value.trim(),
-            shippingAddress: form.querySelector("#orderInfoAddress").value.trim(),
+            shippingProvince: picked.province,
+            shippingWard: picked.ward,
+            shippingStreet: form.querySelector("#orderInfoStreet").value.trim(),
             pickupStoreId: pickupStoreId ? Number(pickupStoreId) : null
         };
 
@@ -408,11 +432,19 @@ async function openOrderInfoModal(options) {
             return String(store.id) === String(result.pickupStoreId) && !lacks(store);
         }));
 
-        const addressOk = result.shippingAddress !== "";
+        const provinceOk = result.shippingProvince !== "";
+
+        const wardOk = result.shippingWard !== "";
+
+        const streetOk = result.shippingStreet !== "";
+
+        const addressOk = provinceOk && wardOk && streetOk;
 
         setError("name", nameOk ? "" : "Vui lòng nhập họ và tên người nhận (tối đa 120 ký tự).");
         setError("phone", phoneOk ? "" : "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).");
-        setError("address", pickup || addressOk ? "" : "Vui lòng nhập địa chỉ nhận hàng đầy đủ.");
+        setError("province", pickup || provinceOk ? "" : "Vui lòng chọn tỉnh / thành phố trong danh sách.");
+        setError("ward", pickup || wardOk ? "" : "Vui lòng chọn phường / xã trong danh sách.");
+        setError("street", pickup || streetOk ? "" : "Vui lòng nhập số nhà, tên đường.");
         setError("store", !pickup || storeOk ? "" : "Vui lòng chọn cửa hàng đang mở để nhận hàng.");
 
         if (!nameOk || !phoneOk || (pickup ? !storeOk : !addressOk)) {
@@ -424,7 +456,10 @@ async function openOrderInfoModal(options) {
             deliveryType: deliveryType,
             recipientName: result.recipientName,
             recipientPhone: result.recipientPhone,
-            shippingAddress: pickup ? "" : result.shippingAddress,
+            shippingProvince: pickup ? "" : result.shippingProvince,
+            shippingWard: pickup ? "" : result.shippingWard,
+            shippingStreet: pickup ? "" : result.shippingStreet,
+            shippingAddress: pickup ? "" : joinVnAddress(result.shippingStreet, result.shippingWard, result.shippingProvince),
             pickupStoreId: pickup ? result.pickupStoreId : null,
             pickupStoreName: pickup ? (stores.find(function (store) { return String(store.id) === String(result.pickupStoreId); }) || {}).name || "" : ""
         };

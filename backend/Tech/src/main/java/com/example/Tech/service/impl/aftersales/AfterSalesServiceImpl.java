@@ -221,8 +221,8 @@ public class AfterSalesServiceImpl implements AfterSalesService {
                 throw BusinessException.invalidField("items", "Chỉ còn %d sản phẩm \"%s\" có thể trả"
                         .formatted(Math.max(left, 0), line.getVariant().getProduct().getName()));
             }
-            // unit_price is what the customer actually paid per unit (promotions included)
-            BigDecimal refund = line.getUnitPrice().multiply(BigDecimal.valueOf(item.quantity()));
+            // what the customer actually paid for these units: unit price (promotions included) minus the voucher share
+            BigDecimal refund = line.paidFor(item.quantity());
             saved.addItem(new ReturnItem(line, item.quantity(), refund));
             total = total.add(refund);
         }

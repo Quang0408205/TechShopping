@@ -128,6 +128,10 @@ public class ReportServiceImpl implements ReportService {
                 queries.topProducts(from, to, storeId, TOP_PRODUCTS).stream()
                         .map(row -> new SalesReportResponse.ProductRow(row.productId(), row.productName(),
                                 row.categoryName(), row.units(), row.revenue()))
+                        .toList(),
+                queries.byCombo(from, to, storeId).stream()
+                        .map(row -> new SalesReportResponse.ComboRow(row.comboId(), row.comboName(), row.orders(),
+                                row.units(), row.discount(), row.revenue()))
                         .toList());
     }
 

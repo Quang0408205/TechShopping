@@ -2,6 +2,8 @@ package com.example.Tech.mapper.payment;
 
 import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.config.PaymentWebhookProperties;
+import com.example.Tech.config.StripeProperties;
+import com.example.Tech.dto.response.payment.CardPaymentResponse;
 import com.example.Tech.dto.response.payment.BankTransferResponse;
 import com.example.Tech.dto.response.payment.InstallmentPeriodResponse;
 import com.example.Tech.dto.response.payment.InstallmentResponse;
@@ -24,6 +26,7 @@ import java.math.RoundingMode;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -34,9 +37,12 @@ public class PaymentMapper {
 
     private final BankTransferProperties bankTransfer;
     private final PaymentWebhookProperties webhook;
+    private final StripeProperties stripe;
 
     public PaymentResponse toResponse(Payment payment, Order order) {
         boolean awaitingTransfer = payment.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
+                && payment.getStatus() == PaymentStatus.PENDING;
+        boolean awaitingCard = payment.getPaymentMethod() == PaymentMethod.CARD
                 && payment.getStatus() == PaymentStatus.PENDING;
         return new PaymentResponse(
                 payment.getId(),
@@ -45,7 +51,8 @@ public class PaymentMapper {
                 payment.getTransactionId(),
                 payment.getPaidAt(),
                 payment.getRefundedAt(),
-                awaitingTransfer ? toBankTransfer(payment, order) : null);
+                awaitingTransfer ? toBankTransfer(payment, order) : null,
+                awaitingCard ? new CardPaymentResponse(stripe.testMode(), payBefore(order)) : null);
     }
 
     public InstallmentResponse toResponse(InstallmentOrder plan, Order order, List<InstallmentPayment> periods,
@@ -82,13 +89,18 @@ public class PaymentMapper {
                 amount, encode(code), encode(bankTransfer.accountName()));
         return new BankTransferResponse(
                 bankTransfer.bankName(),
+                bankTransfer.bankBin(),
                 bankTransfer.accountNumber(),
                 bankTransfer.accountName(),
                 payment.getAmount(),
                 code,
                 qrImageUrl,
-                order.getOrderDate() != null ? order.getOrderDate().plusHours(bankTransfer.deadlineHours()) : null,
+                payBefore(order),
                 webhook.simulatorEnabled());
+    }
+
+    private LocalDateTime payBefore(Order order) {
+        return order.getOrderDate() != null ? order.getOrderDate().plusHours(bankTransfer.deadlineHours()) : null;
     }
 
     private static InstallmentPeriodResponse toPeriodResponse(InstallmentPayment period, LocalDate today) {

@@ -62,8 +62,16 @@ document.addEventListener(
             maxPrice: null,
             search: "",
             sort: sortSelect.value,
-            page: 0
+            page: 0,
+            /* Nhu cầu + thông số: { nhóm: [giá trị, …] }, nhóm "need" là slug nhu cầu */
+            specFilters: {}
         };
+
+        const specFiltersBox = document.getElementById("specFilters");
+
+        const filterGroupCache = {};
+
+        let specRequestId = 0;
 
 
         let categoryMaps = null;
@@ -126,6 +134,8 @@ document.addEventListener(
 
 
             buildBrandFilters();
+
+            buildSpecFilters();
 
             loadProducts();
 
@@ -201,6 +211,16 @@ document.addEventListener(
                 state.search = search.slice(0, MAX_KEYWORD_LENGTH);
             }
 
+            params.getAll("f").forEach(function (item) {
+
+                const colon = item.indexOf(":");
+
+                if (colon > 0 && colon < item.length - 1) {
+                    addSpecFilter(item.slice(0, colon), item.slice(colon + 1));
+                }
+
+            });
+
         }
 
 
@@ -217,6 +237,12 @@ document.addEventListener(
             if (state.search) {
                 params.set("search", state.search);
             }
+
+            Object.keys(state.specFilters).forEach(function (group) {
+                state.specFilters[group].forEach(function (value) {
+                    params.append("f", group + ":" + value);
+                });
+            });
 
 
             const query = params.toString();
@@ -366,6 +392,152 @@ document.addEventListener(
         }
 
 
+        /* ================= NHU CẦU + THÔNG SỐ (kế hoạch v5 GĐ9) ================= */
+
+        function addSpecFilter(group, value) {
+
+            if (!state.specFilters[group]) {
+                state.specFilters[group] = [];
+            }
+
+            if (state.specFilters[group].indexOf(value) === -1) {
+                state.specFilters[group].push(value);
+            }
+
+        }
+
+        function removeSpecFilter(group, value) {
+
+            state.specFilters[group] = (state.specFilters[group] || []).filter(function (item) { return item !== value; });
+
+            if (state.specFilters[group].length === 0) {
+                delete state.specFilters[group];
+            }
+
+        }
+
+        function loadSpecFilterGroups(categoryId) {
+
+            if (!filterGroupCache[categoryId]) {
+
+                filterGroupCache[categoryId] = apiRequest("/categories/" + categoryId + "/filters").catch(function (error) {
+
+                    delete filterGroupCache[categoryId];
+
+                    throw error;
+
+                });
+
+            }
+
+            return filterGroupCache[categoryId];
+
+        }
+
+        /* Mỗi nhóm một khung gập; chỉ hiện giá trị có sản phẩm (máy chủ đã lọc); chọn nhiều ô được */
+
+        async function buildSpecFilters() {
+
+            const requestId = ++specRequestId;
+
+            const categoryId = getCategoryId(state.category);
+
+            if (!categoryId) {
+
+                specFiltersBox.innerHTML = "";
+
+                state.specFilters = {};
+
+                return;
+
+            }
+
+            let groups;
+
+            try {
+
+                groups = await loadSpecFilterGroups(categoryId);
+
+            } catch (error) {
+
+                if (requestId === specRequestId) {
+                    specFiltersBox.innerHTML = "";
+                }
+
+                return;
+
+            }
+
+            if (requestId !== specRequestId) {
+                return;
+            }
+
+            /* Bỏ giá trị trên địa chỉ không còn tồn tại */
+            Object.keys(state.specFilters).forEach(function (group) {
+
+                const known = groups.find(function (item) { return item.key === group; });
+
+                (state.specFilters[group] || []).slice().forEach(function (value) {
+
+                    if (!known || !known.values.some(function (item) { return item.value === value; })) {
+                        removeSpecFilter(group, value);
+                    }
+
+                });
+
+            });
+
+            specFiltersBox.innerHTML = groups.map(function (group, index) {
+
+                const selected = state.specFilters[group.key] || [];
+
+                const open = index < 3 || selected.length > 0;
+
+                return `
+                    <details class="filter-group spec-filter-group" data-group="${escapeHtml(group.key)}" ${open ? "open" : ""}>
+                        <summary><h4>${escapeHtml(group.title)}</h4></summary>
+                        <div class="spec-filter-options">
+                            ${group.values.map(function (item) {
+
+                                const label = item.label || item.value;
+
+                                return `
+                                    <label>
+                                        <input type="checkbox" data-group="${escapeHtml(group.key)}" value="${escapeHtml(item.value)}" ${selected.indexOf(item.value) !== -1 ? "checked" : ""}>
+                                        <span>${escapeHtml(label)}</span>
+                                        <small>${escapeHtml(String(item.count))}</small>
+                                    </label>
+                                `;
+
+                            }).join("")}
+                        </div>
+                    </details>
+                `;
+
+            }).join("");
+
+            specFiltersBox.querySelectorAll('input[type="checkbox"]').forEach(function (box) {
+
+                box.addEventListener("change", function () {
+
+                    if (box.checked) {
+                        addSpecFilter(box.dataset.group, box.value);
+                    } else {
+                        removeSpecFilter(box.dataset.group, box.value);
+                    }
+
+                    state.page = 0;
+
+                    syncUrl();
+
+                    loadProducts();
+
+                });
+
+            });
+
+        }
+
         function getCategoryLabel(categoryKey) {
 
             const radio = Array.from(document.querySelectorAll('input[name="category"]')).find(function (input) {
@@ -451,6 +623,16 @@ document.addEventListener(
 
             if (state.maxPrice !== null) {
                 params.set("maxPrice", String(state.maxPrice));
+            }
+
+            if (categoryId) {
+
+                Object.keys(state.specFilters).forEach(function (group) {
+                    state.specFilters[group].forEach(function (value) {
+                        params.append(group === "need" ? "need" : "filter", group === "need" ? value : group + ":" + value);
+                    });
+                });
+
             }
 
 
@@ -756,11 +938,15 @@ document.addEventListener(
 
                         state.brandId = "";
 
+                        state.specFilters = {};
+
                         state.page = 0;
 
                         syncUrl();
 
                         buildBrandFilters();
+
+                        buildSpecFilters();
 
                         loadProducts();
 
@@ -808,6 +994,8 @@ document.addEventListener(
 
                     state.maxPrice = null;
 
+                    state.specFilters = {};
+
                     state.search = "";
 
                     state.sort = sortSelect.options[0].value;
@@ -837,6 +1025,8 @@ document.addEventListener(
                     syncUrl();
 
                     buildBrandFilters();
+
+                    buildSpecFilters();
 
                     loadProducts();
 

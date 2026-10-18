@@ -1,11 +1,17 @@
-/* ================= TRANG THANH TOÁN CHUYỂN KHOẢN ================= */
+/* ================= TRANG THANH TOÁN (CHUYỂN KHOẢN / THẺ QUỐC TẾ) ================= */
 
 /*
- * customer/payment.html?id=<id đơn>: hiện ngay sau khi đặt đơn chuyển khoản.
+ * customer/payment.html?id=<id đơn>: hiện ngay sau khi đặt đơn chuyển khoản hoặc thẻ.
  * Dữ liệu: GET /api/v1/orders/{id} (fetchMyOrder). Cứ 5 giây hỏi lại một lần; khi
- * webhook ngân hàng xác nhận (payment.status = PAID) trang tự chuyển sang
- * "Đã nhận được thanh toán". Đơn không còn chờ tiền (đã hủy, đổi cách trả...) →
- * khối thông báo. Mọi dữ liệu đưa vào innerHTML đều escape.
+ * tiền về (payment.status = PAID) trang tự chuyển sang "Đã nhận được thanh toán".
+ * - Chuyển khoản: thông tin trên (có nút sao chép STK / số tiền / nội dung), QR dưới;
+ *   webhook ngân hàng xác nhận.
+ * - Thẻ quốc tế (kế hoạch v5 GĐ5, Stripe chế độ Test): nút mở Stripe Checkout; &start=card
+ *   (vừa đặt đơn) → tự mở. Stripe đưa khách về &card=paid (hỏi lại Stripe qua
+ *   POST …/payment/card-refresh, chạy cả khi không có webhook) hoặc &card=back (chưa trả).
+ * - "Huỷ thanh toán": huỷ đơn, trả lượt voucher, đưa đúng sản phẩm về giỏ → trang giỏ hàng.
+ * Đơn không còn chờ tiền (đã huỷ, đổi cách trả...) → khối thông báo. Mọi dữ liệu đưa vào
+ * innerHTML đều escape.
  */
 
 const PAYMENT_POLL_MS = 5000;
@@ -14,6 +20,16 @@ const PAYMENT_AUTO_OPEN_MS = 4000;
 
 /* Chế độ demo (PAYMENT_SIMULATOR_ENABLED): QR hiện đủ 1 phút là tính đã chuyển khoản */
 const PAYMENT_DEMO_AFTER_MS = 60000;
+
+/* Quay về từ Stripe (&card=paid): webhook có thể tới chậm vài giây → hỏi Stripe thêm vài lần */
+const CARD_REFRESH_TRIES = 6;
+
+/* Logo ngân hàng theo mã BIN VietQR (api.vietqr.io/img/<mã>.png); không có → chỉ hiện tên */
+const BANK_LOGO_CODES = {
+    "970436": "VCB", "970422": "MB", "970407": "TCB", "970415": "ICB", "970418": "BIDV",
+    "970432": "VPB", "970423": "TPB", "970405": "VBA", "970416": "ACB", "970403": "STB",
+    "970441": "VIB", "970443": "SHB", "970437": "HDB", "970426": "MSB", "970448": "OCB"
+};
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -29,11 +45,23 @@ document.addEventListener(
         }
 
 
-        const orderId = new URLSearchParams(window.location.search).get("id");
+        const params = new URLSearchParams(window.location.search);
+
+        const orderId = params.get("id");
+
+        const cardReturn = params.get("card");
+
+        let autoStartCard = params.get("start") === "card";
+
+        let cardRefreshLeft = cardReturn === "paid" ? CARD_REFRESH_TRIES : 0;
 
         const loading = document.getElementById("payLoading");
 
         const errorBox = document.getElementById("payError");
+
+        const cardButton = document.getElementById("payCardBtn");
+
+        let currentOrder = null;
 
         let timer = null;
 
@@ -45,6 +73,11 @@ document.addEventListener(
         if (!orderId || !/^\d{1,18}$/.test(orderId)) {
             showOnly("payNotFound");
             return;
+        }
+
+        /* Bỏ start / card khỏi địa chỉ: tải lại hoặc Back từ Stripe không tự mở Stripe lần nữa */
+        if (autoStartCard || cardReturn) {
+            history.replaceState(null, "", window.location.pathname + "?id=" + encodeURIComponent(orderId));
         }
 
         const orderUrl = getOrderDetailUrl(orderId);
@@ -66,6 +99,24 @@ document.addEventListener(
             }
         });
 
+        cardButton.addEventListener("click", openStripe);
+
+        document.getElementById("payCancelBtn").addEventListener("click", function () {
+
+            if (!currentOrder) {
+                return;
+            }
+
+            confirmCancelPayment(currentOrder, function () {
+
+                stop();
+
+                window.location.replace("cart.html");
+
+            });
+
+        });
+
 
         await load(true);
 
@@ -76,13 +127,25 @@ document.addEventListener(
 
             try {
 
-                order = await fetchMyOrder(orderId);
+                order = cardRefreshLeft > 0
+                    ? await refreshCardPayment(orderId)
+                    : await fetchMyOrder(orderId);
 
             } catch (error) {
 
                 if (!isLoggedIn()) {
                     redirectToLogin();
                     return;
+                }
+
+                if (error.status === 404) {
+                    showOnly("payNotFound");
+                    return;
+                }
+
+                /* Hỏi Stripe lỗi: lần sau đọc đơn như thường (webhook vẫn có thể xác nhận) */
+                if (cardRefreshLeft > 0) {
+                    cardRefreshLeft = 0;
                 }
 
                 /* Lỗi khi đang chờ: bỏ qua, lần hỏi sau thử lại */
@@ -102,6 +165,12 @@ document.addEventListener(
                 return;
             }
 
+            if (cardRefreshLeft > 0) {
+                cardRefreshLeft--;
+            }
+
+            currentOrder = order;
+
             render(order);
 
         }
@@ -109,17 +178,24 @@ document.addEventListener(
 
         function render(order) {
 
-            const transfer = order.payment ? order.payment.bankTransfer : null;
+            const payment = order.payment;
+
+            const transfer = payment ? payment.bankTransfer : null;
+
+            const card = payment ? payment.card : null;
+
+            const online = order.paymentMethod === "BANK_TRANSFER" || order.paymentMethod === "CARD";
 
             document.getElementById("pageTitle").textContent = "Thanh toán đơn " + order.code + " - POY";
 
 
-            if (order.paymentMethod === "BANK_TRANSFER" && order.payment && order.payment.status === "PAID") {
+            if (online && payment && payment.status === "PAID") {
 
                 stop();
 
                 document.getElementById("payDoneText").textContent =
-                    "Đơn " + order.code + " (" + formatPrice(order.total) + ") đã được thanh toán. "
+                    "Đơn " + order.code + " (" + formatPrice(order.total) + ") đã được thanh toán"
+                    + (order.paymentMethod === "CARD" ? " bằng thẻ" : "") + ". "
                     + "Cửa hàng sẽ xác nhận và giao hàng cho bạn. Đang chuyển tới đơn hàng…";
 
                 showOnly("payDone");
@@ -133,19 +209,19 @@ document.addEventListener(
             }
 
 
-            if (!transfer || order.status === "CANCELLED") {
+            if ((!transfer && !card) || order.status === "CANCELLED") {
 
                 stop();
 
                 const cancelled = order.status === "CANCELLED";
 
                 document.getElementById("payClosedTitle").textContent = cancelled
-                    ? "Đơn hàng đã được hủy"
-                    : "Đơn hàng không cần chuyển khoản";
+                    ? "Đơn hàng đã được huỷ"
+                    : "Đơn hàng không cần thanh toán trước";
 
                 document.getElementById("payClosedText").textContent = cancelled
-                    ? "Đơn " + order.code + " đã hủy nên không còn chờ thanh toán."
-                    : "Đơn " + order.code + " không ở trạng thái chờ chuyển khoản.";
+                    ? "Đơn " + order.code + " đã huỷ nên không còn chờ thanh toán."
+                    : "Đơn " + order.code + " không ở trạng thái chờ thanh toán.";
 
                 showOnly("payClosed");
 
@@ -154,20 +230,54 @@ document.addEventListener(
             }
 
 
-            renderWaiting(order, transfer);
+            renderHead(order, transfer || card);
+
+            if (card) {
+                renderCard(card);
+            } else {
+                renderTransfer(transfer);
+            }
 
             showOnly("payWaiting");
+
+            if (autoStartCard && card) {
+
+                autoStartCard = false;
+
+                openStripe();
+
+                return;
+
+            }
 
             schedule();
 
         }
 
 
-        function renderWaiting(order, transfer) {
+        function renderHead(order, pending) {
 
             document.getElementById("payOrderCode").textContent = order.code;
 
-            document.getElementById("payAmount").textContent = formatPrice(transfer.amount);
+            document.getElementById("payAmount").textContent = formatPrice(order.payment.amount || order.total);
+
+            document.getElementById("payMethodLine").textContent = order.paymentMethod === "CARD"
+                ? "Thẻ quốc tế (Visa / Mastercard)"
+                : "Chuyển khoản ngân hàng";
+
+            startCountdown(pending.payBefore, order.paymentMethod === "CARD");
+
+        }
+
+
+        function renderTransfer(transfer) {
+
+            document.getElementById("payTransferBody").hidden = false;
+
+            document.getElementById("payCardBody").hidden = true;
+
+            document.getElementById("payWaitingText").textContent =
+                "Đang chờ nhận tiền… Trang tự cập nhật khi cửa hàng nhận được tiền.";
 
 
             const qr = document.getElementById("payQr");
@@ -181,21 +291,102 @@ document.addEventListener(
             }
 
 
+            const logoCode = BANK_LOGO_CODES[transfer.bankBin];
+
+            const bankHtml = (logoCode
+                ? `<img class="pay-bank-logo" src="https://api.vietqr.io/img/${logoCode}.png" alt="">`
+                : "") + escapeHtml(transfer.bankName);
+
             document.getElementById("payFacts").innerHTML = [
-                row("Ngân hàng", escapeHtml(transfer.bankName)),
+                row("Ngân hàng", bankHtml),
                 row("Chủ tài khoản", escapeHtml(transfer.accountName)),
                 row("Số tài khoản", escapeHtml(transfer.accountNumber), transfer.accountNumber, "số tài khoản"),
-                row("Số tiền", escapeHtml(formatPrice(transfer.amount)), null, null, true),
-                row("Nội dung", escapeHtml(transfer.transferContent), null, null, true)
+                row("Số tiền", escapeHtml(formatPrice(transfer.amount)), String(Math.ceil(transfer.amount)), "số tiền", true),
+                row("Nội dung", escapeHtml(transfer.transferContent), transfer.transferContent, "nội dung chuyển khoản", true)
             ].join("");
 
+            document.querySelectorAll("#payFacts .pay-bank-logo").forEach(function (logo) {
+                logo.addEventListener("error", function () { logo.remove(); });
+            });
 
-            startCountdown(transfer.payBefore);
 
             /* Demo: QR đã hiện 1 phút trên trang → coi như đã nhận tiền; rời trang trước đó thì chưa tính */
             if (transfer.demoAutoPay && !demoTimer) {
                 demoTimer = setTimeout(confirmDemoPayment, PAYMENT_DEMO_AFTER_MS);
             }
+
+        }
+
+
+        function renderCard(card) {
+
+            document.getElementById("payTransferBody").hidden = true;
+
+            document.getElementById("payCardBody").hidden = false;
+
+            document.getElementById("payCardTest").hidden = !card.testMode;
+
+            document.getElementById("payWaitingText").textContent = cardRefreshLeft > 0
+                ? "Đang xác nhận thanh toán với Stripe…"
+                : "Chưa nhận được thanh toán thẻ. Bấm nút trên để thanh toán.";
+
+            const notice = document.getElementById("payCardNotice");
+
+            if (cardReturn === "back" || (cardReturn === "paid" && cardRefreshLeft === 0)) {
+
+                notice.textContent = cardReturn === "back"
+                    ? "Bạn chưa hoàn tất thanh toán thẻ. Bấm \"Thanh toán bằng thẻ\" để thử lại, hoặc huỷ thanh toán để lấy lại giỏ hàng."
+                    : "Chưa nhận được xác nhận từ Stripe. Nếu bạn đã thanh toán, trang sẽ tự cập nhật trong giây lát.";
+
+                notice.hidden = false;
+
+            }
+
+        }
+
+
+        /* POST …/payment/card-checkout → chuyển sang trang Stripe (hoặc đã trả rồi → tải lại) */
+        async function openStripe() {
+
+            cardButton.disabled = true;
+
+            cardButton.querySelector("span").textContent = "Đang mở Stripe…";
+
+            let result;
+
+            try {
+
+                result = await startCardCheckout(orderId, window.location.origin + window.location.pathname);
+
+            } catch (error) {
+
+                cardButton.disabled = false;
+
+                cardButton.querySelector("span").textContent = "Thanh toán bằng thẻ";
+
+                showToast(getErrorMessage(error), "error");
+
+                schedule();
+
+                return;
+
+            }
+
+            if (result && result.checkoutUrl) {
+
+                stop();
+
+                window.location.href = result.checkoutUrl;
+
+                return;
+
+            }
+
+            cardButton.disabled = false;
+
+            cardButton.querySelector("span").textContent = "Thanh toán bằng thẻ";
+
+            load(false);
 
         }
 
@@ -217,7 +408,7 @@ document.addEventListener(
         }
 
 
-        function startCountdown(payBefore) {
+        function startCountdown(payBefore, card) {
 
             clearInterval(countdown);
 
@@ -230,12 +421,15 @@ document.addEventListener(
                 return;
             }
 
+            const verb = card ? "Thanh toán" : "Chuyển khoản";
+
             const tick = function () {
 
                 const left = end - Date.now();
 
                 if (left <= 0) {
-                    line.textContent = "Đã quá hạn chuyển khoản (" + formatOrderDateTime(payBefore) + "). Liên hệ cửa hàng nếu bạn đã chuyển.";
+                    line.textContent = "Đã quá hạn thanh toán (" + formatOrderDateTime(payBefore) + "). Liên hệ cửa hàng nếu bạn đã trả tiền.";
+                    line.classList.add("is-late");
                     clearInterval(countdown);
                     return;
                 }
@@ -246,7 +440,7 @@ document.addEventListener(
                     ? Math.floor(minutes / 60) + " giờ " + (minutes % 60) + " phút"
                     : minutes + " phút " + String(Math.floor((left % 60000) / 1000)).padStart(2, "0") + " giây";
 
-                line.textContent = "Chuyển khoản trong " + text + " (trước " + formatOrderDateTime(payBefore) + ")";
+                line.textContent = verb + " trong " + text + " (trước " + formatOrderDateTime(payBefore) + ")";
 
             };
 
@@ -271,7 +465,7 @@ document.addEventListener(
 
             timer = setTimeout(function () {
                 load(false);
-            }, PAYMENT_POLL_MS);
+            }, cardRefreshLeft > 0 ? 2000 : PAYMENT_POLL_MS);
 
         }
 
@@ -323,6 +517,15 @@ document.addEventListener(
                 await navigator.clipboard.writeText(button.dataset.copy);
 
                 showToast("Đã sao chép " + button.dataset.copyLabel + ".", "success");
+
+                button.textContent = "Đã chép";
+
+                button.classList.add("is-copied");
+
+                setTimeout(function () {
+                    button.textContent = "Sao chép";
+                    button.classList.remove("is-copied");
+                }, 1600);
 
             } catch (error) {
 

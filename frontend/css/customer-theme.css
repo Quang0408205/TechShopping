@@ -564,41 +564,93 @@ h4 {
 
 .mega-menu-grid {
     display: grid;
-    /* --mega-cols: số danh mục đang hiển thị (js/core/main.js renderMegaMenuCategories) */
-    grid-template-columns: repeat(var(--mega-cols, 4), minmax(0, 1fr)) 220px;
+    grid-template-columns: minmax(0, 1fr) 220px;
     gap: var(--space-2);
+}
+
+/* Lưới đều 4 cột: mỗi danh mục một ô cùng kích thước (biểu tượng / ảnh + tên), dễ quét bằng mắt */
+.mega-cards {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    align-content: start;
 }
 
 .mega-card {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: space-between;
-    gap: var(--space-1);
+    gap: 12px;
 
-    height: 190px;
-    padding: var(--space-2);
+    min-height: 72px;
+    padding: 10px 14px 10px 10px;
 
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     background: var(--surface-warm);
 
     font-size: 14px;
     font-weight: 600;
+    line-height: 1.3;
+
+    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+
+.mega-card:hover {
+    border-color: var(--color-ink);
+    background: var(--surface-warm-strong);
+}
+
+.mega-card-visual {
+    flex: 0 0 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 52px;
+    height: 52px;
+
+    border-radius: 12px;
+    background: #fff;
 
     overflow: hidden;
 }
 
-.mega-card img {
+.mega-card-visual img {
     width: 100%;
-    height: 130px;
+    height: 100%;
+    padding: 4px;
+    box-sizing: border-box;
 
     object-fit: contain;
 
     transition: transform var(--duration-slow) var(--ease-standard);
 }
 
-.mega-card:hover img {
-    transform: scale(1.06);
+.mega-card:hover .mega-card-visual img {
+    transform: scale(1.1);
+}
+
+.mega-card-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.category-art {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 100%;
+    height: 100%;
+
+    color: var(--color-ink);
+}
+
+.category-art svg {
+    width: 62%;
+    height: 62%;
+
+    stroke-width: 1.3;
 }
 
 .mega-links {
@@ -701,8 +753,11 @@ h4 {
     padding: var(--space-2);
 
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-1);
+    flex-direction: column;
+    gap: var(--space-2);
+
+    max-height: min(70vh, 560px);
+    overflow-y: auto;
 
     background: #fff;
     border: 1px solid var(--gray-200);
@@ -711,8 +766,18 @@ h4 {
     box-shadow: var(--shadow-md);
 }
 
+.search-suggest[hidden],
+.search-suggest-section[hidden],
+.search-suggest-results[hidden] {
+    display: none;
+}
+
 .search-suggest-label {
-    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 8px;
 
     color: var(--text-muted);
 
@@ -720,7 +785,123 @@ h4 {
     font-weight: 600;
 }
 
-.search-suggest button {
+.search-suggest-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+}
+
+.search-suggest .search-suggest-clear {
+    padding: 0;
+
+    border: 0;
+    background: none;
+
+    color: var(--text-muted);
+    font-size: 12px;
+    text-decoration: underline;
+}
+
+/* Kế hoạch v5 GĐ3: dòng sản phẩm gợi ý (ảnh + tên + giá) */
+.search-result {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 8px;
+
+    border-radius: var(--radius-md);
+
+    color: inherit;
+    text-decoration: none;
+}
+
+.search-result:hover,
+.search-result:focus-visible {
+    background: var(--gray-100);
+    outline: none;
+}
+
+.search-result img {
+    flex-shrink: 0;
+
+    width: 48px;
+    height: 48px;
+
+    object-fit: contain;
+
+    border-radius: var(--radius-sm);
+    background: #fff;
+}
+
+.search-result-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    min-width: 0;
+}
+
+.search-result-name {
+    overflow: hidden;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.search-result-price {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--color-danger, #c0392b);
+}
+
+.search-result-price s {
+    margin-left: 6px;
+
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.search-result-out {
+    margin-left: 6px;
+
+    color: var(--text-muted);
+    font-size: 12px;
+    font-style: normal;
+    font-weight: 500;
+}
+
+.search-suggest-all {
+    display: block;
+
+    margin-top: 4px;
+    padding: 10px 8px 4px;
+
+    border-top: 1px solid var(--gray-200);
+
+    color: var(--color-ink);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.search-suggest-all:hover,
+.search-suggest-all:focus-visible {
+    text-decoration: underline;
+}
+
+.search-suggest-status {
+    margin: 0;
+    padding: 8px;
+
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.search-suggest-chips button {
     padding: 6px 12px;
 
     border: 1px solid var(--gray-300);
@@ -732,8 +913,8 @@ h4 {
     cursor: pointer;
 }
 
-.search-suggest button:hover,
-.search-suggest button:focus-visible {
+.search-suggest-chips button:hover,
+.search-suggest-chips button:focus-visible {
     border-color: var(--color-ink);
 }
 
@@ -1677,6 +1858,78 @@ div[data-include="header"] {
 
     div[data-include="header"] {
         min-height: 149px;
+    }
+
+}
+
+
+/* ================= ĐƠN ĐANG CHỜ THANH TOÁN (giỏ hàng / checkout, kế hoạch v5 GĐ5) ================= */
+
+.awaiting-pay-slot {
+    margin-bottom: 20px;
+}
+
+section.awaiting-pay-slot {
+    margin-top: 20px;
+}
+
+.awaiting-pay {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 18px;
+    border: 1px solid #f0d58a;
+    border-left: 4px solid #e0a100;
+    border-radius: var(--radius-md, 8px);
+    background: #fffaf0;
+}
+
+.awaiting-pay-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #fff0c7;
+    color: #8a5a00;
+}
+
+.awaiting-pay-text strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 15px;
+}
+
+.awaiting-pay-text span {
+    font-size: 13px;
+    color: var(--text-muted, #5f5f68);
+}
+
+.awaiting-pay-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.awaiting-pay-actions .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+
+    .awaiting-pay {
+        grid-template-columns: auto 1fr;
+    }
+
+    .awaiting-pay-actions {
+        grid-column: 1 / -1;
+    }
+
+    .awaiting-pay-actions .btn {
+        flex: 1 1 auto;
+        text-align: center;
     }
 
 }

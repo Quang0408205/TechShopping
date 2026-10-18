@@ -52,6 +52,10 @@ public class SalesReportQueries {
     public record EmployeeRefund(Long employeeId, Integer storeId, BigDecimal amount) {
     }
 
+    public record ComboTotals(Long comboId, String comboName, long orders, long units, BigDecimal discount,
+                              BigDecimal revenue) {
+    }
+
     public record ProductTotals(Long productId, String productName, String categoryName, long units,
                                 BigDecimal revenue) {
     }
@@ -105,7 +109,7 @@ public class SalesReportQueries {
     }
 
     public List<CategoryRow> byCategory(LocalDateTime from, LocalDateTime to, Integer storeId) {
-        return jdbc.query("select c.category_id, c.name, sum(oi.quantity) units, sum(oi.subtotal) revenue "
+        return jdbc.query("select c.category_id, c.name, sum(oi.quantity) units, sum(oi.subtotal - oi.voucher_discount - oi.combo_discount) revenue "
                         + "from order_items oi join orders o on o.order_id = oi.order_id "
                         + "join product_variants v on v.variant_id = oi.variant_id "
                         + "join products p on p.product_id = v.product_id "
@@ -172,7 +176,7 @@ public class SalesReportQueries {
     public List<ProductTotals> topProducts(LocalDateTime from, LocalDateTime to, Integer storeId, int limit) {
         MapSqlParameterSource params = params(from, to, storeId).addValue("limit", limit);
         return jdbc.query("select p.product_id, p.name, c.name category_name, sum(oi.quantity) units, "
-                        + "sum(oi.subtotal) revenue from order_items oi join orders o on o.order_id = oi.order_id "
+                        + "sum(oi.subtotal - oi.voucher_discount - oi.combo_discount) revenue from order_items oi join orders o on o.order_id = oi.order_id "
                         + "join product_variants v on v.variant_id = oi.variant_id "
                         + "join products p on p.product_id = v.product_id "
                         + "left join categories c on c.category_id = p.category_id where" + DELIVERED + store(storeId)
@@ -180,6 +184,15 @@ public class SalesReportQueries {
                         + "limit :limit",
                 params, (rs, i) -> new ProductTotals(rs.getLong("product_id"), rs.getString("name"),
                         rs.getString("category_name"), rs.getLong("units"), rs.getBigDecimal("revenue")));
+    }
+
+    public List<ComboTotals> byCombo(LocalDateTime from, LocalDateTime to, Integer storeId) {
+        return jdbc.query("select oc.combo_id, max(oc.combo_name) name, count(distinct o.order_id) n, sum(oc.units) units, "
+                        + "sum(oc.discount_amount) discount, sum(o.total_amount) revenue "
+                        + "from order_combos oc join orders o on o.order_id = oc.order_id where" + DELIVERED + store(storeId)
+                        + " group by oc.combo_id order by discount desc, oc.combo_id",
+                params(from, to, storeId), (rs, i) -> new ComboTotals(rs.getLong("combo_id"), rs.getString("name"),
+                        rs.getLong("n"), rs.getLong("units"), rs.getBigDecimal("discount"), rs.getBigDecimal("revenue")));
     }
 
     /** Delivered orders of the period, oldest first, at most {@code limit} rows. */

@@ -6,8 +6,13 @@ import com.example.Tech.dto.request.product.ProductUpdateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
+import com.example.Tech.dto.response.product.ProductSuggestResult;
 import com.example.Tech.service.product.ProductService;
+import com.example.Tech.service.product.SearchRateLimiter;
 import io.swagger.v3.oas.annotations.Operation;
+import com.example.Tech.exception.BusinessException;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.annotation.RequestParam;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ProductController {
 
     private final ProductService productService;
+    private final SearchRateLimiter searchRateLimiter;
 
     @GetMapping
     @Operation(summary = "Search products with pagination (soft-deleted products are excluded)",
@@ -47,6 +53,29 @@ public class ProductController {
             @Valid @ParameterObject ProductSearchRequest filter,
             @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(ApiResult.ok(productService.search(filter, pageable)));
+    }
+
+    @GetMapping("/suggest")
+    @Operation(summary = "Search box suggestions: products on sale with image and price (plan v5)",
+            description = "Every word of q must be in the name, the slug (no accents needed) or the brand. "
+                    + "In stock first, then names starting with the first word, then shorter names.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "At most size suggestions + the total number of matches"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (q blank / longer than 100, size not 1-10)"),
+            @ApiResponse(responseCode = "429", description = "TOO_MANY_REQUESTS (per-IP limit)")
+    })
+    public ResponseEntity<ApiResult<ProductSuggestResult>> suggest(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "6") int size,
+            HttpServletRequest httpRequest) {
+        if (q == null || q.isBlank() || q.trim().length() > 100) {
+            throw BusinessException.invalidField("q", "q is required (at most 100 characters)");
+        }
+        if (size < 1 || size > 10) {
+            throw BusinessException.invalidField("size", "size must be 1-10");
+        }
+        searchRateLimiter.acquire(httpRequest.getRemoteAddr());
+        return ResponseEntity.ok(ApiResult.ok(productService.suggest(q, size)));
     }
 
     @GetMapping("/{id}")

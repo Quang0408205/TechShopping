@@ -28,6 +28,7 @@ import com.example.Tech.repository.aftersales.WarrantyRequestRepository;
 import com.example.Tech.repository.inventory.InventoryRepository;
 import com.example.Tech.repository.inventory.StockMovementRepository;
 import com.example.Tech.repository.user.CustomerProfileRepository;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.service.aftersales.AdminServiceRequestService;
 import com.example.Tech.service.store.StoreAccessGuard;
 import lombok.RequiredArgsConstructor;
@@ -71,6 +72,7 @@ public class AdminServiceRequestServiceImpl implements AdminServiceRequestServic
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final CustomerProfileRepository customerProfileRepository;
+    private final LoyaltyService loyaltyService;
     private final Clock clock;
 
     @Override
@@ -201,6 +203,7 @@ public class AdminServiceRequestServiceImpl implements AdminServiceRequestServic
                     returnRequestRepository.flush();
                     // the refunded amount no longer counts as the customer's spending (clears the persistence context)
                     customerProfileRepository.addToTotalSpent(r.getUser().getId(), r.getRefundAmount().negate());
+                    loyaltyService.onReturnRefunded(id);
                 }
             }
         }

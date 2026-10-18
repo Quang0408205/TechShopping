@@ -104,7 +104,11 @@
                 </div>
 
                 <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên -->
-                <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
+                <div class="detail-thumb-strip">
+                    <button type="button" class="detail-thumb-nav" id="thumbPrev" aria-label="Ảnh trước">&#8249;</button>
+                    <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
+                    <button type="button" class="detail-thumb-nav" id="thumbNext" aria-label="Ảnh sau">&#8250;</button>
+                </div>
 
             </div>
 
@@ -128,9 +132,18 @@
                 </div>
 
 
+                <!-- Kế hoạch v5 GĐ2: trái = phiên bản (RAM + bộ nhớ), phải = màu của phiên bản đang chọn -->
                 <div class="detail-variants" id="detailVariants" hidden>
-                    <span class="variant-label">Phiên bản</span>
-                    <div class="variant-options" id="variantOptions"></div>
+                    <div class="variant-picker" id="variantPicker">
+                        <div class="variant-column" id="versionColumn">
+                            <span class="variant-label">Phiên bản</span>
+                            <div class="variant-options" id="variantOptions" role="group" aria-label="Phiên bản"></div>
+                        </div>
+                        <div class="variant-column" id="colorColumn" hidden>
+                            <span class="variant-label">Màu sắc<span class="variant-label-value" id="selectedColorName"></span></span>
+                            <div class="variant-options" id="colorOptions" role="group" aria-label="Màu sắc"></div>
+                        </div>
+                    </div>
                 </div>
 
 
@@ -182,6 +195,20 @@
             </div>
 
         </div>
+
+
+        <!-- ================= MUA KÈM TIẾT KIỆM (kế hoạch v5 GĐ10): combo đang chạy của sản phẩm này ================= -->
+
+        <section class="combo-zone" id="comboZone" hidden>
+
+            <div class="section-heading">
+                <span class="section-label">COMBO</span>
+                <h2>Mua kèm tiết kiệm</h2>
+            </div>
+
+            <div id="comboList"></div>
+
+        </section>
 
 
         <!-- ================= TABS: THÔNG SỐ / MÔ TẢ / ĐÁNH GIÁ ================= -->

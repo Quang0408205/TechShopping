@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Voucher - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- Kế hoạch v5 GĐ4: voucher giảm % cho đơn hàng, chỉ ADMIN -->
+<body class="admin-body" data-page-title="Voucher" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="vouchers"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="voucherFilterForm" role="search">
+
+                    <input type="search" id="voucherKeyword" placeholder="Tìm mã hoặc tên voucher…" maxlength="100" aria-label="Từ khoá">
+
+                    <select id="voucherStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="RUNNING">Đang áp dụng</option>
+                        <option value="UPCOMING">Sắp áp dụng</option>
+                        <option value="PAUSED">Tạm dừng</option>
+                        <option value="ENDED">Đã kết thúc</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newVoucherBtn">
+                    + THÊM VOUCHER
+                </button>
+
+            </div>
+
+
+            <!-- Thêm / sửa voucher -->
+            <section class="admin-panel" id="voucherFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="voucherFormTitle">Thêm voucher</h2>
+                </div>
+
+                <form id="voucherForm" novalidate>
+
+                    <p id="voucherFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="vcCode">Mã voucher *</label>
+                            <input type="text" id="vcCode" maxlength="30" required placeholder="VD: POY10" autocomplete="off">
+                            <span class="admin-field-hint">3–30 ký tự: chữ không dấu, số, - hoặc _. Tự viết hoa.</span>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcName">Tên hiển thị *</label>
+                            <input type="text" id="vcName" maxlength="150" required placeholder="VD: Giảm 10% đơn từ 5 triệu">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="vcDescription">Mô tả</label>
+                            <textarea id="vcDescription" rows="2" maxlength="2000"></textarea>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcPercent">Giảm (%) *</label>
+                            <input type="number" id="vcPercent" min="0.01" max="100" step="0.01" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcMax">Giảm tối đa (đ)</label>
+                            <input type="number" id="vcMax" min="1" step="1000" placeholder="Để trống = không giới hạn">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcMin">Đơn tối thiểu (đ)</label>
+                            <input type="number" id="vcMin" min="0" step="1000" placeholder="Để trống = 0">
+                            <span class="admin-field-hint">Tính trên tiền hàng thuộc phạm vi, sau khuyến mãi sản phẩm, chưa gồm phí ship.</span>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcStart">Bắt đầu *</label>
+                            <input type="datetime-local" id="vcStart" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcEnd">Kết thúc *</label>
+                            <input type="datetime-local" id="vcEnd" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcUsageLimit">Tổng lượt dùng</label>
+                            <input type="number" id="vcUsageLimit" min="1" step="1" placeholder="Để trống = không giới hạn">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="vcPerCustomer">Lượt mỗi khách *</label>
+                            <input type="number" id="vcPerCustomer" min="1" step="1" value="1" required>
+                        </div>
+
+                        <label class="admin-field-check">
+                            <input type="checkbox" id="vcActive" checked>
+                            Đang bật (bỏ chọn = tạm dừng)
+                        </label>
+
+                        <fieldset class="admin-field admin-field-wide">
+
+                            <legend>Phạm vi áp dụng *</legend>
+
+                            <label class="admin-field-check">
+                                <input type="radio" name="vcScope" value="ALL" checked>
+                                Toàn bộ sản phẩm
+                            </label>
+
+                            <label class="admin-field-check">
+                                <input type="radio" name="vcScope" value="CATEGORIES">
+                                Chỉ một số danh mục
+                            </label>
+
+                            <div class="admin-voucher-categories" id="vcCategories" hidden></div>
+
+                        </fieldset>
+
+                        <p class="admin-field admin-field-wide admin-voucher-preview" id="vcPreview" aria-live="polite"></p>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="voucherSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="voucherCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <!-- Đơn hàng đã dùng một voucher -->
+            <section class="admin-panel" id="voucherUsagePanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="voucherUsageTitle">Đơn đã dùng voucher</h2>
+                    <button type="button" class="admin-link-btn" id="voucherUsageClose">Đóng</button>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Đơn hàng</th>
+                                <th>Khách hàng</th>
+                                <th>Giảm</th>
+                                <th>Tổng đơn</th>
+                                <th>Thời gian</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="voucherUsageBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="voucherUsagePagination"></div>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách voucher</h2>
+                    <span class="admin-row-count" id="voucherRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Voucher</th>
+                                <th>Mức giảm</th>
+                                <th>Điều kiện</th>
+                                <th>Thời gian</th>
+                                <th>Lượt dùng</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="voucherTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="voucherPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/vouchers.js"></script>
+
+</body>
+</html>

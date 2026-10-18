@@ -19,6 +19,9 @@
 
     const FILTER_DRAWER_QUERY = window.matchMedia("(max-width: 899px)");
 
+    /* Số Zalo nhận tin nhắn của khách (chỉ chữ số, vd "0901234567"); để trống thì không hiện bong bóng Zalo */
+    const ZALO_PHONE = "";
+
     const ready = typeof layoutReady !== "undefined" ? layoutReady : Promise.resolve();
 
     ready.then(function () {
@@ -26,8 +29,6 @@
         setupMobileNav();
 
         setupMegaMenu();
-
-        setupSearchSuggest();
 
         setupBackToTop();
 
@@ -48,6 +49,56 @@
     setupBuyBar();
 
     setupPasswordToggles();
+
+    setupZaloBubble();
+
+
+    /* Bong bóng chat Zalo nổi ngay trên bong bóng trợ lý AI (thay cho mục "Liên hệ" trên menu) */
+
+    function setupZaloBubble() {
+
+        const phone = ZALO_PHONE.replace(/\D/g, "");
+
+        if (!phone || document.getElementById("zaloBubble")) {
+            return;
+        }
+
+        const link = document.createElement("a");
+
+        link.id = "zaloBubble";
+
+        link.className = "zalo-bubble";
+
+        link.href = "https://zalo.me/" + phone;
+
+        link.target = "_blank";
+
+        link.rel = "noopener noreferrer";
+
+        link.setAttribute("aria-label", "Chat với POY qua Zalo");
+
+        link.title = "Chat qua Zalo";
+
+        link.innerHTML = `<span aria-hidden="true">Zalo</span>`;
+
+        document.body.appendChild(link);
+
+        /* link "Liên hệ" còn trong nội dung trang / chatbot (kể cả link vẽ sau) → mở Zalo */
+        document.addEventListener("click", function (event) {
+
+            const target = event.target.closest('a[href$="contact.html"]');
+
+            if (!target || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) {
+                return;
+            }
+
+            event.preventDefault();
+
+            window.open(link.href, "_blank", "noopener");
+
+        });
+
+    }
 
 
     function reducedMotion() {
@@ -202,121 +253,11 @@
     }
 
 
-    /* ---------- Gợi ý tìm kiếm (dữ liệu tĩnh) ---------- */
+    /* ---------- So khớp không dấu (ô tìm hãng của bộ lọc) ---------- */
 
     function normalize(text) {
 
         return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/đ/g, "d").trim();
-
-    }
-
-
-    function setupSearchSuggest() {
-
-        document.querySelectorAll(".header .search-form").forEach(function (form) {
-
-            const input = form.querySelector("input");
-
-            const panel = form.querySelector(".search-suggest");
-
-            if (!input || !panel) {
-                return;
-            }
-
-            const options = Array.from(panel.querySelectorAll("[data-suggest]"));
-
-
-            function refresh() {
-
-                const query = normalize(input.value);
-
-                let visible = 0;
-
-                options.forEach(function (option) {
-
-                    const match = !query || normalize(option.dataset.suggest).includes(query);
-
-                    option.hidden = !match;
-
-                    visible += match ? 1 : 0;
-
-                });
-
-                panel.hidden = visible === 0;
-
-            }
-
-
-            input.addEventListener("focus", refresh);
-
-            input.addEventListener("input", refresh);
-
-            input.addEventListener("keydown", function (event) {
-
-                if (event.key === "ArrowDown" && !panel.hidden) {
-
-                    event.preventDefault();
-
-                    const first = options.find(function (option) { return !option.hidden; });
-
-                    if (first) {
-                        first.focus();
-                    }
-
-                }
-
-                if (event.key === "Escape") {
-                    panel.hidden = true;
-                }
-
-            });
-
-            panel.addEventListener("keydown", function (event) {
-
-                const visible = options.filter(function (option) { return !option.hidden; });
-
-                const index = visible.indexOf(document.activeElement);
-
-                if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-                    event.preventDefault();
-                    (visible[index + 1] || visible[0]).focus();
-                }
-
-                if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-                    event.preventDefault();
-                    (visible[index - 1] || input).focus();
-                }
-
-                if (event.key === "Escape") {
-                    panel.hidden = true;
-                    input.focus();
-                }
-
-            });
-
-            form.addEventListener("focusout", function (event) {
-
-                if (!form.contains(event.relatedTarget)) {
-                    panel.hidden = true;
-                }
-
-            });
-
-            options.forEach(function (option) {
-
-                option.addEventListener("click", function () {
-
-                    input.value = option.dataset.suggest;
-
-                    panel.hidden = true;
-
-                    form.requestSubmit();
-
-                });
-
-            });
-
-        });
 
     }
 
@@ -335,7 +276,7 @@
 
         const dots = Array.from(hero.querySelectorAll("[data-hero-dot]"));
 
-        const INTERVAL = 6500;
+        const INTERVAL = 5000;
 
         let current = 0;
 
@@ -652,6 +593,19 @@
                 if (checked && checked.value) {
                     chips.push({ label: labelOf(checked), clear: function () { resetRadio(name); } });
                 }
+
+            });
+
+            /* Nhu cầu + thông số đã tích (kế hoạch v5 GĐ9): mỗi ô một chip, bấm để bỏ ô đó */
+            scope.querySelectorAll('#specFilters input[type="checkbox"]:checked').forEach(function (box) {
+
+                chips.push({
+                    label: labelOf(box).replace(/\s+\d+$/, ""),
+                    clear: function () {
+                        box.checked = false;
+                        box.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                });
 
             });
 

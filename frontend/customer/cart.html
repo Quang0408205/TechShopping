@@ -63,6 +63,9 @@
 
         <div class="container">
 
+            <!-- Kế hoạch v5 GĐ5: đơn chuyển khoản / thẻ còn chờ tiền (khách bấm Back từ trang thanh toán) -->
+            <div id="awaitingPayment" class="awaiting-pay-slot" hidden></div>
+
             <div
                 id="cartContainer"
                 class="cart-container"
@@ -82,10 +85,13 @@
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
+<script src="../js/core/vn-address.js"></script>
 <script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/order-info.js"></script>
+<script src="../js/customer/awaiting-payment.js"></script>
 <script src="../js/customer/cart.js"></script>
 <script src="../js/customer/chatbot.js"></script>
 <script src="../js/customer/ui-effects.js"></script>

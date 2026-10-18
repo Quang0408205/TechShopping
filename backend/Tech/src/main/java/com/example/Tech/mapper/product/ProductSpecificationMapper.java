@@ -17,6 +17,7 @@ public class ProductSpecificationMapper {
         specification.setSpecName(request.specName().trim());
         specification.setSpecValue(request.specValue().trim());
         specification.setSpecOrder(request.specOrder());
+        specification.setVariantId(request.variantId());
         return specification;
     }
 
@@ -32,7 +33,8 @@ public class ProductSpecificationMapper {
                 specification.getProduct().getId(),
                 specification.getSpecName(),
                 specification.getSpecValue(),
-                specification.getSpecOrder()
+                specification.getSpecOrder(),
+                specification.getVariantId()
         );
     }
 }

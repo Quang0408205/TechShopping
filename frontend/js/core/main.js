@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     setupHeaderSearch();
 
+    setupSearchSuggestions();
+
     setupHeaderScrollEffect();
 
     setupScrollReveal();
@@ -34,7 +36,7 @@ document.addEventListener("DOMContentLoaded", async function () {
  * ADMIN đặt). Lỗi tải danh mục → giữ thẻ viết sẵn. Trang không có header (auth/) → bỏ qua.
  */
 
-const MEGA_MENU_MAX_CATEGORIES = 6;
+const MEGA_MENU_MAX_CATEGORIES = 12;
 
 async function renderMegaMenuCategories() {
 
@@ -56,11 +58,13 @@ async function renderMegaMenuCategories() {
 
     }
 
-    grid.querySelectorAll(".mega-card").forEach(function (card) {
-        card.remove();
-    });
+    const cards = grid.querySelector(".mega-cards");
 
-    const links = grid.querySelector(".mega-links");
+    if (!cards) {
+        return;
+    }
+
+    cards.innerHTML = "";
 
     categories.forEach(function (category) {
 
@@ -71,15 +75,13 @@ async function renderMegaMenuCategories() {
         card.href = categoryUrlOf(category);
 
         card.innerHTML = `
-            <img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">
-            <span>${escapeHtml(category.name)}</span>
+            <span class="mega-card-visual">${categoryVisualHtml(category)}</span>
+            <span class="mega-card-name">${escapeHtml(category.name)}</span>
         `;
 
-        grid.insertBefore(card, links);
+        cards.appendChild(card);
 
     });
-
-    grid.style.setProperty("--mega-cols", String(Math.max(categories.length, 1)));
 
 }
 
@@ -282,6 +284,8 @@ function setupHeaderSearch() {
 
                 const keyword = input ? input.value.trim() : "";
 
+                rememberSearch(keyword);
+
 
                 window.location.href =
                     siteUrl("customer/products.html") +
@@ -290,6 +294,350 @@ function setupHeaderSearch() {
             });
 
         });
+
+}
+
+
+/* ================= GỢI Ý DƯỚI Ô TÌM KIẾM (kế hoạch v5 GĐ3) ================= */
+
+/*
+ * Ô trống: "Tìm gần đây" (5 từ khoá cuối, localStorage poy_recent_searches) + "Tìm nhiều" (chip trong header).
+ * Gõ 1 ký tự: lọc 2 nhóm chip. Gõ ≥ 2 ký tự: chờ người dùng ngừng gõ rồi hỏi GET /products/suggest
+ * (công khai, không gửi token) → tối đa 6 sản phẩm có ảnh + giá + "Xem tất cả". Kết quả cũ về muộn bị bỏ.
+ */
+
+const RECENT_SEARCH_KEY = "poy_recent_searches";
+
+const RECENT_SEARCH_MAX = 5;
+
+const SEARCH_SUGGEST_DELAY = 250;
+
+const SEARCH_SUGGEST_MIN_LENGTH = 2;
+
+
+function readRecentSearches() {
+
+    try {
+
+        const list = JSON.parse(localStorage.getItem(RECENT_SEARCH_KEY) || "[]");
+
+        return Array.isArray(list)
+            ? list.filter(function (item) { return typeof item === "string" && item.trim(); }).slice(0, RECENT_SEARCH_MAX)
+            : [];
+
+    } catch (error) {
+
+        return [];
+
+    }
+
+}
+
+
+function rememberSearch(keyword) {
+
+    const text = String(keyword || "").trim().slice(0, 100);
+
+    if (!text) {
+        return;
+    }
+
+    const list = readRecentSearches().filter(function (item) {
+        return item.toLowerCase() !== text.toLowerCase();
+    });
+
+    list.unshift(text);
+
+    try {
+        localStorage.setItem(RECENT_SEARCH_KEY, JSON.stringify(list.slice(0, RECENT_SEARCH_MAX)));
+    } catch (error) {
+        /* không lưu được (chế độ riêng tư…): bỏ qua */
+    }
+
+}
+
+
+function foldSearchText(text) {
+
+    return String(text || "")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .toLowerCase()
+        .trim();
+
+}
+
+
+function searchResultHtml(item) {
+
+    const image = isSafeImageUrl(item.imageUrl) ? item.imageUrl.trim() : getFallbackImage("");
+
+    const price = Number(item.price) || 0;
+
+    const original = Number(item.originalPrice) || 0;
+
+    return `
+        <a class="search-result" role="option" href="${escapeHtml(getProductDetailUrl(item.id))}" data-search-result>
+            <img src="${escapeHtml(image)}" alt="" referrerpolicy="no-referrer" loading="lazy">
+            <span class="search-result-info">
+                <span class="search-result-name">${escapeHtml(item.name)}</span>
+                <span class="search-result-price">
+                    ${price > 0 ? escapeHtml(formatPrice(price)) : "Liên hệ"}
+                    ${original > price && price > 0 ? `<s>${escapeHtml(formatPrice(original))}</s>` : ""}
+                    ${item.inStock ? "" : `<em class="search-result-out">Tạm hết hàng</em>`}
+                </span>
+            </span>
+        </a>
+    `;
+
+}
+
+
+function setupSearchSuggestions() {
+
+    document.querySelectorAll(".header .search-form").forEach(function (form) {
+
+        const input = form.querySelector("input");
+
+        const panel = form.querySelector(".search-suggest");
+
+        if (!input || !panel) {
+            return;
+        }
+
+        const recentBox = panel.querySelector("[data-suggest-recent]");
+
+        const recentList = panel.querySelector("[data-recent-list]");
+
+        const popularBox = panel.querySelector("[data-suggest-popular]");
+
+        const popularChips = Array.from(popularBox.querySelectorAll("[data-suggest]"));
+
+        const results = panel.querySelector("[data-suggest-results]");
+
+        let timer = null;
+
+        let requestNo = 0;
+
+
+        function chipsFor(term) {
+
+            const recent = readRecentSearches().filter(function (item) {
+                return !term || foldSearchText(item).indexOf(term) !== -1;
+            });
+
+            recentList.innerHTML = recent.map(function (item) {
+                return `<button type="button" data-suggest="${escapeHtml(item)}">${escapeHtml(item)}</button>`;
+            }).join("");
+
+            recentBox.hidden = recent.length === 0;
+
+            let popularShown = 0;
+
+            popularChips.forEach(function (chip) {
+                const match = !term || foldSearchText(chip.dataset.suggest).indexOf(term) !== -1;
+                chip.hidden = !match;
+                popularShown += match ? 1 : 0;
+            });
+
+            popularBox.hidden = popularShown === 0;
+
+            results.hidden = true;
+
+            panel.hidden = recent.length === 0 && popularShown === 0;
+
+        }
+
+
+        function showResultsBox(html) {
+
+            recentBox.hidden = true;
+
+            popularBox.hidden = true;
+
+            results.innerHTML = html;
+
+            results.hidden = false;
+
+            panel.hidden = false;
+
+        }
+
+
+        async function loadResults(query) {
+
+            const current = ++requestNo;
+
+            showResultsBox(`<p class="search-suggest-status">Đang tìm…</p>`);
+
+            let data;
+
+            try {
+
+                data = await apiRequest("/products/suggest?" + new URLSearchParams({ q: query, size: 6 }).toString());
+
+            } catch (error) {
+
+                if (current === requestNo) {
+                    showResultsBox(`<p class="search-suggest-status">${escapeHtml(getErrorMessage(error))}</p>`);
+                }
+
+                return;
+
+            }
+
+            /* đã gõ tiếp / xoá ô trong lúc chờ */
+            if (current !== requestNo || input.value.trim() !== query) {
+                return;
+            }
+
+            const items = data && Array.isArray(data.items) ? data.items : [];
+
+            if (items.length === 0) {
+
+                showResultsBox(`<p class="search-suggest-status">Không tìm thấy sản phẩm nào cho “${escapeHtml(query)}”.</p>`);
+
+                return;
+
+            }
+
+            const allUrl = siteUrl("customer/products.html") + "?search=" + encodeURIComponent(query);
+
+            showResultsBox(
+                `<div role="listbox" aria-label="Sản phẩm gợi ý">${items.map(searchResultHtml).join("")}</div>`
+                + `<a class="search-suggest-all" href="${escapeHtml(allUrl)}" data-search-all>`
+                + `Xem tất cả ${escapeHtml(String(data.total))} kết quả cho “${escapeHtml(query)}” ›</a>`
+            );
+
+        }
+
+
+        function refresh() {
+
+            clearTimeout(timer);
+
+            const query = input.value.trim();
+
+            if (query.length < SEARCH_SUGGEST_MIN_LENGTH) {
+
+                requestNo += 1;
+
+                chipsFor(foldSearchText(query));
+
+                return;
+
+            }
+
+            timer = setTimeout(function () { loadResults(query); }, SEARCH_SUGGEST_DELAY);
+
+        }
+
+
+        function focusables() {
+
+            return Array.from(panel.querySelectorAll("[data-suggest], [data-search-result], [data-search-all]"))
+                .filter(function (element) { return element.offsetParent !== null; });
+
+        }
+
+
+        input.addEventListener("focus", refresh);
+
+        input.addEventListener("input", refresh);
+
+        input.addEventListener("keydown", function (event) {
+
+            if (event.key === "ArrowDown" && !panel.hidden) {
+
+                event.preventDefault();
+
+                const first = focusables()[0];
+
+                if (first) {
+                    first.focus();
+                }
+
+            }
+
+            if (event.key === "Escape") {
+                panel.hidden = true;
+            }
+
+        });
+
+        panel.addEventListener("keydown", function (event) {
+
+            const items = focusables();
+
+            const index = items.indexOf(document.activeElement);
+
+            if (event.key === "ArrowDown" || event.key === "ArrowRight") {
+                event.preventDefault();
+                (items[index + 1] || items[0]).focus();
+            }
+
+            if (event.key === "ArrowUp" || event.key === "ArrowLeft") {
+                event.preventDefault();
+                (items[index - 1] || input).focus();
+            }
+
+            if (event.key === "Escape") {
+                panel.hidden = true;
+                input.focus();
+            }
+
+        });
+
+        form.addEventListener("focusout", function (event) {
+
+            if (!form.contains(event.relatedTarget)) {
+                panel.hidden = true;
+            }
+
+        });
+
+        panel.addEventListener("click", function (event) {
+
+            if (event.target.closest("[data-clear-recent]")) {
+
+                try {
+                    localStorage.removeItem(RECENT_SEARCH_KEY);
+                } catch (error) {
+                    /* bỏ qua */
+                }
+
+                chipsFor(foldSearchText(input.value.trim()));
+
+                input.focus();
+
+                return;
+
+            }
+
+            const chip = event.target.closest("[data-suggest]");
+
+            if (chip) {
+
+                input.value = chip.dataset.suggest;
+
+                panel.hidden = true;
+
+                form.requestSubmit();
+
+                return;
+
+            }
+
+            /* bấm sản phẩm / "Xem tất cả": nhớ từ khoá rồi để link tự chuyển trang */
+            if (event.target.closest("[data-search-result], [data-search-all]")) {
+                rememberSearch(input.value);
+            }
+
+        });
+
+    });
 
 }
 

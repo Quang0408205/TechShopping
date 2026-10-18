@@ -7,6 +7,8 @@ import com.example.Tech.dto.request.product.ProductSearchRequest;
 import com.example.Tech.dto.request.product.ProductUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
+import com.example.Tech.dto.response.product.ProductSuggestResult;
+import com.example.Tech.dto.response.product.ProductSuggestionResponse;
 import com.example.Tech.dto.response.product.ProductVariantOption;
 import com.example.Tech.entity.product.Brand;
 import com.example.Tech.entity.product.Category;
@@ -24,6 +26,7 @@ import com.example.Tech.repository.product.ProductFilterSpecifications;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
+import com.example.Tech.service.product.ProductFilterService;
 import com.example.Tech.service.product.ProductService;
 import com.example.Tech.service.promotion.EffectivePrice;
 import com.example.Tech.service.promotion.PromotionPricingService;
@@ -32,7 +35,9 @@ import com.example.Tech.service.inventory.StockAvailability;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.core.type.TypeReference;
@@ -64,6 +69,7 @@ public class ProductServiceImpl implements ProductService {
     private final StockAvailability stockAvailability;
     private final Clock clock;
     private final ReadCache cache;
+    private final ProductFilterService filterService;
 
     @Override
     public PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable) {
@@ -108,6 +114,46 @@ public class ProductServiceImpl implements ProductService {
             }
         }
         return "";
+    }
+
+    /** Matches looked at before ordering (stock / name), so a few in-stock items are not hidden behind old ids. */
+    private static final int SUGGEST_POOL = 60;
+
+    @Override
+    public ProductSuggestResult suggest(String query, int size) {
+        String text = query == null ? "" : query.trim();
+        if (text.isEmpty()) {
+            return new ProductSuggestResult(List.of(), 0);
+        }
+        Page<Product> page = productRepository.findAll(
+                ProductFilterSpecifications.matching(new ProductSearchRequest(text, null, null, true, null, null)),
+                PageRequest.of(0, SUGGEST_POOL, Sort.by("id")));
+        List<Product> pool = page.getContent();
+        List<Long> ids = pool.stream().map(Product::getId).toList();
+        Map<Long, String> imageUrls = primaryImageUrls(ids);
+        Map<Long, EffectivePrice> prices = pricingService.resolveProducts(pool, LocalDateTime.now(clock));
+        Map<Long, Integer> available = stockAvailability.byProduct(ids);
+        String firstWord = SlugUtil.toSlug(text.split("\\s+")[0]);
+        Comparator<Product> order = Comparator
+                .<Product>comparingInt(product -> available.getOrDefault(product.getId(), 0) > 0 ? 0 : 1)
+                .thenComparingInt(product -> product.getSlug() != null && !firstWord.isEmpty()
+                        && product.getSlug().startsWith(firstWord) ? 0 : 1)
+                .thenComparingInt(product -> product.getName().length())
+                .thenComparing(Product::getId);
+        List<ProductSuggestionResponse> items = pool.stream()
+                .sorted(order)
+                .limit(size)
+                .map(product -> {
+                    EffectivePrice price = prices.get(product.getId());
+                    return new ProductSuggestionResponse(product.getId(), product.getName(),
+                            product.getBrand() == null ? null : product.getBrand().getName(),
+                            product.getCategory() == null ? null : product.getCategory().getName(),
+                            imageUrls.get(product.getId()), price.unitPrice(),
+                            price.hasDiscount() ? price.originalPrice() : null,
+                            available.getOrDefault(product.getId(), 0) > 0);
+                })
+                .toList();
+        return new ProductSuggestResult(items, page.getTotalElements());
     }
 
     @Override
@@ -213,6 +259,7 @@ public class ProductServiceImpl implements ProductService {
 
         Product saved = productRepository.saveAndFlush(product);
         evictProduct(id);
+        filterService.reindex(id);
         log.info("Updated product id={}", id);
         return toResponse(saved);
     }

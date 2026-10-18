@@ -22,6 +22,13 @@ public record ProductImageInput(
         String altText,
 
         @Schema(description = "Exactly one image of the list must be primary")
-        Boolean isPrimary
+        Boolean isPrimary,
+        @Schema(description = "Tên màu (trùng màu của một phiên bản); trống = ảnh chung cho mọi màu")
+        @Size(max = 50, message = "Color must be at most 50 characters")
+        String color
 ) {
+
+    public ProductImageInput(String imageUrl, String altText, Boolean isPrimary) {
+        this(imageUrl, altText, isPrimary, null);
+    }
 }

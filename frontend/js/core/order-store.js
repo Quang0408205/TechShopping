@@ -44,7 +44,8 @@ const DELIVERY_TYPE_LABELS = {
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng (COD)",
     BANK_TRANSFER: "Chuyển khoản ngân hàng",
-    INSTALLMENT: "Trả góp 0% qua thẻ tín dụng"
+    INSTALLMENT: "Trả góp 0% qua thẻ tín dụng",
+    CARD: "Thẻ quốc tế (Visa / Mastercard)"
 };
 
 /* Phase 5: trạng thái thanh toán (COD / chuyển khoản) và hợp đồng trả góp; tone = màu huy hiệu */
@@ -111,12 +112,21 @@ async function placeOrder(input) {
 
 /* { orders, page, totalPages, totalElements } */
 
-async function fetchMyOrders(page) {
+async function fetchMyOrders(page, filter) {
 
     const params = new URLSearchParams({
         page: String(page || 0),
         size: String(ORDERS_PAGE_SIZE)
     });
+
+    /* Kế hoạch v5 GĐ6: lọc theo trạng thái (lặp tham số) + từ khoá (mã đơn / tên sản phẩm) */
+    ((filter && filter.statuses) || []).forEach(function (status) {
+        params.append("status", status);
+    });
+
+    if (filter && filter.keyword) {
+        params.set("keyword", filter.keyword);
+    }
 
     const result = await apiRequest("/orders?" + params.toString(), { auth: true });
 
@@ -162,6 +172,137 @@ async function cancelMyOrder(id) {
 }
 
 
+/* Kế hoạch v5 GĐ6: số đơn theo tab lịch sử { all, pending, inProgress, delivered, cancelled } */
+
+async function fetchOrderCounts() {
+
+    return apiRequest("/orders/summary", { auth: true });
+
+}
+
+
+/*
+ * "Mua lại" (đơn đã giao / đã huỷ): server thêm các sản phẩm còn bán vào giỏ với giá mới nhất. Có sản phẩm bị bỏ
+ * qua → hộp thông báo liệt kê lý do rồi mới mở giỏ; không thêm được gì → chỉ báo lỗi.
+ */
+
+async function buyAgain(orderId, button) {
+
+    if (button) {
+        button.disabled = true;
+    }
+
+    let result;
+
+    try {
+
+        result = await apiRequest("/orders/" + encodeURIComponent(orderId) + "/reorder", { method: "POST", auth: true });
+
+    } catch (error) {
+
+        showToast(getErrorMessage(error), "error");
+
+        if (button) {
+            button.disabled = false;
+        }
+
+        return;
+
+    }
+
+    if (typeof setCartCount === "function") {
+        setCartCount(result.cartQuantity);
+    }
+
+    const cartUrl = siteUrl("customer/cart.html");
+
+    const skipped = result.skipped.map(function (line) {
+        return line.productName + (line.variantName ? " (" + line.variantName + ")" : "") + ": " + line.reason;
+    });
+
+    if (result.added.length === 0) {
+
+        showToast("Không thêm được sản phẩm nào vào giỏ. " + skipped.join("; "), "error");
+
+        if (button) {
+            button.disabled = false;
+        }
+
+        return;
+
+    }
+
+    if (skipped.length === 0) {
+
+        window.location.href = cartUrl;
+
+        return;
+
+    }
+
+    openConfirmModal({
+        title: "Đã thêm " + result.added.length + " sản phẩm vào giỏ",
+        message: "Một số sản phẩm không thêm được: " + skipped.join("; ") + ".",
+        cancelLabel: "Ở lại",
+        confirmLabel: "Xem giỏ hàng",
+        onConfirm: function () {
+            window.location.href = cartUrl;
+        }
+    });
+
+    if (button) {
+        button.disabled = false;
+    }
+
+}
+
+
+/* Kế hoạch v5 GĐ5: "Huỷ thanh toán" — huỷ đơn chuyển khoản / thẻ chưa trả tiền, server đưa lại đúng sản phẩm vào giỏ */
+
+async function cancelOrderPayment(id) {
+
+    const order = await apiRequest("/orders/" + encodeURIComponent(id) + "/cancel-payment", {
+        method: "POST", auth: true
+    });
+
+    return toOrderView(order);
+
+}
+
+
+/* Đơn chuyển khoản / thẻ mới nhất còn chờ tiền (trong hạn), hoặc null */
+
+async function fetchAwaitingPaymentOrder() {
+
+    const order = await apiRequest("/orders/awaiting-payment", { auth: true });
+
+    return order ? toOrderView(order) : null;
+
+}
+
+
+/* Thẻ quốc tế (Stripe, chế độ Test): { checkoutUrl, paid } — Stripe đưa khách về returnUrl?id=…&card=paid|back */
+
+async function startCardCheckout(id, returnUrl) {
+
+    return apiRequest("/orders/" + encodeURIComponent(id) + "/payment/card-checkout", {
+        method: "POST", auth: true, body: { returnUrl: returnUrl }
+    });
+
+}
+
+
+/* Khách vừa quay về từ Stripe: server hỏi Stripe đã trả chưa (chạy cả khi không có webhook) */
+
+async function refreshCardPayment(id) {
+
+    return toOrderView(await apiRequest("/orders/" + encodeURIComponent(id) + "/payment/card-refresh", {
+        method: "POST", auth: true
+    }));
+
+}
+
+
 /* OrderResponse của API → dạng dùng ở giao diện (số tiền đổi sang Number) */
 
 function toOrderView(order) {
@@ -179,7 +320,8 @@ function toOrderView(order) {
                 ? Number(item.originalPrice)
                 : null,
             quantity: item.quantity,
-            lineTotal: Number(item.subtotal) || 0
+            lineTotal: Number(item.subtotal) || 0,
+            comboDiscount: Number(item.comboDiscount) || 0
         };
 
     });
@@ -199,6 +341,13 @@ function toOrderView(order) {
         items: items,
         totalQuantity: order.totalQuantity || 0,
         subtotal: Number(order.subtotal) || 0,
+        comboDiscount: Number(order.comboDiscount) || 0,
+        combos: Array.isArray(order.combos) ? order.combos : [],
+        voucherCode: order.voucherCode || "",
+        voucherDiscount: Number(order.voucherDiscount) || 0,
+        pointsUsed: Number(order.pointsUsed) || 0,
+        pointsDiscount: Number(order.pointsDiscount) || 0,
+        pointsEarned: Number(order.pointsEarned) || 0,
         shippingFee: Number(order.shippingFee) || 0,
         total: Number(order.total) || 0,
         trackingNumber: order.trackingNumber || "",
@@ -239,7 +388,13 @@ function toPaymentView(payment) {
             qrImageUrl: isSafeImageUrl(transfer.qrImageUrl) ? transfer.qrImageUrl.trim() : null,
             payBefore: transfer.payBefore,
             /* chế độ demo: trang thanh toán tự báo đã nhận tiền sau 1 phút hiện QR */
-            demoAutoPay: transfer.demoAutoPay === true
+            demoAutoPay: transfer.demoAutoPay === true,
+            bankBin: transfer.bankBin || ""
+        } : null,
+        /* chỉ có khi đơn thẻ quốc tế đang chờ thanh toán */
+        card: payment.card ? {
+            testMode: payment.card.testMode === true,
+            payBefore: payment.card.payBefore
         } : null
     };
 
@@ -336,7 +491,7 @@ function getOrderDetailUrl(orderId, justPlaced) {
 }
 
 
-/* Trang thanh toán chuyển khoản (QR + nội dung), tự cập nhật khi nhận được tiền */
+/* Trang thanh toán chuyển khoản (QR + nội dung) / thẻ quốc tế, tự cập nhật khi nhận được tiền */
 
 function getPaymentUrl(orderId) {
 

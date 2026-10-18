@@ -7,6 +7,7 @@ import com.example.Tech.dto.request.payment.InstallmentRejectRequest;
 import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
 import com.example.Tech.service.impl.aftersales.WarrantyIssuer;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import org.mockito.InOrder;
 import com.example.Tech.dto.response.order.AdminOrderResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
@@ -81,6 +82,9 @@ class AdminOrderServiceImplTest {
     private OrderPaymentLifecycle orderPaymentLifecycle;
 
     @Mock
+    private LoyaltyService loyaltyService;
+
+    @Mock
     private OrderStockLifecycle orderStockLifecycle;
 
     @Mock
@@ -95,6 +99,9 @@ class AdminOrderServiceImplTest {
     @Mock
     private SalesRecorder salesRecorder;
 
+    @Mock
+    private com.example.Tech.service.voucher.VoucherService voucherService;
+
     private final User staff = new User();
 
     private AdminOrderServiceImpl adminOrderService;
@@ -105,7 +112,7 @@ class AdminOrderServiceImplTest {
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
                 orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
-                statusRecorder, salesRecorder, CLOCK);
+                statusRecorder, salesRecorder, voucherService, loyaltyService, CLOCK);
         customer = new User();
         customer.setId(CUSTOMER_ID);
         customer.setUsername("khach");

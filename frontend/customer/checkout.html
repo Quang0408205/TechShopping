@@ -65,6 +65,10 @@
     </section>
 
 
+    <!-- Kế hoạch v5 GĐ5: đơn chuyển khoản / thẻ còn chờ tiền (khách bấm Back từ trang thanh toán) -->
+    <section class="container awaiting-pay-slot" id="awaitingPayment" hidden></section>
+
+
     <!-- ================= GIỎ HÀNG TRỐNG ================= -->
 
     <section class="container" id="checkoutEmpty" hidden>
@@ -132,9 +136,21 @@
                 <small class="field-error" data-field="recipientPhone"></small>
 
                 <div class="checkout-delivery-fields" id="homeDeliveryFields">
-                    <label for="shippingAddress">Địa chỉ nhận hàng</label>
-                    <textarea id="shippingAddress" rows="3" maxlength="500" required></textarea>
-                    <small class="field-error" data-field="shippingAddress"></small>
+                    <div class="vn-address-row">
+                        <div>
+                            <label for="shippingProvince">Tỉnh / Thành phố</label>
+                            <div><input type="text" id="shippingProvince" maxlength="100" required></div>
+                            <small class="field-error" data-field="shippingProvince"></small>
+                        </div>
+                        <div>
+                            <label for="shippingWard">Phường / Xã</label>
+                            <div><input type="text" id="shippingWard" maxlength="100" required></div>
+                            <small class="field-error" data-field="shippingWard"></small>
+                        </div>
+                    </div>
+                    <label for="shippingStreet">Số nhà, tên đường</label>
+                    <input type="text" id="shippingStreet" maxlength="255" placeholder="Ví dụ: 12 Nguyễn Trãi" autocomplete="street-address" required>
+                    <small class="field-error" data-field="shippingStreet"></small>
                 </div>
 
                 <div class="checkout-delivery-fields" id="pickupFields" hidden>
@@ -169,6 +185,15 @@
                         <span>
                             <strong>Chuyển khoản ngân hàng</strong>
                             <small>Chuyển khoản trong 24 giờ theo mã QR ở trang đơn hàng; đơn được xử lý sau khi cửa hàng nhận được tiền.</small>
+                        </span>
+                    </label>
+
+                    <!-- Kế hoạch v5 GĐ5: chỉ hiện khi server bật Stripe (GET /payments/card-options) -->
+                    <label class="payment-method" id="cardMethod" hidden>
+                        <input type="radio" name="paymentMethod" value="CARD">
+                        <span>
+                            <strong>Thẻ quốc tế (Visa / Mastercard) <em class="payment-test-badge" id="cardTestBadge" hidden>Chế độ thử</em></strong>
+                            <small id="cardMethodHint">Thanh toán ngay trên trang bảo mật của Stripe.</small>
                         </span>
                     </label>
 
@@ -226,9 +251,60 @@
 
                 <div id="checkoutItems" class="checkout-items"></div>
 
+                <!-- Kế hoạch v5 GĐ4: nhập mã hoặc chọn voucher (POST /vouchers/apply, GET /vouchers/available) -->
+                <div class="checkout-voucher" id="checkoutVoucher">
+
+                    <div class="checkout-voucher-input" id="voucherInputRow">
+                        <input type="text" id="voucherCodeInput" maxlength="30" placeholder="Nhập mã voucher" aria-label="Mã voucher" autocomplete="off">
+                        <button type="button" class="btn btn-outline-dark" id="voucherApplyBtn">ÁP DỤNG</button>
+                    </div>
+
+                    <div class="checkout-voucher-applied" id="voucherApplied" hidden>
+                        <span class="checkout-voucher-tag" id="voucherAppliedCode"></span>
+                        <span class="checkout-voucher-name" id="voucherAppliedName"></span>
+                        <button type="button" class="checkout-voucher-remove" id="voucherRemoveBtn">Bỏ</button>
+                    </div>
+
+                    <p class="checkout-voucher-message" id="voucherMessage" role="status" hidden></p>
+
+                    <button type="button" class="checkout-voucher-pick" id="voucherPickBtn">
+                        <span>Chọn voucher</span>
+                        <span id="voucherPickCount"></span>
+                    </button>
+
+                </div>
+
+                <!-- Kế hoạch v5 GĐ6: dùng điểm tích luỹ (1 điểm = 1.000đ, tối đa 10% tiền hàng sau voucher); ẩn khi không có điểm -->
+                <label class="checkout-points" id="checkoutPoints" hidden>
+                    <input type="checkbox" id="usePoints">
+                    <span class="checkout-points-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9Z"/></svg>
+                    </span>
+                    <span class="checkout-points-text">
+                        <strong>Dùng <span id="pointsUsable">0</span> điểm tích luỹ</strong>
+                        <small id="pointsHint"></small>
+                    </span>
+                    <span class="checkout-points-value" id="pointsValue"></span>
+                </label>
+
                 <div class="checkout-total-row">
                     <span>Tạm tính</span>
                     <strong id="checkoutSubtotal"></strong>
+                </div>
+
+                <div class="checkout-total-row checkout-total-voucher" id="checkoutComboRow" hidden>
+                    <span>Giảm combo</span>
+                    <strong id="checkoutComboDiscount"></strong>
+                </div>
+
+                <div class="checkout-total-row checkout-total-voucher" id="checkoutVoucherRow" hidden>
+                    <span>Voucher <span id="checkoutVoucherCode"></span></span>
+                    <strong id="checkoutVoucherDiscount"></strong>
+                </div>
+
+                <div class="checkout-total-row checkout-total-voucher" id="checkoutPointsRow" hidden>
+                    <span>Điểm tích luỹ</span>
+                    <strong id="checkoutPointsDiscount"></strong>
                 </div>
 
                 <div class="checkout-total-row">
@@ -255,11 +331,13 @@
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
+<script src="../js/core/vn-address.js"></script>
 <script src="../js/core/cart-store.js"></script>
 <script src="../js/core/order-store.js"></script>
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/order-info.js"></script>
+<script src="../js/customer/awaiting-payment.js"></script>
 <script src="../js/customer/checkout.js"></script>
 <script src="../js/customer/chatbot.js"></script>
 <script src="../js/customer/ui-effects.js"></script>

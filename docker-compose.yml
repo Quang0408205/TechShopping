@@ -66,6 +66,13 @@ services:
       PAYMENT_BANK_ACCOUNT_NAME: ${PAYMENT_BANK_ACCOUNT_NAME:-}
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:-}
       PAYMENT_SIMULATOR_ENABLED: ${PAYMENT_SIMULATOR_ENABLED:-false}
+      # Thẻ quốc tế qua Stripe Checkout, chỉ dùng khoá Test (sk_test_…); trống = ẩn hình thức này
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Ảnh đại diện lên Cloudinary; thiếu một trong 3 khoá = lưu ổ đĩa như ảnh khác
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
       # Địa chỉ web công khai (vd. https://ten-cua-ban.ngrok-free.app): được ghi vào link ảnh tải lên
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
       # Cho trình duyệt gọi API từ địa chỉ công khai (POST kèm Origin: https://<tên-miền>), không thì 403 Invalid CORS request

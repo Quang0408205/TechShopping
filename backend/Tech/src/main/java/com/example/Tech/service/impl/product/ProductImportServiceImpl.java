@@ -86,6 +86,7 @@ public class ProductImportServiceImpl implements ProductImportService {
     private final CategoryRepository categoryRepository;
     private final BrandRepository brandRepository;
     private final ReadCache cache;
+    private final com.example.Tech.service.product.ProductFilterService filterService;
 
     @Override
     public byte[] template() {
@@ -487,6 +488,7 @@ public class ProductImportServiceImpl implements ProductImportService {
         cache.evict(ReadCache.VARIANTS, productId);
         cache.evict(ReadCache.IMAGES, productId);
         cache.evict(ReadCache.SPECS, productId);
+        filterService.reindex(productId);
     }
 
     // ---------- helpers ----------

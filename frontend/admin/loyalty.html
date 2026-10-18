@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Hạng thành viên - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- Kế hoạch v5 GĐ6: ngưỡng chi tiêu + hệ số nhân điểm của 4 hạng thành viên, chỉ ADMIN -->
+<body class="admin-body" data-page-title="Hạng thành viên" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="loyalty"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Hạng thành viên &amp; tích điểm</h2>
+                </div>
+
+                <p class="admin-field-hint">
+                    Khách được cộng 1 điểm / 10.000đ tiền hàng thực trả khi đơn đã giao, nhân hệ số của hạng; 1 điểm = 1.000đ khi mua
+                    (tối đa 10% giá trị hàng). Hạng tính theo tổng chi tiêu đơn đã giao và không bị hạ: hạ ngưỡng thì khách đủ điều kiện
+                    được nâng hạng ngay, nâng ngưỡng không làm ai mất hạng.
+                </p>
+
+                <form id="tierForm" novalidate>
+
+                    <p id="tierFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-table-wrapper">
+
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Hạng</th>
+                                    <th>Tổng chi tiêu tối thiểu (đ)</th>
+                                    <th>Hệ số nhân điểm</th>
+                                    <th>Ví dụ đơn 20.000.000đ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tierTableBody">
+                                <tr><td colspan="4">Đang tải…</td></tr>
+                            </tbody>
+                        </table>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="tierSaveBtn">LƯU THAY ĐỔI</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/loyalty.js"></script>
+
+</body>
+</html>

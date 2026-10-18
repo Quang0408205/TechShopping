@@ -1,292 +1,571 @@
-/* Trang tài khoản: dùng lại .contact-grid, .contact-form (contact.css) */
+/* ================= KHU TÀI KHOẢN (làm mới ở kế hoạch v5 GĐ6) ================= */
+
+/*
+ * Dùng cho Tài khoản / Lịch sử mua hàng / Chi tiết đơn / Yêu cầu dịch vụ. Form dùng lại .contact-form
+ * (contact.css). Màu hạng: Thành viên = mực + đồng, Bạc = bạc, Vàng = vàng, Kim cương = xanh đậm ánh kim.
+ */
+
+:root {
+    --account-line: #ece7de;
+    --account-copper: #b87333;
+    --tier-member-a: #2a2d35;
+    --tier-member-b: #111318;
+    --tier-silver-a: #f3f4f6;
+    --tier-silver-b: #a9b0ba;
+    --tier-gold-a: #fbe9b0;
+    --tier-gold-b: #c9952b;
+    --tier-diamond-a: #1d2b55;
+    --tier-diamond-b: #3f6fe0;
+}
 
 
 /* ================= BỐ CỤC CHUNG (SIDEBAR + NỘI DUNG) ================= */
 
+.account-hero-bar {
+    padding-bottom: var(--space-3, 24px);
+}
+
+.account-hero-bar h1 {
+    margin-bottom: 0;
+}
+
 .account-layout {
     display: grid;
-
-    grid-template-columns: 260px 1fr;
-
-    gap: 45px;
-
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: 36px;
     align-items: flex-start;
-}
-
-.account-sidebar {
-    position: sticky;
-    top: 105px;
-
-    padding: 30px 25px;
-
-    background: #f4f4f4;
-}
-
-.account-sidebar-user {
-    padding-bottom: 20px;
-
-    margin-bottom: 20px;
-
-    border-bottom: 1px solid #ddd;
-}
-
-.account-sidebar-user strong {
-    display: block;
-
-    font-size: 15px;
-
-    /* Tên dài không có khoảng trắng không được tràn ra ngoài thanh bên */
-    overflow-wrap: anywhere;
-}
-
-.account-sidebar-user span {
-    display: block;
-
-    margin-top: 4px;
-
-    color: #777;
-    font-size: 12px;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.account-nav {
-    display: flex;
-    flex-direction: column;
-
-    gap: 4px;
-}
-
-.account-nav a {
-    padding: 12px 14px;
-
-    font-size: 13px;
-    font-weight: 600;
-
-    color: #444;
-
-    transition: 0.2s;
-}
-
-.account-nav a:hover {
-    background: #ececec;
-}
-
-.account-nav a.active {
-    background: #111;
-    color: #fff;
-}
-
-.account-nav-logout {
-    margin-top: 10px;
-
-    border-top: 1px solid #ddd;
-
-    padding-top: 16px !important;
-
-    color: #c0392b !important;
 }
 
 .account-main {
     min-width: 0;
 }
 
-.account-placeholder-section {
-    margin-top: 70px;
-}
+.account-sidebar {
+    position: sticky;
+    top: 105px;
 
-.account-placeholder-section .section-label {
-    display: block;
+    padding: 18px 14px;
 
-    margin-bottom: 25px;
-}
-
-@media (max-width: 1000px) {
-
-    .account-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .account-sidebar {
-        position: static;
-    }
-
-    .account-nav {
-        flex-direction: row;
-        flex-wrap: wrap;
-    }
-
-}
-
-
-/* TỔNG QUAN */
-
-.account-summary {
-    display: grid;
-
-    grid-template-columns: repeat(4, 1fr) auto;
-
-    align-items: center;
-
-    gap: 30px;
-
-    margin-bottom: 70px;
-
-    padding: 30px 35px;
-
-    background: #f4f4f4;
-}
-
-/* Đảm bảo thuộc tính [hidden] thắng "display: grid" ở trên (xem giải thích tương tự ở .chatbot-panel trong style.css) */
-.account-summary[hidden] {
-    display: none;
-}
-
-.account-summary-item strong {
-    font-size: 10px;
-
-    letter-spacing: 2px;
-}
-
-.account-summary-item p {
-    margin-top: 5px;
-
-    font-size: 18px;
-    font-weight: 700;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.account-summary .btn {
-    cursor: pointer;
-
-    background: transparent;
-}
-
-
-/* FORM */
-
-.account-column {
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 70px;
-}
-
-.account-form .btn {
-    margin-top: 20px;
-
-    border: none;
-
-    cursor: pointer;
-}
-
-.account-form .btn:disabled {
-    opacity: 0.6;
-
-    cursor: wait;
-}
-
-.account-form input[readonly] {
-    background: #f4f4f4;
-
-    color: #777;
-}
-
-.account-form select {
-    width: 100%;
-
-    padding: 15px;
-
-    border: 1px solid #ddd;
-
+    border: 1px solid var(--account-line);
+    border-radius: var(--radius-lg, 12px);
     background: #fff;
-
-    outline: none;
-
-    /* Giống input (style.css chỉ kế thừa font-family, cỡ chữ mặc định) */
-    font-family: inherit;
+    box-shadow: 0 10px 30px -22px rgba(17, 19, 24, 0.35);
 }
-
-.account-form select:focus {
-    border-color: #111;
-}
-
-.account-hint {
-    color: #777;
-
-    font-size: 11px;
-}
-
-
-@media (max-width: 1000px) {
-
-    .account-summary {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-}
-
-@media (max-width: 700px) {
-
-    .account-summary {
-        grid-template-columns: 1fr;
-    }
-
-}
-
-
-/* ================= KHUNG THEO HASH + ẢNH ĐẠI DIỆN (kế hoạch v2 GĐ5) ================= */
 
 .account-sidebar-user {
     display: flex;
     align-items: center;
     gap: 12px;
+
+    margin: 0 4px 14px;
+    padding: 6px 4px 16px;
+
+    border-bottom: 1px solid var(--account-line);
 }
 
 .account-sidebar-text {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
 }
 
+.account-sidebar-user strong {
+    font-size: 15px;
+    overflow-wrap: anywhere;
+}
+
+.account-sidebar-text > span {
+    color: var(--text-muted, #5f5f68);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .account-sidebar-user .user-avatar {
-    width: 44px;
-    height: 44px;
+    flex: none;
+    width: 46px;
+    height: 46px;
     margin: 0;
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 .account-sidebar-user .user-avatar--initials {
     display: inline-flex;
-    font-size: 15px;
+    align-items: center;
+    justify-content: center;
+    background: var(--account-copper);
     color: #fff;
+    font-size: 15px;
+    font-weight: 700;
 }
 
+.account-nav {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.account-nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 11px 12px;
+
+    border-radius: 8px;
+    color: #3a3a40;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    transition: background 0.15s, color 0.15s;
+}
+
+.account-nav-icon {
+    flex: none;
+    color: #8b8b93;
+    transition: color 0.15s;
+}
+
+.account-nav a:hover {
+    background: var(--surface-warm, #f5f1ea);
+}
+
+.account-nav a.active,
 .account-nav a[aria-current="page"] {
+    background: var(--surface-ink, #111318);
+    color: #fff;
+    font-weight: 600;
+}
+
+.account-nav a.active .account-nav-icon,
+.account-nav a[aria-current="page"] .account-nav-icon {
+    color: #e8b27a;
+}
+
+.account-nav-logout {
+    margin-top: 8px;
+    padding-top: 14px !important;
+    border-top: 1px solid var(--account-line);
+    border-radius: 0 0 8px 8px !important;
+    color: #b42318 !important;
+}
+
+.account-nav-logout .account-nav-icon {
+    color: #b42318;
+}
+
+
+/* nhãn hạng nhỏ (thanh bên, chi tiết) */
+
+.tier-chip {
+    display: inline-flex;
+    align-self: flex-start;
+    margin-top: 6px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: #ece8e1;
+    color: #3a3a40;
+    font-size: 11px;
+    font-style: normal;
     font-weight: 700;
+    letter-spacing: 0.2px;
+}
+
+.tier-chip--member { background: #2a2d35; color: #f0c08c; }
+.tier-chip--silver { background: linear-gradient(135deg, var(--tier-silver-a), var(--tier-silver-b)); color: #2a2d35; }
+.tier-chip--gold { background: linear-gradient(135deg, var(--tier-gold-a), var(--tier-gold-b)); color: #3d2a00; }
+.tier-chip--diamond { background: linear-gradient(135deg, var(--tier-diamond-a), var(--tier-diamond-b)); color: #fff; }
+
+
+/* ================= THẺ THÀNH VIÊN + THỐNG KÊ ================= */
+
+.account-overview {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.account-overview[hidden] {
+    display: none;
+}
+
+.member-card {
+    position: relative;
+    overflow: hidden;
+
+    padding: 26px 28px 38px;
+
+    border-radius: 16px;
+    color: #fff;
+    background: linear-gradient(135deg, var(--tier-member-a) 0%, var(--tier-member-b) 70%);
+    box-shadow: 0 18px 40px -22px rgba(17, 19, 24, 0.7);
+}
+
+/* vân sáng chéo + vòng tròn trang trí */
+.member-card::before,
+.member-card::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.member-card::before {
+    top: -120px;
+    right: -60px;
+    width: 320px;
+    height: 320px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 65%);
+}
+
+.member-card::after {
+    bottom: -150px;
+    left: 35%;
+    width: 360px;
+    height: 360px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.member-card--member { --member-accent: #e8b27a; }
+.member-card--silver { --member-accent: #2a2d35; color: #1c1e24; background: linear-gradient(135deg, var(--tier-silver-a) 0%, var(--tier-silver-b) 100%); }
+.member-card--gold { --member-accent: #3d2a00; color: #2c1f00; background: linear-gradient(135deg, var(--tier-gold-a) 0%, var(--tier-gold-b) 100%); }
+.member-card--diamond { --member-accent: #9fc0ff; background: linear-gradient(135deg, var(--tier-diamond-a) 0%, var(--tier-diamond-b) 100%); }
+
+.member-card-top {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.member-card-avatar {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    border-radius: 50%;
+    background: var(--account-copper);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.member-card-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.member-card-who {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.member-card-hello {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.member-card-who strong {
+    font-size: 20px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.member-card-meta {
+    font-size: 12px;
+    opacity: 0.75;
+}
+
+.member-card-tier {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    padding: 6px 14px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    color: var(--member-accent, #e8b27a);
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.member-card-body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: end;
+    gap: 32px;
+    margin-top: 26px;
+}
+
+.member-card-points span {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.member-card-points strong {
+    display: block;
+    font-size: 44px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -1px;
+    font-variant-numeric: tabular-nums;
+}
+
+.member-card-points small {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.member-progress-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.member-progress-bar {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.member-card--silver .member-progress-bar,
+.member-card--gold .member-progress-bar {
+    background: rgba(0, 0, 0, 0.12);
+}
+
+.member-progress-bar i {
+    display: block;
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--member-accent, #e8b27a);
+    transition: width 0.8s ease;
+}
+
+.member-card-brand {
+    position: absolute;
+    right: 28px;
+    bottom: 12px;
+    z-index: 0;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 4px;
+    opacity: 0.18;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .member-progress-bar i {
+        transition: none;
+    }
+
+}
+
+.account-stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.account-stat {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 12px;
+    align-items: center;
+
+    padding: 16px;
+
+    border: 1px solid var(--account-line);
+    border-radius: var(--radius-lg, 12px);
+    background: #fff;
+    color: inherit;
+
+    transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+a.account-stat:hover {
+    border-color: #d8cfc0;
+    box-shadow: 0 10px 24px -18px rgba(17, 19, 24, 0.45);
+    transform: translateY(-1px);
+}
+
+.account-stat-icon {
+    grid-row: 1 / 3;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: var(--surface-warm, #f5f1ea);
+    color: var(--account-copper);
+}
+
+.account-stat strong {
+    font-size: 18px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.account-stat > span:last-child {
+    color: var(--text-muted, #5f5f68);
+    font-size: 12px;
+}
+
+
+/* ================= KHUNG NỘI DUNG (thẻ) ================= */
+
+.account-panel {
+    padding: 28px;
+
+    border: 1px solid var(--account-line);
+    border-radius: var(--radius-lg, 12px);
+    background: #fff;
 }
 
 .account-panel[hidden] {
     display: none;
 }
 
-.account-panel-title {
+.account-panel-head {
     margin-bottom: 24px;
-
-    font-size: 22px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--account-line);
 }
+
+.account-panel-title {
+    margin: 0 0 4px;
+    font-size: 20px;
+}
+
+.account-panel-head p {
+    margin: 0;
+    color: var(--text-muted, #5f5f68);
+    font-size: 14px;
+}
+
+.account-subtitle {
+    margin: 30px 0 14px;
+    font-size: 16px;
+}
+
+
+/* ================= FORM ================= */
 
 .account-panel .account-form {
-    max-width: 640px;
+    max-width: none;
 }
+
+.account-form--narrow {
+    max-width: 480px !important;
+}
+
+.account-form label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.account-form input,
+.account-form select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd6ca;
+    border-radius: 8px;
+    background: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.account-form input:focus,
+.account-form select:focus {
+    border-color: #111;
+    box-shadow: 0 0 0 3px rgba(184, 115, 51, 0.18);
+}
+
+.account-form input[readonly] {
+    background: #f7f5f1;
+    color: #777;
+}
+
+.account-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 18px;
+}
+
+.account-form-grid--wide {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.account-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 22px;
+    padding-top: 18px;
+    border-top: 1px solid var(--account-line);
+}
+
+.account-form .btn {
+    margin: 0;
+    padding: 12px 26px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.account-form .btn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.account-hint {
+    color: #777;
+    font-size: 12px;
+}
+
+.account-hint--lock {
+    display: block;
+    margin: -4px 0 14px;
+}
+
+
+/* ================= ẢNH ĐẠI DIỆN ================= */
 
 .account-profile-grid {
     display: grid;
-    grid-template-columns: 240px minmax(0, 1fr);
-    gap: 40px;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 32px;
     align-items: start;
 }
 
@@ -296,9 +575,10 @@
     align-items: center;
     gap: 12px;
 
-    padding: 28px 20px;
+    padding: 26px 18px;
 
-    background: #f4f4f4;
+    border-radius: var(--radius-lg, 12px);
+    background: var(--surface-warm, #f5f1ea);
 
     text-align: center;
 }
@@ -308,23 +588,24 @@
     align-items: center;
     justify-content: center;
 
-    width: 96px;
-    height: 96px;
+    width: 104px;
+    height: 104px;
 
+    border: 4px solid #fff;
     border-radius: 50%;
     overflow: hidden;
 
-    background: var(--color-accent, #8a5a22);
+    background: var(--account-copper);
     color: #fff;
+    box-shadow: 0 10px 24px -14px rgba(17, 19, 24, 0.6);
 
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 700;
 }
 
 .account-avatar img {
     width: 100%;
     height: 100%;
-
     object-fit: cover;
 }
 
@@ -340,8 +621,8 @@
 }
 
 .account-avatar-actions .btn {
-    padding: 10px 16px;
-
+    padding: 9px 16px;
+    border-radius: 8px;
     cursor: pointer;
 }
 
@@ -349,16 +630,348 @@
 .account-avatar-card .form-success {
     width: 100%;
     margin: 0;
-
     font-size: 12px;
     text-align: left;
 }
 
+
+/* ================= BẬC HẠNG / CÁCH TÍNH / LỊCH SỬ ĐIỂM ================= */
+
+.tier-ladder {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.tier-step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 18px 16px 16px;
+
+    border: 1px solid var(--account-line);
+    border-radius: var(--radius-lg, 12px);
+    background: #fff;
+    color: var(--text-muted, #5f5f68);
+}
+
+.tier-step strong {
+    color: #1c1e24;
+    font-size: 16px;
+}
+
+.tier-step-medal {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    margin-bottom: 6px;
+    border-radius: 50%;
+    background: #ece8e1;
+    color: #b6b0a6;
+}
+
+.tier-step.is-reached .tier-step-medal { color: #fff; }
+.tier-step--member.is-reached .tier-step-medal { background: linear-gradient(135deg, var(--tier-member-a), var(--tier-member-b)); color: #e8b27a; }
+.tier-step--silver.is-reached .tier-step-medal { background: linear-gradient(135deg, var(--tier-silver-a), var(--tier-silver-b)); color: #2a2d35; }
+.tier-step--gold.is-reached .tier-step-medal { background: linear-gradient(135deg, var(--tier-gold-a), var(--tier-gold-b)); color: #3d2a00; }
+.tier-step--diamond.is-reached .tier-step-medal { background: linear-gradient(135deg, var(--tier-diamond-a), var(--tier-diamond-b)); }
+
+.tier-step-min,
+.tier-step-rate {
+    font-size: 13px;
+}
+
+.tier-step-rate {
+    color: var(--account-copper);
+    font-weight: 600;
+}
+
+.tier-step.is-current {
+    border-color: #111;
+    box-shadow: 0 0 0 1px #111, 0 14px 30px -20px rgba(17, 19, 24, 0.6);
+}
+
+.tier-step-you {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #111;
+    color: #fff;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.loyalty-rules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.loyalty-rules li {
+    display: flex;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--surface-warm, #f5f1ea);
+}
+
+.loyalty-rule-no {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #111;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.loyalty-rules strong {
+    font-size: 14px;
+}
+
+.loyalty-rules p {
+    margin: 2px 0 0;
+    color: var(--text-muted, #5f5f68);
+    font-size: 13px;
+}
+
+.loyalty-tx-list {
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--account-line);
+    border-radius: var(--radius-lg, 12px);
+    list-style: none;
+}
+
+.loyalty-tx {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+}
+
+.loyalty-tx + .loyalty-tx {
+    border-top: 1px solid var(--account-line);
+}
+
+.loyalty-tx-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.loyalty-tx-icon--plus { background: #e7f4ec; color: #1b7f3b; }
+.loyalty-tx-icon--minus { background: #fbeceb; color: #b42318; }
+
+.loyalty-tx-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.loyalty-tx-main strong {
+    font-size: 14px;
+}
+
+.loyalty-tx-main span {
+    color: var(--text-muted, #5f5f68);
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.loyalty-tx-main a {
+    color: #111;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.loyalty-tx-main small,
+.loyalty-tx-points small {
+    color: #8b8b93;
+    font-size: 12px;
+}
+
+.loyalty-tx-points {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    white-space: nowrap;
+}
+
+.loyalty-tx-points strong {
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.loyalty-tx-points .is-plus { color: #1b7f3b; }
+.loyalty-tx-points .is-minus { color: #b42318; }
+
+.loyalty-empty {
+    padding: 28px;
+    border: 1px dashed #d8cfc0;
+    border-radius: var(--radius-lg, 12px);
+    text-align: center;
+}
+
+.loyalty-empty p {
+    margin: 4px 0 14px;
+    color: var(--text-muted, #5f5f68);
+}
+
+.loyalty-more {
+    display: block;
+    margin: 14px auto 0;
+    border-radius: 8px;
+}
+
+
+/* ================= MÀN HÌNH NHỎ ================= */
+
 @media (max-width: 1000px) {
+
+    /* minmax(0, …): hàng tab cuộn ngang không được kéo rộng cột (tràn màn hình) */
+    .account-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+
+    .account-sidebar {
+        min-width: 0;
+    }
+
+    /* thanh bên → hàng tab cuộn ngang */
+    .account-sidebar {
+        position: static;
+        padding: 8px;
+        overflow: hidden;
+    }
+
+    .account-sidebar-user {
+        display: none;
+    }
+
+    .account-nav {
+        flex-direction: row;
+        gap: 6px;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .account-nav::-webkit-scrollbar {
+        display: none;
+    }
+
+    .account-nav a {
+        flex: none;
+        padding: 9px 14px;
+        white-space: nowrap;
+    }
+
+    .account-nav-logout {
+        margin-top: 0;
+        padding-top: 9px !important;
+        border-top: 0;
+        border-radius: 8px !important;
+    }
+
+    .account-stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 
     .account-profile-grid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 22px;
+    }
+
+    .tier-ladder {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 640px) {
+
+    .member-card {
+        padding: 20px 18px 18px;
+    }
+
+    .member-card-top {
+        flex-wrap: wrap;
+    }
+
+    .member-card-tier {
+        margin-left: 0;
+    }
+
+    .member-card-body {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-top: 18px;
+    }
+
+    .member-card-points strong {
+        font-size: 36px;
+    }
+
+    .account-panel {
+        padding: 20px 16px;
+    }
+
+    .account-stat {
+        column-gap: 10px;
+        padding: 12px;
+    }
+
+    .account-stat-icon {
+        width: 34px;
+        height: 34px;
+    }
+
+    .account-stat strong {
+        font-size: 15px;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .account-form-grid,
+    .account-form-grid--wide,
+    .loyalty-rules {
+        grid-template-columns: 1fr;
+    }
+
+    .account-form-actions .btn {
+        width: 100%;
+    }
+
+    .loyalty-tx {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .loyalty-tx-points {
+        grid-column: 2;
+        flex-direction: row;
+        align-items: baseline;
+        gap: 8px;
     }
 
 }

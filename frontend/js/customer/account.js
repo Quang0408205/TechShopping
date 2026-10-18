@@ -49,13 +49,10 @@ document.addEventListener(
                 "Địa chỉ tối đa 255 ký tự.",
 
             ward:
-                "Phường / Xã tối đa 100 ký tự.",
-
-            district:
-                "Quận / Huyện tối đa 100 ký tự.",
+                "Vui lòng chọn phường / xã trong danh sách.",
 
             city:
-                "Tỉnh / Thành phố tối đa 100 ký tự.",
+                "Vui lòng chọn tỉnh / thành phố trong danh sách.",
 
             postalCode:
                 "Mã bưu chính tối đa 20 ký tự.",
@@ -79,15 +76,33 @@ document.addEventListener(
 
         const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
 
-        const TABS = ["profile", "security", "address"];
+        const TABS = ["profile", "loyalty", "security", "address"];
+
+        /* Lịch sử điểm (kế hoạch v5 GĐ6): trang đang xem, 8 dòng / lần */
+        const HISTORY_SIZE = 8;
+
+        let historyPage = 0;
+
+        const TX_LABELS = {
+            EARN: "Tích điểm",
+            REDEEM: "Dùng điểm",
+            REDEEM_BACK: "Hoàn điểm",
+            REVOKE: "Trừ điểm",
+            ADJUST: "Điều chỉnh"
+        };
 
         /* Tài khoản đang hiển thị (GET / PUT /users/me), để lưu tên / SĐT mà không đụng tới ảnh và ngược lại */
         let currentUser = null;
+
+        /* Hồ sơ đang hiển thị: giữ lại các trường không còn ô nhập (địa chỉ 1 dòng kiểu cũ) */
+        let currentProfile = null;
 
 
         setupTabs();
 
         setupAvatar();
+
+        const area = setupVnAddress(document.getElementById("city"), document.getElementById("ward"));
 
         accountForm.addEventListener("submit", saveAccount);
 
@@ -95,20 +110,14 @@ document.addEventListener(
 
         passwordForm.addEventListener("submit", changePassword);
 
-        document.getElementById("logoutButton")
-            .addEventListener(
-                "click",
-                async function () {
-
-                    await logout();
-
-                    window.location.href = siteUrl("index.html");
-
-                }
-            );
+        document.getElementById("loyaltyMoreBtn").addEventListener("click", function () {
+            loadHistory(historyPage + 1);
+        });
 
 
         await loadAccount();
+
+        loadLoyalty();
 
 
         /* ================= TẢI DỮ LIỆU ================= */
@@ -180,6 +189,8 @@ document.addEventListener(
             document.getElementById("summaryUsername").textContent =
                 user.username;
 
+            document.getElementById("memberName").textContent = user.fullname || user.username;
+
             document.getElementById("summaryJoined").textContent =
                 user.createdAt
                     ? new Date(user.createdAt).toLocaleDateString("vi-VN")
@@ -195,11 +206,10 @@ document.addEventListener(
             setValue("dateOfBirth", data.dateOfBirth);
             setValue("gender", data.gender);
             setValue("address", data.address);
-            setValue("ward", data.ward);
-            setValue("district", data.district);
-            setValue("city", data.city);
+            area.setValue(data.city, data.ward);
             setValue("postalCode", data.postalCode);
-            setValue("defaultShippingAddress", data.defaultShippingAddress);
+
+            currentProfile = profile;
 
             document.getElementById("profileEmptyHint").hidden =
                 profile !== null;
@@ -209,6 +219,202 @@ document.addEventListener(
 
             document.getElementById("summarySpent").textContent =
                 formatPrice(Number(data.totalSpent || 0));
+
+        }
+
+
+        /* ================= HẠNG & ĐIỂM (kế hoạch v5 GĐ6) ================= */
+
+        /* Thẻ thành viên + ô thống kê + bậc hạng + cách tính điểm; lỗi thì giữ số từ hồ sơ */
+        async function loadLoyalty() {
+
+            const results = await Promise.all([
+                typeof getLoyaltySummary === "function" ? getLoyaltySummary() : apiRequest("/loyalty/me", { auth: true }).catch(function () { return null; }),
+                apiRequest("/orders/summary", { auth: true }).catch(function () { return null; })
+            ]);
+
+            const summary = results[0];
+
+            const counts = results[1];
+
+            if (counts) {
+                document.getElementById("statProcessing").textContent = formatCount(counts.pending + counts.inProgress);
+                document.getElementById("statDelivered").textContent = formatCount(counts.delivered);
+            }
+
+            if (!summary) {
+                document.getElementById("memberProgressText").textContent = "Chưa tải được hạng thành viên.";
+                return;
+            }
+
+            renderMemberCard(summary);
+
+            renderTierLadder(summary);
+
+            renderRules(summary.rules);
+
+            loadHistory(0);
+
+        }
+
+
+        function renderMemberCard(summary) {
+
+            const tier = summary.tier;
+
+            const card = document.getElementById("memberCard");
+
+            card.className = "member-card member-card--" + String(tier.code).toLowerCase();
+
+            document.getElementById("memberTierName").textContent = tier.name;
+
+            document.getElementById("summaryPoints").textContent = formatCount(summary.points);
+
+            document.getElementById("memberPointsValue").textContent = "Dùng như " + formatPrice(Number(summary.pointsValue)) + " khi mua hàng";
+
+            document.getElementById("summarySpent").textContent = formatPrice(Number(summary.totalSpent));
+
+            document.getElementById("statMultiplier").textContent = "x" + multiplierText(tier.pointMultiplier);
+
+            const next = summary.nextTier;
+
+            document.getElementById("memberProgressText").textContent = next
+                ? "Còn " + formatPrice(Number(summary.amountToNextTier)) + " để lên hạng " + next.name
+                : "Bạn đang ở hạng cao nhất";
+
+            document.getElementById("memberProgressPercent").textContent = next ? summary.progressPercent + "%" : "";
+
+            document.getElementById("memberProgressFill").style.width = (next ? summary.progressPercent : 100) + "%";
+
+            document.getElementById("memberProgressBar").setAttribute("aria-valuenow", String(next ? summary.progressPercent : 100));
+
+        }
+
+
+        function renderTierLadder(summary) {
+
+            const current = summary.tier;
+
+            document.getElementById("tierLadder").innerHTML = summary.tiers.map(function (tier) {
+
+                const reached = tier.sortOrder <= current.sortOrder;
+
+                const mine = tier.code === current.code;
+
+                return `
+                    <div class="tier-step tier-step--${escapeHtml(String(tier.code).toLowerCase())}${mine ? " is-current" : ""}${reached ? " is-reached" : ""}" data-tier="${escapeHtml(tier.code)}">
+                        <span class="tier-step-medal" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5-4.8-4.6 6.6-.9Z"/></svg>
+                        </span>
+                        <strong>${escapeHtml(tier.name)}</strong>
+                        <span class="tier-step-min">${Number(tier.minSpent) > 0 ? "Từ " + escapeHtml(formatPrice(Number(tier.minSpent))) : "Khi đăng ký"}</span>
+                        <span class="tier-step-rate">Tích điểm x${escapeHtml(multiplierText(tier.pointMultiplier))}</span>
+                        ${mine ? `<em class="tier-step-you">Hạng của bạn</em>` : ""}
+                    </div>
+                `;
+
+            }).join("");
+
+        }
+
+
+        function renderRules(rules) {
+
+            const earn = formatPrice(Number(rules.vndPerPointEarned));
+
+            const spend = formatPrice(Number(rules.vndPerPointSpent));
+
+            const items = [
+                ["Tích điểm", "Mỗi " + earn + " tiền hàng thực trả (không tính phí giao hàng) = 1 điểm, nhân hệ số của hạng. Điểm được cộng khi đơn đã giao."],
+                ["Dùng điểm", "1 điểm = " + spend + ". Mỗi đơn dùng tối đa " + rules.maxRedeemPercent + "% giá trị hàng (sau voucher), dùng cùng voucher được."],
+                ["Huỷ / trả hàng", "Đơn huỷ được hoàn lại điểm đã dùng. Trả hàng: hoàn điểm đã dùng cho phần trả và trừ điểm đã tích tương ứng."],
+                ["Lên hạng", "Hạng tính theo tổng chi tiêu các đơn đã giao. Hạng đã đạt được giữ nguyên, không bị hạ."]
+            ];
+
+            document.getElementById("loyaltyRules").innerHTML = items.map(function (item, index) {
+                return `<li><span class="loyalty-rule-no">${index + 1}</span><div><strong>${escapeHtml(item[0])}</strong><p>${escapeHtml(item[1])}</p></div></li>`;
+            }).join("");
+
+        }
+
+
+        async function loadHistory(page) {
+
+            const box = document.getElementById("loyaltyHistory");
+
+            const more = document.getElementById("loyaltyMoreBtn");
+
+            let result;
+
+            try {
+
+                result = await apiRequest("/loyalty/me/history?page=" + page + "&size=" + HISTORY_SIZE, { auth: true });
+
+            } catch (error) {
+
+                if (page === 0) {
+                    box.innerHTML = `<div class="state-box"><p>${escapeHtml(getErrorMessage(error))}</p></div>`;
+                }
+
+                return;
+
+            }
+
+            historyPage = page;
+
+            const rows = (result.content || []).map(function (tx) {
+
+                const plus = tx.points > 0;
+
+                const order = tx.orderId
+                    ? `<a href="${escapeHtml(getOrderDetailUrl(tx.orderId))}">${escapeHtml(tx.orderCode)}</a>`
+                    : "";
+
+                return `
+                    <li class="loyalty-tx">
+                        <span class="loyalty-tx-icon loyalty-tx-icon--${plus ? "plus" : "minus"}" aria-hidden="true">${plus ? "+" : "−"}</span>
+                        <div class="loyalty-tx-main">
+                            <strong>${escapeHtml(TX_LABELS[tx.type] || tx.type)}</strong>
+                            <span>${escapeHtml(tx.note || "")}${order ? " · " + order : ""}</span>
+                            <small>${escapeHtml(formatOrderDateTime(tx.createdAt))}</small>
+                        </div>
+                        <div class="loyalty-tx-points">
+                            <strong class="${plus ? "is-plus" : "is-minus"}">${plus ? "+" : "−"}${escapeHtml(formatCount(Math.abs(tx.points)))}</strong>
+                            <small>Còn ${escapeHtml(formatCount(tx.balanceAfter))}</small>
+                        </div>
+                    </li>
+                `;
+
+            }).join("");
+
+            if (page === 0) {
+
+                box.innerHTML = rows
+                    ? `<ul class="loyalty-tx-list">${rows}</ul>`
+                    : `<div class="loyalty-empty"><strong>Chưa có điểm nào</strong><p>Điểm được cộng khi đơn hàng của bạn đã giao.</p>
+                        <a class="btn btn-dark" href="${escapeHtml(siteUrl("customer/products.html"))}">Mua sắm ngay</a></div>`;
+
+            } else {
+
+                box.querySelector(".loyalty-tx-list").insertAdjacentHTML("beforeend", rows);
+
+            }
+
+            more.hidden = result.page + 1 >= result.totalPages;
+
+        }
+
+
+        function formatCount(value) {
+
+            return new Intl.NumberFormat("vi-VN").format(Number(value) || 0);
+
+        }
+
+
+        function multiplierText(value) {
+
+            return String(Number(value)).replace(".", ",");
 
         }
 
@@ -346,6 +552,10 @@ document.addEventListener(
                 }
             });
 
+            if (typeof revealActiveAccountTab === "function") {
+                revealActiveAccountTab();
+            }
+
         }
 
 
@@ -370,6 +580,9 @@ document.addEventListener(
             }
 
             document.getElementById("avatarName").textContent = user.fullname || user.username || "";
+
+            /* thẻ thành viên dùng chung ảnh vừa chọn / ảnh đã lưu */
+            document.getElementById("memberAvatar").innerHTML = box.innerHTML;
 
             document.getElementById("avatarRemoveBtn").hidden = !user.avatarUrl;
 
@@ -523,15 +736,18 @@ document.addEventListener(
             clearMessages(profileForm);
 
 
+            const picked = area.getValue();
+
+            /* địa chỉ 2 cấp: không còn quận / huyện; địa chỉ 1 dòng kiểu cũ giữ nguyên giá trị đang có */
             const data = {
                 dateOfBirth: valueOf("dateOfBirth"),
                 gender: valueOf("gender"),
                 address: valueOf("address").trim(),
-                ward: valueOf("ward").trim(),
-                district: valueOf("district").trim(),
-                city: valueOf("city").trim(),
+                ward: picked.ward,
+                district: "",
+                city: picked.province,
                 postalCode: valueOf("postalCode").trim(),
-                defaultShippingAddress: valueOf("defaultShippingAddress").trim()
+                defaultShippingAddress: (currentProfile && currentProfile.defaultShippingAddress) || ""
             };
 
 
@@ -542,9 +758,17 @@ document.addEventListener(
                 invalid.push("dateOfBirth");
             }
 
+            /* đã gõ nhưng không chọn đúng tên trong danh sách */
+            if (valueOf("city").trim() && !data.city) {
+                invalid.push("city");
+            }
+
+            if (valueOf("ward").trim() && !data.ward) {
+                invalid.push("ward");
+            }
+
             const maxLengths = {
-                address: 255, ward: 100, district: 100, city: 100,
-                postalCode: 20, defaultShippingAddress: 1000
+                address: 255, postalCode: 20
             };
 
             Object.keys(maxLengths).forEach(function (field) {

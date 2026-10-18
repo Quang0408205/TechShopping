@@ -35,12 +35,14 @@ final class SalesReportExcelWriter {
     static final String EMPLOYEES = "Theo nhân viên";
     static final String CATEGORIES = "Theo danh mục";
     static final String PRODUCTS = "Top sản phẩm";
+    static final String COMBOS = "Theo combo";
     static final String ORDERS = "Danh sách đơn";
 
     private static final Map<String, String> PAYMENT_LABELS = Map.of(
             "COD", "Thanh toán khi nhận hàng",
             "BANK_TRANSFER", "Chuyển khoản",
-            "INSTALLMENT", "Trả góp");
+            "INSTALLMENT", "Trả góp",
+            "CARD", "Thẻ quốc tế");
 
     private final XSSFWorkbook workbook = new XSSFWorkbook();
     private final CellStyle header;
@@ -87,6 +89,7 @@ final class SalesReportExcelWriter {
         writer.employees(report);
         writer.categories(report);
         writer.products(report);
+        writer.combos(report);
         writer.orders(orders, ordersCut);
         try (XSSFWorkbook workbook = writer.workbook; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             workbook.write(out);
@@ -204,6 +207,20 @@ final class SalesReportExcelWriter {
             r++;
         }
         widths(sheet, 8, 48, 22, 10, 18);
+    }
+
+    private void combos(SalesReportResponse report) {
+        Sheet sheet = table(COMBOS, "Combo", "Số đơn", "Món mua kèm", "Tiền giảm", "Doanh thu các đơn");
+        int r = 1;
+        for (SalesReportResponse.ComboRow c : report.byCombo()) {
+            Row row = sheet.createRow(r++);
+            row.createCell(0).setCellValue(c.comboName());
+            row.createCell(1).setCellValue(c.orders());
+            row.createCell(2).setCellValue(c.units());
+            moneyCell(row, 3, c.discount());
+            moneyCell(row, 4, c.revenue());
+        }
+        widths(sheet, 40, 10, 14, 18, 22);
     }
 
     private void orders(List<DeliveredOrder> orders, boolean cut) {

@@ -57,6 +57,13 @@ app:
     dir: ${APP_UPLOAD_DIR:uploads}
     # Origin the browser uses to reach this API; stored image URLs start with it
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+    # Plan v5 GĐ7: account avatars on Cloudinary (square crop around the face, compressed); any key empty = local disk.
+    # Product / review / after-sales photos always stay on the disk
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+      api-key: ${CLOUDINARY_API_KEY:}
+      api-secret: ${CLOUDINARY_API_SECRET:}
+      folder: ${CLOUDINARY_FOLDER:techshopping/avatars}
   payment:
     # Shop account shown for bank transfers and used for the VietQR image. Set the real one in .env (never commit it);
     # empty = the demo account
@@ -73,6 +80,13 @@ app:
     webhook:
       secret: ${PAYMENT_WEBHOOK_SECRET:}
       simulator-enabled: ${PAYMENT_SIMULATOR_ENABLED:false}
+    # Card payments through Stripe Checkout, TEST keys only (Stripe pays out to no Vietnamese bank). Empty secret key =
+    # the "Thẻ quốc tế" method is hidden. Webhook: POST /api/v1/payments/stripe/webhook, signed with the whsec_ key
+    stripe:
+      secret-key: ${STRIPE_SECRET_KEY:}
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+      api-base: ${STRIPE_API_BASE:https://api.stripe.com}
+      session-minutes: 30
   sales:
     # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
     commission-rate: ${SALES_COMMISSION_RATE:0.01}
@@ -104,6 +118,11 @@ app:
       register-window: 1h
       refresh-per-ip: ${REFRESH_LIMIT_PER_IP:60}
       refresh-window: 1m
+  search:
+    # Plan v5: suggestions under the search box (GET /products/suggest), per client IP; generous because behind the
+    # deploy proxy every visitor shares the proxy's IP
+    suggest-per-ip: ${SUGGEST_LIMIT_PER_IP:600}
+    suggest-window: 1m
   cache:
     # Redis read cache (categories, brands, product pages, reports); off = every request reads the database
     enabled: ${CACHE_ENABLED:true}

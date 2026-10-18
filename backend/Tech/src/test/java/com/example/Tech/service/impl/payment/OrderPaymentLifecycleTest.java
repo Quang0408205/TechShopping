@@ -1,5 +1,7 @@
 package com.example.Tech.service.impl.payment;
 
+import com.example.Tech.config.StripeProperties;
+import com.example.Tech.service.payment.StripeGateway;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.order.Order;
 import com.example.Tech.entity.order.PaymentMethod;
@@ -55,13 +57,17 @@ class OrderPaymentLifecycleTest {
     @Mock
     private InstallmentPaymentRepository installmentPaymentRepository;
 
+    @Mock
+    private StripeGateway stripeGateway;
+
     private OrderPaymentLifecycle lifecycle;
 
     private final User staff = new User();
 
     @BeforeEach
     void setUp() {
-        lifecycle = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, installmentPaymentRepository);
+        lifecycle = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, installmentPaymentRepository,
+                new StripeProperties("sk_test_x", null, null, null), stripeGateway);
     }
 
     @Test
@@ -232,6 +238,51 @@ class OrderPaymentLifecycleTest {
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INSTALLMENT_STATUS);
         verify(paymentRepository, never()).save(any());
+    }
+
+    @Test
+    void card_isRefusedWhenStripeIsOff_orAboveStripesLimit() {
+        OrderPaymentLifecycle off = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository,
+                installmentPaymentRepository, new StripeProperties("", null, null, null), stripeGateway);
+
+        assertThatThrownBy(() -> off.validateSelection(PaymentMethod.CARD, null))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CARD_PAYMENT_DISABLED));
+        assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.CARD, null)).doesNotThrowAnyException();
+        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("99999999"))).doesNotThrowAnyException();
+        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("100000000")))
+                .isInstanceOfSatisfying(BusinessException.class,
+                        ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CARD_AMOUNT_TOO_LARGE));
+    }
+
+    @Test
+    void cardOrder_isConfirmedOnlyOncePaid() {
+        Order order = order(PaymentMethod.CARD, "990000");
+        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L))
+                .thenReturn(Optional.of(payment(PaymentMethod.CARD, PaymentStatus.PENDING)));
+
+        assertThatThrownBy(() -> lifecycle.checkCanConfirm(order))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.PAYMENT_REQUIRED);
+                    assertThat(ex.getMessage()).contains("thẻ");
+                });
+
+        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L))
+                .thenReturn(Optional.of(payment(PaymentMethod.CARD, PaymentStatus.PAID)));
+        assertThatCode(() -> lifecycle.checkCanConfirm(order)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void cancellingAnUnpaidCardOrder_closesItsStripePage() {
+        Payment payment = payment(PaymentMethod.CARD, PaymentStatus.PENDING);
+        payment.setCheckoutSessionId("cs_test_1");
+        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L)).thenReturn(Optional.of(payment));
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.empty());
+
+        lifecycle.onOrderCancelled(order(PaymentMethod.CARD, "990000"));
+
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CANCELLED);
+        verify(stripeGateway).expireSession("cs_test_1");
     }
 
     private static Payment payment(PaymentMethod method, PaymentStatus status) {

@@ -22,6 +22,14 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 16 | `reviews_own_only.sql` | Chỉ đánh giá thật, mỗi tài khoản đánh giá nhiều lần (sao lưu trước) |
 | 17 | `merge_product_variants.sql` | Gộp sản phẩm chỉ khác RAM / bộ nhớ thành một sản phẩm nhiều phiên bản, bỏ phiên bản giá 0 (sao lưu trước; sau đó dọn Redis `cache:*` và chạy lại dữ liệu AI) |
 | 18 | `review_likes_variant.sql` | Đánh giá: "Phân loại hàng" + nút "Hữu ích" (`review_likes`) |
+| 19 | `order_shipping_area.sql` | Địa chỉ giao hàng 2 cấp: đơn lưu thêm tỉnh / thành + phường / xã |
+| 20 | `vouchers.sql` | Voucher giảm % cho đơn hàng (lượt dùng, danh mục áp dụng; đơn + dòng hàng lưu số tiền giảm) |
+| 21 | `card_payment.sql` | Thanh toán thẻ quốc tế (Stripe Checkout, chế độ Test): thêm hình thức `CARD` + mã phiên Stripe của khoản thanh toán |
+| 22 | `loyalty.sql` | Điểm tích luỹ + hạng thành viên (bảng hạng, lịch sử điểm, điểm dùng / được cộng của đơn; cộng bù đơn đã giao; sao lưu trước) |
+| 23 | `product_images_color.sql` | Ảnh sản phẩm theo màu (`product_images.color`, NULL = ảnh chung) |
+| 24 | `variant_specifications.sql` | Thông số riêng của từng phiên bản (`product_specifications.variant_id`, NULL = chung) |
+| 25 | `filters_needs.sql` | Bộ lọc thông số nâng cao (`product_filter_values`) + nhu cầu (`needs`, `product_needs`); sau khi chạy gọi `POST /api/v1/admin/products/reindex-filters` |
+| 26 | `combos.sql` | Combo mua kèm giảm giá (`combos`, `combo_items`, `order_combos`; đơn + dòng hàng lưu `combo_discount`) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

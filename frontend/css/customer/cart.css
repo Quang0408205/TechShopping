@@ -223,7 +223,7 @@
     font-size: 14px;
 }
 
-.cart-total-row:nth-of-type(3) {
+.cart-total-final {
     margin: var(--space-2) 0 var(--space-3);
     padding-top: var(--space-2);
 
@@ -570,4 +570,10 @@
 
 .order-info-card {
     margin-bottom: var(--space-3);
+}
+
+
+/* Kế hoạch v5 GĐ10: dòng "Giảm combo" của giỏ */
+.cart-total-combo strong {
+    color: var(--color-success);
 }

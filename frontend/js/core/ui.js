@@ -368,6 +368,215 @@ function isSoldOut(item) {
 }
 
 
+/* ================= MÀU + PHIÊN BẢN (kế hoạch v5 GĐ2) ================= */
+
+/*
+ * Dữ liệu chỉ có tên màu ("Titan sa mạc", "Đen - Đỏ"…): đổi sang mã màu theo từ khoá (không dấu, khớp
+ * nguyên cụm từ, cụm dài đứng trước). Màu 2 tông "A - B" → nửa A nửa B; không nhận ra → null (chấm xám).
+ */
+
+const VARIANT_COLOR_HEX = [
+    ["titan sa mac", "#c8a98a"], ["titan tu nhien", "#b8b1a6"], ["titan den", "#3c3b39"], ["titan xam", "#7d7f83"],
+    ["titan xanh", "#4b5e72"], ["titan tim", "#7b6a8c"], ["titan vang", "#d9c08f"], ["titan trang", "#e9e7e2"],
+    ["xanh bac ha", "#a8dcc6"], ["xanh mint", "#a8dcc6"], ["xanh navy", "#1f3a68"], ["xanh nuoc bien", "#1f5fa0"],
+    ["xanh luu ly", "#3b5ba5"], ["xanh duong dam", "#1f4e8c"], ["xanh duong nhat", "#a9c8ec"],
+    ["xanh da troi nhat", "#a9c8ec"], ["xanh lam nhat", "#a9c8ec"], ["xanh da troi", "#6aa6e0"],
+    ["xanh duong", "#2f6fbf"], ["xanh la xo thom", "#9caf88"], ["xanh la dam", "#2e6b45"], ["xanh la", "#3e9a5c"],
+    ["xanh reu", "#5b6b3a"], ["xanh oliu", "#708238"], ["xanh ngoc", "#2bb3a6"], ["xanh tim", "#5a5ba8"],
+    ["xanh den", "#1e2b3a"], ["xanh dam", "#1f3f6e"], ["xanh", "#4a7fb5"],
+    ["tim bac", "#b9a9cc"], ["tim nhat", "#c7b3e0"], ["tim", "#7e5bb5"],
+    ["vang hong", "#e8b4a0"], ["hong nhat", "#f6c6d2"], ["hong", "#ef8fa8"],
+    ["vang dong", "#c9a26b"], ["vang nhat", "#f1dc98"], ["vang", "#e5bf4c"],
+    ["do burgundy", "#7a1f2b"], ["do", "#c62f2f"],
+    ["cam vu tru", "#d9652b"], ["cam nhat", "#f4b183"], ["cam", "#e67e22"],
+    ["nau nhat", "#b08968"], ["nau", "#7b4b2a"],
+    ["trang starlight", "#f3efe6"], ["trang anh sao", "#f3efe6"], ["trang", "#f7f7f7"],
+    ["mau be", "#efe4cc"], ["kem", "#efe4cc"], ["be", "#efe4cc"],
+    ["ghi den", "#3a3b3d"], ["ghi", "#6d6f73"], ["bac", "#c9ccd1"], ["xam nhat", "#c3c5c9"], ["xam", "#85888e"],
+    ["den bong", "#111111"], ["den", "#1f1f1f"], ["dong", "#b87333"]
+];
+
+
+function foldVariantText(text) {
+
+    return String(text || "")
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+
+}
+
+
+function variantColorHex(name) {
+
+    const folded = " " + foldVariantText(name) + " ";
+
+    const found = VARIANT_COLOR_HEX.find(function (entry) {
+        return folded.indexOf(" " + entry[0] + " ") !== -1;
+    });
+
+    return found ? found[1] : null;
+
+}
+
+
+/* Giá trị CSS background cho chấm màu (đã an toàn: chỉ từ bảng mã màu ở trên) */
+
+function variantColorBackground(name) {
+
+    const tones = String(name || "").split(/\s+-\s+/).map(variantColorHex).filter(Boolean);
+
+    if (tones.length >= 2) {
+        return "linear-gradient(135deg, " + tones[0] + " 50%, " + tones[1] + " 50%)";
+    }
+
+    return tones[0] || variantColorHex(name) || "";
+
+}
+
+
+function variantColorDotHtml(name, extraClass) {
+
+    const background = variantColorBackground(name);
+
+    return `<span class="color-dot${background ? "" : " is-unknown"}${extraClass ? " " + extraClass : ""}"`
+        + (background ? ` style="background:${background}"` : "")
+        + ` aria-hidden="true"></span>`;
+
+}
+
+
+/* "12 GB" → "12GB" */
+
+function compactCapacity(value) {
+
+    return String(value || "").replace(/\s+/g, "").toUpperCase();
+
+}
+
+
+/* Dung lượng ra GB để sắp xếp ("1 TB" → 1024); không đọc được → 0 */
+
+function capacityInGb(value) {
+
+    const match = String(value || "").match(/([\d.,]+)\s*(TB|GB|MB)/i);
+
+    if (!match) {
+        return 0;
+    }
+
+    const number = Number(match[1].replace(",", "."));
+
+    const unit = match[2].toUpperCase();
+
+    return unit === "TB" ? number * 1024 : unit === "MB" ? number / 1024 : number;
+
+}
+
+
+/*
+ * Nhãn "phiên bản" = RAM + bộ nhớ: "8GB - 256GB", chỉ bộ nhớ → "256GB", laptop → "RAM 16GB - SSD 512GB".
+ * Không có cả hai → tên phiên bản bỏ phần màu (hoặc "" nếu chỉ khác nhau về màu).
+ */
+
+function variantVersionLabel(variant, isLaptop) {
+
+    const ram = compactCapacity(variant.ram);
+
+    const storage = compactCapacity(variant.storage);
+
+    if (ram && storage) {
+        return isLaptop ? "RAM " + ram + " - SSD " + storage : ram + " - " + storage;
+    }
+
+    if (storage || ram) {
+        return isLaptop && ram ? "RAM " + ram : storage || ram;
+    }
+
+    const name = String(variant.variantName || "").trim();
+
+    if (!name || !variant.color) {
+        return name;
+    }
+
+    /* "Bản thường - Đen" → "Bản thường"; chỉ có màu → "" */
+    return name.split(/\s+-\s+/).filter(function (part) {
+        return foldVariantText(part) !== foldVariantText(variant.color);
+    }).join(" - ");
+
+}
+
+
+/*
+ * Nhóm phiên bản theo nhãn RAM + bộ nhớ, nhóm sắp theo bộ nhớ rồi RAM tăng dần:
+ * [{ label, variants: [...] }]. Thứ tự màu trong nhóm giữ như API.
+ */
+
+function groupVariantsByVersion(variants, isLaptop) {
+
+    const groups = [];
+
+    (variants || []).forEach(function (variant) {
+
+        const label = variantVersionLabel(variant, isLaptop);
+
+        let group = groups.find(function (item) { return item.label === label; });
+
+        if (!group) {
+            group = { label: label, variants: [], storageGb: capacityInGb(variant.storage), ramGb: capacityInGb(variant.ram) };
+            groups.push(group);
+        }
+
+        group.variants.push(variant);
+
+    });
+
+    return groups.sort(function (a, b) {
+        return (a.storageGb - b.storageGb) || (a.ramGb - b.ramGb);
+    });
+
+}
+
+
+/* Dãy chấm màu nhỏ trên thẻ sản phẩm: các màu khác nhau của sản phẩm (tối đa 5, còn lại "+n") */
+
+const CARD_COLOR_DOTS_MAX = 5;
+
+function cardColorDotsHtml(product) {
+
+    const names = [];
+
+    (Array.isArray(product.variants) ? product.variants : []).forEach(function (option) {
+
+        const color = String(option.color || "").trim();
+
+        if (color && !names.some(function (name) { return foldVariantText(name) === foldVariantText(color); })) {
+            names.push(color);
+        }
+
+    });
+
+    if (names.length === 0) {
+        return "";
+    }
+
+    const dots = names.slice(0, CARD_COLOR_DOTS_MAX).map(function (name) {
+        return `<span class="product-color" title="${escapeHtml(name)}">${variantColorDotHtml(name)}</span>`;
+    }).join("");
+
+    const more = names.length > CARD_COLOR_DOTS_MAX
+        ? `<span class="product-color-more">+${names.length - CARD_COLOR_DOTS_MAX}</span>`
+        : "";
+
+    return `<div class="product-colors" aria-label="${escapeHtml(names.length + " màu: " + names.join(", "))}">${dots}${more}</div>`;
+
+}
+
+
 /*
  * Phiên bản trên thẻ (API GET /products trả product.variants, rẻ nhất trước): gộp theo nhãn
  * (dung lượng / RAM), mỗi nút đại diện phiên bản rẻ nhất còn hàng của nhãn đó. Chọn nút →
@@ -576,7 +785,7 @@ function productCardHtml(product, categorySlug) {
     /* Có giảm giá thật (giá bán < basePrice): nhãn -x% + giá gốc gạch ngang; di chuột lên nhãn → tên chương trình */
     const hasDiscount = hasPrice && basePrice > price;
 
-    const promotionTitle = hasDiscount && product.activePromotionName && shown === product
+    const promotionTitle = hasDiscount && product.activePromotionName
         ? ` title="${escapeHtml("Khuyến mãi: " + product.activePromotionName)}"`
         : "";
 
@@ -609,6 +818,8 @@ function productCardHtml(product, categorySlug) {
                 ${productCardRatingHtml(product)}
 
                 ${cardVariantsHtml(choices, firstChoice ? firstChoice.id : null)}
+
+                ${cardColorDotsHtml(product)}
 
                 <p class="product-price">${cardPriceHtml(price, basePrice)}</p>
 
@@ -1101,6 +1312,83 @@ function categoryImageOf(category) {
     const key = getCategoryFilterKey(category.slug);
 
     return key && CATEGORY_CARD_IMAGES[key] ? siteUrl(CATEGORY_CARD_IMAGES[key]) : getFallbackImage(category.slug);
+
+}
+
+
+/*
+ * Danh mục không có ảnh ADMIN tải lên / ảnh cắt sẵn: biểu tượng nét mảnh cùng một bộ (không dùng ảnh poster của sản phẩm,
+ * vì mỗi sản phẩm một kiểu nền nên khó nhìn và dễ lệch màu). Khớp theo slug.
+ */
+
+const CATEGORY_ART_PATHS = {
+    phone: '<rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18.5h2"/>',
+    laptop: '<rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/>',
+    tablet: '<rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M11.5 18.5h1"/>',
+    smartwatch: '<rect x="7" y="6" width="10" height="12" rx="3"/><path d="M9 6l.8-3h4.4l.8 3M9 18l.8 3h4.4l.8-3M12 9.5v2.7l1.6 1"/>',
+    watch: '<circle cx="12" cy="12" r="5"/><path d="M12 9.5V12l1.8 1.2M9.5 7.2L10 3h4l.5 4.2M9.5 16.8L10 21h4l.5-4.2"/>',
+    monitor: '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>',
+    desktop: '<rect x="7" y="2.5" width="10" height="19" rx="1.5"/><circle cx="12" cy="7" r="1.2"/><path d="M10 17h4"/>',
+    accessory: '<path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/>',
+    other: '<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5l8 4.5 8-4.5M12 12v9"/>'
+};
+
+function categoryArtKey(slug) {
+
+    const value = String(slug || "");
+
+    if (/dong-ho-thong-minh|smartwatch|vong-deo/.test(value)) {
+        return "smartwatch";
+    }
+
+    if (/dong-ho/.test(value)) {
+        return "watch";
+    }
+
+    if (/man-hinh/.test(value)) {
+        return "monitor";
+    }
+
+    if (/may-tinh-de-ban|pc|desktop/.test(value)) {
+        return "desktop";
+    }
+
+    if (/may-tinh-bang|tablet/.test(value)) {
+        return "tablet";
+    }
+
+    if (/laptop/.test(value)) {
+        return "laptop";
+    }
+
+    if (/dien-thoai|phone/.test(value)) {
+        return "phone";
+    }
+
+    if (/phu-kien|accessory/.test(value)) {
+        return "accessory";
+    }
+
+    return "other";
+
+}
+
+function categoryHasPhoto(category) {
+
+    return isSafeImageUrl(category.iconUrl) || Boolean(CATEGORY_CARD_IMAGES[getCategoryFilterKey(category.slug)]);
+
+}
+
+/* <img> khi có ảnh riêng, không thì biểu tượng (cả hai dùng chung ô hiển thị của header và trang chủ) */
+
+function categoryVisualHtml(category) {
+
+    if (categoryHasPhoto(category)) {
+        return `<img src="${escapeHtml(categoryImageOf(category))}" alt="" loading="lazy">`;
+    }
+
+    return `<span class="category-art" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" `
+        + `stroke-linecap="round" stroke-linejoin="round">${CATEGORY_ART_PATHS[categoryArtKey(category.slug)]}</svg></span>`;
 
 }
 

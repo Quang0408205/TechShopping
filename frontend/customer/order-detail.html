@@ -114,9 +114,9 @@
 
                         <div class="order-detail-side">
 
-                            <!-- Phase 5: chỉ khi đơn chuyển khoản đang chờ tiền -->
+                            <!-- Phase 5: chỉ khi đơn chuyển khoản / thẻ (kế hoạch v5 GĐ5) đang chờ tiền -->
                             <div class="order-detail-block order-transfer" id="orderTransferBlock" hidden>
-                                <h4>Chờ chuyển khoản</h4>
+                                <h4 id="orderTransferTitle">Chờ chuyển khoản</h4>
                                 <dl class="order-facts" id="orderTransferFacts"></dl>
                                 <p id="orderTransferDeadline" class="order-transfer-deadline"></p>
                                 <a id="orderTransferPayLink" href="payment.html" class="btn btn-dark order-transfer-pay">XEM MÃ QR VÀ THANH TOÁN</a>
@@ -152,6 +152,19 @@
                                     <span>Tạm tính</span>
                                     <strong id="orderSubtotal"></strong>
                                 </div>
+                                <div class="checkout-total-row checkout-total-voucher" id="orderComboRow" hidden>
+                                    <span>Giảm combo <small id="orderComboNames"></small></span>
+                                    <strong id="orderComboDiscount"></strong>
+                                </div>
+                                <div class="checkout-total-row checkout-total-voucher" id="orderVoucherRow" hidden>
+                                    <span>Voucher <span id="orderVoucherCode"></span></span>
+                                    <strong id="orderVoucherDiscount"></strong>
+                                </div>
+                                <!-- Kế hoạch v5 GĐ6: điểm đã dùng + điểm được cộng khi giao -->
+                                <div class="checkout-total-row checkout-total-voucher" id="orderPointsRow" hidden>
+                                    <span>Điểm tích luỹ (<span id="orderPointsUsed"></span> điểm)</span>
+                                    <strong id="orderPointsDiscount"></strong>
+                                </div>
                                 <div class="checkout-total-row">
                                     <span>Phí vận chuyển</span>
                                     <strong id="orderShippingFee"></strong>
@@ -160,6 +173,13 @@
                                     <span>Tổng cộng</span>
                                     <span id="orderTotal"></span>
                                 </div>
+                                <p class="order-points-earned" id="orderPointsEarned" hidden></p>
+                            </div>
+
+                            <!-- Kế hoạch v5 GĐ6: đơn đã giao / đã huỷ mua lại được -->
+                            <div class="order-detail-actions" id="orderBuyAgain" hidden>
+                                <button type="button" class="btn btn-dark" id="orderBuyAgainBtn">MUA LẠI</button>
+                                <p>Thêm các sản phẩm của đơn này vào giỏ với giá hiện tại.</p>
                             </div>
 
                             <!-- Chỉ hiện khi đơn còn "Chờ xác nhận" (cancellable) -->

@@ -1826,3 +1826,109 @@ button.admin-badge {
 .excel-import-errors td:nth-child(2) {
     white-space: nowrap;
 }
+
+/* Phase 12: thẻ phiên bản (admin/products.html) */
+.admin-version-card {
+    padding: 14px 16px;
+    margin-bottom: 14px;
+
+    border: 1px solid var(--admin-border, #e4e4e7);
+    border-radius: 10px;
+    background: #fafafa;
+}
+
+.admin-version-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.admin-version-actions {
+    display: inline-flex;
+    gap: 14px;
+}
+
+.admin-version-fields {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.admin-version-fields label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-version-fields input,
+.admin-color-row input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.admin-version-block {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--admin-border, #e4e4e7);
+}
+
+.admin-version-label {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.admin-color-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) 36px;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.admin-image-color-pick {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.admin-image-tile .admin-image-color {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 12px;
+}
+
+@media (max-width: 720px) {
+
+    .admin-version-fields {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-color-row {
+        grid-template-columns: minmax(0, 1fr) 36px;
+    }
+
+    .admin-color-row input[name="skuVariant"],
+    .admin-color-row input[name="price"] {
+        grid-column: 1;
+    }
+
+}
+
+.admin-need-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+}
+
+.admin-need-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}

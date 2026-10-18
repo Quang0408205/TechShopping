@@ -12,6 +12,7 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.mapper.product.ProductSpecificationMapper;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.ProductSpecificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ import static org.mockito.Mockito.when;
 class ProductSpecificationServiceImplTest {
 
     @Mock
+    private com.example.Tech.service.product.ProductFilterService filterService;
+
+    @Mock
     private ProductSpecificationRepository specificationRepository;
 
     @Mock
@@ -42,12 +46,15 @@ class ProductSpecificationServiceImplTest {
     @Mock
     private CategoryRepository categoryRepository;
 
+    @Mock
+    private ProductVariantRepository variantRepository;
+
     private ProductSpecificationServiceImpl specificationService;
 
     @BeforeEach
     void setUp() {
-        specificationService = new ProductSpecificationServiceImpl(specificationRepository, productRepository, categoryRepository,
-                new ProductSpecificationMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)));
+        specificationService = new ProductSpecificationServiceImpl(specificationRepository, productRepository, variantRepository, categoryRepository,
+                new ProductSpecificationMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)), filterService);
     }
 
     @Test

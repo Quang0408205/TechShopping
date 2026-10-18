@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Combo - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- Kế hoạch v5 GĐ10: combo mua kèm giảm giá (sản phẩm chính + món kèm), chỉ ADMIN -->
+<body class="admin-body" data-page-title="Combo" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="combos"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="comboFilterForm" role="search">
+
+                    <input type="search" id="comboKeyword" placeholder="Tìm tên combo…" maxlength="100" aria-label="Từ khoá">
+
+                    <select id="comboStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="RUNNING">Đang áp dụng</option>
+                        <option value="UPCOMING">Sắp áp dụng</option>
+                        <option value="PAUSED">Tạm dừng</option>
+                        <option value="ENDED">Đã kết thúc</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="newComboBtn">
+                    + THÊM COMBO
+                </button>
+
+            </div>
+
+
+            <!-- Thêm / sửa combo -->
+            <section class="admin-panel" id="comboFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="comboFormTitle">Thêm combo</h2>
+                </div>
+
+                <form id="comboForm" novalidate>
+
+                    <p id="comboFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="cbName">Tên combo *</label>
+                            <input type="text" id="cbName" maxlength="150" required placeholder="VD: Mua iPhone kèm phụ kiện giảm sâu">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="cbStart">Bắt đầu *</label>
+                            <input type="datetime-local" id="cbStart" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="cbEnd">Kết thúc *</label>
+                            <input type="datetime-local" id="cbEnd" required>
+                        </div>
+
+                        <label class="admin-field-check">
+                            <input type="checkbox" id="cbActive" checked>
+                            Đang bật (bỏ chọn = tạm dừng)
+                        </label>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="cbDescription">Mô tả</label>
+                            <textarea id="cbDescription" rows="2" maxlength="2000" placeholder="Hiện ở khối “Mua kèm tiết kiệm” trên trang sản phẩm"></textarea>
+                        </div>
+
+                        <!-- Sản phẩm chính -->
+                        <div class="admin-field admin-field-wide">
+                            <label for="cbMainSearch">Sản phẩm chính *</label>
+                            <div class="admin-combo-main" id="cbMainChosen" hidden></div>
+                            <input type="search" id="cbMainSearch" maxlength="100" placeholder="Gõ tên sản phẩm chính (khi giỏ có sản phẩm này, món kèm được giảm)" autocomplete="off">
+                            <div class="admin-combo-results" id="cbMainResults" hidden></div>
+                        </div>
+
+                        <!-- Món mua kèm -->
+                        <fieldset class="admin-field admin-field-wide">
+
+                            <legend>Món mua kèm * <span class="admin-subtext" id="cbItemCount"></span></legend>
+
+                            <div class="admin-combo-items" id="cbItems"></div>
+
+                            <label for="cbAddSearch" class="admin-subtext">Thêm món kèm</label>
+                            <input type="search" id="cbAddSearch" maxlength="100" placeholder="Gõ tên sản phẩm mua kèm…" autocomplete="off">
+                            <div class="admin-combo-results" id="cbAddResults" hidden></div>
+
+                            <div class="admin-combo-suggest">
+                                <button type="button" class="btn btn-outline-dark" id="cbSuggestBtn">GỢI Ý TỪ AI</button>
+                                <span class="admin-subtext">Lấy từ quan hệ “thường mua cùng” của sản phẩm chính.</span>
+                            </div>
+                            <div class="admin-combo-results" id="cbSuggestions" hidden></div>
+
+                        </fieldset>
+
+                        <p class="admin-field admin-field-wide admin-voucher-preview" id="cbPreview" aria-live="polite"></p>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="comboSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="comboCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách combo</h2>
+                    <span class="admin-row-count" id="comboRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Combo</th>
+                                <th>Sản phẩm chính</th>
+                                <th>Món mua kèm</th>
+                                <th>Thời gian</th>
+                                <th>Đơn đã áp</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="comboTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="comboPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/combos.js"></script>
+
+</body>
+</html>

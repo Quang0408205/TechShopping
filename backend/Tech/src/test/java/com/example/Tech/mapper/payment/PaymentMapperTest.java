@@ -2,6 +2,7 @@ package com.example.Tech.mapper.payment;
 
 import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.config.PaymentWebhookProperties;
+import com.example.Tech.config.StripeProperties;
 import com.example.Tech.dto.response.payment.InstallmentResponse;
 import com.example.Tech.dto.response.payment.PaymentResponse;
 import com.example.Tech.entity.order.Order;
@@ -26,7 +27,7 @@ class PaymentMapperTest {
 
     private final PaymentMapper mapper = new PaymentMapper(
             new BankTransferProperties("Vietcombank", "970436", "0123456789", "CONG TY POY", 24),
-            new PaymentWebhookProperties("secret", false));
+            new PaymentWebhookProperties("secret", false), new StripeProperties("sk_test_x", null, null, null));
 
     @Test
     void pendingBankTransfer_hasTheTransferInstructionsAndAVietQrImage() {
@@ -50,13 +51,31 @@ class PaymentMapperTest {
     void demoMode_isFlaggedOnTheTransfer_withTheSameBankQr() {
         PaymentMapper demo = new PaymentMapper(
                 new BankTransferProperties("Vietcombank", "970436", "0123456789", "CONG TY POY", 24),
-                new PaymentWebhookProperties("secret", true));
+                new PaymentWebhookProperties("secret", true), new StripeProperties("sk_test_x", null, null, null));
 
         PaymentResponse response = demo.toResponse(
                 payment(PaymentMethod.BANK_TRANSFER, PaymentStatus.PENDING, "25990000.00"), order(42L, PaymentMethod.BANK_TRANSFER, "25990000.00"));
 
         assertThat(response.bankTransfer().demoAutoPay()).isTrue();
         assertThat(response.bankTransfer().qrImageUrl()).startsWith("https://img.vietqr.io/image/970436-0123456789");
+    }
+
+    @Test
+    void pendingCard_hasTheCardBlockOnly_withTestModeAndDeadline_bankTransferCarriesTheBankBin() {
+        Order order = order(42L, PaymentMethod.CARD, "25990000.00");
+
+        PaymentResponse card = mapper.toResponse(payment(PaymentMethod.CARD, PaymentStatus.PENDING, "25990000.00"), order);
+        PaymentResponse paid = mapper.toResponse(payment(PaymentMethod.CARD, PaymentStatus.PAID, "25990000.00"), order);
+        PaymentResponse transfer = mapper.toResponse(payment(PaymentMethod.BANK_TRANSFER, PaymentStatus.PENDING, "25990000.00"),
+                order(42L, PaymentMethod.BANK_TRANSFER, "25990000.00"));
+
+        assertThat(card.bankTransfer()).isNull();
+        assertThat(card.card()).isNotNull();
+        assertThat(card.card().testMode()).isTrue();
+        assertThat(card.card().payBefore()).isEqualTo(LocalDateTime.of(2026, 10, 4, 10, 0));
+        assertThat(paid.card()).isNull();
+        assertThat(transfer.card()).isNull();
+        assertThat(transfer.bankTransfer().bankBin()).isEqualTo("970436");
     }
 
     @Test
