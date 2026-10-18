@@ -39,6 +39,17 @@ public interface PromotionProductRepository extends JpaRepository<PromotionProdu
                                           @Param("windowEnd") LocalDateTime windowEnd,
                                           @Param("excludePromotionId") Long excludePromotionId);
 
+    /** Every product covered by a promotion running now (home page flash sale), promotion and product loaded. */
+    @Query("""
+            select pp from PromotionProduct pp
+            join fetch pp.promotion
+            join fetch pp.product
+            where pp.promotion.active = true
+              and pp.promotion.startDate <= :now
+              and pp.promotion.endDate > :now
+            """)
+    List<PromotionProduct> findRunningWithProduct(@Param("now") LocalDateTime now);
+
     /**
      * The one active promotion (if any) currently covering each of the given products, as of now. One
      * query for a whole page of products avoids N+1 when rendering a product listing.

@@ -142,6 +142,207 @@ document.addEventListener(
         }
 
 
+        /* ================= DẢI DANH MỤC (kế hoạch v6 B1) ================= */
+
+        const categoryStrip = document.querySelector(".category-strip");
+
+        const ALL_CATEGORIES_ICON = '<path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/>';
+
+        function categoryTabIconHtml(paths) {
+
+            return `<span class="category-tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" `
+                + `stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${paths}</svg></span>`;
+
+        }
+
+        function updateStripNav() {
+
+            if (!categoryStrip) {
+                return;
+            }
+
+            const max = categoryTabs.scrollWidth - categoryTabs.clientWidth;
+
+            categoryStrip.classList.toggle("has-prev", categoryTabs.scrollLeft > 1);
+
+            categoryStrip.classList.toggle("has-next", categoryTabs.scrollLeft < max - 1);
+
+        }
+
+        /* Thẻ đang chọn cuộn vào giữa dải (chỉ cuộn dải, không cuộn cả trang) */
+        function revealActiveCategoryTab() {
+
+            const active = categoryTabs.querySelector("input:checked");
+
+            if (!active) {
+                return;
+            }
+
+            const card = active.closest(".category-tab");
+
+            categoryTabs.scrollTo({
+                left: card.offsetLeft - (categoryTabs.clientWidth - card.offsetWidth) / 2,
+                behavior: "smooth"
+            });
+
+        }
+
+        /* Số sản phẩm đang bán của từng danh mục: một lần gọi GET /categories/product-counts */
+        async function loadCategoryCounts(categories) {
+
+            let rows;
+
+            try {
+                rows = await apiRequest("/categories/product-counts");
+            } catch (error) {
+                return;
+            }
+
+            const byId = {};
+
+            let total = 0;
+
+            (Array.isArray(rows) ? rows : []).forEach(function (row) {
+                byId[row.categoryId] = Number(row.count) || 0;
+            });
+
+            categories.forEach(function (category) {
+
+                const count = byId[category.id] || 0;
+
+                total += count;
+
+                const radio = categoryTabs.querySelector('input[value="' + categoryKeyOf(category.slug) + '"]');
+
+                if (radio) {
+                    radio.nextElementSibling.querySelector(".category-tab-name").dataset.count = count.toLocaleString("vi-VN");
+                }
+
+            });
+
+            const all = categoryTabs.querySelector('input[value=""]');
+
+            if (all) {
+                all.nextElementSibling.querySelector(".category-tab-name").dataset.count = total.toLocaleString("vi-VN");
+            }
+
+            updateStripNav();
+
+        }
+
+        function setupCategoryStrip() {
+
+            if (!categoryStrip) {
+                return;
+            }
+
+            categoryTabs.addEventListener("scroll", updateStripNav);
+
+            window.addEventListener("resize", updateStripNav);
+
+            categoryStrip.querySelector(".category-strip-nav.is-prev").addEventListener("click", function () {
+                categoryTabs.scrollBy({ left: -categoryTabs.clientWidth * 0.7, behavior: "smooth" });
+            });
+
+            categoryStrip.querySelector(".category-strip-nav.is-next").addEventListener("click", function () {
+                categoryTabs.scrollBy({ left: categoryTabs.clientWidth * 0.7, behavior: "smooth" });
+            });
+
+            /* kéo bằng chuột (cảm ứng đã tự vuốt được); kéo xong thì không tính là bấm vào thẻ */
+            let dragStartX = null;
+
+            let dragStartScroll = 0;
+
+            let dragged = false;
+
+            categoryTabs.addEventListener("pointerdown", function (event) {
+
+                if (event.pointerType !== "mouse" || event.button !== 0) {
+                    return;
+                }
+
+                dragStartX = event.clientX;
+
+                dragStartScroll = categoryTabs.scrollLeft;
+
+                dragged = false;
+
+            });
+
+            window.addEventListener("pointermove", function (event) {
+
+                if (dragStartX === null) {
+                    return;
+                }
+
+                const dx = event.clientX - dragStartX;
+
+                if (!dragged && Math.abs(dx) > 5) {
+                    dragged = true;
+                    categoryTabs.classList.add("is-dragging");
+                }
+
+                if (dragged) {
+                    categoryTabs.scrollLeft = dragStartScroll - dx;
+                }
+
+            });
+
+            window.addEventListener("pointerup", function () {
+
+                dragStartX = null;
+
+                categoryTabs.classList.remove("is-dragging");
+
+            });
+
+            categoryTabs.addEventListener("click", function (event) {
+
+                if (dragged) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    dragged = false;
+                }
+
+            }, true);
+
+            /* dải dính dưới header → thu gọn (mốc = một thẻ 1px đặt ngay trên dải) */
+            const sentinel = document.querySelector(".category-strip-sentinel");
+
+            if (sentinel && typeof IntersectionObserver !== "undefined") {
+
+                let observer = null;
+
+                const observe = function () {
+
+                    if (observer) {
+                        observer.disconnect();
+                    }
+
+                    const top = parseFloat(getComputedStyle(categoryStrip).top) || 0;
+
+                    observer = new IntersectionObserver(function (entries) {
+
+                        categoryStrip.classList.toggle("is-stuck",
+                            !entries[0].isIntersecting && entries[0].boundingClientRect.top < top);
+
+                    }, { rootMargin: "-" + Math.round(top) + "px 0px 0px 0px", threshold: [0, 1] });
+
+                    observer.observe(sentinel);
+
+                };
+
+                observe();
+
+                window.addEventListener("resize", observe);
+
+            }
+
+        }
+
+        setupCategoryStrip();
+
+
         /* Tab "Tất cả" + một tab cho mỗi danh mục đang hiển thị (thay các tab viết sẵn trong HTML) */
 
         function renderCategoryTabs(categories) {
@@ -159,7 +360,10 @@ document.addEventListener(
                 return `
                     <label class="category-tab">
                         <input type="radio" name="category" value="${escapeHtml(key)}">
-                        <span>${escapeHtml(category.name)}</span>
+                        <span class="category-tab-card">
+                            ${categoryTabIconHtml(CATEGORY_ART_PATHS[categoryArtKey(category.slug)])}
+                            <span class="category-tab-name" data-count="">${escapeHtml(category.name)}</span>
+                        </span>
                     </label>
                 `;
 
@@ -168,9 +372,16 @@ document.addEventListener(
             categoryTabs.innerHTML = `
                 <label class="category-tab">
                     <input type="radio" name="category" value="">
-                    <span>Tất cả</span>
+                    <span class="category-tab-card">
+                        ${categoryTabIconHtml(ALL_CATEGORIES_ICON)}
+                        <span class="category-tab-name" data-count="">Tất cả</span>
+                    </span>
                 </label>
             ` + tabs;
+
+            updateStripNav();
+
+            loadCategoryCounts(categories);
 
         }
 
@@ -221,6 +432,27 @@ document.addEventListener(
 
             });
 
+            /* Từ mega-menu: ?brand=<id>&min=&max= (chỉ nhận số hợp lệ) */
+            const brand = params.get("brand");
+
+            if (category && brand && /^\d{1,9}$/.test(brand)) {
+                state.brandId = brand;
+            }
+
+            const min = params.get("min");
+
+            const max = params.get("max");
+
+            if (min && /^\d{1,12}$/.test(min)) {
+                state.minPrice = Number(min);
+                minPriceInput.value = min;
+            }
+
+            if (max && /^\d{1,12}$/.test(max)) {
+                state.maxPrice = Number(max);
+                maxPriceInput.value = max;
+            }
+
         }
 
 
@@ -244,6 +476,18 @@ document.addEventListener(
                 });
             });
 
+            if (state.category && state.brandId) {
+                params.set("brand", state.brandId);
+            }
+
+            if (state.minPrice !== null) {
+                params.set("min", String(state.minPrice));
+            }
+
+            if (state.maxPrice !== null) {
+                params.set("max", String(state.maxPrice));
+            }
+
 
             const query = params.toString();
 
@@ -264,6 +508,8 @@ document.addEventListener(
 
             if (radio) {
                 radio.checked = true;
+
+                revealActiveCategoryTab();
             }
 
         }
@@ -382,6 +628,8 @@ document.addEventListener(
                         state.brandId = radio.value;
 
                         state.page = 0;
+
+                        syncUrl();
 
                         loadProducts();
 
@@ -964,6 +1212,8 @@ document.addEventListener(
                     }
 
                     state.page = 0;
+
+                    syncUrl();
 
                     loadProducts();
 

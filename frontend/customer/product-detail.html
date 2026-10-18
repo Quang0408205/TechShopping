@@ -99,15 +99,16 @@
 
             <div class="detail-gallery">
 
-                <div class="detail-main-image">
+                <div class="detail-main-image" id="detailStage" tabindex="0" aria-label="Ảnh sản phẩm: dùng phím mũi tên để đổi ảnh, Enter để phóng to">
+                    <button type="button" class="detail-arrow is-prev" id="mainPrev" aria-label="Ảnh trước" hidden>&#8249;</button>
                     <img id="mainImage" alt="" referrerpolicy="no-referrer">
+                    <button type="button" class="detail-arrow is-next" id="mainNext" aria-label="Ảnh sau" hidden>&#8250;</button>
+                    <span class="detail-counter" id="imageCounter" hidden></span>
                 </div>
 
-                <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên -->
+                <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên; đổi ảnh bằng mũi tên trên ảnh chính -->
                 <div class="detail-thumb-strip">
-                    <button type="button" class="detail-thumb-nav" id="thumbPrev" aria-label="Ảnh trước">&#8249;</button>
                     <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
-                    <button type="button" class="detail-thumb-nav" id="thumbNext" aria-label="Ảnh sau">&#8250;</button>
                 </div>
 
             </div>

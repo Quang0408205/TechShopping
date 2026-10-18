@@ -170,33 +170,23 @@
             <div class="products-main">
 
                 <!-- Danh mục: radio name="category" gốc của products.js, hiện dạng tab -->
-                <div class="category-tabs" role="radiogroup" aria-label="Danh mục">
+                <div class="category-strip-sentinel" aria-hidden="true"></div>
 
-                    <!-- value = data-category cũ; products.js map sang slug trong DB -->
-                    <label class="category-tab">
-                        <input type="radio" name="category" value="" checked>
-                        <span>Tất cả</span>
-                    </label>
+                <div class="category-strip">
 
-                    <label class="category-tab">
-                        <input type="radio" name="category" value="laptop">
-                        <span>Laptop</span>
-                    </label>
+                    <button type="button" class="category-strip-nav is-prev" aria-label="Cuộn danh mục sang trái">&#8249;</button>
 
-                    <label class="category-tab">
-                        <input type="radio" name="category" value="phone">
-                        <span>Điện thoại</span>
-                    </label>
+                    <div class="category-tabs" role="radiogroup" aria-label="Danh mục">
 
-                    <label class="category-tab">
-                        <input type="radio" name="category" value="tablet">
-                        <span>Tablet</span>
-                    </label>
+                        <!-- products.js dựng lại các thẻ từ API danh mục; thẻ viết sẵn này chỉ để hiện trước -->
+                        <label class="category-tab">
+                            <input type="radio" name="category" value="" checked>
+                            <span class="category-tab-card"><span class="category-tab-name">Tất cả</span></span>
+                        </label>
 
-                    <label class="category-tab">
-                        <input type="radio" name="category" value="accessory">
-                        <span>Phụ kiện</span>
-                    </label>
+                    </div>
+
+                    <button type="button" class="category-strip-nav is-next" aria-label="Cuộn danh mục sang phải">&#8250;</button>
 
                 </div>
 

@@ -257,12 +257,9 @@
 }
 
 
-/* ---- Tóm tắt đơn (dính khi cuộn) ---- */
+/* ---- Tóm tắt đơn (cuộn cùng form, không dính: kế hoạch v6 B1) ---- */
 
 .checkout-summary {
-    position: sticky;
-    top: 96px;
-
     padding: var(--space-3);
 
     border-radius: var(--radius-lg);

@@ -4,6 +4,7 @@ import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.BrandResponse;
+import com.example.Tech.dto.response.product.CategoryProductCount;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.cache.ReadCache;
@@ -58,6 +59,14 @@ public class CategoryServiceImpl implements CategoryService {
             findCategory(id);
             return brandRepository.findOnSaleByCategoryId(id).stream().map(brandMapper::toResponse).toList();
         });
+    }
+
+    @Override
+    public List<CategoryProductCount> getProductCounts() {
+        return cache.get(ReadCache.PRODUCT, "category-counts", new TypeReference<>() { },
+                () -> productRepository.countOnSaleByCategory().stream()
+                        .map(row -> new CategoryProductCount((Integer) row[0], (Long) row[1]))
+                        .toList());
     }
 
     @Override

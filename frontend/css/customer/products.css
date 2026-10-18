@@ -317,28 +317,110 @@
 }
 
 
-/* ---- Tab danh mục: radio name="category" ẩn trực quan, vẫn dùng bàn phím được ---- */
+/* ---- Dải danh mục (kế hoạch v6 B1): thẻ ngang, kéo / vuốt / nút ‹ ›, dính dưới header và thu gọn khi dính ----
+   radio name="category" ẩn trực quan trong từng thẻ, vẫn dùng bàn phím được */
 
-.category-tabs {
+.products-main {
+    min-width: 0;
+}
+
+.category-strip-sentinel {
+    height: 1px;
+    margin-bottom: -1px;
+}
+
+.category-strip {
     position: sticky;
     top: var(--sticky-top);
     z-index: 20;
 
-    display: flex;
-    gap: 4px;
-
     margin-bottom: var(--space-2);
-    padding: 10px 0;
 
     border-bottom: 1px solid var(--gray-200);
     background: var(--color-paper);
+}
+
+.category-tabs {
+    display: flex;
+    gap: 10px;
+
+    padding: 12px 6px;
 
     overflow-x: auto;
     scrollbar-width: none;
+    overscroll-behavior-x: contain;
+
+    cursor: grab;
+}
+
+.category-tabs.is-dragging {
+    cursor: grabbing;
+    user-select: none;
 }
 
 .category-tabs::-webkit-scrollbar {
     display: none;
+}
+
+/* mép mờ báo còn thẻ ở phía đó */
+.category-strip.has-prev .category-tabs {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 48px);
+    mask-image: linear-gradient(90deg, transparent 0, #000 48px);
+}
+
+.category-strip.has-next .category-tabs {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 48px), transparent 100%);
+}
+
+.category-strip.has-prev.has-next .category-tabs {
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0, #000 48px, #000 calc(100% - 48px), transparent 100%);
+}
+
+.category-strip-nav {
+    position: absolute;
+    top: 50%;
+    z-index: 2;
+
+    width: 36px;
+    height: 36px;
+
+    display: none;
+    place-items: center;
+
+    border: 1px solid var(--gray-200);
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+
+    font-size: 22px;
+    line-height: 1;
+    color: var(--color-ink);
+
+    cursor: pointer;
+
+    transform: translateY(-50%);
+
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.category-strip-nav:hover {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.category-strip-nav.is-prev {
+    left: 0;
+}
+
+.category-strip-nav.is-next {
+    right: 0;
+}
+
+.category-strip.has-prev .category-strip-nav.is-prev,
+.category-strip.has-next .category-strip-nav.is-next {
+    display: grid;
 }
 
 .category-tab {
@@ -360,14 +442,17 @@
     opacity: 0;
 }
 
-.category-tab span {
-    height: 40px;
-    padding: 0 18px;
-
+.category-tab-card {
     display: inline-flex;
     align-items: center;
+    gap: 10px;
 
+    height: 56px;
+    padding: 0 18px 0 10px;
+
+    border: 1px solid var(--gray-200);
     border-radius: var(--radius-full);
+    background: #fff;
     color: var(--gray-700);
 
     font-size: 14px;
@@ -376,22 +461,131 @@
 
     cursor: pointer;
 
+    transition: transform var(--duration-fast) var(--ease-standard), box-shadow var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard), height var(--duration-fast) var(--ease-standard);
+}
+
+.category-tab-icon {
+    display: grid;
+    place-items: center;
+
+    width: 36px;
+    height: 36px;
+
+    border-radius: 50%;
+    background: var(--gray-100);
+    color: var(--color-ink);
+
     transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
 }
 
-.category-tab:hover span {
-    background: var(--gray-100);
-    color: var(--color-ink);
+.category-tab-icon svg {
+    width: 22px;
+    height: 22px;
 }
 
-.category-tab input:checked + span {
+.category-tab-name {
+    display: grid;
+    line-height: 1.2;
+}
+
+.category-tab-name::after {
+    content: attr(data-count);
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.category-tab-name[data-count=""]::after {
+    content: none;
+}
+
+.category-tab:hover .category-tab-card {
+    transform: translateY(-2px);
+
+    border-color: var(--gray-400);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+}
+
+.category-tab input:checked + .category-tab-card {
+    transform: scale(1.03);
+
+    border-color: var(--color-ink);
     background: var(--color-ink);
+    color: #fff;
+
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.category-tab input:checked + .category-tab-card .category-tab-icon {
+    background: rgba(255, 255, 255, 0.16);
     color: #fff;
 }
 
-.category-tab input:focus-visible + span {
+.category-tab input:checked + .category-tab-card .category-tab-name::after {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.category-tab input:focus-visible + .category-tab-card {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+}
+
+/* đang dính dưới header: gọn lại, bỏ số sản phẩm */
+.category-strip.is-stuck .category-tabs {
+    padding: 6px;
+}
+
+.category-strip.is-stuck .category-tab-card {
+    height: 40px;
+    padding: 0 14px 0 6px;
+}
+
+.category-strip.is-stuck .category-tab-icon {
+    width: 28px;
+    height: 28px;
+}
+
+.category-strip.is-stuck .category-tab-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.category-strip.is-stuck .category-tab-name::after {
+    content: none;
+}
+
+@media (max-width: 700px) {
+
+    .category-tabs {
+        gap: 8px;
+    }
+
+    .category-tab-card {
+        height: 48px;
+        padding-right: 14px;
+
+        font-size: 13px;
+    }
+
+    .category-tab-icon {
+        width: 30px;
+        height: 30px;
+    }
+
+    .category-strip-nav {
+        display: none !important;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .category-tab-card {
+        transition: none;
+    }
+
 }
 
 

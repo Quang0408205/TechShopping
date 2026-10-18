@@ -1294,30 +1294,17 @@ function categoryUrlOf(category) {
 }
 
 
-/* Ảnh của danh mục: ảnh biểu tượng ADMIN nhập → ảnh cắt sẵn của 4 danh mục gốc → ảnh thay thế */
-
-const CATEGORY_CARD_IMAGES = {
-    phone: "assets/images/category-phone.webp",
-    laptop: "assets/images/category-laptop.webp",
-    tablet: "assets/images/category-tablet.webp",
-    accessory: "assets/images/category-accessory.webp"
-};
+/* Ảnh của danh mục: chỉ ảnh ADMIN tải lên ở trang Danh mục (không có thì dùng bộ biểu tượng nét mảnh bên dưới) */
 
 function categoryImageOf(category) {
 
-    if (isSafeImageUrl(category.iconUrl)) {
-        return category.iconUrl.trim();
-    }
-
-    const key = getCategoryFilterKey(category.slug);
-
-    return key && CATEGORY_CARD_IMAGES[key] ? siteUrl(CATEGORY_CARD_IMAGES[key]) : getFallbackImage(category.slug);
+    return isSafeImageUrl(category.iconUrl) ? category.iconUrl.trim() : null;
 
 }
 
 
 /*
- * Danh mục không có ảnh ADMIN tải lên / ảnh cắt sẵn: biểu tượng nét mảnh cùng một bộ (không dùng ảnh poster của sản phẩm,
+ * Danh mục chưa có ảnh ADMIN tải lên: biểu tượng nét mảnh cùng một bộ (không dùng ảnh poster của sản phẩm,
  * vì mỗi sản phẩm một kiểu nền nên khó nhìn và dễ lệch màu). Khớp theo slug.
  */
 
@@ -1375,7 +1362,7 @@ function categoryArtKey(slug) {
 
 function categoryHasPhoto(category) {
 
-    return isSafeImageUrl(category.iconUrl) || Boolean(CATEGORY_CARD_IMAGES[getCategoryFilterKey(category.slug)]);
+    return isSafeImageUrl(category.iconUrl);
 
 }
 
@@ -1397,6 +1384,57 @@ function categoryVisualHtml(category) {
 
 /* Sản phẩm khách xem gần nhất: "neo" cho các khu tương tự / mua kèm / nâng cấp ở trang Khuyến nghị */
 const LAST_VIEWED_PRODUCT_KEY = "poy_last_viewed_product";
+
+/* Sản phẩm đã xem (kế hoạch v6 B3): mảng id trong localStorage, mới nhất đứng đầu, tối đa 10 */
+const RECENT_VIEWED_KEY = "poy_recent_viewed";
+
+const RECENT_VIEWED_MAX = 10;
+
+function readRecentViewed() {
+
+    try {
+
+        const list = JSON.parse(localStorage.getItem(RECENT_VIEWED_KEY) || "[]");
+
+        return Array.isArray(list)
+            ? list.filter(function (id) { return Number.isInteger(id) && id > 0; }).slice(0, RECENT_VIEWED_MAX)
+            : [];
+
+    } catch (error) {
+
+        return [];
+
+    }
+
+}
+
+function writeRecentViewed(ids) {
+
+    try {
+
+        if (ids.length) {
+            localStorage.setItem(RECENT_VIEWED_KEY, JSON.stringify(ids.slice(0, RECENT_VIEWED_MAX)));
+        } else {
+            localStorage.removeItem(RECENT_VIEWED_KEY);
+        }
+
+    } catch (error) {
+        /* bỏ qua: trình duyệt chặn lưu trữ */
+    }
+
+}
+
+function rememberViewedProduct(productId) {
+
+    const id = Number(productId);
+
+    if (Number.isInteger(id) && id > 0) {
+
+        writeRecentViewed([id].concat(readRecentViewed().filter(function (other) { return other !== id; })));
+
+    }
+
+}
 
 
 /*

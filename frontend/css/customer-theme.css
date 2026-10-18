@@ -544,7 +544,12 @@ h4 {
 }
 
 
-/* ---- Mega-menu danh mục ---- */
+/* ---- Mega-menu danh mục (kế hoạch v6 B2): hàng danh mục ngang + 4 khối; dựng ở js/core/main.js ---- */
+
+/* Panel rộng bằng cả header: neo vào .header (sticky), không phải khung 1300px */
+.header-inner {
+    position: static;
+}
 
 .mega-menu {
     position: absolute;
@@ -553,86 +558,96 @@ h4 {
     right: 0;
     z-index: 5;
 
-    padding: var(--space-3);
-
     background: #fff;
-    border: 1px solid var(--gray-200);
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    border-top: 1px solid var(--gray-200);
+    border-bottom: 1px solid var(--gray-200);
 
     box-shadow: var(--shadow-md);
 }
 
-.mega-menu-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: var(--space-2);
+.mega-menu-inner {
+    padding-block: 0 var(--space-2);
 }
 
-/* Lưới đều 4 cột: mỗi danh mục một ô cùng kích thước (biểu tượng / ảnh + tên), dễ quét bằng mắt */
-.mega-cards {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 10px;
-    align-content: start;
+.mega-cats {
+    display: flex;
+    gap: 4px;
+
+    border-bottom: 1px solid var(--gray-200);
+
+    overflow-x: auto;
+    scrollbar-width: none;
 }
 
-.mega-card {
+.mega-cats::-webkit-scrollbar {
+    display: none;
+}
+
+.mega-cat {
+    position: relative;
+
+    flex: 0 0 auto;
+
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
 
-    min-height: 72px;
-    padding: 10px 14px 10px 10px;
+    padding: 12px 10px;
 
-    border: 1px solid transparent;
-    border-radius: var(--radius-md);
-    background: var(--surface-warm);
+    color: var(--gray-700);
 
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 600;
-    line-height: 1.3;
+    white-space: nowrap;
 
-    transition: background-color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+    transition: color var(--duration-fast) var(--ease-standard), background-color var(--duration-fast) var(--ease-standard);
 }
 
-.mega-card:hover {
-    border-color: var(--color-ink);
-    background: var(--surface-warm-strong);
+.mega-cat::after {
+    content: "";
+
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+
+    height: 2px;
+
+    background: var(--color-ink);
+
+    transform: scaleX(0);
+    transform-origin: left;
 }
 
-.mega-card-visual {
-    flex: 0 0 52px;
+.mega-cat:hover,
+.mega-cat.is-active,
+.mega-cat:focus-visible {
+    color: var(--color-ink);
+    background: var(--surface-warm);
+}
+
+.mega-cat.is-active::after {
+    transform: scaleX(1);
+}
+
+.mega-cat-icon {
+    flex: 0 0 24px;
+
     display: flex;
     align-items: center;
     justify-content: center;
 
-    width: 52px;
-    height: 52px;
-
-    border-radius: 12px;
-    background: #fff;
+    width: 24px;
+    height: 24px;
 
     overflow: hidden;
 }
 
-.mega-card-visual img {
+.mega-cat-icon img {
     width: 100%;
     height: 100%;
-    padding: 4px;
-    box-sizing: border-box;
 
     object-fit: contain;
-
-    transition: transform var(--duration-slow) var(--ease-standard);
-}
-
-.mega-card:hover .mega-card-visual img {
-    transform: scale(1.1);
-}
-
-.mega-card-name {
-    min-width: 0;
-    overflow-wrap: anywhere;
 }
 
 .category-art {
@@ -653,37 +668,254 @@ h4 {
     stroke-width: 1.3;
 }
 
-.mega-links {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.mega-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-3);
 
-    padding-left: var(--space-2);
+    min-height: 260px;
+    padding: var(--space-3) 0 var(--space-2);
 
-    border-left: 1px solid var(--gray-200);
+    transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
-.mega-links-title {
-    margin-bottom: 4px;
+.mega-body.is-loading {
+    opacity: 0.45;
+}
+
+.mega-body:empty::before {
+    content: "Đang tải...";
+
+    grid-column: 1 / -1;
 
     color: var(--text-muted);
-
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-}
-
-.mega-links a {
-    padding: 6px 0;
 
     font-size: 14px;
 }
 
-.mega-links a:hover {
+.mega-block h4 {
+    margin: 0 0 12px;
+
+    color: var(--color-accent);
+
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.mega-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.mega-chip {
+    padding: 7px 13px;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-full);
+    background: #fff;
+    color: var(--gray-800);
+
+    font-size: 13.5px;
+    line-height: 1.2;
+
+    transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard), border-color var(--duration-fast) var(--ease-standard);
+}
+
+.mega-chip:hover,
+.mega-chip:focus-visible {
+    border-color: var(--color-ink);
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.mega-brand {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.mega-block--prices .mega-chips,
+.mega-block--needs .mega-chips {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.mega-hot-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 16px;
+
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+.mega-hot-item {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 6px 8px;
+
+    border-radius: var(--radius-md);
+
+    transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.mega-hot-item:hover,
+.mega-hot-item:focus-visible {
+    background: var(--surface-warm);
+}
+
+.mega-hot-item img {
+    flex: 0 0 44px;
+
+    width: 44px;
+    height: 44px;
+
+    border-radius: var(--radius-sm);
+    background: var(--surface-warm);
+
+    object-fit: contain;
+}
+
+.mega-hot-text {
+    flex: 1;
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mega-hot-name {
+    display: -webkit-box;
+
+    color: var(--gray-800);
+
+    font-size: 13px;
+    line-height: 1.3;
+
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.mega-hot-price {
+    color: var(--color-accent);
+
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.mega-tag {
+    flex-shrink: 0;
+
+    padding: 2px 7px;
+
+    border-radius: var(--radius-sm);
+
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.mega-tag.is-hot {
+    background: var(--color-ink);
+    color: #fff;
+}
+
+.mega-tag.is-new {
+    background: var(--surface-warm-strong);
     color: var(--color-accent);
 }
 
+.mega-empty {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 13.5px;
+}
+
+.mega-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px var(--space-3);
+
+    padding-top: var(--space-2);
+
+    border-top: 1px solid var(--gray-200);
+
+    font-size: 13.5px;
+}
+
+.mega-foot a {
+    color: var(--text-muted);
+}
+
+.mega-foot a:hover {
+    color: var(--color-accent);
+}
+
+@media (max-width: 1180px) {
+
+    .mega-body {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+    }
+
+    .mega-block--needs {
+        grid-column: 1 / -1;
+    }
+
+    .mega-block--needs .mega-chips {
+        flex-direction: row;
+    }
+
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+    .mega-menu:not([hidden]) {
+        animation: mega-in var(--duration-base) var(--ease-standard);
+    }
+
+    .mega-cat::after {
+        transition: transform var(--duration-base) var(--ease-standard);
+    }
+
+    .mega-body:not(.is-loading) .mega-block {
+        animation: mega-block-in var(--duration-base) var(--ease-standard) both;
+    }
+
+    .mega-body:not(.is-loading) .mega-block:nth-child(2) { animation-delay: 40ms; }
+    .mega-body:not(.is-loading) .mega-block:nth-child(3) { animation-delay: 80ms; }
+    .mega-body:not(.is-loading) .mega-block:nth-child(4) { animation-delay: 120ms; }
+
+}
+
+@keyframes mega-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes mega-block-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+}
+
+
+/* ---- Ngăn kéo điện thoại: danh mục dạng danh sách, chạm để mở rộng ---- */
+
+.nav-cats {
+    display: none;
+}
 
 /* ---- Tìm kiếm (submit xử lý ở js/core/main.js) ---- */
 
@@ -1264,6 +1496,108 @@ h4 {
     .mega-toggle,
     .mega-menu {
         display: none;
+    }
+
+    /* Danh mục trong ngăn kéo: bấm một hàng → mở Hãng / HOT / Mức giá / Nhu cầu */
+    .nav-cats {
+        display: block;
+
+        border-bottom: 1px solid var(--gray-100);
+        background: var(--surface-warm);
+    }
+
+    .nav-cat + .nav-cat {
+        border-top: 1px solid var(--gray-200);
+    }
+
+    .nav-cat-head {
+        width: 100%;
+
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        padding: 12px 12px 12px 20px;
+
+        border: none;
+        background: transparent;
+        color: var(--gray-800);
+
+        font: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        text-align: left;
+
+        cursor: pointer;
+    }
+
+    .nav-cat-head svg {
+        margin-left: auto;
+
+        flex-shrink: 0;
+    }
+
+    .nav-cat-head[aria-expanded="true"] svg {
+        transform: rotate(180deg);
+    }
+
+    .nav-cat-panel {
+        padding: 0 12px 16px 20px;
+    }
+
+    .nav-cat-panel .mega-block {
+        margin-top: 14px;
+    }
+
+    .nav-cat-panel .mega-block h4 {
+        margin-bottom: 8px;
+    }
+
+    .nav .nav-cat-panel a.mega-chip {
+        padding: 7px 12px;
+
+        border: 1px solid var(--gray-300);
+        border-radius: var(--radius-full);
+
+        font-size: 13.5px;
+    }
+
+    .nav .nav-cat-panel a.mega-chip:hover {
+        background: var(--color-ink);
+    }
+
+    .nav-cat-panel .mega-block--prices .mega-chips,
+    .nav-cat-panel .mega-block--needs .mega-chips {
+        flex-direction: row;
+    }
+
+    .nav-cat-panel .mega-hot-list {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .nav .nav-cat-panel a.mega-hot-item {
+        padding: 6px 4px;
+
+        border-bottom: none;
+        border-radius: var(--radius-sm);
+
+        font-size: 13px;
+        white-space: normal;
+    }
+
+    .nav .nav-cat-panel a.nav-cat-all {
+        display: block;
+
+        margin-top: 14px;
+        padding: 10px 0 0;
+
+        border-top: 1px solid var(--gray-200);
+        border-bottom: none;
+
+        color: var(--color-accent);
+
+        font-size: 14px;
+        font-weight: 600;
     }
 
     .header-actions {

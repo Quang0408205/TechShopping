@@ -45,6 +45,7 @@
             <button type="button" class="mega-toggle" aria-label="Danh mục sản phẩm" aria-expanded="false" aria-controls="megaMenu">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="nav-cats" id="navCats"></div>
             <a href="{{ROOT}}customer/services.html" data-page="services">Dịch vụ</a>
         </nav>
 
@@ -104,36 +105,16 @@
         </div>
 
 
+        <!-- Mega-menu (js/core/main.js, kế hoạch v6 B2): hàng danh mục + 4 khối Hãng / HOT / Mức giá / Nhu cầu -->
         <div class="mega-menu" id="megaMenu" hidden>
 
-            <div class="mega-menu-grid">
+            <div class="container mega-menu-inner">
 
-                <div class="mega-cards">
+                <div class="mega-cats" role="navigation" aria-label="Danh mục sản phẩm"></div>
 
-                    <a href="{{ROOT}}customer/products.html?category=phone" class="mega-card">
-                        <span class="mega-card-visual"><img src="{{ROOT}}assets/images/category-phone.webp" alt="" width="503" height="600" loading="lazy"></span>
-                        <span class="mega-card-name">Điện thoại</span>
-                    </a>
+                <div class="mega-body" aria-live="polite"></div>
 
-                    <a href="{{ROOT}}customer/products.html?category=laptop" class="mega-card">
-                        <span class="mega-card-visual"><img src="{{ROOT}}assets/images/category-laptop.webp" alt="" width="600" height="378" loading="lazy"></span>
-                        <span class="mega-card-name">Laptop</span>
-                    </a>
-
-                    <a href="{{ROOT}}customer/products.html?category=tablet" class="mega-card">
-                        <span class="mega-card-visual"><img src="{{ROOT}}assets/images/category-tablet.webp" alt="" width="545" height="600" loading="lazy"></span>
-                        <span class="mega-card-name">Máy tính bảng</span>
-                    </a>
-
-                    <a href="{{ROOT}}customer/products.html?category=accessory" class="mega-card">
-                        <span class="mega-card-visual"><img src="{{ROOT}}assets/images/category-accessory.webp" alt="" width="329" height="474" loading="lazy"></span>
-                        <span class="mega-card-name">Phụ kiện</span>
-                    </a>
-
-                </div>
-
-                <div class="mega-links">
-                    <span class="mega-links-title">Mua sắm</span>
+                <div class="mega-foot">
                     <a href="{{ROOT}}customer/products.html">Tất cả sản phẩm</a>
                     <a href="{{ROOT}}customer/recommendation.html">Gợi ý cho bạn</a>
                     <a href="{{ROOT}}customer/services.html#chinh-sach-bao-hanh">Bảo hành</a>

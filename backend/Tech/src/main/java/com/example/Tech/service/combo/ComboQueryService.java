@@ -1,6 +1,8 @@
 package com.example.Tech.service.combo;
 
 import com.example.Tech.dto.response.combo.ComboOptionResponse;
+import com.example.Tech.dto.response.combo.FeaturedComboResponse;
+import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.entity.combo.Combo;
 import com.example.Tech.entity.combo.ComboItem;
 import com.example.Tech.entity.product.Product;
@@ -14,7 +16,9 @@ import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.service.inventory.StockAvailability;
+import com.example.Tech.service.product.ProductService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +42,7 @@ public class ComboQueryService {
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final StockAvailability stockAvailability;
+    private final ProductService productService;
     private final CartMapper cartMapper;
     private final Clock clock;
 
@@ -89,6 +94,46 @@ public class ComboQueryService {
             if (!items.isEmpty()) {
                 result.add(new ComboOptionResponse(combo.getId(), combo.getName(), combo.getDescription(), combo.getEndsAt(), items));
             }
+        }
+        return result;
+    }
+
+    /**
+     * The home page "Combo nổi bật": the newest running combos whose main product is on sale and in stock and that
+     * still have a purchasable add-on; each add-on at its cheapest variant (same rules as the product page).
+     */
+    public List<FeaturedComboResponse> featured(int limit) {
+        List<Combo> candidates = comboRepository.findRunning(LocalDateTime.now(clock), PageRequest.of(0, limit * 4));
+        List<FeaturedComboResponse> result = new ArrayList<>();
+        for (Combo combo : candidates) {
+            if (result.size() >= limit) {
+                break;
+            }
+            Long mainId = combo.getMainProduct().getId();
+            List<ProductResponse> main = productService.getActiveByIds(List.of(mainId));
+            if (main.isEmpty() || main.get(0).availableQuantity() == null || main.get(0).availableQuantity() <= 0
+                    || main.get(0).effectivePrice() == null || main.get(0).effectivePrice().signum() <= 0) {
+                continue;
+            }
+            ComboOptionResponse option = forProduct(mainId).stream()
+                    .filter(found -> found.id().equals(combo.getId())).findFirst().orElse(null);
+            if (option == null) {
+                continue;
+            }
+            BigDecimal original = main.get(0).effectivePrice();
+            BigDecimal discounted = original;
+            List<FeaturedComboResponse.AddOn> items = new ArrayList<>();
+            for (ComboOptionResponse.Item item : option.items()) {
+                ComboOptionResponse.Variant cheapest = item.variants().get(0);
+                items.add(new FeaturedComboResponse.AddOn(item.productId(), item.name(), item.imageUrl(),
+                        cheapest.price(), cheapest.comboPrice()));
+                original = original.add(cheapest.price());
+                discounted = discounted.add(cheapest.comboPrice());
+            }
+            result.add(new FeaturedComboResponse(combo.getId(), combo.getName(), combo.getEndsAt(),
+                    new FeaturedComboResponse.Product(mainId, main.get(0).name(), main.get(0).primaryImageUrl(),
+                            main.get(0).effectivePrice()),
+                    items, original, discounted, original.subtract(discounted)));
         }
         return result;
     }

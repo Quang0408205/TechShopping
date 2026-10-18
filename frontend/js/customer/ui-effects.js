@@ -19,8 +19,11 @@
 
     const FILTER_DRAWER_QUERY = window.matchMedia("(max-width: 899px)");
 
-    /* Số Zalo nhận tin nhắn của khách (chỉ chữ số, vd "0901234567"); để trống thì không hiện bong bóng Zalo */
-    const ZALO_PHONE = "";
+    /* Số Zalo nhận tin nhắn của khách (chỉ chữ số, vd "0901234567"); để trống thì nút liên hệ không có mục Chat Zalo */
+    const ZALO_PHONE = "0877276504";
+
+    /* Số gọi nhanh ở nút liên hệ (cùng số ở chân trang) */
+    const HOTLINE = "1900 0000";
 
     const ready = typeof layoutReady !== "undefined" ? layoutReady : Promise.resolve();
 
@@ -38,8 +41,6 @@
 
     setupHeroCarousel();
 
-    setupWeekCountdown();
-
     setupProductsView();
 
     setupActiveFilters();
@@ -50,53 +51,310 @@
 
     setupPasswordToggles();
 
-    setupZaloBubble();
+    setupContactHub();
+
+    setupPageProgress();
 
 
-    /* Bong bóng chat Zalo nổi ngay trên bong bóng trợ lý AI (thay cho mục "Liên hệ" trên menu) */
+    /*
+     * Nút liên hệ gộp (kế hoạch v6 B1): một nút tròn ở góc phải, bấm xòe ra Chat Zalo / Trợ lý AI / Gọi hotline.
+     * Thay bong bóng Zalo riêng; nút chatbot cũ vẫn có trong trang (chatbot.js) nhưng được ẩn, "Trợ lý AI" bấm hộ nó.
+     */
 
-    function setupZaloBubble() {
+    function setupContactHub() {
 
-        const phone = ZALO_PHONE.replace(/\D/g, "");
-
-        if (!phone || document.getElementById("zaloBubble")) {
+        if (document.getElementById("contactHub")) {
             return;
         }
 
-        const link = document.createElement("a");
+        const phone = ZALO_PHONE.replace(/\D/g, "");
 
-        link.id = "zaloBubble";
+        const hotlineDigits = HOTLINE.replace(/\D/g, "");
 
-        link.className = "zalo-bubble";
+        const hub = document.createElement("div");
 
-        link.href = "https://zalo.me/" + phone;
+        hub.id = "contactHub";
 
-        link.target = "_blank";
+        hub.className = "contact-hub";
 
-        link.rel = "noopener noreferrer";
+        hub.innerHTML = `
+            <div class="contact-hub-menu" id="contactHubMenu" hidden>
+                ${phone ? `<a class="contact-hub-item is-zalo" id="zaloBubble" href="https://zalo.me/${phone}" target="_blank" rel="noopener noreferrer">
+                    <span class="contact-hub-icon" aria-hidden="true">Zalo</span><span class="contact-hub-label">Chat Zalo</span></a>` : ""}
+                <button type="button" class="contact-hub-item is-ai" data-hub="ai">
+                    <span class="contact-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z"/></svg></span>
+                    <span class="contact-hub-label">Trợ lý AI</span></button>
+                <a class="contact-hub-item is-phone" href="tel:${hotlineDigits}">
+                    <span class="contact-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></span>
+                    <span class="contact-hub-label">Gọi ${HOTLINE}</span></a>
+            </div>
+            <button type="button" class="contact-hub-toggle" id="contactHubToggle" aria-expanded="false" aria-controls="contactHubMenu" aria-label="Liên hệ với POY">
+                <svg class="is-open" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8.5 10h.01M12 10h.01M15.5 10h.01"/></svg>
+                <svg class="is-close" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+        `;
 
-        link.setAttribute("aria-label", "Chat với POY qua Zalo");
+        document.body.appendChild(hub);
 
-        link.title = "Chat qua Zalo";
+        document.body.classList.add("has-contact-hub");
 
-        link.innerHTML = `<span aria-hidden="true">Zalo</span>`;
+        const toggle = document.getElementById("contactHubToggle");
 
-        document.body.appendChild(link);
+        const menu = document.getElementById("contactHubMenu");
 
-        /* link "Liên hệ" còn trong nội dung trang / chatbot (kể cả link vẽ sau) → mở Zalo */
+        function setOpen(open) {
+
+            menu.hidden = !open;
+
+            hub.classList.toggle("is-open", open);
+
+            toggle.setAttribute("aria-expanded", String(open));
+
+        }
+
+        toggle.addEventListener("click", function () {
+            /* trang không có chatbot (đăng nhập…) → không có mục Trợ lý AI */
+            hub.querySelector('[data-hub="ai"]').hidden = !document.getElementById("chatbotLauncher");
+            setOpen(menu.hidden);
+        });
+
+        hub.querySelector('[data-hub="ai"]').addEventListener("click", function () {
+
+            const launcher = document.getElementById("chatbotLauncher");
+
+            setOpen(false);
+
+            if (launcher) {
+                launcher.click();
+            }
+
+        });
+
+        hub.addEventListener("click", function (event) {
+
+            if (event.target.closest("a.contact-hub-item")) {
+                setOpen(false);
+            }
+
+        });
+
         document.addEventListener("click", function (event) {
 
-            const target = event.target.closest('a[href$="contact.html"]');
+            if (!menu.hidden && !hub.contains(event.target)) {
+                setOpen(false);
+            }
 
-            if (!target || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) {
+        });
+
+        document.addEventListener("keydown", function (event) {
+
+            if (event.key === "Escape" && !menu.hidden) {
+                setOpen(false);
+                toggle.focus();
+            }
+
+        });
+
+        /* link "Liên hệ" còn trong nội dung trang / chatbot (kể cả link vẽ sau) → mở Zalo khi đã có số */
+        if (phone) {
+
+            document.addEventListener("click", function (event) {
+
+                const target = event.target.closest('a[href$="contact.html"]');
+
+                if (!target || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                window.open("https://zalo.me/" + phone, "_blank", "noopener");
+
+            });
+
+        }
+
+    }
+
+
+    /*
+     * Thanh tiến độ khi chuyển trang: bấm link sang trang khác của web (hoặc chuyển trang bằng JS / gửi form) → thanh chạy dần
+     * tới ~90%; trang mới mở ra thì chạy nốt tới 100% rồi mờ đi (đánh dấu qua sessionStorage). Quay lại bằng nút Back
+     * (trang lấy từ bộ nhớ đệm) thì tắt ngay.
+     */
+
+    function setupPageProgress() {
+
+        const KEY = "poy_nav_progress";
+
+        let bar = null;
+
+        let timer = null;
+
+        let safety = null;
+
+        let value = 0;
+
+        function element() {
+
+            if (!bar) {
+
+                bar = document.createElement("div");
+
+                bar.className = "page-progress";
+
+                bar.setAttribute("aria-hidden", "true");
+
+                bar.appendChild(document.createElement("i"));
+
+                document.body.appendChild(bar);
+
+            }
+
+            return bar;
+
+        }
+
+        function set(next) {
+
+            value = next;
+
+            element().firstChild.style.transform = "scaleX(" + next.toFixed(3) + ")";
+
+        }
+
+        function start() {
+
+            if (timer) {
                 return;
             }
 
-            event.preventDefault();
+            element().classList.remove("is-done");
 
-            window.open(link.href, "_blank", "noopener");
+            bar.classList.add("is-active");
+
+            set(0.12);
+
+            /* nhích dần, chậm lại khi gần 90% */
+            timer = setInterval(function () {
+                set(value + (0.9 - value) * 0.09);
+            }, 180);
+
+            /* trang không chuyển (vd. huỷ hộp thoại rời trang): không để thanh chạy mãi */
+            safety = setTimeout(finish, 12000);
+
+            try {
+                sessionStorage.setItem(KEY, String(Date.now()));
+            } catch (error) {
+                /* bỏ qua */
+            }
+
+        }
+
+        function finish() {
+
+            clearTimeout(safety);
+
+            clearInterval(timer);
+
+            timer = null;
+
+            element().classList.add("is-active");
+
+            set(1);
+
+            setTimeout(function () { bar.classList.add("is-done"); }, 280);
+
+            setTimeout(function () {
+                bar.classList.remove("is-active", "is-done");
+                set(0);
+            }, 700);
+
+        }
+
+        function shouldTrack(link, event) {
+
+            if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+                return false;
+            }
+
+            if (link.target && link.target !== "_self" || link.hasAttribute("download")) {
+                return false;
+            }
+
+            const url = new URL(link.href, location.href);
+
+            if (!/^https?:$/.test(url.protocol) || url.origin !== location.origin) {
+                return false;
+            }
+
+            /* chỉ đổi #… trên cùng trang: không tải trang mới */
+            return !(url.pathname === location.pathname && url.search === location.search && (url.hash || link.getAttribute("href").startsWith("#")));
+
+        }
+
+        document.addEventListener("click", function (event) {
+
+            const link = event.target.closest && event.target.closest("a[href]");
+
+            if (!link || !shouldTrack(link, event)) {
+                return;
+            }
+
+            /* chờ các xử lý khác của cú bấm (vd. link "Liên hệ" mở Zalo) quyết định có chặn không */
+            setTimeout(function () {
+
+                if (!event.defaultPrevented) {
+                    start();
+                }
+
+            }, 0);
 
         });
+
+        /* chuyển trang bằng JS (location.href = …) hoặc gửi form */
+        window.addEventListener("beforeunload", start);
+
+        window.addEventListener("pageshow", function (event) {
+
+            if (event.persisted) {
+
+                clearInterval(timer);
+
+                timer = null;
+
+                if (bar) {
+                    bar.classList.remove("is-active", "is-done");
+                    set(0);
+                }
+
+            }
+
+        });
+
+        /* vừa mở từ một lần chuyển trang: chạy nốt */
+        let startedAt = 0;
+
+        try {
+            startedAt = Number(sessionStorage.getItem(KEY)) || 0;
+            sessionStorage.removeItem(KEY);
+        } catch (error) {
+            startedAt = 0;
+        }
+
+        if (startedAt && Date.now() - startedAt < 15000) {
+
+            element().classList.add("is-active");
+
+            set(0.7);
+
+            if (document.readyState === "complete") {
+                setTimeout(finish, 60);
+            } else {
+                window.addEventListener("load", function () { setTimeout(finish, 60); }, { once: true });
+            }
+
+        }
 
     }
 
@@ -264,6 +522,11 @@
 
     /* ---------- Carousel hero (trang chủ) ---------- */
 
+    /*
+     * Kế hoạch v6 B5: slide mới quét vào bằng màn che (slide cũ giữ .is-leaving tới khi quét xong), bộ đếm "01 / 03",
+     * mỗi chấm là một thanh thời gian chạy đúng INTERVAL. Dừng khi rê chuột / focus thì thời gian còn lại được giữ.
+     */
+
     function setupHeroCarousel() {
 
         const hero = document.querySelector(".hero[aria-roledescription='carousel']");
@@ -276,24 +539,42 @@
 
         const dots = Array.from(hero.querySelectorAll("[data-hero-dot]"));
 
-        const INTERVAL = 5000;
+        const counter = hero.querySelector("[data-hero-current]");
+
+        const INTERVAL = 6000;
+
+        const WIPE_MS = 950;
+
+        hero.style.setProperty("--hero-interval", INTERVAL + "ms");
 
         let current = 0;
 
         let timer = null;
 
+        let leaveTimer = null;
+
         let paused = false;
+
+        let remaining = INTERVAL;
+
+        let startedAt = 0;
 
 
         function show(index) {
 
+            const previous = current;
+
             current = (index + slides.length) % slides.length;
+
+            clearTimeout(leaveTimer);
 
             slides.forEach(function (slide, i) {
 
                 const active = i === current;
 
                 slide.classList.toggle("is-active", active);
+
+                slide.classList.toggle("is-leaving", !active && i === previous && previous !== current);
 
                 slide.setAttribute("aria-hidden", String(!active));
 
@@ -303,6 +584,10 @@
 
             });
 
+            leaveTimer = setTimeout(function () {
+                slides.forEach(function (slide) { slide.classList.remove("is-leaving"); });
+            }, WIPE_MS);
+
             dots.forEach(function (dot, i) {
 
                 if (i === current) {
@@ -311,7 +596,22 @@
                     dot.removeAttribute("aria-current");
                 }
 
+                /* chạy lại thanh thời gian của chấm đang chọn */
+                dot.classList.remove("is-running");
+
             });
+
+            if (counter) {
+                counter.textContent = String(current + 1).padStart(2, "0");
+            }
+
+            void hero.offsetWidth;
+
+            if (dots[current]) {
+                dots[current].classList.add("is-running");
+            }
+
+            remaining = INTERVAL;
 
         }
 
@@ -319,12 +619,16 @@
 
             clearTimeout(timer);
 
+            hero.classList.toggle("is-paused", paused || reducedMotion());
+
             if (!paused && !reducedMotion() && !document.hidden) {
+
+                startedAt = Date.now();
 
                 timer = setTimeout(function () {
                     show(current + 1);
                     schedule();
-                }, INTERVAL);
+                }, remaining);
 
             }
 
@@ -365,8 +669,15 @@
 
 
         function pause() {
+
+            if (!paused && timer) {
+                remaining = Math.max(400, remaining - (Date.now() - startedAt));
+            }
+
             paused = true;
-            clearTimeout(timer);
+
+            schedule();
+
         }
 
         function resume() {
@@ -420,62 +731,20 @@
 
         show(0);
 
-        schedule();
+        /* màn hình mở đầu đang che: chờ nó xong mới bắt đầu tính giờ */
+        if (document.documentElement.classList.contains("has-intro")) {
 
-    }
+            paused = true;
 
+            schedule();
 
-    /* ---------- Đếm ngược tới 23:59:59 Chủ nhật (MOCK: chưa có API ưu đãi) ---------- */
+            document.addEventListener("poy:intro-done", resume, { once: true });
 
-    function setupWeekCountdown() {
+        } else {
 
-        const box = document.querySelector("[data-countdown-week]");
-
-        if (!box) {
-            return;
-        }
-
-        const units = {};
-
-        box.querySelectorAll("[data-unit]").forEach(function (element) {
-            units[element.dataset.unit] = element;
-        });
-
-
-        function endOfWeek() {
-
-            const end = new Date();
-
-            end.setDate(end.getDate() + ((7 - end.getDay()) % 7));
-
-            end.setHours(23, 59, 59, 999);
-
-            return end;
+            schedule();
 
         }
-
-        function pad(value) {
-            return String(value).padStart(2, "0");
-        }
-
-        function tick() {
-
-            const seconds = Math.max(0, Math.floor((endOfWeek() - Date.now()) / 1000));
-
-            units.d.textContent = Math.floor(seconds / 86400);
-
-            units.h.textContent = pad(Math.floor(seconds / 3600) % 24);
-
-            units.m.textContent = pad(Math.floor(seconds / 60) % 60);
-
-            units.s.textContent = pad(seconds % 60);
-
-        }
-
-
-        tick();
-
-        setInterval(tick, 1000);
 
     }
 

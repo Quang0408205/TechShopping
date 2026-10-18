@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.BrandResponse;
+import com.example.Tech.dto.response.product.CategoryProductCount;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import com.example.Tech.service.product.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,6 +44,12 @@ public class CategoryController {
     public ResponseEntity<ApiResult<PageResponse<CategoryResponse>>> getAll(
             @ParameterObject @PageableDefault(size = 20, sort = {"displayOrder", "id"}) Pageable pageable) {
         return ResponseEntity.ok(ApiResult.ok(categoryService.getAll(pageable)));
+    }
+
+    @GetMapping("/product-counts")
+    @Operation(summary = "Products on sale per category (cached 10 minutes); categories without any are left out")
+    public ResponseEntity<ApiResult<List<CategoryProductCount>>> getProductCounts() {
+        return ResponseEntity.ok(ApiResult.ok(categoryService.getProductCounts()));
     }
 
     @GetMapping("/{id}")

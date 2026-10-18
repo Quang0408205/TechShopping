@@ -406,72 +406,278 @@ document.addEventListener(
 
         }
 
-        /* Nút ‹ › của dãy ảnh nhỏ: cuộn gần hết một khung, khoá ở hai đầu */
+        /*
+         * Khung ảnh (kế hoạch v6 B1): mũi tên ‹ › nằm trên ảnh chính, bấm → ảnh kế tiếp thay ảnh chính (vòng lại),
+         * dải ảnh nhỏ bên dưới đổi viền đang chọn và tự cuộn theo; vuốt trên điện thoại, phím ← →, số "3 / 12",
+         * bấm ảnh chính → xem toàn màn hình (lightbox).
+         */
 
-        function updateThumbNav() {
+        let galleryUrls = [];
 
-            const track = document.getElementById("detailThumbnails");
+        let galleryIndex = 0;
 
-            document.getElementById("thumbPrev").disabled = track.scrollLeft <= 1;
+        const stage = document.getElementById("detailStage");
 
-            document.getElementById("thumbNext").disabled =
-                track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+        const lightbox = createLightbox();
 
-        }
-
-        function setupThumbNav() {
-
-            const track = document.getElementById("detailThumbnails");
-
-            [["thumbPrev", -1], ["thumbNext", 1]].forEach(function (item) {
-
-                document.getElementById(item[0]).addEventListener("click", function () {
-                    track.scrollBy({ left: item[1] * track.clientWidth * 0.8, behavior: "smooth" });
-                });
-
-            });
-
-            track.addEventListener("scroll", updateThumbNav);
-
-            window.addEventListener("resize", updateThumbNav);
-
-        }
-
-        setupThumbNav();
-
-
-        function showGallery(color, force) {
-
-            const key = colorKey(color);
-
-            if (!force && key === galleryColor) {
-                return;
-            }
-
-            galleryColor = key;
+        function setMainImage(direction) {
 
             const mainImage = document.getElementById("mainImage");
 
+            const url = galleryUrls[galleryIndex] || galleryFallback;
+
+            if (direction) {
+                mainImage.classList.remove("is-sliding");
+                mainImage.style.setProperty("--slide-from", direction > 0 ? "36px" : "-36px");
+            }
+
+            mainImage.src = url;
+
+            if (direction) {
+                void mainImage.offsetWidth;
+                mainImage.classList.add("is-sliding");
+            }
+
+            const many = galleryUrls.length > 1;
+
+            document.getElementById("mainPrev").hidden = !many;
+
+            document.getElementById("mainNext").hidden = !many;
+
+            const counter = document.getElementById("imageCounter");
+
+            counter.hidden = !many;
+
+            counter.textContent = (galleryIndex + 1) + " / " + galleryUrls.length;
+
+            stage.classList.toggle("has-gallery", galleryUrls.length > 0);
+
             const thumbnails = document.getElementById("detailThumbnails");
 
-            const urls = imagesForColor(color).map(function (image) {
-                return image.imageUrl;
+            thumbnails.querySelectorAll(".detail-thumb").forEach(function (button, index) {
+
+                const on = index === galleryIndex;
+
+                button.classList.toggle("active", on);
+
+                if (on) {
+                    thumbnails.scrollTo({
+                        left: button.offsetLeft - (thumbnails.clientWidth - button.offsetWidth) / 2,
+                        behavior: "smooth"
+                    });
+                }
+
             });
 
-            mainImage.src = urls[0] || galleryFallback;
+            lightbox.sync();
 
-            if (urls.length < 2) {
+        }
+
+        function goToImage(index, direction) {
+
+            if (galleryUrls.length === 0) {
+                return;
+            }
+
+            galleryIndex = (index + galleryUrls.length) % galleryUrls.length;
+
+            setMainImage(direction);
+
+        }
+
+        function stepImage(step) {
+
+            goToImage(galleryIndex + step, step);
+
+        }
+
+        function setupGalleryControls() {
+
+            document.getElementById("mainPrev").addEventListener("click", function (event) {
+                event.stopPropagation();
+                stepImage(-1);
+            });
+
+            document.getElementById("mainNext").addEventListener("click", function (event) {
+                event.stopPropagation();
+                stepImage(1);
+            });
+
+            stage.addEventListener("click", function () {
+
+                if (galleryUrls.length > 0) {
+                    lightbox.open();
+                }
+
+            });
+
+            stage.addEventListener("keydown", function (event) {
+
+                if (event.key === "ArrowLeft") {
+                    stepImage(-1);
+                } else if (event.key === "ArrowRight") {
+                    stepImage(1);
+                } else if ((event.key === "Enter" || event.key === " ") && galleryUrls.length > 0) {
+                    event.preventDefault();
+                    lightbox.open();
+                }
+
+            });
+
+            bindSwipe(stage, stepImage);
+
+        }
+
+        /* Vuốt ngang: sang trái → ảnh sau, sang phải → ảnh trước (bỏ qua khi vuốt dọc để cuộn trang) */
+        function bindSwipe(element, onStep) {
+
+            let startX = null;
+
+            let startY = null;
+
+            element.addEventListener("touchstart", function (event) {
+                startX = event.touches[0].clientX;
+                startY = event.touches[0].clientY;
+            }, { passive: true });
+
+            element.addEventListener("touchend", function (event) {
+
+                if (startX === null) {
+                    return;
+                }
+
+                const dx = event.changedTouches[0].clientX - startX;
+
+                const dy = event.changedTouches[0].clientY - startY;
+
+                startX = null;
+
+                if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+                    onStep(dx < 0 ? 1 : -1);
+                }
+
+            }, { passive: true });
+
+        }
+
+        function createLightbox() {
+
+            const root = document.createElement("div");
+
+            root.className = "lightbox";
+
+            root.hidden = true;
+
+            root.setAttribute("role", "dialog");
+
+            root.setAttribute("aria-modal", "true");
+
+            root.setAttribute("aria-label", "Xem ảnh sản phẩm");
+
+            root.innerHTML = `
+                <button type="button" class="lightbox-close" aria-label="Đóng">&times;</button>
+                <button type="button" class="lightbox-arrow is-prev" aria-label="Ảnh trước">&#8249;</button>
+                <img class="lightbox-image" alt="" referrerpolicy="no-referrer">
+                <button type="button" class="lightbox-arrow is-next" aria-label="Ảnh sau">&#8250;</button>
+                <span class="lightbox-counter"></span>
+            `;
+
+            document.body.appendChild(root);
+
+            const image = root.querySelector(".lightbox-image");
+
+            let opener = null;
+
+            function close() {
+
+                root.hidden = true;
+
+                document.body.classList.remove("lightbox-open");
+
+                document.removeEventListener("keydown", onKey);
+
+                if (opener) {
+                    opener.focus({ preventScroll: true });
+                }
+
+            }
+
+            function onKey(event) {
+
+                if (event.key === "Escape") {
+                    close();
+                } else if (event.key === "ArrowLeft") {
+                    stepImage(-1);
+                } else if (event.key === "ArrowRight") {
+                    stepImage(1);
+                }
+
+            }
+
+            root.querySelector(".lightbox-close").addEventListener("click", close);
+
+            root.querySelector(".is-prev").addEventListener("click", function () { stepImage(-1); });
+
+            root.querySelector(".is-next").addEventListener("click", function () { stepImage(1); });
+
+            root.addEventListener("click", function (event) {
+
+                if (event.target === root) {
+                    close();
+                }
+
+            });
+
+            bindSwipe(root, stepImage);
+
+            return {
+
+                open: function () {
+                    opener = document.activeElement;
+                    root.hidden = false;
+                    document.body.classList.add("lightbox-open");
+                    document.addEventListener("keydown", onKey);
+                    this.sync();
+                    root.querySelector(".lightbox-close").focus({ preventScroll: true });
+                },
+
+                sync: function () {
+
+                    if (root.hidden) {
+                        return;
+                    }
+
+                    image.src = galleryUrls[galleryIndex] || galleryFallback;
+
+                    root.querySelector(".lightbox-counter").textContent = (galleryIndex + 1) + " / " + galleryUrls.length;
+
+                    root.classList.toggle("is-single", galleryUrls.length < 2);
+
+                }
+
+            };
+
+        }
+
+        setupGalleryControls();
+
+
+        function renderThumbnails() {
+
+            const thumbnails = document.getElementById("detailThumbnails");
+
+            if (galleryUrls.length < 2) {
                 thumbnails.hidden = true;
                 thumbnails.innerHTML = "";
                 return;
             }
 
-            thumbnails.innerHTML = urls.map(function (url, index) {
+            thumbnails.innerHTML = galleryUrls.map(function (url, index) {
 
                 return `
                     <button
                         type="button"
-                        class="detail-thumb ${index === 0 ? "active" : ""}"
+                        class="detail-thumb ${index === galleryIndex ? "active" : ""}"
                         data-url="${escapeHtml(url)}"
                         aria-label="Ảnh ${index + 1}"
                     >
@@ -485,40 +691,49 @@ document.addEventListener(
 
             thumbnails.scrollLeft = 0;
 
-            updateThumbNav();
+            thumbnails.querySelectorAll(".detail-thumb").forEach(function (button, index) {
 
-            /* chờ bố cục xong (ảnh, phông chữ) rồi tính lại trạng thái nút */
-            requestAnimationFrame(updateThumbNav);
-
-            setTimeout(updateThumbNav, 400);
-
-
-            thumbnails.querySelectorAll(".detail-thumb").forEach(function (button) {
-
-                /* Ảnh phụ hỏng: bỏ khỏi dải; còn dưới 2 ảnh thì ẩn cả dải */
+                /* Ảnh phụ hỏng: bỏ khỏi bộ ảnh rồi dựng lại dải (còn dưới 2 ảnh thì ẩn cả dải) */
                 button.querySelector("img").addEventListener("error", function () {
 
-                    button.remove();
+                    galleryUrls.splice(index, 1);
 
-                    if (thumbnails.querySelectorAll(".detail-thumb").length < 2) {
-                        thumbnails.hidden = true;
-                    }
+                    galleryIndex = Math.min(galleryIndex, Math.max(0, galleryUrls.length - 1));
+
+                    renderThumbnails();
+
+                    setMainImage(0);
 
                 });
 
                 button.addEventListener("click", function () {
-
-                    mainImage.src = button.dataset.url;
-
-                    thumbnails.querySelectorAll(".detail-thumb").forEach(function (b) {
-                        b.classList.toggle("active", b === button);
-                    });
-
-                    button.scrollIntoView({ block: "nearest", inline: "nearest" });
-
+                    goToImage(index, index > galleryIndex ? 1 : -1);
                 });
 
             });
+
+        }
+
+
+        function showGallery(color, force) {
+
+            const key = colorKey(color);
+
+            if (!force && key === galleryColor) {
+                return;
+            }
+
+            galleryColor = key;
+
+            galleryUrls = imagesForColor(color).map(function (image) {
+                return image.imageUrl;
+            });
+
+            galleryIndex = 0;
+
+            renderThumbnails();
+
+            setMainImage(0);
 
         }
 
@@ -1081,6 +1296,7 @@ document.addEventListener(
 
             try {
                 localStorage.setItem(LAST_VIEWED_PRODUCT_KEY, String(product.id));
+                rememberViewedProduct(product.id);
             } catch (error) {
                 /* bỏ qua */
             }

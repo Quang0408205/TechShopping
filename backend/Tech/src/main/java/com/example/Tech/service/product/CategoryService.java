@@ -4,6 +4,7 @@ import com.example.Tech.dto.request.product.CategoryCreateRequest;
 import com.example.Tech.dto.request.product.CategoryUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.BrandResponse;
+import com.example.Tech.dto.response.product.CategoryProductCount;
 import com.example.Tech.dto.response.product.CategoryResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -17,6 +18,9 @@ public interface CategoryService {
 
     /** Brands that have products on sale in the category, by name. */
     List<BrandResponse> getBrands(Integer id);
+
+    /** Products on sale per category (only categories that have some). */
+    List<CategoryProductCount> getProductCounts();
 
     CategoryResponse create(CategoryCreateRequest request);
 

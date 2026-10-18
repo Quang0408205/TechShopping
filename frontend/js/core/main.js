@@ -29,20 +29,220 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 
-/* ================= DANH MỤC TRÊN MENU HEADER (kế hoạch v3) ================= */
+/* ================= MEGA-MENU DANH MỤC (kế hoạch v6 B2) ================= */
 
 /*
- * Thay 4 thẻ viết sẵn trong partials/header.html bằng các danh mục ĐANG HIỂN THỊ (tối đa 6, theo thứ tự
- * ADMIN đặt). Lỗi tải danh mục → giữ thẻ viết sẵn. Trang không có header (auth/) → bỏ qua.
+ * Panel "Sản phẩm" (desktop) và ngăn kéo (điện thoại) dùng chung dữ liệu: mỗi danh mục tải MỘT lần rồi giữ trong
+ * bộ nhớ — Hãng GET /categories/{id}/brands, Nhu cầu GET /categories/{id}/needs, HOT = GET /products sắp theo lượt xem.
+ * Khối Mức giá là các bậc cố định theo loại danh mục. Lỗi tải danh mục → panel không có hàng danh mục (chỉ còn link đáy).
  */
 
 const MEGA_MENU_MAX_CATEGORIES = 12;
 
+const MEGA_HOT_SIZE = 10;
+
+const MEGA_NEW_DAYS = 30;
+
+const MEGA_HOVER_DELAY = 110;
+
+const MEGA_BRAND_LIMIT = 16;
+
+/* Mốc giá (đồng) chia khoảng; khoá theo categoryArtKey() */
+const MEGA_PRICE_STEPS = {
+    phone: [5e6, 10e6, 20e6],
+    tablet: [5e6, 10e6, 20e6],
+    laptop: [15e6, 25e6, 35e6],
+    monitor: [3e6, 6e6, 12e6],
+    desktop: [10e6, 20e6, 35e6],
+    smartwatch: [2e6, 5e6, 10e6],
+    watch: [1e6, 3e6, 6e6],
+    accessory: [200e3, 500e3, 1e6, 3e6],
+    other: [1e6, 5e6, 20e6]
+};
+
+const megaDataCache = new Map();
+
+
+function megaMoneyLabel(value) {
+
+    return value >= 1e6
+        ? (value / 1e6).toLocaleString("vi-VN") + " triệu"
+        : (value / 1e3).toLocaleString("vi-VN") + " nghìn";
+
+}
+
+function megaPriceRanges(category) {
+
+    const steps = MEGA_PRICE_STEPS[categoryArtKey(category.slug)] || MEGA_PRICE_STEPS.other;
+
+    const ranges = [];
+
+    let previous = null;
+
+    steps.forEach(function (step) {
+
+        ranges.push({
+            min: previous,
+            max: step,
+            label: previous === null ? "Dưới " + megaMoneyLabel(step) : "Từ " + megaMoneyLabel(previous) + " - " + megaMoneyLabel(step)
+        });
+
+        previous = step;
+
+    });
+
+    ranges.push({ min: previous, max: null, label: "Trên " + megaMoneyLabel(previous) });
+
+    return ranges;
+
+}
+
+function megaDataFor(category) {
+
+    if (!megaDataCache.has(category.id)) {
+
+        const id = encodeURIComponent(category.id);
+
+        const quiet = function (promise) {
+            return promise.catch(function () { return null; });
+        };
+
+        const promise = Promise.all([
+            quiet(apiRequest("/categories/" + id + "/brands")),
+            quiet(apiRequest("/products?isActive=true&categoryId=" + id + "&size=" + MEGA_HOT_SIZE
+                + "&sort=viewCount,desc&sort=totalReviews,desc&sort=id,desc")),
+            quiet(apiRequest("/categories/" + id + "/needs"))
+        ]).then(function (results) {
+
+            if (results.every(function (item) { return item === null; })) {
+
+                megaDataCache.delete(category.id);
+
+                throw new Error("mega-menu");
+
+            }
+
+            return {
+                brands: Array.isArray(results[0]) ? results[0] : [],
+                hot: results[1] && Array.isArray(results[1].content) ? results[1].content : [],
+                needs: (Array.isArray(results[2]) ? results[2] : []).filter(function (need) { return need.productCount > 0; })
+            };
+
+        });
+
+        megaDataCache.set(category.id, promise);
+
+    }
+
+    return megaDataCache.get(category.id);
+
+}
+
+/* "Hot" = đang khuyến mãi; "Mới" = thêm trong MEGA_NEW_DAYS ngày */
+
+function megaProductTag(product) {
+
+    if (product.activePromotionName || Number(product.basePrice) > Number(product.effectivePrice)) {
+        return { text: "Hot", className: "is-hot" };
+    }
+
+    const created = Date.parse(product.createdAt);
+
+    if (!isNaN(created) && Date.now() - created < MEGA_NEW_DAYS * 86400000) {
+        return { text: "Mới", className: "is-new" };
+    }
+
+    return null;
+
+}
+
+function megaProductPrice(product) {
+
+    const prices = (product.variants || [])
+        .map(function (variant) { return Number(variant.effectivePrice); })
+        .filter(function (price) { return price > 0; });
+
+    return prices.length ? Math.min.apply(null, prices) : getDisplayPrice(product);
+
+}
+
+function megaHotHtml(category, products) {
+
+    if (!products.length) {
+        return `<p class="mega-empty">Chưa có sản phẩm.</p>`;
+    }
+
+    return `<ul class="mega-hot-list">${products.map(function (product) {
+
+        const image = isSafeImageUrl(product.primaryImageUrl) ? product.primaryImageUrl.trim() : getFallbackImage(category.slug);
+
+        const tag = megaProductTag(product);
+
+        const price = megaProductPrice(product);
+
+        return `
+            <li>
+                <a class="mega-hot-item" href="${escapeHtml(getProductDetailUrl(product.id))}">
+                    <img src="${escapeHtml(image)}" alt="" referrerpolicy="no-referrer">
+                    <span class="mega-hot-text">
+                        <span class="mega-hot-name">${escapeHtml(product.name)}</span>
+                        <span class="mega-hot-price">${price > 0 ? escapeHtml(formatPrice(price)) : "Liên hệ"}</span>
+                    </span>
+                    ${tag ? `<span class="mega-tag ${tag.className}">${tag.text}</span>` : ""}
+                </a>
+            </li>`;
+
+    }).join("")}</ul>`;
+
+}
+
+/* Bốn khối cho một danh mục; compact = ngăn kéo điện thoại (HOT chỉ lấy 6, danh mục không cần tiêu đề lớn) */
+
+function megaBlocksHtml(category, data, compact) {
+
+    const base = categoryUrlOf(category);
+
+    const brands = data.brands.slice(0, MEGA_BRAND_LIMIT).map(function (brand) {
+        return `<a class="mega-chip mega-brand" href="${escapeHtml(base + "&brand=" + encodeURIComponent(brand.id))}">${escapeHtml(brand.name)}</a>`;
+    }).join("");
+
+    const prices = megaPriceRanges(category).map(function (range) {
+
+        let query = "";
+
+        if (range.min !== null) {
+            query += "&min=" + range.min;
+        }
+
+        if (range.max !== null) {
+            query += "&max=" + range.max;
+        }
+
+        return `<a class="mega-chip" href="${escapeHtml(base + query)}">${escapeHtml(range.label)}</a>`;
+
+    }).join("");
+
+    const needs = data.needs.map(function (need) {
+        return `<a class="mega-chip" href="${escapeHtml(base + "&f=" + encodeURIComponent("need:" + need.slug))}">${escapeHtml(need.name)}</a>`;
+    }).join("");
+
+    const hot = compact ? data.hot.slice(0, 6) : data.hot;
+
+    return `
+        ${brands ? `<section class="mega-block mega-block--brands"><h4>Hãng</h4><div class="mega-chips">${brands}</div></section>` : ""}
+        <section class="mega-block mega-block--hot"><h4>Sản phẩm HOT</h4>${megaHotHtml(category, hot)}</section>
+        <section class="mega-block mega-block--prices"><h4>Mức giá</h4><div class="mega-chips">${prices}</div></section>
+        ${needs ? `<section class="mega-block mega-block--needs"><h4>Nhu cầu</h4><div class="mega-chips">${needs}</div></section>` : ""}
+    `;
+
+}
+
+
 async function renderMegaMenuCategories() {
 
-    const grid = document.querySelector("#megaMenu .mega-menu-grid");
+    const menu = document.getElementById("megaMenu");
 
-    if (!grid || typeof loadShopCategories !== "function") {
+    if (!menu || typeof loadShopCategories !== "function") {
         return;
     }
 
@@ -58,28 +258,244 @@ async function renderMegaMenuCategories() {
 
     }
 
-    const cards = grid.querySelector(".mega-cards");
-
-    if (!cards) {
+    if (!categories.length) {
         return;
     }
 
-    cards.innerHTML = "";
+    setupMegaPanel(menu, categories);
 
-    categories.forEach(function (category) {
+    setupMegaDrawer(document.getElementById("navCats"), categories);
 
-        const card = document.createElement("a");
+}
 
-        card.className = "mega-card";
+function setupMegaPanel(menu, categories) {
 
-        card.href = categoryUrlOf(category);
+    const row = menu.querySelector(".mega-cats");
 
-        card.innerHTML = `
-            <span class="mega-card-visual">${categoryVisualHtml(category)}</span>
-            <span class="mega-card-name">${escapeHtml(category.name)}</span>
-        `;
+    const body = menu.querySelector(".mega-body");
 
-        cards.appendChild(card);
+    row.innerHTML = categories.map(function (category) {
+        return `
+            <a class="mega-cat" href="${escapeHtml(categoryUrlOf(category))}" data-category-id="${escapeHtml(category.id)}">
+                <span class="mega-cat-icon">${categoryVisualHtml(category)}</span>
+                <span class="mega-cat-name">${escapeHtml(category.name)}</span>
+            </a>`;
+    }).join("");
+
+    const links = Array.from(row.querySelectorAll(".mega-cat"));
+
+    let activeId = null;
+
+    let requestId = 0;
+
+    let hoverTimer = null;
+
+
+    function activate(category) {
+
+        if (activeId === category.id) {
+            return;
+        }
+
+        activeId = category.id;
+
+        links.forEach(function (link) {
+
+            const active = link.dataset.categoryId === String(category.id);
+
+            link.classList.toggle("is-active", active);
+
+            if (active) {
+                link.setAttribute("aria-current", "true");
+            } else {
+                link.removeAttribute("aria-current");
+            }
+
+        });
+
+        const mine = ++requestId;
+
+        body.classList.add("is-loading");
+
+        megaDataFor(category).then(function (data) {
+
+            if (mine === requestId) {
+
+                body.innerHTML = megaBlocksHtml(category, data, false);
+
+                body.classList.remove("is-loading");
+
+            }
+
+        }).catch(function () {
+
+            if (mine === requestId) {
+
+                activeId = null;
+
+                body.innerHTML = `<p class="mega-empty">Chưa tải được danh mục này, thử lại sau.</p>`;
+
+                body.classList.remove("is-loading");
+
+            }
+
+        });
+
+    }
+
+    function activateFirst() {
+
+        if (activeId === null) {
+            activate(categories[0]);
+        }
+
+    }
+
+
+    links.forEach(function (link, index) {
+
+        const category = categories[index];
+
+        link.addEventListener("mouseenter", function () {
+
+            clearTimeout(hoverTimer);
+
+            /* trễ ngắn: đi chéo qua các thẻ không làm bảng nháy liên tục */
+            hoverTimer = setTimeout(function () { activate(category); }, activeId === null ? 0 : MEGA_HOVER_DELAY);
+
+        });
+
+        link.addEventListener("mouseleave", function () {
+            clearTimeout(hoverTimer);
+        });
+
+        link.addEventListener("focus", function () {
+            activate(category);
+        });
+
+        link.addEventListener("keydown", function (event) {
+
+            const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+
+            if (step) {
+
+                event.preventDefault();
+
+                links[(index + step + links.length) % links.length].focus();
+
+            }
+
+        });
+
+    });
+
+
+    /* Mở panel bằng chuột / bàn phím → tải sẵn danh mục đầu; Tab từ nút mũi tên đi thẳng vào hàng danh mục */
+
+    const trigger = document.querySelector(".header .nav-has-mega");
+
+    const toggle = document.querySelector(".header .mega-toggle");
+
+    [trigger, toggle, menu].forEach(function (element) {
+
+        if (element) {
+
+            element.addEventListener("mouseenter", activateFirst);
+
+            element.addEventListener("focus", activateFirst);
+
+        }
+
+    });
+
+    if (toggle) {
+
+        toggle.addEventListener("click", activateFirst);
+
+        toggle.addEventListener("keydown", function (event) {
+
+            if (event.key === "Tab" && !event.shiftKey && !menu.hidden) {
+
+                event.preventDefault();
+
+                (row.querySelector(".mega-cat.is-active") || links[0]).focus();
+
+            }
+
+        });
+
+    }
+
+}
+
+function setupMegaDrawer(container, categories) {
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = categories.map(function (category) {
+        return `
+            <div class="nav-cat" data-category-id="${escapeHtml(category.id)}">
+                <button type="button" class="nav-cat-head" aria-expanded="false">
+                    <span class="mega-cat-icon">${categoryVisualHtml(category)}</span>
+                    <span class="nav-cat-name">${escapeHtml(category.name)}</span>
+                    <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <div class="nav-cat-panel" hidden></div>
+            </div>`;
+    }).join("");
+
+    const items = Array.from(container.querySelectorAll(".nav-cat"));
+
+    items.forEach(function (item, index) {
+
+        const category = categories[index];
+
+        const head = item.querySelector(".nav-cat-head");
+
+        const panel = item.querySelector(".nav-cat-panel");
+
+        head.addEventListener("click", function () {
+
+            const open = head.getAttribute("aria-expanded") !== "true";
+
+            items.forEach(function (other) {
+
+                other.querySelector(".nav-cat-head").setAttribute("aria-expanded", "false");
+
+                other.querySelector(".nav-cat-panel").hidden = true;
+
+            });
+
+            if (!open) {
+                return;
+            }
+
+            head.setAttribute("aria-expanded", "true");
+
+            panel.hidden = false;
+
+            if (panel.dataset.loaded === "1") {
+                return;
+            }
+
+            panel.innerHTML = `<p class="mega-empty">Đang tải...</p>`;
+
+            megaDataFor(category).then(function (data) {
+
+                panel.innerHTML = megaBlocksHtml(category, data, true)
+                    + `<a class="nav-cat-all" href="${escapeHtml(categoryUrlOf(category))}">Xem tất cả ${escapeHtml(category.name)}</a>`;
+
+                panel.dataset.loaded = "1";
+
+            }).catch(function () {
+
+                panel.innerHTML = `<p class="mega-empty">Chưa tải được danh mục này, thử lại sau.</p>`;
+
+            });
+
+        });
 
     });
 
@@ -681,7 +1097,7 @@ function setupHeaderScrollEffect() {
  */
 
 const SCROLL_REVEAL_SELECTOR =
-    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid, .promo-grid, .review-grid";
+    ".section-heading, .category-grid, .service-grid, .benefits-grid, .footer-grid, .promo-grid, .review-grid, .combo-grid";
 
 
 function setupScrollReveal() {

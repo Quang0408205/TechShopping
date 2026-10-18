@@ -26,6 +26,11 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
 
     List<Review> findAllByProduct_IdAndHiddenFalseOrderByCreatedAtDesc(Long productId);
 
+    /** Home page: newest visible reviews with at least {@code minRating} stars of products still on sale. */
+    @Query("select r from Review r join fetch r.user join fetch r.product p where r.hidden = false "
+            + "and r.rating >= :minRating and p.deletedAt is null and p.active = true order by r.createdAt desc, r.id desc")
+    List<Review> findHighlights(@Param("minRating") short minRating, Pageable pageable);
+
     /** The caller's own review (any visibility) with its product; another account's id behaves as missing. */
     @EntityGraph(attributePaths = {"user", "product"})
     Optional<Review> findByIdAndUser_Id(Long id, Long userId);
