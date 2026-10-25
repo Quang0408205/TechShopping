@@ -83,18 +83,17 @@
 
 
                 <!-- Chỉ sản phẩm đang giảm giá (giá giảm thủ công hoặc chương trình khuyến mãi đang chạy): GET /products?onSale=true -->
-                <details class="filter-group" open>
-
-                    <summary><h4>Khuyến mãi</h4></summary>
-
-                    <div class="spec-filter-options">
-                        <label>
-                            <input type="checkbox" id="saleOnlyInput">
-                            <span>Đang giảm giá</span>
-                        </label>
-                    </div>
-
-                </details>
+                <label class="sale-toggle" for="saleOnlyInput">
+                    <span class="sale-toggle-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></svg>
+                    </span>
+                    <span class="sale-toggle-text">
+                        <strong>Đang giảm giá</strong>
+                        <small>Chỉ hiện sản phẩm có ưu đãi</small>
+                    </span>
+                    <input type="checkbox" id="saleOnlyInput" role="switch">
+                    <span class="sale-toggle-switch" aria-hidden="true"></span>
+                </label>
 
 
                 <details class="filter-group" open>

@@ -1012,7 +1012,7 @@ html.has-intro:not(.intro-opening) .hero-track {
 }
 
 .showcase-sticky {
-    padding: var(--space-10) 0 var(--space-8);
+    padding: var(--space-8) 0 var(--space-6);
 }
 
 .showcase-head {
@@ -1229,7 +1229,7 @@ html.has-intro:not(.intro-opening) .hero-track {
 /* ================= 8. SỐ LIỆU ĐẾM TĂNG ================= */
 
 .stats {
-    padding: var(--space-10) 0;
+    padding: var(--space-8) 0;
 
     background: var(--surface-ink);
     color: var(--text-on-dark);
@@ -1278,7 +1278,7 @@ html.has-intro:not(.intro-opening) .hero-track {
 }
 
 .stats + .promo-banners {
-    padding-top: var(--space-10);
+    padding-top: var(--space-8);
 }
 
 .promo-card--dark p {
@@ -1423,7 +1423,7 @@ main > section[hidden] {
 /* ================= 6. BANNER ĐÔI ================= */
 
 .promo-banners {
-    padding-bottom: var(--space-12);
+    padding-bottom: var(--space-8);
 }
 
 .promo-grid {
