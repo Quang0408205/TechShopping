@@ -117,6 +117,22 @@ class ProductFilterSpecificationsTest {
     }
 
     @Test
+    void onSale_keepsOnlyProductsWithADiscountBelowThePrice() {
+        Product galaxy = productRepository.findAll().stream()
+                .filter(p -> "test-dien-thoai-samsung-galaxy-s26-5g".equals(p.getSlug())).findFirst().orElseThrow();
+        ProductSearchRequest onSale = new ProductSearchRequest(null, null, null, true, null, null, null, null, true);
+        assertThat(search(onSale)).isEmpty();
+
+        galaxy.setDiscountPrice(new BigDecimal("17500000"));
+        productRepository.saveAndFlush(galaxy);
+        assertThat(search(onSale)).extracting(Product::getName).containsExactly("Điện thoại Samsung Galaxy S26 5G");
+
+        galaxy.setDiscountPrice(new BigDecimal("19500000"));
+        productRepository.saveAndFlush(galaxy);
+        assertThat(search(onSale)).isEmpty();
+    }
+
+    @Test
     void pagination_andSorting() {
         Page<Product> firstPage = productRepository.findAll(
                 ProductFilterSpecifications.matching(filter(null, null, null, null, null, null)),

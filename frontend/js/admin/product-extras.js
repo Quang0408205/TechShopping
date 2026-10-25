@@ -19,6 +19,13 @@ function createProductExtras() {
 
     const specRows = document.getElementById("pfSpecRows");
 
+    const highlightBar = document.getElementById("pfHighlightBar");
+
+    /* Tên thông số đã dùng trong danh mục (gợi ý + để cảnh báo tên lạ), chữ thường */
+    let knownSpecNames = [];
+
+    const TEMPLATE_ROWS = 15;
+
     /* Bản gốc từ server (id → dữ liệu) để biết dòng nào thêm / sửa / xoá */
     let originalVariants = new Map();
 
@@ -108,12 +115,30 @@ function createProductExtras() {
 
     });
 
+    /* Nhãn nhóm, xem trước thẻ nhỏ và ô nổi bật cập nhật ngay khi gõ */
+    [specRows, variantRows].forEach(function (box) {
+
+        box.addEventListener("input", function (event) {
+
+            const row = event.target.closest(".admin-spec-row");
+
+            if (row) {
+                refreshSpecRow(row);
+                refreshHighlights();
+            }
+
+        });
+
+    });
+
     specRows.addEventListener("click", function (event) {
 
         const button = event.target.closest("button[data-row-action]");
 
         if (button) {
             moveOrRemoveSpec(button.closest(".admin-extra-row"), button.dataset.rowAction);
+
+            refreshHighlights();
         }
 
     });
@@ -360,14 +385,102 @@ function createProductExtras() {
                 <button type="button" data-row-action="up" aria-label="Đưa lên">↑</button>
                 <button type="button" data-row-action="down" aria-label="Đưa xuống">↓</button>
             </span>
-            ${inputHtml("specName", specName, 'maxlength="100" placeholder="Tên thông số" aria-label="Tên thông số"')}
-            ${inputHtml("specValue", specValue, 'placeholder="Giá trị" aria-label="Giá trị thông số"')}
+            <div class="admin-spec-cell">
+                ${inputHtml("specName", specName, 'maxlength="100" list="pfSpecNameList" placeholder="Tên thông số" aria-label="Tên thông số"')}
+                <small class="admin-spec-tag"></small>
+            </div>
+            <div class="admin-spec-cell">
+                ${inputHtml("specValue", specValue, 'placeholder="Giá trị (nhiều mục: ngăn bằng |)" aria-label="Giá trị thông số"')}
+                <span class="admin-spec-preview"></span>
+            </div>
             <button type="button" class="admin-extra-remove" data-row-action="remove" aria-label="Xoá thông số">✕</button>
         `;
 
         container.appendChild(row);
 
+        refreshSpecRow(row);
+
         return row;
+
+    }
+
+
+    /*
+     * Hiện trước cách trang khách sẽ xếp dòng này: nhóm (cùng quy tắc specGroupKey ở ui.js), cảnh báo khi tên lạ
+     * (không thuộc tên đã dùng trong danh mục và rơi vào "Tiện ích khác"), và các thẻ nhỏ khi giá trị có dấu |.
+     */
+
+    function refreshSpecRow(row) {
+
+        const name = rowValue(row, "specName");
+
+        const tag = row.querySelector(".admin-spec-tag");
+
+        const preview = row.querySelector(".admin-spec-preview");
+
+        if (!name) {
+            tag.textContent = "";
+            tag.className = "admin-spec-tag";
+        } else {
+
+            const group = specGroupLabel(name);
+
+            const known = knownSpecNames.indexOf(name.toLowerCase()) !== -1;
+
+            const warn = group.key === "other" && !known;
+
+            tag.className = "admin-spec-tag" + (warn ? " is-warn" : "");
+
+            tag.textContent = warn
+                ? "Tên mới, sẽ nằm ở Tiện ích khác"
+                : "→ " + group.label + (known ? "" : " · tên mới");
+
+        }
+
+        const parts = String(rowValue(row, "specValue") || "").split("|").map(function (part) { return part.trim(); }).filter(Boolean);
+
+        preview.innerHTML = parts.length > 1
+            ? parts.map(function (part) { return '<span class="spec-chip">' + escapeHtml(part) + "</span>"; }).join("")
+            : "";
+
+    }
+
+
+    /* Các ô "Điểm nổi bật" trang khách sẽ hiện, tính từ thông số chung + thông số riêng của phiên bản đầu */
+    function refreshHighlights() {
+
+        if (!highlightBar) {
+            return;
+        }
+
+        const rows = [];
+
+        Array.from(specRows.querySelectorAll(".admin-spec-row")).concat(
+            Array.from(variantRows.querySelectorAll(".admin-version-card:first-child .admin-spec-row"))
+        ).forEach(function (row) {
+
+            const name = rowValue(row, "specName");
+
+            const value = rowValue(row, "specValue");
+
+            if (name && value) {
+                rows.push([name, value]);
+            }
+
+        });
+
+        const picked = pickHighlights(rows);
+
+        const have = {};
+
+        picked.forEach(function (item) { have[item.tile.key] = item.value; });
+
+        highlightBar.innerHTML = "<strong>Điểm nổi bật trên trang khách: " + picked.length + "/4</strong>"
+            + HIGHLIGHT_TILES.map(function (tile) {
+                return '<span class="admin-hl' + (have[tile.key] ? " is-on" : "") + '">' + escapeHtml(tile.label) + ": "
+                    + (have[tile.key] ? escapeHtml(have[tile.key]) : "thiếu") + "</span>";
+            }).join("")
+            + (picked.length < 3 ? '<em class="admin-hl-warn">Dưới 3 ô thì trang khách ẩn cả khối. Thêm thông số như Chip xử lý (CPU), Kích thước màn hình, Dung lượng pin, Độ phân giải camera sau.</em>' : "");
 
     }
 
@@ -525,7 +638,7 @@ function createProductExtras() {
         let names = [];
 
         try {
-            names = await apiRequest("/categories/" + encodeURIComponent(categoryId) + "/spec-names?limit=15");
+            names = await apiRequest("/categories/" + encodeURIComponent(categoryId) + "/spec-names?limit=60");
         } catch (error) {
             return;
         }
@@ -538,11 +651,22 @@ function createProductExtras() {
             return input.value.trim().toLowerCase();
         }));
 
-        names.filter(function (name) {
+        /* Mọi tên đã dùng làm gợi ý + mốc "tên quen"; chỉ TEMPLATE_ROWS tên hay gặp nhất được thêm sẵn thành dòng trống */
+        knownSpecNames = names.map(function (name) { return String(name).toLowerCase(); });
+
+        document.getElementById("pfSpecNameList").innerHTML = names.map(function (name) {
+            return '<option value="' + escapeHtml(name) + '"></option>';
+        }).join("");
+
+        names.slice(0, TEMPLATE_ROWS).filter(function (name) {
             return !existing.has(String(name).toLowerCase());
         }).forEach(function (name) {
             appendSpecRow(specRows, null, name);
         });
+
+        document.querySelectorAll("#pfSpecs .admin-spec-row, #pfVariantRows .admin-spec-row").forEach(refreshSpecRow);
+
+        refreshHighlights();
 
     }
 

@@ -259,6 +259,19 @@ function initProductReviews(product, options) {
 
         document.getElementById("reviewAverageStars").innerHTML = starsHtml(average);
 
+        const bars = document.getElementById("reviewBars");
+
+        const counts = {};
+
+        (summary ? summary.stars : []).forEach(function (row) { counts[row.stars] = row.count; });
+
+        bars.hidden = total === 0;
+
+        bars.innerHTML = total === 0 ? "" : [5, 4, 3, 2, 1].map(function (s) {
+            const count = counts[s] || 0;
+            return `<div class="review-bar"><span>${s} sao</span><span class="review-bar-track"><span class="review-bar-fill" style="width:${(count * 100 / total).toFixed(1)}%"></span></span><span>${count}</span></div>`;
+        }).join("");
+
         document.getElementById("reviewTotal").textContent = total > 0
             ? total.toLocaleString("vi-VN") + " đánh giá trên POY"
             : "Chưa có đánh giá nào trên POY";

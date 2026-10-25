@@ -5,6 +5,7 @@ import com.example.Tech.entity.order.DeliveryType;
 import com.example.Tech.entity.order.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -69,8 +70,22 @@ public record OrderCreateRequest(
                 + "after the voucher and at most the balance", example = "200")
         @Min(value = 0, message = "Số điểm không được âm")
         @Max(value = 1_000_000, message = "Số điểm quá lớn")
-        Integer pointsToUse
+        Integer pointsToUse,
+
+        @Schema(description = "Plan v7: where the order mails go (placed, confirmed, shipping…); when absent the account's "
+                + "email is used", example = "an@example.com")
+        @Email(message = "Email chưa hợp lệ")
+        @Size(max = 255, message = "Email tối đa 255 ký tự")
+        String contactEmail
 ) {
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId,
+                              String shippingProvince, String shippingWard, String voucherCode, Integer pointsToUse) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, shippingProvince, shippingWard, voucherCode, pointsToUse, null);
+    }
 
     public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
                               PaymentMethod paymentMethod, InstallmentRequest installment,

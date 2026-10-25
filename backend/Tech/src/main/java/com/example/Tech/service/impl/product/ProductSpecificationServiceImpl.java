@@ -31,7 +31,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ProductSpecificationServiceImpl implements ProductSpecificationService {
 
-    private static final int MAX_COMMON_NAMES = 30;
+    private static final int MAX_COMMON_NAMES = 60;
 
     private final ProductSpecificationRepository specificationRepository;
     private final ProductRepository productRepository;

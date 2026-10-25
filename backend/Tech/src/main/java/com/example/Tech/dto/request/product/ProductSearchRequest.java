@@ -39,8 +39,16 @@ public record ProductSearchRequest(
         List<String> filter,
 
         @Schema(description = "Need slugs of the category, repeatable (any of them)", example = "gaming")
-        List<String> need
+        List<String> need,
+
+        @Schema(description = "true = only products on sale now: a manual discount price (product or variant) or a running promotion")
+        Boolean onSale
 ) {
+
+    public ProductSearchRequest(String keyword, Integer categoryId, Integer brandId, Boolean isActive,
+                                BigDecimal minPrice, BigDecimal maxPrice, List<String> filter, List<String> need) {
+        this(keyword, categoryId, brandId, isActive, minPrice, maxPrice, filter, need, null);
+    }
 
     public ProductSearchRequest(String keyword, Integer categoryId, Integer brandId, Boolean isActive,
                                 BigDecimal minPrice, BigDecimal maxPrice) {

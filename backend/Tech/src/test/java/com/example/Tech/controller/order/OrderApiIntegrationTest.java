@@ -573,6 +573,107 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.banks[0].name").value("Vietcombank"));
     }
 
+    @Test
+    void productSales_countsUnitsOfOrdersThatAreNotCancelled_andIsPublic() throws Exception {
+        String ids = phone.getId() + "," + cover.getProduct().getId();
+        mockMvc.perform(get("/api/v1/products/sales?ids=" + ids))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].sold").value(0))
+                .andExpect(jsonPath("$.data[1].sold").value(0));
+
+        addToCart(black, 2);
+        addToCart(cover, 1);
+        send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated());
+        addToCart(white, 3);
+        long cancelled = data(send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated())).get("id").asLong();
+        send(post("/api/v1/orders/" + cancelled + "/cancel"), token, null).andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/products/sales?ids=" + ids))
+                .andExpect(jsonPath("$.data[0].productId").value(phone.getId()))
+                .andExpect(jsonPath("$.data[0].sold").value(2))
+                .andExpect(jsonPath("$.data[1].sold").value(1));
+
+        mockMvc.perform(get("/api/v1/products/sales")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/v1/products/sales?ids=1,abc")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void productStoreStock_listsOpenStoresWithStock_isPublic_and404ForUnknownProduct() throws Exception {
+        String body = mockMvc.perform(get("/api/v1/products/" + phone.getId() + "/store-stock"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode rows = jsonMapper.readTree(body).get("data");
+        assertThat(rows.size()).isGreaterThan(0);
+        for (JsonNode row : rows) {
+            assertThat(row.get("quantity").asInt()).isPositive();
+            assertThat(row.get("storeName").asString()).isNotBlank();
+        }
+
+        mockMvc.perform(get("/api/v1/products/999999999/store-stock")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void topBrands_arePublic_sortedByProductCount_withoutProductTypeWords() throws Exception {
+        String body = mockMvc.perform(get("/api/v1/brands/top?size=40"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        JsonNode brands = jsonMapper.readTree(body).get("data");
+        long previous = Long.MAX_VALUE;
+        for (JsonNode brand : brands) {
+            assertThat(brand.get("productCount").asLong()).isLessThanOrEqualTo(previous);
+            previous = brand.get("productCount").asLong();
+            assertThat(brand.get("name").asString().toLowerCase()).isNotIn("túi", "ốp", "đèn", "camera", "usb", "miếng");
+        }
+        assertThat(brands.size()).isLessThanOrEqualTo(40);
+    }
+
+    @Test
+    void placeOrder_keepsTheContactEmail_andRefusesABadOne() throws Exception {
+        addToCart(cover, 1);
+        Map<String, Object> bad = orderBody();
+        bad.put("contactEmail", "không-phải-email");
+        send(post("/api/v1/orders"), token, bad)
+                .andExpect(status().isBadRequest());
+        assertThat(orderRepository.findAllByUserId(userId, PageRequest.of(0, 10)).getTotalElements()).isZero();
+
+        Map<String, Object> body = orderBody();
+        body.put("contactEmail", "khach.nhan@example.com");
+        long id = data(send(post("/api/v1/orders"), token, body).andExpect(status().isCreated())).get("id").asLong();
+        assertThat(orderRepository.findById(id).orElseThrow().getContactEmail()).isEqualTo("khach.nhan@example.com");
+
+        addToCart(cover, 1);
+        long withoutEmail = data(send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated()))
+                .get("id").asLong();
+        assertThat(orderRepository.findById(withoutEmail).orElseThrow().getContactEmail()).isNull();
+    }
+
+    @Test
+    void trackingLink_isPublic_showsOnlyTheProgress_andAnUnknownTokenIs404() throws Exception {
+        addToCart(black, 1);
+        long id = data(send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated())).get("id").asLong();
+        String trackingToken = orderRepository.findById(id).orElseThrow().getTrackingToken();
+        assertThat(trackingToken).matches("[0-9a-f]{64}");
+
+        String body = mockMvc.perform(get("/api/v1/orders/track/" + trackingToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.code").value("DH%08d".formatted(id)))
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.paymentMethod").value("COD"))
+                .andExpect(jsonPath("$.data.items.length()").value(1))
+                .andExpect(jsonPath("$.data.items[0].name").value("Điện thoại Đơn Hàng X - Đen 128GB"))
+                .andExpect(jsonPath("$.data.total").value(14990000))
+                .andExpect(jsonPath("$.data.steps.length()").value(1))
+                .andReturn().getResponse().getContentAsString();
+        assertThat(body).doesNotContain("0901").doesNotContain("Nguyễn Trãi").doesNotContain("Nguyễn Văn An")
+                .doesNotContain("order.test");
+
+        mockMvc.perform(get("/api/v1/orders/track/" + "0".repeat(64)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error.code").value("ORDER_NOT_FOUND"));
+        mockMvc.perform(get("/api/v1/orders/track/" + id)).andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/orders/track/ABC")).andExpect(status().isNotFound());
+    }
+
     private JsonNode register(String username) throws Exception {
         JsonNode data = data(send(post("/api/v1/auth/register"), null, Map.of(
                 "email", username + "@example.com", "username", username, "password", PASSWORD,

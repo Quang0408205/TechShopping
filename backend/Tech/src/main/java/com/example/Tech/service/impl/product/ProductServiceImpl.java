@@ -77,7 +77,7 @@ public class ProductServiceImpl implements ProductService {
                 && filter.minPrice().compareTo(filter.maxPrice()) > 0) {
             throw new BusinessException(ErrorCode.VALIDATION_ERROR, "minPrice must not exceed maxPrice");
         }
-        Page<Product> page = productRepository.findAll(ProductFilterSpecifications.matching(filter), pageable);
+        Page<Product> page = productRepository.findAll(ProductFilterSpecifications.matching(filter, LocalDateTime.now(clock)), pageable);
         Map<Long, String> imageUrls = primaryImageUrls(page.getContent().stream().map(Product::getId).toList());
         Map<Long, EffectivePrice> prices = pricingService.resolveProducts(page.getContent(), LocalDateTime.now(clock));
         Map<Long, Integer> available = stockAvailability.byProduct(page.getContent().stream().map(Product::getId).toList());

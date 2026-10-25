@@ -20,6 +20,12 @@ app:
   review:
     # tests and E2E write several reviews per account in a row (the gap has its own unit test)
     min-interval-seconds: 0
+  mail:
+    # mails are built on the committing thread, so a test can look at them right after the request; no SMTP user = nothing is sent
+    async: false
+    per-recipient-limit: 100000
+  wishlist:
+    alerts-enabled: false
   contact:
     rate-limit:
       # every test / E2E request comes from 127.0.0.1: only the per-email limit is exercised

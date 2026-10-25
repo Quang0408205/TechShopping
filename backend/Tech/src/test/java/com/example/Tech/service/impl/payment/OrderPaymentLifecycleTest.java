@@ -60,6 +60,9 @@ class OrderPaymentLifecycleTest {
     @Mock
     private StripeGateway stripeGateway;
 
+    @Mock
+    private com.example.Tech.service.mail.OrderMailPublisher mailPublisher;
+
     private OrderPaymentLifecycle lifecycle;
 
     private final User staff = new User();
@@ -67,7 +70,7 @@ class OrderPaymentLifecycleTest {
     @BeforeEach
     void setUp() {
         lifecycle = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, installmentPaymentRepository,
-                new StripeProperties("sk_test_x", null, null, null), stripeGateway);
+                new StripeProperties("sk_test_x", null, null, null), stripeGateway, mailPublisher);
     }
 
     @Test
@@ -243,7 +246,7 @@ class OrderPaymentLifecycleTest {
     @Test
     void card_isRefusedWhenStripeIsOff_orAboveStripesLimit() {
         OrderPaymentLifecycle off = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository,
-                installmentPaymentRepository, new StripeProperties("", null, null, null), stripeGateway);
+                installmentPaymentRepository, new StripeProperties("", null, null, null), stripeGateway, mailPublisher);
 
         assertThatThrownBy(() -> off.validateSelection(PaymentMethod.CARD, null))
                 .isInstanceOfSatisfying(BusinessException.class,

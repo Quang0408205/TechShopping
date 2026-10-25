@@ -30,6 +30,8 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 24 | `variant_specifications.sql` | Thông số riêng của từng phiên bản (`product_specifications.variant_id`, NULL = chung) |
 | 25 | `filters_needs.sql` | Bộ lọc thông số nâng cao (`product_filter_values`) + nhu cầu (`needs`, `product_needs`); sau khi chạy gọi `POST /api/v1/admin/products/reindex-filters` |
 | 26 | `combos.sql` | Combo mua kèm giảm giá (`combos`, `combo_items`, `order_combos`; đơn + dòng hàng lưu `combo_discount`) |
+| 27 | `order_email.sql` | Email đơn hàng (kế hoạch v7): `orders.contact_email`, `orders.tracking_token` (link theo dõi đơn), bảng `email_log` |
+| 28 | `wishlist.sql` | Danh sách yêu thích (kế hoạch v7 GĐ4): `wishlist_items` (giá lúc thêm + mốc giá để báo giảm giá qua email) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

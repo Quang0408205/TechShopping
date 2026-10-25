@@ -1,0 +1,162 @@
+/* Trang sản phẩm yêu thích (kế hoạch v7 GĐ4) */
+
+.wishlist-note {
+    margin: 0 0 20px;
+
+    color: var(--gray-600);
+    font-size: 14px;
+}
+
+.wish-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 20px;
+}
+
+.wish-grid[hidden] {
+    display: none;
+}
+
+.wish-grid > .skeleton-block {
+    border-radius: var(--radius-lg, 14px);
+    height: 380px;
+}
+
+.wish-card {
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg, 14px);
+    overflow: hidden;
+
+    transition: opacity 240ms var(--ease-standard), transform 240ms var(--ease-standard), box-shadow 240ms var(--ease-standard);
+}
+
+.wish-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.wish-card.is-leaving {
+    opacity: 0;
+    transform: scale(0.94);
+}
+
+.wish-card-image {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 200px;
+    padding: 16px;
+
+    background: var(--gray-50);
+}
+
+.wish-card-image img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.wish-card-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+
+    padding: 3px 10px;
+
+    border-radius: 999px;
+    background: #d64550;
+    color: #fff;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.wish-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+
+    flex: 1;
+    padding: 16px;
+}
+
+.wish-card-category {
+    color: var(--gray-500);
+    font-size: 11px;
+    letter-spacing: 0.6px;
+}
+
+.wish-card-body h3 {
+    margin: 0;
+
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.wish-card-price {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin: 4px 0 0;
+}
+
+.wish-card-price strong {
+    font-size: 17px;
+}
+
+.wish-card-price s {
+    color: var(--gray-500);
+    font-size: 13px;
+}
+
+.wish-card-drop {
+    margin: 0;
+
+    color: #1b7a3a;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.wish-card-stock {
+    margin: 0;
+
+    color: #1b7a3a;
+    font-size: 13px;
+}
+
+.wish-card-stock.is-out {
+    color: #b42318;
+}
+
+.wish-card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: auto;
+    padding-top: 10px;
+}
+
+.wish-card-actions .btn {
+    width: 100%;
+}
+
+.wish-remove {
+    border: 0;
+    background: none;
+    color: var(--gray-600);
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.wish-remove:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}

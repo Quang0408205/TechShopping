@@ -12,6 +12,7 @@ const ACCOUNT_NAV_ICONS = {
     profile: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/>',
     loyalty: '<path d="m12 3 2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.8Z"/>',
     orders: '<path d="M6 7h12l-1 13H7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/>',
+    wishlist: '<path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/>',
     "service-requests": '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4Z"/>',
     address: '<path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10Z"/><circle cx="12" cy="11" r="2.2"/>',
     security: '<rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/>',
@@ -124,6 +125,7 @@ function renderAccountSidebar() {
                 ${link("profile", "customer/account.html#profile", "Hồ sơ")}
                 ${link("loyalty", "customer/account.html#loyalty", "Hạng & điểm")}
                 ${link("orders", "customer/orders.html", "Lịch sử mua hàng")}
+                ${link("wishlist", "customer/wishlist.html", "Yêu thích")}
                 ${link("service-requests", "customer/service-requests.html", "Yêu cầu dịch vụ")}
                 ${link("address", "customer/account.html#address", "Địa chỉ")}
                 ${link("security", "customer/account.html#security", "Bảo mật")}

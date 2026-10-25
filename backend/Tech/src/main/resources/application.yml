@@ -19,6 +19,18 @@ spring:
     async:
       # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer with product search took ~2 minutes on a 4 GB GPU
       request-timeout: 300s
+  mail:
+    # Plan v7: order emails through SMTP (Gmail + an App Password by default); empty username = mail is not sent
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 8000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   servlet:
     multipart:
       # Product image uploads (ImageStorageService.MAX_IMAGE_BYTES)
@@ -102,6 +114,23 @@ app:
   review:
     # An account may write any number of reviews, but two must be at least this many seconds apart (0 = off)
     min-interval-seconds: ${REVIEW_MIN_INTERVAL_SECONDS:60}
+  mail:
+    # Plan v7: emails about an order (placed, confirmed, shipping, delivered, cancelled). Sent after the order
+    # transaction commits, on another thread; a failed mail never fails the order (see email_log)
+    enabled: ${MAIL_ENABLED:true}
+    from-name: ${MAIL_FROM_NAME:POY}
+    # Empty = the SMTP username
+    from-address: ${MAIL_FROM_ADDRESS:}
+    # Address of the web shop in the links of the mails (…/track.html?token=…)
+    site-url: ${MAIL_SITE_URL:http://localhost:5510}
+    # One address gets at most this many mails per window (Redis), so nobody can flood a stranger's inbox
+    per-recipient-limit: ${MAIL_LIMIT_PER_RECIPIENT:12}
+    window: 1h
+    async: true
+  wishlist:
+    # Plan v7 GĐ4: hourly check that mails customers about price drops of the products they saved
+    alerts-enabled: ${WISHLIST_ALERTS_ENABLED:true}
+    alert-cron: ${WISHLIST_ALERT_CRON:0 0 * * * *}
   contact:
     # Contact form: at most per-ip sends per client IP and per-email per email address in each window (Redis)
     rate-limit:

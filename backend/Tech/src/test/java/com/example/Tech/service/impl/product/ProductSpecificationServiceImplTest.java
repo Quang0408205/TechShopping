@@ -60,7 +60,7 @@ class ProductSpecificationServiceImplTest {
     @Test
     void getCommonNames_capsTheLimit_andUnknownCategoryIs404() {
         when(categoryRepository.existsById(4)).thenReturn(true);
-        when(specificationRepository.findCommonNamesByCategoryId(4, PageRequest.of(0, 30)))
+        when(specificationRepository.findCommonNamesByCategoryId(4, PageRequest.of(0, 60)))
                 .thenReturn(List.of("Màn hình", "Chip"));
 
         assertThat(specificationService.getCommonNames(4, 500)).containsExactly("Màn hình", "Chip");

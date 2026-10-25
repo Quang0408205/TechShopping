@@ -69,6 +69,8 @@ document.addEventListener(
 
         let demoTimer = null;
 
+        let sandboxTimer = null;
+
 
         if (!orderId || !/^\d{1,18}$/.test(orderId)) {
             showOnly("payNotFound");
@@ -100,6 +102,8 @@ document.addEventListener(
         });
 
         cardButton.addEventListener("click", openStripe);
+
+        document.getElementById("paySandboxBtn").addEventListener("click", confirmDemoPayment);
 
         document.getElementById("payCancelBtn").addEventListener("click", function () {
 
@@ -310,9 +314,12 @@ document.addEventListener(
             });
 
 
-            /* Demo: QR đã hiện 1 phút trên trang → coi như đã nhận tiền; rời trang trước đó thì chưa tính */
+            /* Chế độ thử nghiệm: nút giả lập ngân hàng báo tiền; không bấm thì QR hiện đủ 1 phút là tính đã nhận tiền (rời trang trước đó thì chưa tính) */
+            document.getElementById("paySandbox").hidden = !transfer.demoAutoPay;
+
             if (transfer.demoAutoPay && !demoTimer) {
                 demoTimer = setTimeout(confirmDemoPayment, PAYMENT_DEMO_AFTER_MS);
+                startSandboxCountdown();
             }
 
         }
@@ -391,7 +398,36 @@ document.addEventListener(
         }
 
 
+        function startSandboxCountdown() {
+
+            const end = Date.now() + PAYMENT_DEMO_AFTER_MS;
+
+            const left = document.getElementById("paySandboxLeft");
+
+            const tick = function () {
+                left.textContent = "(" + Math.max(0, Math.ceil((end - Date.now()) / 1000)) + "s)";
+            };
+
+            tick();
+
+            clearInterval(sandboxTimer);
+
+            sandboxTimer = setInterval(tick, 1000);
+
+        }
+
+
         async function confirmDemoPayment() {
+
+            clearTimeout(demoTimer);
+
+            clearInterval(sandboxTimer);
+
+            const button = document.getElementById("paySandboxBtn");
+
+            button.disabled = true;
+
+            button.textContent = "Đang xử lý…";
 
             try {
 
@@ -475,6 +511,8 @@ document.addEventListener(
             clearTimeout(timer);
 
             clearTimeout(demoTimer);
+
+            clearInterval(sandboxTimer);
 
             clearInterval(countdown);
 

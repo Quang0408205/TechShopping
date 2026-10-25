@@ -1932,3 +1932,77 @@ button.admin-badge {
     gap: 6px;
     font-size: 14px;
 }
+
+
+/* ----- Thông số: nhãn nhóm, xem trước thẻ nhỏ, thanh điểm nổi bật ----- */
+
+.admin-spec-cell {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.admin-spec-tag {
+    min-height: 15px;
+
+    color: var(--gray-600, #666);
+    font-size: 11px;
+}
+
+.admin-spec-tag.is-warn {
+    color: #9a5b00;
+    font-weight: 600;
+}
+
+.admin-spec-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.admin-spec-preview:empty {
+    display: none;
+}
+
+.admin-spec-preview .spec-chip {
+    padding: 2px 8px;
+
+    background: #f5f1ea;
+    border-radius: 999px;
+    font-size: 11px;
+}
+
+.admin-hl-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 8px;
+
+    margin: 8px 0;
+    padding: 10px 12px;
+
+    background: #faf7f2;
+    border: 1px solid #ebe4d8;
+    border-radius: 8px;
+    font-size: 12px;
+}
+
+.admin-hl {
+    padding: 2px 8px;
+
+    background: #fff;
+    border: 1px dashed #c9c9c9;
+    border-radius: 999px;
+    color: #777;
+}
+
+.admin-hl.is-on {
+    border: 1px solid #8a5a22;
+    color: #5a3a14;
+}
+
+.admin-hl-warn {
+    flex-basis: 100%;
+    color: #9a5b00;
+    font-style: normal;
+}

@@ -86,6 +86,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/promotions/flash-sale", "/api/v1/combos/featured",
                                 "/api/v1/reviews/highlights").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
+                        // plan v7: order progress page opened from the email link (the random token is the key)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orders/track/*").permitAll()
                         // bank webhook: no token, the shared key is checked by the controller
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                         // Stripe webhook: no token, the Stripe-Signature header is checked by CardPaymentService

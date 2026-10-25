@@ -109,6 +109,7 @@ public class OrderServiceImpl implements OrderService {
         order.setRecipientName(request.recipientName().trim());
         order.setRecipientPhone(request.recipientPhone().trim());
         order.setShippingAddress(trimToNull(request.shippingAddress()));
+        order.setContactEmail(trimToNull(request.contactEmail()));
         if (deliveryType == DeliveryType.HOME_DELIVERY) {
             order.setShippingProvince(trimToNull(request.shippingProvince()));
             order.setShippingWard(trimToNull(request.shippingWard()));

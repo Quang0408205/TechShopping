@@ -2371,3 +2371,28 @@ main > section[hidden] {
     }
 
 }
+
+
+/* Kế hoạch v8: dải thương hiệu = các hãng nhiều sản phẩm nhất, chữ đậm như logo, số sản phẩm nhỏ bên cạnh */
+.brand-marquee-item {
+    color: var(--color-ink);
+    opacity: 0.55;
+
+    transition: opacity var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard);
+}
+
+.brand-marquee-item:hover,
+.brand-marquee-item:focus-visible {
+    opacity: 1;
+    color: var(--color-ink);
+}
+
+.brand-marquee-item sup {
+    margin-left: 4px;
+
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0;
+    vertical-align: super;
+}

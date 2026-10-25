@@ -19,6 +19,7 @@ import com.example.Tech.repository.payment.InstallmentPaymentRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
 import com.example.Tech.service.payment.InstallmentPolicy;
 import com.example.Tech.service.payment.StripeGateway;
+import com.example.Tech.service.mail.OrderMailPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -44,6 +45,7 @@ public class OrderPaymentLifecycle {
     private final InstallmentPaymentRepository installmentPaymentRepository;
     private final StripeProperties stripe;
     private final StripeGateway stripeGateway;
+    private final OrderMailPublisher mailPublisher;
 
     /** Checks that installment data comes with INSTALLMENT and only with it; called before the cart is read. */
     public void validateSelection(PaymentMethod method, InstallmentRequest installment) {
@@ -172,6 +174,7 @@ public class OrderPaymentLifecycle {
         payment.setPaidAt(now);
         payment.setConfirmedBy(staff);
         payment.setTransactionId(trimToNull(transactionId));
+        mailPublisher.paymentReceived(order);
     }
 
     /** Staff sent the money of a cancelled, already paid order back to the customer. */

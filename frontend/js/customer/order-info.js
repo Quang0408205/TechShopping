@@ -12,6 +12,9 @@ const ORDER_INFO_KEY_PREFIX = "poy_order_info:";
 
 const ORDER_INFO_PHONE_PATTERN = /^[0-9+\s().-]{8,20}$/;
 
+/* Email nhận thông tin đơn hàng (đặt hàng, xác nhận, giao hàng…); server kiểm tra lại */
+const ORDER_INFO_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 
 function orderInfoKey() {
 
@@ -63,7 +66,8 @@ function clearOrderInfo() {
 
 function isOrderInfoComplete(info) {
 
-    if (!info || !info.recipientName || !ORDER_INFO_PHONE_PATTERN.test(info.recipientPhone || "")) {
+    if (!info || !info.recipientName || !ORDER_INFO_PHONE_PATTERN.test(info.recipientPhone || "")
+        || !ORDER_INFO_EMAIL_PATTERN.test(info.contactEmail || "")) {
         return false;
     }
 
@@ -96,7 +100,8 @@ function orderInfoSummaryHtml(info) {
     }
 
     return `<strong>${escapeHtml(info.recipientName)} · ${escapeHtml(info.recipientPhone)}</strong>`
-        + `<span>${escapeHtml(where)}</span>`;
+        + `<span>${escapeHtml(where)}</span>`
+        + `<span>${escapeHtml("Email: " + info.contactEmail)}</span>`;
 
 }
 
@@ -154,7 +159,7 @@ async function loadOrderInfoDefaults() {
     const user = getCurrentUser() || {};
 
     const defaults = {
-        deliveryType: "HOME_DELIVERY", recipientName: user.fullname || "", recipientPhone: "",
+        deliveryType: "HOME_DELIVERY", recipientName: user.fullname || "", recipientPhone: "", contactEmail: user.email || "",
         shippingProvince: "", shippingWard: "", shippingStreet: "", pickupStoreId: null
     };
 
@@ -166,6 +171,7 @@ async function loadOrderInfoDefaults() {
     if (results[0].status === "fulfilled" && results[0].value) {
         defaults.recipientName = results[0].value.fullname || defaults.recipientName;
         defaults.recipientPhone = results[0].value.phone || "";
+        defaults.contactEmail = results[0].value.email || defaults.contactEmail;
     }
 
     if (results[1].status === "fulfilled" && results[1].value) {
@@ -278,6 +284,12 @@ async function openOrderInfoModal(options) {
                 <span>Số điện thoại <b>*</b></span>
                 <input type="tel" id="orderInfoPhone" maxlength="20" value="${escapeHtml(info.recipientPhone)}" autocomplete="tel">
                 <small class="field-error" data-error="phone"></small>
+            </label>
+
+            <label class="order-info-field">
+                <span>Email nhận thông tin đơn hàng <b>*</b></span>
+                <input type="email" id="orderInfoEmail" maxlength="255" value="${escapeHtml(info.contactEmail || "")}" autocomplete="email" placeholder="ten@example.com">
+                <small class="field-error" data-error="email"></small>
             </label>
 
             <div id="orderInfoHome">
@@ -416,6 +428,7 @@ async function openOrderInfoModal(options) {
             deliveryType: deliveryType,
             recipientName: form.querySelector("#orderInfoName").value.trim(),
             recipientPhone: form.querySelector("#orderInfoPhone").value.trim(),
+            contactEmail: form.querySelector("#orderInfoEmail").value.trim(),
             shippingProvince: picked.province,
             shippingWard: picked.ward,
             shippingStreet: form.querySelector("#orderInfoStreet").value.trim(),
@@ -427,6 +440,8 @@ async function openOrderInfoModal(options) {
         const nameOk = result.recipientName !== "" && result.recipientName.length <= 120;
 
         const phoneOk = ORDER_INFO_PHONE_PATTERN.test(result.recipientPhone);
+
+        const emailOk = ORDER_INFO_EMAIL_PATTERN.test(result.contactEmail) && result.contactEmail.length <= 255;
 
         const storeOk = Boolean((stores || []).find(function (store) {
             return String(store.id) === String(result.pickupStoreId) && !lacks(store);
@@ -442,12 +457,13 @@ async function openOrderInfoModal(options) {
 
         setError("name", nameOk ? "" : "Vui lòng nhập họ và tên người nhận (tối đa 120 ký tự).");
         setError("phone", phoneOk ? "" : "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).");
+        setError("email", emailOk ? "" : "Vui lòng nhập email hợp lệ để nhận thông tin đơn hàng.");
         setError("province", pickup || provinceOk ? "" : "Vui lòng chọn tỉnh / thành phố trong danh sách.");
         setError("ward", pickup || wardOk ? "" : "Vui lòng chọn phường / xã trong danh sách.");
         setError("street", pickup || streetOk ? "" : "Vui lòng nhập số nhà, tên đường.");
         setError("store", !pickup || storeOk ? "" : "Vui lòng chọn cửa hàng đang mở để nhận hàng.");
 
-        if (!nameOk || !phoneOk || (pickup ? !storeOk : !addressOk)) {
+        if (!nameOk || !phoneOk || !emailOk || (pickup ? !storeOk : !addressOk)) {
             return;
         }
 
@@ -456,6 +472,7 @@ async function openOrderInfoModal(options) {
             deliveryType: deliveryType,
             recipientName: result.recipientName,
             recipientPhone: result.recipientPhone,
+            contactEmail: result.contactEmail,
             shippingProvince: pickup ? "" : result.shippingProvince,
             shippingWard: pickup ? "" : result.shippingWard,
             shippingStreet: pickup ? "" : result.shippingStreet,

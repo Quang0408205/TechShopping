@@ -2267,3 +2267,421 @@ section.awaiting-pay-slot {
     }
 
 }
+
+
+/* ================= Yêu thích + so sánh (kế hoạch v7 GĐ4; js/customer/compare-wishlist.js) ================= */
+
+/* Biểu tượng tim ở đầu trang: dáng như nút giỏ hàng, nhưng KHÔNG dùng lớp .cart-btn / .cart-count (script giỏ hàng tìm theo lớp đó) */
+.wish-btn {
+    position: relative;
+
+    width: 44px;
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--gray-300);
+    border-radius: 50%;
+
+    transition: border-color var(--duration-base) var(--ease-standard);
+}
+
+.wish-btn:hover {
+    border-color: var(--color-ink);
+}
+
+.wish-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+
+    min-width: 19px;
+    height: 19px;
+    padding: 0 5px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid #fff;
+    border-radius: var(--radius-full);
+    background: #d64550;
+    color: #fff;
+
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.wish-badge[hidden] {
+    display: none;
+}
+
+/* Nút trên thẻ sản phẩm */
+.product-card {
+    position: relative;
+}
+
+.product-card-tools {
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    z-index: 3;
+
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.card-tool {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--gray-200);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--gray-600);
+
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(17, 19, 24, 0.1);
+
+    transition:
+        transform var(--duration-fast) var(--ease-standard),
+        color var(--duration-fast) var(--ease-standard),
+        background var(--duration-fast) var(--ease-standard);
+}
+
+.card-tool:hover {
+    transform: scale(1.1);
+    color: var(--color-ink);
+}
+
+.card-tool--wish.is-on {
+    color: #d64550;
+}
+
+.card-tool--wish.is-on svg,
+.detail-tool[data-wish].is-on svg {
+    fill: currentColor;
+}
+
+.card-tool--compare.is-on {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+}
+
+.card-tool:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* Trên màn hình chạm không có hover: các nút luôn hiện; máy tính: hiện khi rê vào thẻ, hoặc khi đã bật */
+@media (hover: hover) {
+
+    .product-card .card-tool {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    .product-card:hover .card-tool,
+    .product-card .card-tool:focus-visible,
+    .product-card .card-tool.is-on {
+        opacity: 1;
+        transform: none;
+    }
+
+}
+
+/* Trang chi tiết */
+.detail-tools {
+    flex-basis: 100%;
+    display: flex;
+    gap: 10px;
+}
+
+.detail-actions {
+    flex-wrap: wrap;
+}
+
+.detail-tool {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 9px 16px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-full);
+    background: #fff;
+    color: var(--color-ink);
+
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+
+    transition: border-color var(--duration-fast) var(--ease-standard), background var(--duration-fast) var(--ease-standard);
+}
+
+.detail-tool[hidden] {
+    display: none;
+}
+
+.detail-tool:hover {
+    border-color: var(--color-ink);
+}
+
+.detail-tool[data-wish].is-on {
+    color: #d64550;
+    border-color: #d64550;
+}
+
+.detail-tool[data-compare].is-on {
+    background: var(--color-ink);
+    border-color: var(--color-ink);
+    color: #fff;
+}
+
+/* Thanh so sánh nổi ở đáy màn hình */
+.compare-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 90;
+
+    background: #fff;
+    border-top: 1px solid var(--gray-200);
+    box-shadow: 0 -8px 30px rgba(17, 19, 24, 0.12);
+
+    animation: compareBarIn 240ms var(--ease-standard);
+}
+
+.compare-bar[hidden] {
+    display: none;
+}
+
+@keyframes compareBarIn {
+    from { transform: translateY(100%); }
+    to { transform: none; }
+}
+
+.compare-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    padding-top: 12px;
+    padding-bottom: 12px;
+}
+
+.compare-slots {
+    display: flex;
+    gap: 10px;
+}
+
+.compare-slot {
+    position: relative;
+
+    width: 56px;
+    height: 56px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius-md, 10px);
+    color: var(--gray-400);
+    font-size: 20px;
+}
+
+.compare-slot.is-filled {
+    border-style: solid;
+    background: var(--gray-50);
+}
+
+.compare-slot img {
+    max-width: 44px;
+    max-height: 44px;
+    object-fit: contain;
+}
+
+.compare-slot button {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+
+    width: 20px;
+    height: 20px;
+    padding: 0;
+
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-ink);
+    color: #fff;
+
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.compare-hint {
+    flex: 1;
+    margin: 0;
+
+    color: var(--gray-600);
+    font-size: 14px;
+}
+
+.compare-clear {
+    border: 0;
+    background: none;
+    color: var(--gray-600);
+    font-size: 14px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.compare-go.is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* chừa chỗ để thanh so sánh không che chân trang */
+body.has-compare-bar {
+    padding-bottom: 82px;
+}
+
+body.has-compare-bar .contact-hub,
+body.has-compare-bar .chatbot-launcher {
+    margin-bottom: 78px;
+}
+
+@media (max-width: 700px) {
+
+    .wish-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .compare-bar-inner {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .compare-hint {
+        flex-basis: 100%;
+        order: 3;
+        font-size: 13px;
+    }
+
+    .compare-slot {
+        width: 46px;
+        height: 46px;
+    }
+
+}
+
+
+/* Giảm chuyển động: thanh so sánh hiện ngay, không trượt lên */
+@media (prefers-reduced-motion: reduce) {
+
+    .compare-bar {
+        animation: none;
+    }
+
+}
+
+
+/* ================= Thẻ sản phẩm kế hoạch v8: nền ảnh đồng nhất, dòng đánh giá + đã bán, trả góp, nhãn ================= */
+
+/* Ảnh cào có nền trắng / xám / xanh nhạt khác nhau: đặt trên cùng một nền ngà, "multiply" để nền trắng của ảnh hoà vào */
+.product-image {
+    background: #f6f5f2;
+}
+
+.product-image img {
+    mix-blend-mode: multiply;
+}
+
+.product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 10px;
+
+    min-height: 18px;
+    margin: 0 0 4px;
+
+    font-size: 12px;
+}
+
+.product-meta .product-rating {
+    margin: 0;
+}
+
+.product-sold {
+    color: var(--gray-600);
+}
+
+.product-meta .product-rating + .product-sold::before {
+    content: "·";
+    margin-right: 10px;
+    color: var(--gray-400);
+}
+
+.product-installment {
+    margin: -8px 0 12px;
+
+    color: #8a6a2f;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.product-installment[hidden] {
+    display: none;
+}
+
+.product-flags {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    z-index: 2;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.product-flag {
+    padding: 3px 9px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+}
+
+.product-flag--hot {
+    background: var(--color-ink);
+    color: #f3d9a4;
+}
+
+.product-flag--hot::before {
+    content: "🔥 ";
+}
+
+.product-flag--low {
+    background: #fff1e6;
+    color: #b45309;
+    border: 1px solid #fcd9b6;
+}

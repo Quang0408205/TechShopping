@@ -173,7 +173,11 @@ document.addEventListener(
 
             skeleton.hidden = true;
 
+            await loadStoreStock(product.id);
+
             renderProduct(images);
+
+            loadCompareSuggestions(product, resolvePrices(product, null).price);
 
             loadRelatedProducts();
 
@@ -251,6 +255,20 @@ document.addEventListener(
 
 
             renderImages(images, categorySlug);
+
+            /* nút yêu thích / so sánh (compare-wishlist.js đọc data-*; trạng thái bật tắt do script đó cập nhật) */
+            ["detailWishBtn", "detailCompareBtn"].forEach(function (id) {
+
+                const tool = document.getElementById(id);
+
+                tool.dataset.productId = String(product.id);
+                tool.dataset.categoryId = String(product.categoryId);
+                tool.dataset.name = product.name;
+                tool.dataset.image = isSafeImageUrl(product.primaryImageUrl) ? product.primaryImageUrl.trim() : "";
+
+                tool.hidden = false;
+
+            });
 
             renderVariants();
 
@@ -971,6 +989,8 @@ document.addEventListener(
 
             renderStock(hasPrice);
 
+            renderStoreStock(currentVariant ? currentVariant.id : null);
+
 
             renderSpecs();
 
@@ -1274,16 +1294,9 @@ document.addEventListener(
             });
 
 
-            document.getElementById("specsTable").innerHTML = rows.map(function (row) {
+            renderSpecGroups(document.getElementById("specsTable"), rows);
 
-                return `
-                    <tr>
-                        <th scope="row">${escapeHtml(row[0])}</th>
-                        <td>${escapeHtml(row[1])}</td>
-                    </tr>
-                `;
-
-            }).join("");
+            renderProductHighlights(rows);
 
         }
 

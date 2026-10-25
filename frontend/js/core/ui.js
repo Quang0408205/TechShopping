@@ -155,6 +155,7 @@ function emptyStateHtml(title, message) {
 
     return `
         <div class="state-box empty-state">
+            <svg class="empty-art" viewBox="0 0 120 96" width="120" height="96" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 38h80l-7 42a6 6 0 0 1-6 5H33a6 6 0 0 1-6-5Z"/><path d="M40 38c0-12 9-22 20-22s20 10 20 22"/><path d="M48 58l24 12M72 58 48 70" stroke="#8a5a22"/><circle cx="96" cy="18" r="3" fill="#8a5a22" stroke="none"/><circle cx="22" cy="22" r="2" fill="#8a5a22" stroke="none"/></svg>
             <h3>${escapeHtml(title)}</h3>
             <p>${escapeHtml(message)}</p>
         </div>
@@ -341,8 +342,11 @@ function productCardRatingHtml(product) {
 
     const rating = productRatingSummary(product);
 
+    /* kế hoạch v8: không còn dòng "Chưa có đánh giá" lặp lại trên mọi thẻ; "Đã bán N" do decorateCardSales điền */
+    const sold = '<span class="product-sold" data-sold hidden></span>';
+
     if (!rating) {
-        return '<p class="product-rating product-rating--none">Chưa có đánh giá</p>';
+        return `<p class="product-meta">${sold}</p>`;
     }
 
     const score = escapeHtml(rating.rating.toFixed(1));
@@ -350,9 +354,9 @@ function productCardRatingHtml(product) {
     const count = escapeHtml(rating.count.toLocaleString("vi-VN"));
 
     return `
-        <p class="product-rating" title="${escapeHtml(rating.count + " đánh giá trên POY")}">
-            ★ ${score}
-            <span>(${count})</span>
+        <p class="product-meta">
+            <span class="product-rating" title="${escapeHtml(rating.count + " đánh giá trên POY")}">★ ${score} <span>(${count})</span></span>
+            ${sold}
         </p>
     `;
 
@@ -700,6 +704,13 @@ function bindCardVariantChips(container) {
 
                 card.querySelector(".product-price").innerHTML = cardPriceHtml(price, listPrice);
 
+                const installment = card.querySelector(".product-installment");
+
+                if (installment) {
+                    installment.textContent = cardInstallmentText(soldOut ? 0 : price);
+                    installment.hidden = !installment.textContent;
+                }
+
                 const image = card.querySelector(".product-image");
                 const badge = image.querySelector(".product-badge");
 
@@ -772,6 +783,11 @@ function productCardHtml(product, categorySlug) {
 
     const soldOut = hasPrice && isSoldOut(shown);
 
+    /* "Chỉ còn N": tồn kho thật của sản phẩm (mọi phiên bản, chi nhánh đang mở) từ 1 tới 5 */
+    const available = Number(product.availableQuantity);
+
+    const lowStock = hasPrice && !soldOut && available > 0 && available <= 5 ? available : 0;
+
     const name = escapeHtml(product.name);
 
     const detailUrl = escapeHtml(getProductDetailUrl(product.id));
@@ -796,6 +812,7 @@ function productCardHtml(product, categorySlug) {
             <a href="${detailUrl}" class="product-image">
                 ${hasDiscount ? `<span class="product-badge"${promotionTitle}>-${Math.round(100 - (price / basePrice) * 100)}%</span>` : ""}
                 ${soldOut ? `<span class="product-stock-badge">Hết hàng</span>` : ""}
+                <span class="product-flags">${lowStock ? `<span class="product-flag product-flag--low">Chỉ còn ${escapeHtml(String(lowStock))}</span>` : ""}</span>
                 <img
                     src="${escapeHtml(imageUrl)}"
                     data-fallback="${escapeHtml(fallbackImage)}"
@@ -804,6 +821,17 @@ function productCardHtml(product, categorySlug) {
                     loading="lazy"
                 >
             </a>
+
+            <button type="button" class="card-quickview" data-quickview aria-label="Xem nhanh ${name}">Xem nhanh</button>
+
+            <div class="product-card-tools">
+                <button type="button" class="card-tool card-tool--wish" data-wish data-product-id="${escapeHtml(product.id)}" aria-pressed="false" title="Thêm vào yêu thích" aria-label="Yêu thích ${name}">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/></svg>
+                </button>
+                <button type="button" class="card-tool card-tool--compare" data-compare data-product-id="${escapeHtml(product.id)}" data-category-id="${escapeHtml(product.categoryId)}" data-name="${name}" data-image="${escapeHtml(imageUrl)}" aria-pressed="false" title="So sánh" aria-label="So sánh ${name}">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v16M6 20h12M5 8h14M5 8l-2.5 6a2.5 2.5 0 0 0 5 0Zm14 0-2.5 6a2.5 2.5 0 0 0 5 0Z"/></svg>
+                </button>
+            </div>
 
             <div class="product-info">
 
@@ -822,6 +850,8 @@ function productCardHtml(product, categorySlug) {
                 ${cardColorDotsHtml(product)}
 
                 <p class="product-price">${cardPriceHtml(price, basePrice)}</p>
+
+                <p class="product-installment"${cardInstallmentText(soldOut ? 0 : price) ? "" : " hidden"}>${escapeHtml(cardInstallmentText(soldOut ? 0 : price))}</p>
 
                 <button
                     type="button"
@@ -873,6 +903,21 @@ function renderProductGrid(container, products, categorySlugById) {
         return productCardHtml(product, slugs[product.categoryId]);
     }).join("");
 
+
+    /* Ảnh các thẻ đầu nằm ngay màn hình đầu: tải ngay (không lazy) và ưu tiên ảnh đầu tiên → LCP nhanh hơn */
+    container.querySelectorAll(".product-card .product-image img").forEach(function (image, index) {
+
+        if (index < 4) {
+            image.loading = "eager";
+        }
+
+        if (index === 0) {
+            image.setAttribute("fetchpriority", "high");
+        }
+
+    });
+
+    decorateCardSales(container);
 
     bindCardVariantChips(container);
 
@@ -1484,5 +1529,301 @@ function renderRecommendationGrid(container, items, categorySlugById) {
         }
 
     });
+
+}
+
+
+/* ================= THÔNG SỐ KỸ THUẬT: NHÓM + HIỂN THỊ GỌN (kế hoạch v8) ================= */
+
+/* Giá trị không mang thông tin (dữ liệu cào) → ẩn dòng */
+const SPEC_EMPTY_VALUES = ["hãng không công bố", "đang cập nhật", "chưa có thông tin", "-"];
+
+/* Nhóm theo từ khoá trong tên thông số; xét lần lượt, nhóm đầu khớp được chọn (vd. "Kích thước màn hình" → Màn hình, "Độ phân giải camera sau" → Camera) */
+const SPEC_GROUPS = [
+    { key: "general", label: "Thông tin chung", words: ["thương hiệu", "danh mục", "mã sản phẩm", "phiên bản", "màu sắc", "bảo hành", "sản xuất tại", "ra mắt", "loại sản phẩm", "loại máy", "đối tượng", "bộ sưu tập"] },
+    { key: "camera", label: "Camera", words: ["camera", "quay phim", "đèn flash", "chụp", "webcam"] },
+    { key: "screen", label: "Màn hình", words: ["màn hình", "độ phân giải", "tần số quét", "độ sáng", "tấm nền", "độ phủ màu", "mặt kính", "kính cảm ứng"] },
+    { key: "performance", label: "Hiệu năng & bộ nhớ", words: ["chip", "cpu", "gpu", "ram", "bộ nhớ", "ổ cứng", "hệ điều hành", "npu", "số nhân", "số luồng", "tốc độ", "card", "tản nhiệt", "dung lượng lưu trữ", "hiệu năng", "bộ máy"] },
+    { key: "battery", label: "Pin & sạc", words: ["pin", "sạc", "nguồn năng lượng", "thời gian sử dụng", "trữ dây cót"] },
+    { key: "connect", label: "Kết nối", words: ["kết nối", "sim", "bluetooth", "wifi", "gps", "cổng", "jack", "mạng", "nfc", "khe", "tai nghe", "radio", "tương thích"] },
+    { key: "design", label: "Thiết kế & chất liệu", words: ["chất liệu", "kích thước", "khối lượng", "dài", "rộng", "dày", "ngang", "thiết kế", "đường kính", "dây", "mạ", "chống nước", "khung viền"] },
+    { key: "other", label: "Tiện ích khác", words: [] }
+];
+
+const SPEC_GROUP_ICONS = {
+    general: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+    screen: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+    camera: '<path d="M4 8h3l2-3h6l2 3h3v11H4Z"/><circle cx="12" cy="13" r="3.5"/>',
+    performance: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+    battery: '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M11 9l-2 3h4l-2 3"/>',
+    connect: '<path d="M5 12a10 10 0 0 1 14 0M8 15a6 6 0 0 1 8 0M12 18h.01"/>',
+    design: '<path d="M4 20l4-1L19 8a2.1 2.1 0 0 0-3-3L5 16Z"/>',
+    other: '<path d="M12 3l2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5Z"/>'
+};
+
+
+function specGroupKey(name) {
+
+    const lower = String(name || "").toLowerCase();
+
+    const group = SPEC_GROUPS.find(function (item) {
+        return item.words.some(function (word) { return lower.indexOf(word) !== -1; });
+    });
+
+    return group ? group.key : "other";
+
+}
+
+
+/* "A|B|C" → các thẻ nhỏ (có dấu phẩy ẩn để chép / đọc màn hình vẫn liền mạch); còn lại là chữ thường. Đã escape. */
+function specValueHtml(value) {
+
+    const parts = String(value).split("|").map(function (part) { return part.trim(); }).filter(Boolean);
+
+    if (parts.length <= 1) {
+        return escapeHtml(String(value).trim());
+    }
+
+    return `<span class="spec-chips">${parts.map(function (part) {
+        return `<span class="spec-chip">${escapeHtml(part)}</span>`;
+    }).join('<span class="spec-sep">, </span>')}</span>`;
+
+}
+
+
+/*
+ * renderSpecGroups(table, rows): rows = [[tên, giá trị], ...] theo thứ tự gốc. Mỗi nhóm là một <tbody> có dòng tiêu đề
+ * bấm để gập / mở; nhiều dòng thì chỉ mở 3 nhóm đầu. Dòng có giá trị không mang thông tin bị bỏ.
+ */
+function renderSpecGroups(table, rows) {
+
+    const byGroup = {};
+
+    rows.forEach(function (row) {
+
+        const value = String(row[1] == null ? "" : row[1]).trim();
+
+        if (!value || SPEC_EMPTY_VALUES.indexOf(value.toLowerCase()) !== -1) {
+            return;
+        }
+
+        const key = specGroupKey(row[0]);
+
+        (byGroup[key] = byGroup[key] || []).push([row[0], value]);
+
+    });
+
+    const groups = SPEC_GROUPS.filter(function (group) { return byGroup[group.key]; });
+
+    const total = groups.reduce(function (sum, group) { return sum + byGroup[group.key].length; }, 0);
+
+    table.innerHTML = groups.map(function (group, index) {
+
+        const open = total <= 14 || index < 3;
+
+        return `<tbody class="spec-group${open ? "" : " is-collapsed"}" data-group="${group.key}">
+            <tr class="spec-group-head">
+                <th colspan="2" scope="rowgroup">
+                    <button type="button" class="spec-group-toggle" aria-expanded="${open}">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SPEC_GROUP_ICONS[group.key]}</svg>
+                        <span>${escapeHtml(group.label)}</span>
+                        <small>${byGroup[group.key].length}</small>
+                        <i class="spec-group-chevron" aria-hidden="true"></i>
+                    </button>
+                </th>
+            </tr>
+            ${byGroup[group.key].map(function (row) {
+                return `<tr><th scope="row">${escapeHtml(row[0])}</th><td>${specValueHtml(row[1])}</td></tr>`;
+            }).join("")}
+        </tbody>`;
+
+    }).join("");
+
+    if (!table.dataset.groupsBound) {
+
+        table.dataset.groupsBound = "1";
+
+        table.addEventListener("click", function (event) {
+
+            const toggle = event.target.closest(".spec-group-toggle");
+
+            if (!toggle) {
+                return;
+            }
+
+            const body = toggle.closest(".spec-group");
+
+            const collapsed = body.classList.toggle("is-collapsed");
+
+            toggle.setAttribute("aria-expanded", String(!collapsed));
+
+        });
+
+    }
+
+}
+
+
+/* ================= THẺ SẢN PHẨM: TRẢ GÓP + ĐÃ BÁN / BÁN CHẠY (kế hoạch v8) ================= */
+
+/* Trả góp 0% (từ 3.000.000đ, tối đa 12 kỳ) → "Trả góp 0% · từ 3.499.000đ/tháng"; dưới mức đó → "" */
+function cardInstallmentText(price) {
+
+    const value = Number(price) || 0;
+
+    if (value < 3000000) {
+        return "";
+    }
+
+    return "Trả góp 0% · từ " + formatPrice(Math.ceil(value / 12 / 1000) * 1000) + "/tháng";
+
+}
+
+
+/* 1234 → "1,2k"; 56 → "56" */
+function compactCount(value) {
+
+    return value >= 1000
+        ? (Math.floor(value / 100) / 10).toLocaleString("vi-VN") + "k"
+        : String(value);
+
+}
+
+
+const cardSalesCache = new Map();
+
+/*
+ * GET /products/sales?ids=… một lần cho các thẻ chưa có số liệu: "Đã bán N" (đơn không huỷ) và nhãn "Bán chạy"
+ * (top bán của cửa hàng). Lỗi → thẻ giữ nguyên (không hiện gì).
+ */
+async function decorateCardSales(root) {
+
+    const cards = Array.from((root || document).querySelectorAll(".product-card[data-product-id]"));
+
+    if (cards.length === 0) {
+        return;
+    }
+
+    const missing = cards.map(function (card) { return card.dataset.productId; })
+        .filter(function (id, index, all) { return /^\d+$/.test(id) && !cardSalesCache.has(id) && all.indexOf(id) === index; });
+
+    for (let start = 0; start < missing.length; start += 60) {
+
+        try {
+
+            (await apiRequest("/products/sales?ids=" + missing.slice(start, start + 60).join(",")) || []).forEach(function (row) {
+                cardSalesCache.set(String(row.productId), row);
+            });
+
+        } catch (error) {
+            return;
+        }
+
+    }
+
+    cards.forEach(function (card) {
+
+        const row = cardSalesCache.get(card.dataset.productId);
+
+        if (!row) {
+            return;
+        }
+
+        const sold = card.querySelector("[data-sold]");
+
+        if (sold && row.sold > 0) {
+            sold.textContent = "Đã bán " + compactCount(row.sold);
+            sold.hidden = false;
+        }
+
+        const flags = card.querySelector(".product-flags");
+
+        if (flags && row.bestSeller && !flags.querySelector(".product-flag--hot")) {
+            flags.insertAdjacentHTML("afterbegin", '<span class="product-flag product-flag--hot">Bán chạy</span>');
+        }
+
+    });
+
+}
+
+
+/* ================= ĐIỂM NỔI BẬT (dùng ở trang chi tiết và ở form thông số của admin) ================= */
+
+/* Mỗi ô lấy giá trị của thông số đầu tiên khớp tên (so khớp đúng, không phân biệt hoa thường) */
+const HIGHLIGHT_TILES = [
+    {
+        key: "chip", label: "Hiệu năng",
+        icon: '<rect x="7" y="7" width="10" height="10" rx="1.5"/><path d="M10 3v4M14 3v4M10 17v4M14 17v4M3 10h4M3 14h4M17 10h4M17 14h4"/>',
+        names: ["chip xử lý (cpu)", "chipset", "cpu", "loại cpu", "công nghệ cpu", "chip đồ họa (gpu)"]
+    },
+    {
+        key: "screen", label: "Màn hình",
+        icon: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/>',
+        names: ["kích thước màn hình", "công nghệ màn hình", "độ phân giải", "tần số quét"],
+        join: 2
+    },
+    {
+        key: "camera", label: "Camera",
+        icon: '<path d="M4 8h3l2-3h6l2 3h3v11H4Z"/><circle cx="12" cy="13" r="3.5"/>',
+        names: ["độ phân giải camera sau", "camera", "độ phân giải camera trước"]
+    },
+    {
+        key: "battery", label: "Pin",
+        icon: '<rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 11v2M11 9l-2 3h4l-2 3"/>',
+        names: ["dung lượng pin", "thời gian sử dụng pin", "thời gian sử dụng", "pin", "thông tin pin"]
+    },
+    {
+        key: "memory", label: "Bộ nhớ",
+        icon: '<rect x="3" y="8" width="18" height="8" rx="1.5"/><path d="M7 8v8M11 8v8M15 8v8"/>',
+        names: ["ram", "ổ cứng", "bộ nhớ trong", "dung lượng lưu trữ", "bộ nhớ"],
+        join: 2
+    }
+];
+
+
+function highlightValue(rows, tile) {
+
+    const found = [];
+
+    tile.names.forEach(function (name) {
+
+        const row = rows.find(function (item) { return item[0].trim().toLowerCase() === name; });
+
+        if (row && found.indexOf(row[1]) === -1) {
+            found.push(row[1]);
+        }
+
+    });
+
+    if (found.length === 0) {
+        return "";
+    }
+
+    return found.slice(0, tile.join || 1).map(function (value) {
+        return value.split("|")[0].trim();
+    }).join(" · ");
+
+}
+
+
+/* rows = [[tên, giá trị], ...]: tối đa 4 ô có dữ liệu (giá trị ngắn gọn), theo thứ tự ô */
+function pickHighlights(rows) {
+
+    return HIGHLIGHT_TILES.map(function (tile) {
+        return { tile: tile, value: highlightValue(rows, tile) };
+    }).filter(function (item) {
+        return item.value && item.value.length <= 70;
+    }).slice(0, 4);
+
+}
+
+
+function specGroupLabel(name) {
+
+    const key = specGroupKey(name);
+
+    const group = SPEC_GROUPS.find(function (item) { return item.key === key; });
+
+    return { key: key, label: group ? group.label : "Tiện ích khác" };
 
 }

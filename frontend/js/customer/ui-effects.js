@@ -878,6 +878,18 @@
 
             });
 
+            const saleBox = document.getElementById("saleOnlyInput");
+
+            if (saleBox && saleBox.checked) {
+                chips.push({
+                    label: "Đang giảm giá",
+                    clear: function () {
+                        saleBox.checked = false;
+                        saleBox.dispatchEvent(new Event("change", { bubbles: true }));
+                    }
+                });
+            }
+
             if ((minInput.value || maxInput.value) && !priceError.textContent) {
 
                 const label = minInput.value && maxInput.value

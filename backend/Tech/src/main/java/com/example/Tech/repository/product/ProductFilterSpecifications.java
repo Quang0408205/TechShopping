@@ -26,6 +26,10 @@ public final class ProductFilterSpecifications {
     }
 
     public static Specification<Product> matching(ProductSearchRequest filter) {
+        return matching(filter, java.time.LocalDateTime.now());
+    }
+
+    public static Specification<Product> matching(ProductSearchRequest filter, java.time.LocalDateTime now) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.isNull(root.get("deletedAt")));
@@ -64,9 +68,39 @@ public final class ProductFilterSpecifications {
             if (filter.maxPrice() != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("basePrice"), filter.maxPrice()));
             }
+            if (Boolean.TRUE.equals(filter.onSale())) {
+                predicates.add(onSale(root, query, cb, now));
+            }
             addSpecFilters(filter, root, query, cb, predicates);
             return cb.and(predicates.toArray(Predicate[]::new));
         };
+    }
+
+    /** Manual discount below the price (product or any variant) or a promotion running now that lists the product. */
+    private static Predicate onSale(jakarta.persistence.criteria.Root<Product> root,
+                                    jakarta.persistence.criteria.CriteriaQuery<?> query,
+                                    jakarta.persistence.criteria.CriteriaBuilder cb, java.time.LocalDateTime now) {
+        var promo = query.subquery(Long.class);
+        var link = promo.from(com.example.Tech.entity.promotion.PromotionProduct.class);
+        var campaign = link.join("promotion");
+        promo.select(cb.literal(1L)).where(
+                cb.equal(link.get("product").get("id"), root.get("id")),
+                cb.isTrue(campaign.get("active")),
+                cb.lessThanOrEqualTo(campaign.<java.time.LocalDateTime>get("startDate"), now),
+                cb.greaterThan(campaign.<java.time.LocalDateTime>get("endDate"), now));
+
+        var variant = query.subquery(Long.class);
+        var v = variant.from(com.example.Tech.entity.product.ProductVariant.class);
+        variant.select(cb.literal(1L)).where(
+                cb.equal(v.get("product").get("id"), root.get("id")),
+                cb.isNotNull(v.get("discountPrice")),
+                cb.lessThan(v.<java.math.BigDecimal>get("discountPrice"), v.<java.math.BigDecimal>get("price")));
+
+        return cb.or(
+                cb.and(cb.isNotNull(root.get("discountPrice")),
+                        cb.lessThan(root.<java.math.BigDecimal>get("discountPrice"), root.<java.math.BigDecimal>get("basePrice"))),
+                cb.exists(variant),
+                cb.exists(promo));
     }
 
     /** filter=group:value (same group = OR, groups = AND) and need=slug (any), each as an EXISTS on the index tables. */

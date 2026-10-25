@@ -56,9 +56,35 @@
 
             <div class="account-main">
 
-                <p id="justPlacedBanner" class="form-success" hidden>
-                    Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.
-                </p>
+                <!-- Vừa đặt xong (?justPlaced=1; chỉ đơn không chờ thanh toán trực tuyến): lời cảm ơn + các bước tiếp theo -->
+                <section id="justPlacedBanner" class="placed-hero" role="status" hidden>
+
+                    <span class="placed-confetti" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    </span>
+
+                    <svg class="placed-check" viewBox="0 0 52 52" width="64" height="64" aria-hidden="true">
+                        <circle class="placed-check-ring" cx="26" cy="26" r="24" fill="none" stroke-width="3"/>
+                        <path class="placed-check-tick" d="M15 27l8 8 15-17" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    <h2>Đặt hàng thành công!</h2>
+
+                    <p class="placed-lead">Cảm ơn bạn đã mua sắm tại POY. Đơn hàng của bạn đang được xử lý, chúng tôi đã gửi email xác nhận tới hộp thư của bạn.</p>
+
+                    <ol class="placed-steps" aria-label="Các bước tiếp theo">
+                        <li class="is-done"><span aria-hidden="true">✓</span>Đặt hàng</li>
+                        <li class="is-current"><span aria-hidden="true">2</span>Xác nhận đơn</li>
+                        <li><span aria-hidden="true">3</span>Giao hàng</li>
+                        <li><span aria-hidden="true">4</span>Hoàn tất</li>
+                    </ol>
+
+                    <div class="placed-actions">
+                        <a href="products.html" class="btn btn-dark">TIẾP TỤC MUA SẮM</a>
+                        <a href="orders.html" class="btn btn-outline-dark">XEM ĐƠN CỦA TÔI</a>
+                    </div>
+
+                </section>
 
                 <div id="orderNotFound" class="state-box empty-state" hidden>
                     <h3>Không tìm thấy đơn hàng</h3>
@@ -217,6 +243,7 @@
 <script src="../js/customer/order-after-sales.js"></script>
 <script src="../js/customer/order-detail.js"></script>
 <script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
 <script src="../js/customer/ui-effects.js"></script>
 
 </body>

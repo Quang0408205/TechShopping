@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>So sánh sản phẩm - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/compare.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="products"></div>
+
+
+<main>
+
+    <section class="page-hero">
+
+        <div class="container">
+
+            <span class="section-label">POY</span>
+
+            <h1>SO SÁNH SẢN PHẨM</h1>
+
+        </div>
+
+    </section>
+
+
+    <section class="section">
+
+        <div class="container">
+
+            <!-- Khung xương trong lúc tải -->
+            <div id="compareLoading" class="compare-skeleton" aria-busy="true" aria-label="Đang tải">
+                <div class="skeleton-block"></div>
+                <div class="skeleton-block"></div>
+                <div class="skeleton-block"></div>
+            </div>
+
+            <div id="compareEmpty" class="state-box empty-state" hidden>
+                <h3>Chọn ít nhất 2 sản phẩm để so sánh</h3>
+                <p id="compareEmptyText">Bấm biểu tượng cân trên thẻ sản phẩm để thêm vào so sánh (tối đa 4 sản phẩm cùng danh mục).</p>
+                <a href="products.html" class="btn btn-dark">XEM SẢN PHẨM</a>
+            </div>
+
+            <div id="compareBox" hidden>
+
+                <div class="compare-toolbar">
+                    <label class="compare-diff-toggle">
+                        <input type="checkbox" id="compareOnlyDiff">
+                        <span>Chỉ hiện điểm khác nhau</span>
+                    </label>
+                    <a href="products.html" class="compare-add">+ Thêm sản phẩm</a>
+                </div>
+
+                <div class="compare-scroll">
+                    <table class="compare-table" id="compareTable"></table>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/compare.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
+
+</body>
+
+</html>

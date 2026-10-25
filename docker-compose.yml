@@ -69,6 +69,16 @@ services:
       # Thẻ quốc tế qua Stripe Checkout, chỉ dùng khoá Test (sk_test_…); trống = ẩn hình thức này
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      # Email đơn hàng (kế hoạch v7): Gmail SMTP + App Password; MAIL_USERNAME trống = không gửi (ghi SKIPPED trong email_log)
+      MAIL_ENABLED: ${MAIL_ENABLED:-true}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME:-POY}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
+      # Địa chỉ web trong các link của email (…/customer/track.html?token=…); mặc định lấy địa chỉ công khai, không thì localhost
+      MAIL_SITE_URL: ${MAIL_SITE_URL:-${APP_PUBLIC_BASE_URL:-http://localhost:5510}}
       # Ảnh đại diện lên Cloudinary; thiếu một trong 3 khoá = lưu ổ đĩa như ảnh khác
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}

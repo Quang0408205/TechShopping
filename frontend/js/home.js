@@ -22,6 +22,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     renderHomeStats();
 
+    renderHomeNeeds();
+
     renderHomeReviews();
 
     renderRecentViewed();
@@ -257,14 +259,21 @@ async function renderBrandMarquee() {
         return;
     }
 
-    const brands = await loadHomeBrands();
+    /* kế hoạch v8: chỉ các hãng có nhiều sản phẩm đang bán nhất (GET /brands/top), kèm số sản phẩm */
+    let brands = null;
+
+    try {
+        brands = await apiRequest("/brands/top?size=24");
+    } catch (error) {
+        brands = null;
+    }
 
     if (!brands || !brands.length) {
         return;
     }
 
     const items = brands.map(function (brand) {
-        return `<a class="brand-marquee-item" href="${escapeHtml(siteUrl("customer/products.html?search=" + encodeURIComponent(brand.name)))}">${escapeHtml(brand.name)}</a>`;
+        return `<a class="brand-marquee-item" href="${escapeHtml(siteUrl("customer/products.html?search=" + encodeURIComponent(brand.name)))}">${escapeHtml(brand.name)}<sup>${escapeHtml(String(brand.productCount))}</sup></a>`;
     }).join(`<span class="brand-marquee-dot" aria-hidden="true">✦</span>`);
 
     /* bản thứ hai chỉ để nối vòng, trình đọc màn hình bỏ qua */
@@ -527,17 +536,13 @@ async function renderHomeCategories() {
 
         const count = counts && counts[category.id] !== undefined ? counts[category.id] : null;
 
-        const size = index === 0 ? " category-card--hero" : index === 1 ? " category-card--wide" : "";
-
         return `
-            <a href="${escapeHtml(categoryUrlOf(category))}" class="category-card${size}" data-category-id="${escapeHtml(String(category.id))}">
+            <a href="${escapeHtml(categoryUrlOf(category))}" class="category-card" data-category-id="${escapeHtml(String(category.id))}">
+                <div class="category-visual">${categoryVisualHtml(category)}</div>
                 <div class="category-text">
-                    <span class="category-index">${String(index + 1).padStart(2, "0")}</span>
                     <h3>${escapeHtml(category.name)}</h3>
                     ${count !== null ? `<p class="category-count">${escapeHtml(count.toLocaleString("vi-VN"))} sản phẩm</p>` : ""}
-                    <span class="category-more">Khám phá</span>
                 </div>
-                <div class="category-visual">${categoryVisualHtml(category)}</div>
             </a>
         `;
 
@@ -1200,5 +1205,80 @@ function setupHomeTabs() {
         });
 
     });
+
+}
+
+
+/* ================= MUA THEO NHU CẦU ================= */
+
+/* Mỗi thẻ là một bộ lọc "nhu cầu" có thật của danh mục (GET /categories/{id}/filters); nhu cầu không còn sản phẩm thì không hiện */
+
+const HOME_NEEDS = [
+    { slug: "dien-thoai", need: "chup-anh-quay-phim", icon: "<path d=\"M4 8h3l2-3h6l2 3h3v11H4Z\"/><circle cx=\"12\" cy=\"13\" r=\"3.500\"/>" },
+    { slug: "dien-thoai", need: "choi-game", icon: "<rect x=\"2\" y=\"7\" width=\"20\" height=\"11\" rx=\"4\"/><path d=\"M7 10v5M4.500 12.500h5M16 11.500h.01M18.500 13.500h.01\"/>" },
+    { slug: "dien-thoai", need: "pin-khung", icon: "<rect x=\"3\" y=\"7\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M21 11v2M11 9l-2 3h4l-2 3\"/>" },
+    { slug: "laptop", need: "hoc-tap-van-phong", icon: "<rect x=\"4\" y=\"5\" width=\"16\" height=\"11\" rx=\"1.500\"/><path d=\"M2 20h20\"/>" },
+    { slug: "laptop", need: "gaming", icon: "<rect x=\"2\" y=\"7\" width=\"20\" height=\"11\" rx=\"4\"/><path d=\"M7 10v5M4.500 12.500h5M16 11.500h.01M18.500 13.500h.01\"/>" },
+    { slug: "laptop", need: "do-hoa", icon: "<path d=\"M4 20l4-1L19 8a2.100 2.100 0 0 0-3-3L5 16Z\"/>" }
+];
+
+async function renderHomeNeeds() {
+
+    const section = document.getElementById("homeNeeds");
+
+    if (!section) {
+        return;
+    }
+
+    const categories = await getHomeCategories();
+
+    const filters = {};
+
+    await Promise.all(Array.from(new Set(HOME_NEEDS.map(function (item) { return item.slug; }))).map(async function (slug) {
+
+        const category = categories.visible.find(function (item) { return item.slug === slug; });
+
+        if (!category) {
+            return;
+        }
+
+        try {
+            filters[slug] = { category: category, groups: await apiRequest("/categories/" + category.id + "/filters") || [] };
+        } catch (error) {
+            /* thiếu dữ liệu → bỏ các thẻ của danh mục này */
+        }
+
+    }));
+
+    const cards = HOME_NEEDS.map(function (item) {
+
+        const entry = filters[item.slug];
+
+        const group = entry && entry.groups.find(function (g) { return g.key === "need"; });
+
+        const value = group && group.values.find(function (v) { return v.value === item.need; });
+
+        return value && value.count > 0 ? { item: item, entry: entry, value: value } : null;
+
+    }).filter(Boolean);
+
+    if (cards.length < 3) {
+        return;
+    }
+
+    document.getElementById("needsGrid").innerHTML = cards.map(function (card) {
+
+        const href = "customer/products.html?category=" + encodeURIComponent(categoryKeyOf(card.item.slug)) +
+            "&f=" + encodeURIComponent("need:" + card.item.need);
+
+        return `<a class="need-card" href="${escapeHtml(href)}">
+            <svg class="need-icon" viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${card.item.icon}</svg>
+            <strong>${escapeHtml(card.value.label)}</strong>
+            <span>${escapeHtml(card.entry.category.name)} · ${card.value.count.toLocaleString("vi-VN")} sản phẩm</span>
+        </a>`;
+
+    }).join("");
+
+    section.hidden = false;
 
 }

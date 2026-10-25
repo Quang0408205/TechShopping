@@ -287,9 +287,42 @@ create table orders (
     points_used int not null default 0,
     points_discount decimal(15, 2) not null default 0,
     points_earned int not null default 0,
+    contact_email varchar(255),
+    tracking_token varchar(64) not null default (md5(random()::text || clock_timestamp()::text)
+                                                 || md5(random()::text || clock_timestamp()::text)),
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp
 );
+
+create unique index uq_orders_tracking_token on orders(tracking_token);
+
+-- bảng email_log: mail đơn hàng đã gửi / thất bại (kế hoạch v7)
+create table email_log (
+    email_log_id bigserial primary key,
+    order_id bigint references orders(order_id) on delete set null,
+    kind varchar(30) not null,
+    recipient varchar(255) not null,
+    subject varchar(255) not null,
+    status varchar(10) not null check (status in ('SENT', 'FAILED', 'SKIPPED')),
+    error varchar(500),
+    created_at timestamp not null default current_timestamp
+);
+
+-- bảng wishlist_items: sản phẩm khách yêu thích; mốc giá để báo giảm giá qua email (kế hoạch v7)
+create table wishlist_items (
+    wishlist_item_id bigserial primary key,
+    user_id bigint not null references users(user_id),
+    product_id bigint not null references products(product_id),
+    price_at_add decimal(15, 2),
+    last_alert_price decimal(15, 2),
+    created_at timestamp not null default current_timestamp,
+    unique (user_id, product_id)
+);
+
+create index idx_wishlist_items_product on wishlist_items(product_id);
+
+create index idx_email_log_order on email_log(order_id);
+create index idx_email_log_created on email_log(created_at);
 
 -- bảng order_items: lưu chi tiết sản phẩm trong đơn hàng
 create table order_items (

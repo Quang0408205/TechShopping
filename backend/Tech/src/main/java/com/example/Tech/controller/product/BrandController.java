@@ -5,6 +5,10 @@ import com.example.Tech.dto.request.product.BrandUpdateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.BrandResponse;
+import com.example.Tech.dto.response.product.TopBrandResponse;
+import com.example.Tech.service.product.sales.TopBrandService;
+import java.util.List;
+import org.springframework.web.bind.annotation.RequestParam;
 import com.example.Tech.service.product.BrandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -33,6 +37,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class BrandController {
 
     private final BrandService brandService;
+    private final TopBrandService topBrandService;
 
     @GetMapping
     @Operation(summary = "List brands with pagination (default sort: name)")
@@ -40,6 +45,12 @@ public class BrandController {
     public ResponseEntity<ApiResult<PageResponse<BrandResponse>>> getAll(
             @ParameterObject @PageableDefault(size = 20, sort = "name") Pageable pageable) {
         return ResponseEntity.ok(ApiResult.ok(brandService.getAll(pageable)));
+    }
+
+    @GetMapping("/top")
+    @Operation(summary = "Plan v8: brands with the most products on sale (home page strip), at most 40")
+    public ResponseEntity<ApiResult<List<TopBrandResponse>>> top(@RequestParam(defaultValue = "24") int size) {
+        return ResponseEntity.ok(ApiResult.ok(topBrandService.top(Math.max(1, Math.min(size, 40)))));
     }
 
     @GetMapping("/{id}")

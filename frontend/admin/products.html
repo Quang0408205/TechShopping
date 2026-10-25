@@ -198,7 +198,12 @@
 
                             <legend>Thông số kỹ thuật chung</legend>
 
-                            <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
+                            <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục; gõ tên để chọn tên đã dùng (tên lạ vẫn lưu được nhưng sẽ báo vàng). Nhãn "→ Nhóm" cho biết dòng nằm ở nhóm nào trên trang khách; nhiều mục trong một giá trị thì ngăn bằng dấu |. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
+
+                            <!-- Ô nổi bật trang khách sẽ hiện, tính từ các dòng bên dưới (product-extras.js) -->
+                            <div class="admin-hl-bar" id="pfHighlightBar" aria-live="polite"></div>
+
+                            <datalist id="pfSpecNameList"></datalist>
 
                             <div id="pfSpecRows"></div>
 

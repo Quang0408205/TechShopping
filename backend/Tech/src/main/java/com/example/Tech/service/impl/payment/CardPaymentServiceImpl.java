@@ -16,6 +16,7 @@ import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
 import com.example.Tech.service.impl.order.OrderViewLoader;
+import com.example.Tech.service.mail.OrderMailPublisher;
 import com.example.Tech.service.payment.CardPaymentService;
 import com.example.Tech.service.payment.StripeCheckoutSession;
 import com.example.Tech.service.payment.StripeGateway;
@@ -53,13 +54,15 @@ public class CardPaymentServiceImpl implements CardPaymentService {
     private final CurrentUserLoader currentUserLoader;
     private final JsonMapper jsonMapper;
     private final Clock clock;
+    private final OrderMailPublisher mailPublisher;
     /** Stripe may only send the customer back to a page of this shop: an origin the browser may call the API from. */
     private final CorsConfiguration returnOrigins;
 
     public CardPaymentServiceImpl(StripeProperties stripe, StripeGateway gateway, OrderRepository orderRepository,
                                   PaymentRepository paymentRepository, OrderViewLoader orderViewLoader,
                                   CurrentUserLoader currentUserLoader, JsonMapper jsonMapper, Clock clock,
-                                  CorsProperties cors) {
+                                  CorsProperties cors, OrderMailPublisher mailPublisher) {
+        this.mailPublisher = mailPublisher;
         this.stripe = stripe;
         this.gateway = gateway;
         this.orderRepository = orderRepository;
@@ -185,6 +188,7 @@ public class CardPaymentServiceImpl implements CardPaymentService {
             payment.setTransactionId(reference);
             payment.setCheckoutSessionId(session.id());
             log.info("Card payment of order id={} received (Stripe {})", order.getId(), reference);
+            mailPublisher.paymentReceived(order);
         } else if (payment.getStatus() == PaymentStatus.CANCELLED) {
             payment.setStatus(PaymentStatus.REFUND_PENDING);
             payment.setPaidAt(LocalDateTime.now(clock));

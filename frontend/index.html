@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="css/customer-theme.css">
     <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/customer/catalog-extras.css">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
@@ -296,6 +297,24 @@
 </section>
 
 
+<!-- ================= 4b. MUA THEO NHU CẦU (js/home.js; số sản phẩm thật từ GET /categories/{id}/filters; lỗi → ẩn) ================= -->
+
+<section class="needs section" id="homeNeeds" aria-label="Mua theo nhu cầu" hidden>
+
+    <div class="container">
+
+        <div class="section-heading">
+            <span class="section-label">NHU CẦU</span>
+            <h2>Mua theo nhu cầu của bạn</h2>
+        </div>
+
+        <div class="needs-grid" id="needsGrid"></div>
+
+    </div>
+
+</section>
+
+
 <!-- ================= 5. TRƯNG BÀY: DẢI CUỘN NGANG (nút ← →, kéo chuột, vuốt; js/home.js) ================= -->
 
 <section class="showcase" id="showcase" aria-label="Tâm điểm công nghệ" hidden>
@@ -394,10 +413,10 @@
 
     <div class="container stats-grid">
 
-        <div class="stat" data-stat="products" hidden><b data-count>0</b><span>sản phẩm đang bán</span></div>
-        <div class="stat" data-stat="brands" hidden><b data-count>0</b><span>thương hiệu chính hãng</span></div>
-        <div class="stat" data-stat="stores" hidden><b data-count>0</b><span>chi nhánh nhận hàng</span></div>
-        <div class="stat" data-stat="categories" hidden><b data-count>0</b><span>danh mục sản phẩm</span></div>
+        <div class="stat" data-stat="products" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg><b data-count>0</b><span>sản phẩm đang bán</span></div>
+        <div class="stat" data-stat="brands" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z"/></svg><b data-count>0</b><span>thương hiệu chính hãng</span></div>
+        <div class="stat" data-stat="stores" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.800 12 21 12 21Z"/><circle cx="12" cy="9.500" r="2.500"/></svg><b data-count>0</b><span>chi nhánh nhận hàng</span></div>
+        <div class="stat" data-stat="categories" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><b data-count>0</b><span>danh mục sản phẩm</span></div>
 
     </div>
 
@@ -618,7 +637,9 @@
 <script src="js/core/layout.js"></script>
 <script src="js/core/main.js"></script>
 <script src="js/home.js"></script>
+<script src="js/customer/catalog-extras.js"></script>
 <script src="js/customer/chatbot.js"></script>
+<script src="js/customer/compare-wishlist.js"></script>
 <script src="js/customer/ui-effects.js"></script>
 
 </body>

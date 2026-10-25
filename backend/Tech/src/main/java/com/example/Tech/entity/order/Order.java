@@ -25,8 +25,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 
 /**
@@ -114,6 +116,14 @@ public class Order {
     @Column(name = "points_earned", nullable = false)
     private int pointsEarned;
 
+    /** Plan v7: where the order mails go (typed at checkout); null on older orders = the account's email. */
+    @Column(name = "contact_email", length = 255)
+    private String contactEmail;
+
+    /** Plan v7: random code of the public tracking link (customer/track.html?token=…); never shown with the id. */
+    @Column(name = "tracking_token", length = 64, nullable = false, updatable = false)
+    private String trackingToken = newTrackingToken();
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50)
     private OrderStatus status = OrderStatus.PENDING;
@@ -155,6 +165,12 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
     @OrderBy("id")
     private List<OrderItem> items = new ArrayList<>();
+
+    private static String newTrackingToken() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
 
     public void addCombo(OrderCombo combo) {
         combo.setOrder(this);

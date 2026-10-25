@@ -60,6 +60,7 @@ document.addEventListener(
             brandId: "",
             minPrice: null,
             maxPrice: null,
+            onSale: false,
             search: "",
             sort: sortSelect.value,
             page: 0,
@@ -439,6 +440,11 @@ document.addEventListener(
                 state.brandId = brand;
             }
 
+            if (params.get("sale") === "1") {
+                state.onSale = true;
+                document.getElementById("saleOnlyInput").checked = true;
+            }
+
             const min = params.get("min");
 
             const max = params.get("max");
@@ -486,6 +492,10 @@ document.addEventListener(
 
             if (state.maxPrice !== null) {
                 params.set("max", String(state.maxPrice));
+            }
+
+            if (state.onSale) {
+                params.set("sale", "1");
             }
 
 
@@ -873,6 +883,10 @@ document.addEventListener(
                 params.set("maxPrice", String(state.maxPrice));
             }
 
+            if (state.onSale) {
+                params.set("onSale", "true");
+            }
+
             if (categoryId) {
 
                 Object.keys(state.specFilters).forEach(function (group) {
@@ -899,6 +913,8 @@ document.addEventListener(
 
 
             const requestId = ++productRequestId;
+
+            renderCategoryHero();
 
 
             grid.innerHTML = skeletonProductGrid(PAGE_SIZE);
@@ -967,10 +983,101 @@ document.addEventListener(
 
             renderProductGrid(grid, page.content, categoryMaps.byId);
 
+            insertGridPromo(page.content.length);
+
             renderPagination(page.page, page.totalPages);
 
         }
 
+
+        /* ================= ĐẦU TRANG THEO DANH MỤC + Ô XEN LƯỚI (kế hoạch v8 bước 3) ================= */
+
+        const heroBox = document.getElementById("pageHero");
+
+        const HERO_DEFAULT = {
+            title: document.getElementById("pageHeroTitle").textContent,
+            text: document.getElementById("pageHeroText").textContent
+        };
+
+        function renderCategoryHero() {
+
+            const category = state.category && categoryMaps
+                ? categoryMaps.visible.find(function (item) { return item.id === getCategoryId(state.category); })
+                : null;
+
+            const title = document.getElementById("pageHeroTitle");
+
+            const text = document.getElementById("pageHeroText");
+
+            const meta = document.getElementById("pageHeroMeta");
+
+            heroBox.classList.toggle("has-category", Boolean(category));
+
+            heroBox.querySelector(".page-hero-art")?.remove();
+
+            if (!category) {
+
+                title.textContent = HERO_DEFAULT.title;
+
+                text.textContent = HERO_DEFAULT.text;
+
+                meta.hidden = true;
+
+                return;
+
+            }
+
+            title.textContent = category.name;
+
+            text.textContent = category.description && category.description.trim()
+                ? category.description.trim()
+                : "Hàng chính hãng, giá niêm yết rõ ràng, nhận tại cửa hàng hoặc giao tận nơi.";
+
+            meta.innerHTML = ["Trả góp 0% cho đơn từ 3.000.000đ", "Trả hàng trong 7 ngày", "Nhận tại cửa hàng"]
+                .map(function (item) { return "<span>" + item + "</span>"; }).join("");
+
+            meta.hidden = false;
+
+            if (isSafeImageUrl(category.iconUrl)) {
+
+                const art = document.createElement("img");
+
+                art.className = "page-hero-art";
+                art.alt = "";
+                art.src = category.iconUrl.trim();
+
+                heroBox.appendChild(art);
+
+            }
+
+        }
+
+        const GRID_PROMOS = [
+            { label: "Trả góp 0%", title: "Mua trước, trả dần mỗi tháng", text: "Áp dụng cho đơn từ 3.000.000đ, kỳ hạn 12 tháng.", link: "services.html", cta: "Xem chính sách" },
+            { label: "Nhận tại cửa hàng", title: "Đặt online, ghé lấy máy", text: "Chọn cửa hàng còn hàng ngay ở bước đặt hàng.", link: "services.html", cta: "Xem dịch vụ" }
+        ];
+
+        /* Mỗi trang một ô quảng cáo chiếm trọn một hàng, sau thẻ thứ 6 (chỉ khi lưới còn tiếp tục sau đó) */
+        function insertGridPromo(count) {
+
+            const cards = grid.querySelectorAll(":scope > .product-card");
+
+            if (count < 8 || cards.length < 7 || grid.classList.contains("is-list")) {
+                return;
+            }
+
+            const promo = GRID_PROMOS[state.page % GRID_PROMOS.length];
+
+            const tile = document.createElement("aside");
+
+            tile.className = "grid-promo";
+
+            tile.innerHTML = '<div><span class="grid-promo-label">' + promo.label + '</span><strong class="grid-promo-title">' + promo.title + '</strong><p>' + promo.text +
+                '</p></div><a class="btn btn-outline-dark" href="' + promo.link + '">' + promo.cta + '</a>';
+
+            cards[5].after(tile);
+
+        }
 
         function renderResultCount(total) {
 
@@ -1203,6 +1310,19 @@ document.addEventListener(
                 });
 
 
+            document.getElementById("saleOnlyInput").addEventListener("change", function (event) {
+
+                state.onSale = event.target.checked;
+
+                state.page = 0;
+
+                syncUrl();
+
+                loadProducts();
+
+            });
+
+
             [minPriceInput, maxPriceInput].forEach(function (input) {
 
                 input.addEventListener("change", function () {
@@ -1243,6 +1363,10 @@ document.addEventListener(
                     state.minPrice = null;
 
                     state.maxPrice = null;
+
+                    state.onSale = false;
+
+                    document.getElementById("saleOnlyInput").checked = false;
 
                     state.specFilters = {};
 

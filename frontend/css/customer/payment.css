@@ -285,6 +285,27 @@
 }
 
 
+/* ----- Chế độ thử nghiệm: chỉ có nút giả lập ngân hàng báo tiền (đếm ngược ngay trên nút) ----- */
+
+.pay-sandbox {
+    margin-top: 14px;
+}
+
+.pay-sandbox[hidden] {
+    display: none;
+}
+
+.pay-sandbox .btn {
+    width: 100%;
+}
+
+.pay-sandbox .btn span {
+    margin-left: 6px;
+    opacity: 0.7;
+    font-variant-numeric: tabular-nums;
+}
+
+
 /* ----- Thẻ quốc tế ----- */
 
 .pay-notice {

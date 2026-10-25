@@ -92,6 +92,8 @@ document.addEventListener(
                 "Vui lòng nhập họ và tên người nhận (tối đa 120 ký tự).",
             recipientPhone:
                 "Vui lòng nhập số điện thoại hợp lệ (8–20 ký tự số).",
+            contactEmail:
+                "Vui lòng nhập email hợp lệ để nhận thông tin đơn hàng.",
             shippingAddress:
                 "Vui lòng nhập địa chỉ nhận hàng đầy đủ.",
             shippingProvince:
@@ -320,6 +322,8 @@ document.addEventListener(
 
             document.getElementById("recipientPhone").value = stored.recipientPhone;
 
+            document.getElementById("contactEmail").value = stored.contactEmail || "";
+
             document.getElementById("shippingStreet").value = stored.shippingStreet || "";
 
             area.setValue(stored.shippingProvince, stored.shippingWard);
@@ -366,6 +370,8 @@ document.addEventListener(
 
             fillIfEmpty("recipientName", user.fullname);
 
+            fillIfEmpty("contactEmail", user.email);
+
 
             const results = await Promise.allSettled([
                 apiRequest("/users/me", { auth: true }),
@@ -378,6 +384,8 @@ document.addEventListener(
                 fillIfEmpty("recipientName", results[0].value.fullname);
 
                 fillIfEmpty("recipientPhone", results[0].value.phone);
+
+                fillIfEmpty("contactEmail", results[0].value.email);
 
             }
 
@@ -1123,6 +1131,7 @@ document.addEventListener(
             const data = {
                 recipientName: valueOf("recipientName").trim(),
                 recipientPhone: valueOf("recipientPhone").trim(),
+                contactEmail: valueOf("contactEmail").trim(),
                 deliveryType: selectedDeliveryType(),
                 shippingProvince: picked.province,
                 shippingWard: picked.ward,
@@ -1141,6 +1150,10 @@ document.addEventListener(
 
             if (!/^[0-9+\s().-]{8,20}$/.test(data.recipientPhone)) {
                 invalid.push("recipientPhone");
+            }
+
+            if (!ORDER_INFO_EMAIL_PATTERN.test(data.contactEmail) || data.contactEmail.length > 255) {
+                invalid.push("contactEmail");
             }
 
             if (data.deliveryType === "PICKUP") {
@@ -1235,6 +1248,7 @@ document.addEventListener(
                 const input = {
                     recipientName: data.recipientName,
                     recipientPhone: data.recipientPhone,
+                    contactEmail: data.contactEmail,
                     deliveryType: data.deliveryType,
                     shippingAddress: pickup ? null : joinVnAddress(data.shippingStreet, data.shippingWard, data.shippingProvince),
                     shippingProvince: pickup ? null : data.shippingProvince,
