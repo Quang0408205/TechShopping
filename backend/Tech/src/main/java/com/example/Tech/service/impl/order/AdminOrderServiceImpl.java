@@ -24,6 +24,8 @@ import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.AdminOrderService;
 import com.example.Tech.service.store.StoreAccessGuard;
 import com.example.Tech.service.user.CurrentUserLoader;
+import com.example.Tech.service.voucher.VoucherService;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -54,6 +56,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final WarrantyIssuer warrantyIssuer;
     private final OrderStatusRecorder statusRecorder;
     private final SalesRecorder salesRecorder;
+    private final VoucherService voucherService;
+    private final LoyaltyService loyaltyService;
     private final Clock clock;
 
     @Override
@@ -113,6 +117,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 order.setCancelledAt(now);
                 orderPaymentLifecycle.onOrderCancelled(order);
                 orderStockLifecycle.onOrderCancelled(order, from, staff);
+                voucherService.releaseFor(order);
+                loyaltyService.releaseFor(order);
             }
         }
         // flushes the payment / installment / stock changes too, before addToTotalSpent clears the persistence context
@@ -121,9 +127,11 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         if (from != to && to == OrderStatus.DELIVERED) {
             Long customerId = order.getUser().getId();
             if (customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount()) == 0) {
-                log.warn("Order id={} delivered but user id={} has no customer profile: total_spent not updated",
-                        orderId, customerId);
+                // plan v5 GĐ6: an account without a profile gets one, so its spending and points count
+                customerProfileRepository.insertIfMissing(customerId);
+                customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount());
             }
+            loyaltyService.onDelivered(orderId);
         }
         log.info("Staff id={} changed order id={} from {} to {}", staffId, orderId, from, to);
         // addToTotalSpent clears the persistence context: read the order again for the response
@@ -171,6 +179,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         statusRecorder.record(order, order.getStatus(), OrderStatus.CANCELLED, scope.user());
         order.setStatus(OrderStatus.CANCELLED);
         order.setCancelledAt(now);
+        voucherService.releaseFor(order);
+        loyaltyService.releaseFor(order);
         orderRepository.saveAndFlush(order);
         log.info("Staff id={} rejected the installment plan of order id={}; order cancelled", staffId, orderId);
         return toAdminResponse(findWithUser(orderId));

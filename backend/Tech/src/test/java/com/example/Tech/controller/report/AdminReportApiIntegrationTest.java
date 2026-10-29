@@ -211,7 +211,7 @@ class AdminReportApiIntegrationTest {
             List<String> sheets = new ArrayList<>();
             workbook.forEach(sheet -> sheets.add(sheet.getSheetName()));
             assertThat(sheets).containsExactly("Tổng hợp", "Theo thời gian", "Theo chi nhánh", "Theo nhân viên",
-                    "Theo danh mục", "Top sản phẩm", "Danh sách đơn");
+                    "Theo danh mục", "Top sản phẩm", "Theo combo", "Danh sách đơn");
 
             Sheet summary = workbook.getSheet("Tổng hợp");
             assertThat(summary.getRow(1).getCell(1).getStringCellValue()).isEqualTo("Tất cả chi nhánh");

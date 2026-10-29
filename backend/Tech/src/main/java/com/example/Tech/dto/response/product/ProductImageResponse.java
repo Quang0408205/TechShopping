@@ -9,6 +9,7 @@ public record ProductImageResponse(
         String altText,
         Integer displayOrder,
         Boolean isPrimary,
+        String color,
         LocalDateTime uploadedAt
 ) {
 }

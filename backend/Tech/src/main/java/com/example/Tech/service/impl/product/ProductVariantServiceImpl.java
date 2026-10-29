@@ -19,6 +19,7 @@ import com.example.Tech.repository.product.AttributeValueRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.VariantAttributeValueRepository;
+import com.example.Tech.service.product.ProductFilterService;
 import com.example.Tech.service.product.ProductVariantService;
 import com.example.Tech.service.promotion.EffectivePrice;
 import com.example.Tech.service.promotion.PromotionPricingService;
@@ -62,6 +63,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
     private final StockAvailability stockAvailability;
     private final Clock clock;
     private final ReadCache cache;
+    private final ProductFilterService filterService;
 
     @Override
     public List<ProductVariantResponse> getByProductId(Long productId) {
@@ -107,6 +109,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
         ProductVariant saved = variantRepository.save(variant);
         cache.evict(ReadCache.VARIANTS, request.productId());
+        filterService.reindex(request.productId());
         log.info("Created product variant id={} for product id={}", saved.getId(), request.productId());
         return variantMapper.toResponse(saved, List.of(), pricingService.resolve(saved, LocalDateTime.now(clock)), 0);
     }
@@ -127,6 +130,7 @@ public class ProductVariantServiceImpl implements ProductVariantService {
 
         ProductVariant saved = variantRepository.saveAndFlush(variant);
         cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
+        filterService.reindex(variant.getProduct().getId());
         log.info("Updated product variant id={}", id);
         return toResponse(saved);
     }
@@ -158,6 +162,8 @@ public class ProductVariantServiceImpl implements ProductVariantService {
         variantRepository.delete(variant);
         variantRepository.flush();
         cache.evict(ReadCache.VARIANTS, variant.getProduct().getId());
+        cache.evict(ReadCache.SPECS, variant.getProduct().getId());
+        filterService.reindex(variant.getProduct().getId());
         log.info("Deleted product variant id={}", id);
     }
 

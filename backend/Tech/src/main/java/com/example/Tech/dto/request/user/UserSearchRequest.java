@@ -2,6 +2,9 @@ package com.example.Tech.dto.request.user;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
+
+import java.time.LocalDate;
 
 /**
  * Optional filters for the admin user list; all conditions are combined with AND.
@@ -20,6 +23,12 @@ public record UserSearchRequest(
         Boolean isActive,
 
         @Schema(description = "Also list soft-deleted users (default false)")
-        Boolean includeDeleted
+        Boolean includeDeleted,
+        @Schema(description = "Accounts created on or after this day (yyyy-MM-dd)", example = "2026-10-01")
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate createdFrom,
+        @Schema(description = "Accounts created on or before this day (yyyy-MM-dd, the whole day counts)", example = "2026-10-31")
+        @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+        LocalDate createdTo
 ) {
 }

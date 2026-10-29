@@ -5,6 +5,7 @@ import com.example.Tech.dto.request.product.ProductSearchRequest;
 import com.example.Tech.dto.request.product.ProductUpdateRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
+import com.example.Tech.dto.response.product.ProductSuggestResult;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
@@ -15,6 +16,12 @@ public interface ProductService {
      * Paginated product list; soft-deleted products are always excluded.
      */
     PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable);
+
+    /**
+     * Search box suggestions (plan v5 GĐ3): products on sale whose name / slug / brand contain every word of the
+     * query, in stock first, then names starting with the first word, then the shortest names; at most {@code size}.
+     */
+    ProductSuggestResult suggest(String query, int size);
 
     ProductResponse getById(Long id);
 

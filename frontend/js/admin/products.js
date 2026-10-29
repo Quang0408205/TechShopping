@@ -22,16 +22,17 @@
 
 const PRODUCT_ADMIN_PAGE_SIZE = 20;
 
-const PRODUCT_IMAGE_MAX_COUNT = 10;
+const PRODUCT_IMAGE_MAX_COUNT = 60;
 
 const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 
 const PRODUCT_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 const PRODUCT_IMAGE_HINTS = {
-    create: "Bắt buộc 1 ảnh chính và ít nhất 1 ảnh phụ (tối đa 10 ảnh). Chọn file JPG / PNG / WebP tối đa 5 MB "
-        + "hoặc dán link http(s). Ảnh đầu tiên là ảnh chính; bấm \"Đặt làm ảnh chính\" để đổi.",
-    edit: "Thay đổi ảnh được lưu ngay, không cần bấm LƯU. Tối đa 10 ảnh; không xoá được ảnh cuối cùng."
+    create: "Bắt buộc 1 ảnh chính và ít nhất 1 ảnh phụ (tối đa 60 ảnh). Chọn file JPG / PNG / WebP tối đa 5 MB "
+        + "hoặc dán link http(s). Ảnh đầu tiên là ảnh chính; bấm \"Đặt làm ảnh chính\" để đổi. Mỗi ảnh có thể gắn với một màu "
+        + "(khai báo ở khối Phiên bản bên dưới): khách chọn màu thì thấy bộ ảnh của màu đó, ảnh \"Chung\" hiện cho màu chưa có ảnh riêng.",
+    edit: "Thay đổi ảnh được lưu ngay, không cần bấm LƯU. Tối đa 60 ảnh; không xoá được ảnh cuối cùng. Chọn màu cho từng ảnh ở ô dưới ảnh."
 };
 
 
@@ -92,6 +93,20 @@ document.addEventListener("DOMContentLoaded", async function () {
     let imageSession = 0;
 
     let imageLoadCounter = 0;
+
+    const extras = createProductExtras();
+
+    /* Danh sách màu đã khai báo ở khối Phiên bản → ô chọn màu của ảnh */
+    extras.onColorsChange(function () {
+        refreshImageColorOptions();
+        if (!liveImagesLoading) {
+            renderImages();
+        }
+    });
+
+    document.getElementById("pfCategory").addEventListener("change", function () {
+        extras.changeCategory(numberOrNull("pfCategory"));
+    });
 
 
     try {
@@ -161,6 +176,35 @@ document.addEventListener("DOMContentLoaded", async function () {
         openForm(null);
     });
 
+    /* Nhập Excel (kế hoạch v4 bước 6): POST /admin/products/import?dryRun= */
+    const importPanel = document.getElementById("productImportPanel");
+
+    mountExcelImport(document.getElementById("productImportRoot"), {
+        hint: "Mỗi dòng sheet SanPham là một phiên bản; các dòng cùng Mã SP là một sản phẩm. Mã đã có thì cập nhật, mã mới thì thêm. "
+            + "Bấm KIỂM TRA trước: có lỗi thì không ghi gì. Xem sheet HuongDan trong file mẫu.",
+        templatePath: "/admin/products/import/template",
+        templateName: "mau-nhap-san-pham.xlsx",
+        importPath: function () { return "/admin/products/import"; },
+        labels: {
+            productsCreated: "Sản phẩm thêm mới", productsUpdated: "Sản phẩm cập nhật",
+            variantsCreated: "Phiên bản thêm mới", variantsUpdated: "Phiên bản cập nhật",
+            imagesAdded: "Ảnh thêm", specsWritten: "Thông số ghi", brandsCreated: "Thương hiệu mới"
+        },
+        onApplied: function () {
+            currentPage = 0;
+            loadProducts();
+        }
+    });
+
+    document.getElementById("productImportBtn").addEventListener("click", function () {
+        importPanel.hidden = false;
+        importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.getElementById("productImportClose").addEventListener("click", function () {
+        importPanel.hidden = true;
+    });
+
     document.getElementById("productCancelBtn").addEventListener("click", closeForm);
 
     form.addEventListener("submit", saveProduct);
@@ -184,6 +228,16 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (event.key === "Enter") {
             event.preventDefault();
             addImageLink();
+        }
+
+    });
+
+    imageList.addEventListener("change", function (event) {
+
+        const select = event.target.closest("[data-image-color]");
+
+        if (select) {
+            changeImageColor(select.dataset.key, select.value);
         }
 
     });
@@ -440,6 +494,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         resetImages(product);
 
+        extras.reset(product, product ? product.categoryId : null);
+
         panel.hidden = false;
 
         field("pfName").focus();
@@ -465,6 +521,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         draftImages = [];
 
         liveImages = [];
+
+        extras.clear();
 
     }
 
@@ -514,8 +572,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return { error: "Vui lòng chọn danh mục." };
         }
 
-        if (body.basePrice === null || !(body.basePrice >= 0)) {
-            return { error: "Giá gốc phải là số không âm." };
+        if (body.basePrice === null || !(body.basePrice > 0)) {
+            return { error: "Giá gốc phải lớn hơn 0." };
         }
 
         if (body.discountPrice !== null && !(body.discountPrice >= 0 && body.discountPrice <= body.basePrice)) {
@@ -551,12 +609,18 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             body.images = primary.concat(draftImages.filter(function (image) { return !image.isPrimary; }))
                 .map(function (image) {
-                    return { imageUrl: image.url, isPrimary: image.isPrimary };
+                    return { imageUrl: image.url, isPrimary: image.isPrimary, color: image.color || null };
                 });
 
         }
 
-        return { body: body };
+        const extra = extras.read();
+
+        if (extra.error) {
+            return { error: extra.error };
+        }
+
+        return { body: body, extra: extra };
 
     }
 
@@ -593,7 +657,14 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const wasEditing = editingProduct !== null;
 
-            showToast((wasEditing ? "Đã lưu " : "Đã thêm ") + saved.name + ".", "success");
+            /* Phiên bản + thông số ghi sau sản phẩm; lỗi phần này không huỷ sản phẩm đã lưu */
+            const problems = await extras.save(saved.id, result.extra);
+
+            if (problems.length > 0) {
+                showToast("Đã lưu sản phẩm nhưng còn lỗi — " + problems.join("; "), "error");
+            } else {
+                showToast((wasEditing ? "Đã lưu " : "Đã thêm ") + saved.name + ".", "success");
+            }
 
             closeForm();
 
@@ -715,14 +786,86 @@ document.addEventListener("DOMContentLoaded", async function () {
         if (editingProduct) {
 
             return liveImages.map(function (image) {
-                return { key: "id-" + image.id, url: image.imageUrl, isPrimary: image.isPrimary === true };
+                return { key: "id-" + image.id, url: image.imageUrl, isPrimary: image.isPrimary === true, color: image.color || "" };
             });
 
         }
 
         return draftImages.map(function (image, index) {
-            return { key: "draft-" + index, url: image.url, isPrimary: image.isPrimary };
+            return { key: "draft-" + index, url: image.url, isPrimary: image.isPrimary, color: image.color || "" };
         });
+
+    }
+
+
+    /* ----- màu của ảnh ----- */
+
+    function newImageColor() {
+
+        return field("pfImageColor").value;
+
+    }
+
+    function imageColorOptions(selected) {
+
+        const colors = extras.getColors().slice();
+
+        if (selected && !colors.some(function (color) { return color.toLowerCase() === selected.toLowerCase(); })) {
+            colors.push(selected);
+        }
+
+        return `<option value="">Chung (mọi màu)</option>` + colors.map(function (color) {
+            const on = selected && color.toLowerCase() === selected.toLowerCase();
+            return `<option value="${escapeHtml(color)}" ${on ? "selected" : ""}>${escapeHtml(color)}</option>`;
+        }).join("");
+
+    }
+
+    function refreshImageColorOptions() {
+
+        const select = field("pfImageColor");
+
+        const keep = select.value;
+
+        select.innerHTML = imageColorOptions(keep);
+
+    }
+
+    async function changeImageColor(key, color) {
+
+        hideImageError();
+
+        const image = findImage(key);
+
+        if (!image) {
+            return;
+        }
+
+        if (!editingProduct) {
+
+            image.color = color || null;
+
+            renderImages();
+
+            return;
+
+        }
+
+        const problems = [];
+
+        await runImageAction(function () {
+            return apiRequest("/product-images/" + image.id, {
+                method: "PUT",
+                body: { imageUrl: image.imageUrl, altText: image.altText, displayOrder: image.displayOrder, color: color || null },
+                auth: true
+            });
+        }, "Đã đổi màu của ảnh.", problems);
+
+        renderImages();
+
+        if (problems.length > 0) {
+            showImageError(problems.join(" · "));
+        }
 
     }
 
@@ -758,6 +901,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                             ? `<span class="admin-badge admin-badge-success">Ảnh chính</span>`
                             : `<button type="button" class="admin-link-btn" data-image-action="primary" data-key="${key}" ${disabled}>Đặt làm ảnh chính</button>`}
                         <button type="button" class="admin-link-btn admin-link-danger" data-image-action="remove" data-key="${key}" ${disabled}>Xoá</button>
+                        <select class="admin-image-color" data-image-color data-key="${key}" aria-label="Màu của ảnh" ${disabled}>${imageColorOptions(image.color)}</select>
                     </figcaption>
                 </figure>
             `;
@@ -971,7 +1115,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (!editingProduct) {
 
-            draftImages.push({ url: url, isPrimary: draftImages.length === 0 });
+            draftImages.push({ url: url, isPrimary: draftImages.length === 0, color: newImageColor() });
 
             return true;
 
@@ -985,7 +1129,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         return runImageAction(function () {
             return apiRequest("/product-images", {
                 method: "POST",
-                body: { productId: editingProduct.id, imageUrl: url, displayOrder: nextOrder },
+                body: { productId: editingProduct.id, imageUrl: url, displayOrder: nextOrder, color: newImageColor() || null },
                 auth: true
             });
         }, "Đã thêm ảnh.", problems);

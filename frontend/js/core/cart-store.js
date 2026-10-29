@@ -7,7 +7,7 @@
  * đổi sang dạng dùng cho trang giỏ / thanh toán:
  *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
  *               image, quantity, lineTotal, available }],
- *     totalQuantity, subtotal, shippingFee, total, hasUnavailableItems }
+ *     totalQuantity, subtotal, comboDiscount (kế hoạch v5 GĐ10: tiền giảm combo), shippingFee, total, hasUnavailableItems }
  * availableQuantity: số còn ở các chi nhánh đang mở (kế hoạch v3 GĐ E; null = API cũ).
  * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá) hoặc không đủ hàng,
  * không tính vào tạm tính, chỉ còn nút xoá.
@@ -52,7 +52,9 @@ function toCartSummary(cart) {
             quantity: item.quantity,
             lineTotal: Number(item.lineTotal) || 0,
             available: item.available === true,
-            availableQuantity: Number.isInteger(item.availableQuantity) ? item.availableQuantity : null
+            availableQuantity: Number.isInteger(item.availableQuantity) ? item.availableQuantity : null,
+            comboDiscount: Number(item.comboDiscount) || 0,
+            comboNames: Array.isArray(item.comboNames) ? item.comboNames : []
         };
 
     });
@@ -62,6 +64,8 @@ function toCartSummary(cart) {
         items: items,
         totalQuantity: cart ? cart.totalQuantity || 0 : 0,
         subtotal: cart ? Number(cart.subtotal) || 0 : 0,
+        comboDiscount: cart ? Number(cart.comboDiscount) || 0 : 0,
+        combos: cart && Array.isArray(cart.combos) ? cart.combos : [],
         shippingFee: cart ? Number(cart.shippingFee) || 0 : 0,
         total: cart ? Number(cart.total) || 0 : 0,
         hasUnavailableItems: Boolean(cart && cart.hasUnavailableItems)

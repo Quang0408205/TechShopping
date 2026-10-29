@@ -212,6 +212,76 @@ class AdminUserApiIntegrationTest {
     }
 
     @Test
+    void search_createdDateRange_wholeDaysAndValidation() throws Exception {
+        String today = java.time.LocalDate.now().toString();
+        String tomorrow = java.time.LocalDate.now().plusDays(1).toString();
+        String yesterday = java.time.LocalDate.now().minusDays(1).toString();
+
+        // both accounts of setUp were created today: the end day counts as a whole day
+        send(get(BASE).param("keyword", "api.test").param("createdFrom", today).param("createdTo", today), adminToken, null)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.totalElements").value(2));
+        send(get(BASE).param("keyword", "api.test").param("createdFrom", yesterday), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+        send(get(BASE).param("keyword", "api.test").param("createdFrom", tomorrow), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+        send(get(BASE).param("keyword", "api.test").param("createdTo", yesterday), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+
+        send(get(BASE).param("createdFrom", tomorrow).param("createdTo", today), adminToken, null)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.error.details.createdTo").exists());
+        send(get(BASE).param("createdFrom", "not-a-date"), adminToken, null).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createAdmin_randomTemporaryPassword_mustBeChanged_andOnlyAdminsMayCreate() throws Exception {
+        Map<String, Object> body = Map.of("email", "Admin.Moi@Example.com", "username", "admin.moi",
+                "fullname", "Quản Trị Mới", "phone", "0901234567");
+
+        JsonNode created = data(send(post(BASE + "/admins"), adminToken, body).andExpect(status().isCreated()));
+        createdUserIds.add(created.get("user").get("id").asLong());
+        assertThat(created.get("user").get("email").asString()).isEqualTo("admin.moi@example.com");
+        assertThat(created.get("user").get("roles").get(0).asString()).isEqualTo("ADMIN");
+        assertThat(created.get("user").get("roles")).hasSize(1);
+        assertThat(created.get("user").get("mustChangePassword").asBoolean()).isTrue();
+        String password = created.get("temporaryPassword").asString();
+        assertThat(password).hasSize(12).matches(".*[A-Z].*").matches(".*[a-z].*").matches(".*\\d.*");
+        assertThat(created.get("passwordExpiresAt").asString()).isNotBlank();
+
+        // the temporary password works once, the account is flagged to change it, and has no store / employee record
+        JsonNode login = data(send(post("/api/v1/auth/login"), null,
+                Map.of("identifier", "admin.moi", "password", password)).andExpect(status().isOk()));
+        assertThat(login.get("user").get("mustChangePassword").asBoolean()).isTrue();
+        createdUserIds.add(login.get("user").get("id").asLong());
+        send(get(BASE).param("keyword", "admin.moi").param("role", "ADMIN"), adminToken, null)
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+
+        // two creations never share a password
+        JsonNode second = data(send(post(BASE + "/admins"), adminToken, Map.of("email", "admin.hai@example.com",
+                "username", "admin.hai", "fullname", "Quản Trị Hai")).andExpect(status().isCreated()));
+        createdUserIds.add(second.get("user").get("id").asLong());
+        assertThat(second.get("temporaryPassword").asString()).isNotEqualTo(password);
+
+        // duplicates and validation
+        send(post(BASE + "/admins"), adminToken, Map.of("email", "admin.moi@example.com", "username", "khac.hoan.toan",
+                "fullname", "Trùng email")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("DUPLICATE_EMAIL"));
+        send(post(BASE + "/admins"), adminToken, Map.of("email", "khac@example.com", "username", "ADMIN.MOI",
+                "fullname", "Trùng tên đăng nhập")).andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("DUPLICATE_USERNAME"));
+        send(post(BASE + "/admins"), adminToken, Map.of("email", "khong-phai-email", "username", "a b",
+                "fullname", " ")).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.email").exists())
+                .andExpect(jsonPath("$.error.details.username").exists())
+                .andExpect(jsonPath("$.error.details.fullname").exists());
+
+        // customers and anonymous callers are refused
+        send(post(BASE + "/admins"), customerToken, body).andExpect(status().isForbidden());
+        send(post(BASE + "/admins"), null, body).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void search_internalFilter_listsEveryInternalAccountButNoCustomer() throws Exception {
         Object[] staff = staffAt("ur.internal", null);
         send(get(BASE).param("keyword", ".api.test").param("role", "internal"), adminToken, null)

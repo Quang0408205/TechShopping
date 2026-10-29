@@ -32,7 +32,7 @@ public record ProductUpdateRequest(
         Integer brandId,
 
         @NotNull(message = "Base price is required")
-        @DecimalMin(value = "0", message = "Base price must not be negative")
+        @DecimalMin(value = "0", inclusive = false, message = "Giá gốc phải lớn hơn 0")
         @Digits(integer = 13, fraction = 2, message = "Base price must have at most 13 integer digits and 2 decimals")
         BigDecimal basePrice,
 

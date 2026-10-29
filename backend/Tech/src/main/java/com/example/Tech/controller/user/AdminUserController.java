@@ -1,10 +1,12 @@
 package com.example.Tech.controller.user;
 
+import com.example.Tech.dto.request.user.AdminCreateRequest;
 import com.example.Tech.dto.request.user.UserRolesUpdateRequest;
 import com.example.Tech.dto.request.user.UserSearchRequest;
 import com.example.Tech.dto.request.user.UserStatusUpdateRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
+import com.example.Tech.dto.response.user.AdminCreatedResponse;
 import com.example.Tech.dto.response.user.UserResponse;
 import com.example.Tech.service.user.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,6 +63,22 @@ public class AdminUserController {
             @Valid @ParameterObject UserSearchRequest filter,
             @ParameterObject @PageableDefault(size = 20, sort = "id") Pageable pageable) {
         return ResponseEntity.ok(ApiResult.ok(adminUserService.search(adminId(jwt), filter, pageable)));
+    }
+
+    @PostMapping("/admins")
+    @Operation(summary = "Create an ADMIN account with a random temporary password",
+            description = "The password is returned only in this response. The new administrator must change it at the "
+                    + "first login (it expires after 7 days). Staff and managers are hired with POST /admin/employees/hire.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Administrator created"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (details per field)"),
+            @ApiResponse(responseCode = "409", description = "DUPLICATE_EMAIL, DUPLICATE_USERNAME")
+    })
+    public ResponseEntity<ApiResult<AdminCreatedResponse>> createAdmin(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody AdminCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResult.ok(adminUserService.createAdmin(adminId(jwt), request)));
     }
 
     @GetMapping("/{id}")

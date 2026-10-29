@@ -40,10 +40,21 @@ public class OrderMapper {
                 order.getRecipientName(),
                 order.getRecipientPhone(),
                 order.getShippingAddress(),
+                order.getShippingProvince(),
+                order.getShippingWard(),
                 order.getNotes(),
                 items,
                 totalQuantity,
                 subtotal,
+                order.getComboDiscount() == null ? BigDecimal.ZERO : order.getComboDiscount(),
+                order.getCombos().stream()
+                        .map(combo -> new OrderResponse.ComboApplied(combo.getComboName(), combo.getUnits(), combo.getDiscountAmount()))
+                        .toList(),
+                order.getVoucherCode(),
+                order.getVoucherDiscount() == null ? BigDecimal.ZERO : order.getVoucherDiscount(),
+                order.getPointsUsed(),
+                order.getPointsDiscount() == null ? BigDecimal.ZERO : order.getPointsDiscount(),
+                order.getPointsEarned(),
                 order.getShippingCost(),
                 order.getTaxAmount(),
                 order.getTotalAmount(),
@@ -79,6 +90,7 @@ public class OrderMapper {
                 originalPrice,
                 item.getQuantity(),
                 discount,
-                item.getSubtotal());
+                item.getSubtotal(),
+                item.getComboDiscount() == null ? BigDecimal.ZERO : item.getComboDiscount());
     }
 }

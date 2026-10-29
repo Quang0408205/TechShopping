@@ -14,6 +14,9 @@ import java.util.Optional;
 public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long>,
         JpaSpecificationExecutor<ProductVariant> {
 
+    boolean existsByIdAndProductId(Long id, Long productId);
+
+
     /** All-stores inventory page (InventoryFilterSpecifications.stockedVariants): product loaded with the rows. */
     @Override
     @EntityGraph(attributePaths = "product")
@@ -26,7 +29,14 @@ public interface ProductVariantRepository extends JpaRepository<ProductVariant, 
     @EntityGraph(attributePaths = "product")
     List<ProductVariant> findAllByProductIdOrderByIdAsc(Long productId);
 
+    /** Product cards: the variants of a page of products, one query. */
+    List<ProductVariant> findAllByProductIdInOrderByIdAsc(java.util.Collection<Long> productIds);
+
     boolean existsBySkuVariant(String skuVariant);
+
+    /** Excel imports: variants are matched by their SKU, with the product loaded. */
+    @EntityGraph(attributePaths = "product")
+    Optional<ProductVariant> findBySkuVariant(String skuVariant);
 
     boolean existsBySkuVariantAndIdNot(String skuVariant, Long id);
 }

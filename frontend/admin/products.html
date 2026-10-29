@@ -63,11 +63,28 @@
 
                 </form>
 
+                <button type="button" class="btn btn-outline-dark" id="productImportBtn">
+                    NHẬP TỪ EXCEL
+                </button>
+
                 <button type="button" class="btn btn-dark" id="newProductBtn">
                     + THÊM SẢN PHẨM
                 </button>
 
             </div>
+
+
+            <!-- Nhập sản phẩm bằng Excel (js/admin/excel-import.js) -->
+            <section class="admin-panel" id="productImportPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Nhập sản phẩm từ Excel</h2>
+                    <button type="button" class="btn btn-outline-dark" id="productImportClose">ĐÓNG</button>
+                </div>
+
+                <div id="productImportRoot"></div>
+
+            </section>
 
 
             <!-- Thêm / sửa sản phẩm -->
@@ -100,7 +117,7 @@
 
                         <div class="admin-field">
                             <label for="pfBasePrice">Giá gốc (đ) *</label>
-                            <input type="number" id="pfBasePrice" min="0" step="1000" required>
+                            <input type="number" id="pfBasePrice" min="1" step="1000" required>
                         </div>
 
                         <div class="admin-field">
@@ -155,7 +172,53 @@
 
                                 <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
 
+                                <label class="admin-image-color-pick">
+                                    Màu của ảnh thêm mới
+                                    <select id="pfImageColor" aria-label="Màu của ảnh thêm mới"><option value="">Chung (mọi màu)</option></select>
+                                </label>
+
                             </div>
+
+                        </fieldset>
+
+                        <!-- Phiên bản + thông số: ghi khi bấm LƯU (js/admin/product-extras.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfVariants">
+
+                            <legend>Phiên bản *</legend>
+
+                            <p class="admin-field-hint">Mỗi thẻ là một phiên bản (RAM + bộ nhớ, giá) khách chọn khi mua; trong thẻ khai báo các màu và thông số riêng của phiên bản. Cần ít nhất 1 phiên bản, giá lớn hơn 0. Màu hoặc phiên bản đã bán / còn tồn kho không xoá được.</p>
+
+                            <div id="pfVariantRows"></div>
+
+                            <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfVariantAdd">+ THÊM PHIÊN BẢN</button>
+
+                        </fieldset>
+
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfSpecs">
+
+                            <legend>Thông số kỹ thuật chung</legend>
+
+                            <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục; gõ tên để chọn tên đã dùng (tên lạ vẫn lưu được nhưng sẽ báo vàng). Nhãn "→ Nhóm" cho biết dòng nằm ở nhóm nào trên trang khách; nhiều mục trong một giá trị thì ngăn bằng dấu |. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
+
+                            <!-- Ô nổi bật trang khách sẽ hiện, tính từ các dòng bên dưới (product-extras.js) -->
+                            <div class="admin-hl-bar" id="pfHighlightBar" aria-live="polite"></div>
+
+                            <datalist id="pfSpecNameList"></datalist>
+
+                            <div id="pfSpecRows"></div>
+
+                            <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfSpecAdd">+ THÊM THÔNG SỐ</button>
+
+                        </fieldset>
+
+                        <!-- Nhu cầu của danh mục (vd Laptop: Gaming, Đồ hoạ); ghi khi bấm LƯU (js/admin/product-extras.js) -->
+                        <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfNeeds" hidden>
+
+                            <legend>Nhu cầu</legend>
+
+                            <p class="admin-field-hint">Chọn các nhu cầu phù hợp với sản phẩm; khách lọc theo nhu cầu ở trang Sản phẩm. Một sản phẩm có thể có nhiều nhu cầu.</p>
+
+                            <div id="pfNeedList" class="admin-need-list"></div>
 
                         </fieldset>
 
@@ -220,6 +283,8 @@
 <script src="../js/core/layout.js"></script>
 <script src="../js/admin/staff-auth.js"></script>
 <script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/excel-import.js"></script>
+<script src="../js/admin/product-extras.js"></script>
 <script src="../js/admin/products.js"></script>
 
 </body>

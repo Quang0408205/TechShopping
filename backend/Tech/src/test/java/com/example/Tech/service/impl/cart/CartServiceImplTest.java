@@ -103,7 +103,9 @@ class CartServiceImplTest {
         CartMapper cartMapper = new CartMapper(new PromotionPricingService(promotionProductRepository), Clock.systemDefaultZone());
         cartService = new CartServiceImpl(cartRepository, cartItemRepository, variantRepository, imageRepository,
                 new CurrentUserLoader(userRepository, userRoleRepository), cartMapper, stockAvailability, storeRepository,
-                interactionRecorder);
+                interactionRecorder, new com.example.Tech.service.combo.ComboPricingService(
+                        org.mockito.Mockito.mock(com.example.Tech.repository.combo.ComboRepository.class), cartMapper,
+                        Clock.systemDefaultZone()));
         lenient().when(stockAvailability.byVariant(any())).thenAnswer(call -> {
             Map<Long, Integer> units = new HashMap<>();
             for (Object id : (Collection<?>) call.getArgument(0)) {

@@ -17,8 +17,20 @@ spring:
         max-page-size: 100
   mvc:
     async:
-      # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer may take a while
-      request-timeout: 120s
+      # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer with product search took ~2 minutes on a 4 GB GPU
+      request-timeout: 300s
+  mail:
+    # Plan v7: order emails through SMTP (Gmail + an App Password by default); empty username = mail is not sent
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+      mail.smtp.connectiontimeout: 8000
+      mail.smtp.timeout: 10000
+      mail.smtp.writetimeout: 10000
   servlet:
     multipart:
       # Product image uploads (ImageStorageService.MAX_IMAGE_BYTES)
@@ -57,8 +69,16 @@ app:
     dir: ${APP_UPLOAD_DIR:uploads}
     # Origin the browser uses to reach this API; stored image URLs start with it
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
+    # Plan v5 GĐ7: account avatars on Cloudinary (square crop around the face, compressed); any key empty = local disk.
+    # Product / review / after-sales photos always stay on the disk
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+      api-key: ${CLOUDINARY_API_KEY:}
+      api-secret: ${CLOUDINARY_API_SECRET:}
+      folder: ${CLOUDINARY_FOLDER:techshopping/avatars}
   payment:
-    # Demo shop account shown for bank transfers (payments are simulated: staff confirms the money)
+    # Shop account shown for bank transfers and used for the VietQR image. Set the real one in .env (never commit it);
+    # empty = the demo account
     bank-transfer:
       bank-name: ${PAYMENT_BANK_NAME:Vietcombank}
       # VietQR bank id for the QR image (970436 = Vietcombank)
@@ -67,6 +87,18 @@ app:
       account-name: ${PAYMENT_BANK_ACCOUNT_NAME:CONG TY POY}
       # Shown to the customer as "pay before"; unpaid orders are not cancelled automatically
       deadline-hours: 24
+    # Bank webhook (POST /api/v1/payments/webhook): the provider sends this key as "Authorization: Apikey <key>" or
+    # X-Webhook-Secret. Empty = webhook off. simulator-enabled: lets an ADMIN fake a transfer (demo only)
+    webhook:
+      secret: ${PAYMENT_WEBHOOK_SECRET:}
+      simulator-enabled: ${PAYMENT_SIMULATOR_ENABLED:false}
+    # Card payments through Stripe Checkout, TEST keys only (Stripe pays out to no Vietnamese bank). Empty secret key =
+    # the "Thẻ quốc tế" method is hidden. Webhook: POST /api/v1/payments/stripe/webhook, signed with the whsec_ key
+    stripe:
+      secret-key: ${STRIPE_SECRET_KEY:}
+      webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+      api-base: ${STRIPE_API_BASE:https://api.stripe.com}
+      session-minutes: 30
   sales:
     # Commission of the employee who confirmed a delivered order (0.01 = 1% of the order total)
     commission-rate: ${SALES_COMMISSION_RATE:0.01}
@@ -78,7 +110,27 @@ app:
     # Recommendations fall back to popular / same-category products after this
     timeout: 3s
     # One chatbot answer can take several model + tool calls
-    chat-timeout: 90s
+    chat-timeout: 240s
+  review:
+    # An account may write any number of reviews, but two must be at least this many seconds apart (0 = off)
+    min-interval-seconds: ${REVIEW_MIN_INTERVAL_SECONDS:60}
+  mail:
+    # Plan v7: emails about an order (placed, confirmed, shipping, delivered, cancelled). Sent after the order
+    # transaction commits, on another thread; a failed mail never fails the order (see email_log)
+    enabled: ${MAIL_ENABLED:true}
+    from-name: ${MAIL_FROM_NAME:POY}
+    # Empty = the SMTP username
+    from-address: ${MAIL_FROM_ADDRESS:}
+    # Address of the web shop in the links of the mails (…/track.html?token=…)
+    site-url: ${MAIL_SITE_URL:http://localhost:5510}
+    # One address gets at most this many mails per window (Redis), so nobody can flood a stranger's inbox
+    per-recipient-limit: ${MAIL_LIMIT_PER_RECIPIENT:12}
+    window: 1h
+    async: true
+  wishlist:
+    # Plan v7 GĐ4: hourly check that mails customers about price drops of the products they saved
+    alerts-enabled: ${WISHLIST_ALERTS_ENABLED:true}
+    alert-cron: ${WISHLIST_ALERT_CRON:0 0 * * * *}
   contact:
     # Contact form: at most per-ip sends per client IP and per-email per email address in each window (Redis)
     rate-limit:
@@ -95,6 +147,11 @@ app:
       register-window: 1h
       refresh-per-ip: ${REFRESH_LIMIT_PER_IP:60}
       refresh-window: 1m
+  search:
+    # Plan v5: suggestions under the search box (GET /products/suggest), per client IP; generous because behind the
+    # deploy proxy every visitor shares the proxy's IP
+    suggest-per-ip: ${SUGGEST_LIMIT_PER_IP:600}
+    suggest-window: 1m
   cache:
     # Redis read cache (categories, brands, product pages, reports); off = every request reads the database
     enabled: ${CACHE_ENABLED:true}

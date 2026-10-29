@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 /** What the customer needs to make the transfer; only present while the transfer is awaited. */
 public record BankTransferResponse(
         String bankName,
+        @Schema(description = "VietQR bank id (970436 = Vietcombank); the page shows the bank logo from it")
+        String bankBin,
         String accountNumber,
         String accountName,
         BigDecimal amount,
@@ -16,6 +18,9 @@ public record BankTransferResponse(
         @Schema(description = "VietQR image (img.vietqr.io) with the account, amount and content filled in")
         String qrImageUrl,
         @Schema(description = "Order date + the configured deadline (24 h); informative only")
-        LocalDateTime payBefore
+        LocalDateTime payBefore,
+        @Schema(description = "Demo mode (PAYMENT_SIMULATOR_ENABLED): the payment page reports the order paid after a "
+                + "minute on screen (POST /orders/{id}/payment/demo-confirm)")
+        boolean demoAutoPay
 ) {
 }

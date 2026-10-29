@@ -257,7 +257,9 @@ class Recommender:
         """Bảng 3.21: người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
         m = self.model
         allowed = m.valid if allowed is None else allowed
-        reviews = m.items["tgdd_review_count"].to_numpy(float)
+        # model files trained before 2026-10-17 still have the old TGDĐ column name
+        column = "review_count" if "review_count" in m.items else "tgdd_review_count"
+        reviews = m.items[column].to_numpy(float)
         rows = np.flatnonzero(allowed)
         by_popularity = rows[np.lexsort((-reviews[rows], -m.popularity[rows]))]
         created = m.items["created_at"].to_numpy("datetime64[s]").astype(float)

@@ -2,6 +2,8 @@ package com.example.Tech.repository.order;
 
 import com.example.Tech.entity.order.OrderItem;
 import com.example.Tech.entity.order.OrderStatus;
+import com.example.Tech.entity.product.ProductVariant;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,6 +26,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, Long> {
             + "and i.order.status = :status and i.order.user.id in :userIds")
     List<Long> findBuyerIds(@Param("productId") Long productId, @Param("userIds") Collection<Long> userIds,
                             @Param("status") OrderStatus status);
+
+    /** Variants of the product in this account's orders in this status, latest delivery first ("Phân loại hàng"). */
+    @Query("select i.variant from OrderItem i where i.variant.product.id = :productId and i.order.user.id = :userId "
+            + "and i.order.status = :status order by i.order.deliveredAt desc nulls last, i.order.id desc")
+    List<ProductVariant> findVariantsOfProductByUser(@Param("productId") Long productId, @Param("userId") Long userId,
+                                                     @Param("status") OrderStatus status, Pageable pageable);
 
     /** [userId, productId] pairs among these accounts and products with an order in this status (admin review list). */
     @Query("select distinct i.order.user.id, i.variant.product.id from OrderItem i where i.order.status = :status "

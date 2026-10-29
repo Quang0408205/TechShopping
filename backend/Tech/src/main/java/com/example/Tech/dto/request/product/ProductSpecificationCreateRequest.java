@@ -21,6 +21,13 @@ public record ProductSpecificationCreateRequest(
         String specValue,
 
         @PositiveOrZero(message = "Specification order must not be negative")
-        Integer specOrder
+        Integer specOrder,
+
+        @Schema(description = "Trống = thông số chung của sản phẩm; có giá trị = thông số riêng của phiên bản đó")
+        Long variantId
 ) {
+
+    public ProductSpecificationCreateRequest(Long productId, String specName, String specValue, Integer specOrder) {
+        this(productId, specName, specValue, specOrder, null);
+    }
 }

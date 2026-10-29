@@ -8,7 +8,129 @@
  *   { success, timestamp, data, error: { code, message, details } }
  */
 
-const API_BASE_URL = "http://localhost:8080/api/v1";
+/*
+ * Trên máy lập trình (localhost / 127.0.0.1) gọi thẳng backend :8080 (CORS dev cho mọi cổng localhost).
+ * Khi triển khai (tên miền khác, vd. ngrok) nginx chuyển tiếp /api sang backend nên dùng đường dẫn tương đối:
+ * cùng một nguồn, không cần CORS (docker/nginx/default.conf).
+ */
+
+const API_BASE_URL =
+    location.hostname === "localhost" || location.hostname === "127.0.0.1"
+        ? "http://localhost:8080/api/v1"
+        : "/api/v1";
+
+/*
+ * Ảnh tải lên (/uploads/...) được backend ghi kèm địa chỉ công khai lúc tải (localhost:8080, tên miền ngrok…), nên
+ * khi đổi nơi chạy web thì link cũ trỏ sai máy. Đọc dữ liệu: đổi phần địa chỉ của mọi link /uploads/ sang máy chủ đang
+ * phục vụ API (localhost:8080 ở máy lập trình, chính tên miền khi triển khai — nginx chuyển tiếp /uploads/).
+ * Gửi dữ liệu: trả lại đúng link gốc (backend chỉ nhận link ảnh của chính nó theo địa chỉ đã ghi).
+ */
+
+const UPLOAD_ORIGIN = new URL(API_BASE_URL, location.href).origin;
+
+const UPLOAD_URL_PATTERN = /^https?:\/\/[^/?#]+(\/uploads\/[^\s"'<>]+)$/i;
+
+const UPLOAD_ORIGINALS_KEY = "poy_upload_originals";
+
+const uploadOriginals = (function () {
+
+    try {
+        return new Map(Object.entries(JSON.parse(localStorage.getItem(UPLOAD_ORIGINALS_KEY) || "{}")));
+    } catch (error) {
+        return new Map();
+    }
+
+})();
+
+let uploadOriginalsDirty = false;
+
+function localizeUploadUrls(value) {
+
+    if (typeof value === "string") {
+
+        const match = UPLOAD_URL_PATTERN.exec(value);
+
+        if (!match) {
+            return value;
+        }
+
+        const local = UPLOAD_ORIGIN + match[1];
+
+        if (local !== value && uploadOriginals.get(match[1]) !== value) {
+            uploadOriginals.set(match[1], value);
+            uploadOriginalsDirty = true;
+        }
+
+        return local;
+
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(localizeUploadUrls);
+    }
+
+    if (value && typeof value === "object") {
+
+        Object.keys(value).forEach(function (key) {
+            value[key] = localizeUploadUrls(value[key]);
+        });
+
+    }
+
+    return value;
+
+}
+
+function restoreUploadUrls(value) {
+
+    if (typeof value === "string") {
+
+        const match = UPLOAD_URL_PATTERN.exec(value);
+
+        return match && value.startsWith(UPLOAD_ORIGIN + "/") && uploadOriginals.has(match[1]) ? uploadOriginals.get(match[1]) : value;
+
+    }
+
+    if (Array.isArray(value)) {
+        return value.map(restoreUploadUrls);
+    }
+
+    if (value && typeof value === "object") {
+
+        const copy = {};
+
+        Object.keys(value).forEach(function (key) {
+            copy[key] = restoreUploadUrls(value[key]);
+        });
+
+        return copy;
+
+    }
+
+    return value;
+
+}
+
+function saveUploadOriginals() {
+
+    if (!uploadOriginalsDirty) {
+        return;
+    }
+
+    uploadOriginalsDirty = false;
+
+    try {
+
+        /* giữ tối đa 800 link gần nhất */
+        const entries = Array.from(uploadOriginals.entries()).slice(-800);
+
+        localStorage.setItem(UPLOAD_ORIGINALS_KEY, JSON.stringify(Object.fromEntries(entries)));
+
+    } catch (error) {
+        /* bỏ qua */
+    }
+
+}
 
 /*
  * Đường dẫn gốc của website (thư mục chứa index.html), tính từ vị trí file này
@@ -450,7 +572,7 @@ async function sendRequest(path, method, body, useAuth) {
             {
                 method: method,
                 headers: headers,
-                body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(body))
+                body: body === undefined ? undefined : (isFormData ? body : JSON.stringify(restoreUploadUrls(body)))
             }
         );
 
@@ -485,7 +607,13 @@ async function readApiResult(response) {
 
 
     if (response.ok) {
-        return result ? result.data : null;
+
+        const data = result ? localizeUploadUrls(result.data) : null;
+
+        saveUploadOriginals();
+
+        return data;
+
     }
 
 

@@ -96,8 +96,16 @@
                         </div>
 
                         <div class="admin-field admin-field-wide">
-                            <label for="taxImage">Ảnh biểu tượng (link)</label>
-                            <input type="url" id="taxImage" maxlength="500" placeholder="https://… (có thể bỏ trống)">
+                            <label for="taxImage">Ảnh danh mục</label>
+                            <div class="admin-tax-image">
+                                <img id="taxImagePreview" class="admin-tax-image-preview" alt="" hidden>
+                                <input type="url" id="taxImage" maxlength="500" placeholder="Dán link https://… hoặc tải ảnh lên">
+                                <label class="btn btn-outline-dark admin-image-file-btn">
+                                    TẢI ẢNH LÊN
+                                    <input type="file" id="taxImageFile" accept="image/jpeg,image/png,image/webp">
+                                </label>
+                            </div>
+                            <p class="admin-field-hint">Ảnh hiện trên thẻ danh mục ở trang chủ. Bỏ trống thì dùng ảnh của sản phẩm đầu tiên trong danh mục.</p>
                         </div>
 
                         <div class="admin-field admin-field-wide">

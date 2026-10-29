@@ -489,6 +489,387 @@ img {
     background: var(--color-accent-strong);
 }
 
+/* Nút liên hệ gộp (ui-effects.js, kế hoạch v6 B1): thay bong bóng Zalo riêng; nút chatbot cũ được ẩn, "Trợ lý AI" bấm hộ nó */
+.has-contact-hub .chatbot-launcher {
+    display: none;
+}
+
+.contact-hub {
+    position: fixed;
+
+    right: 24px;
+    bottom: 24px;
+    z-index: 2400;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.contact-hub-toggle {
+    position: relative;
+
+    width: 60px;
+    height: 60px;
+
+    display: grid;
+    place-items: center;
+
+    border: none;
+    border-radius: 50%;
+
+    background: var(--color-ink);
+    color: #fff;
+
+    box-shadow: var(--shadow-lg);
+
+    cursor: pointer;
+
+    transition: background-color var(--duration-base) var(--ease-standard), transform var(--duration-base) var(--ease-standard);
+}
+
+.contact-hub-toggle::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+    border: 2px solid var(--color-ink);
+
+    animation: contactPulse 2.8s ease-out infinite;
+}
+
+@keyframes contactPulse {
+    0% {
+        opacity: 0.45;
+        transform: scale(1);
+    }
+
+    70%, 100% {
+        opacity: 0;
+        transform: scale(1.5);
+    }
+}
+
+.contact-hub-toggle:hover {
+    background: var(--gray-800);
+    transform: translateY(-2px) scale(1.05);
+}
+
+.contact-hub-toggle svg {
+    transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.contact-hub-toggle:hover svg {
+    transform: rotate(-8deg) scale(1.08);
+}
+
+.contact-hub-toggle:focus-visible {
+    outline: 3px solid var(--color-accent-soft);
+    outline-offset: 3px;
+}
+
+.contact-hub-toggle .is-close {
+    display: none;
+}
+
+.contact-hub.is-open .contact-hub-toggle {
+    background: var(--color-accent-strong);
+}
+
+.contact-hub.is-open .contact-hub-toggle::before {
+    animation: none;
+    opacity: 0;
+}
+
+.contact-hub.is-open .contact-hub-toggle .is-open {
+    display: none;
+}
+
+.contact-hub.is-open .contact-hub-toggle .is-close {
+    display: block;
+}
+
+.contact-hub-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.contact-hub-menu[hidden] {
+    display: none;
+}
+
+/* Mỗi mục có màu riêng (--hub-color) cho vòng sáng khi rê chuột */
+.contact-hub-item {
+    --hub-color: var(--color-ink);
+
+    position: relative;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 6px 16px 6px 6px;
+
+    border: 0;
+    border-radius: var(--radius-full);
+    background: #fff;
+    color: var(--color-ink);
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+
+    box-shadow: var(--shadow-lg);
+
+    /* vệt sáng màu của mục lướt qua khi rê chuột (nền chạy, nằm gọn trong viên thuốc) */
+    background-image: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--hub-color) 16%, transparent) 50%, transparent 65%);
+    background-repeat: no-repeat;
+    background-size: 260% 100%;
+    background-position: 120% 0;
+
+    cursor: pointer;
+
+    /* backwards: giữ vị trí xuất phát trong lúc chờ, xong thì nhả transform cho hiệu ứng rê chuột */
+    animation: contactItemIn 0.34s var(--ease-standard) backwards;
+
+    transition: transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+}
+
+
+
+.contact-hub-item:nth-child(3) {
+    animation-delay: 0.04s;
+}
+
+.contact-hub-item:nth-child(2) {
+    animation-delay: 0.08s;
+}
+
+.contact-hub-item:nth-child(1) {
+    animation-delay: 0.12s;
+}
+
+@keyframes contactItemIn {
+    from {
+        opacity: 0;
+        transform: translate(18px, 10px) scale(0.94);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.contact-hub-item[hidden] {
+    display: none;
+}
+
+.contact-hub-item:hover,
+.contact-hub-item:focus-visible {
+    box-shadow: 0 14px 34px rgba(17, 19, 24, 0.2);
+
+    transform: translateX(-6px);
+}
+
+.contact-hub-item:focus-visible {
+    outline: 3px solid var(--color-accent-soft);
+    outline-offset: 2px;
+}
+
+.contact-hub-icon {
+    position: relative;
+
+    display: grid;
+    place-items: center;
+
+    width: 40px;
+    height: 40px;
+
+    border-radius: 50%;
+    background: var(--gray-100);
+    color: var(--color-ink);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.contact-hub-item.is-zalo {
+    --hub-color: #0068ff;
+}
+
+.contact-hub-item.is-phone {
+    --hub-color: #1f9d55;
+}
+
+.contact-hub-item .contact-hub-icon {
+    background: var(--hub-color);
+    color: #fff;
+}
+
+/* vòng sáng lan ra (nhấp nháy) quanh biểu tượng */
+.contact-hub-icon::after {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    border-radius: 50%;
+
+    box-shadow: 0 0 0 0 var(--hub-color);
+
+    opacity: 0;
+
+    pointer-events: none;
+}
+
+.contact-hub-icon svg,
+.contact-hub-icon {
+    transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.contact-hub-label {
+    transition: color var(--duration-fast) ease;
+}
+
+.contact-hub-item:hover .contact-hub-label,
+.contact-hub-item:focus-visible .contact-hub-label {
+    color: var(--hub-color);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+
+    /* chỉ chạy khi rê vào; rời ra thì về chỗ cũ ngay (không có transition ở trạng thái thường) */
+    .contact-hub-item:hover,
+    .contact-hub-item:focus-visible {
+        background-position: -20% 0;
+
+        transition: background-position 0.8s var(--ease-standard), transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
+    }
+
+    .contact-hub-item:hover .contact-hub-icon::after,
+    .contact-hub-item:focus-visible .contact-hub-icon::after {
+        animation: contactRing 1.1s ease-out infinite;
+    }
+
+    .contact-hub-item.is-phone:hover .contact-hub-icon svg,
+    .contact-hub-item.is-phone:focus-visible .contact-hub-icon svg {
+        animation: contactRinging 1.1s ease-in-out infinite;
+    }
+
+    .contact-hub-item.is-zalo:hover .contact-hub-icon,
+    .contact-hub-item.is-zalo:focus-visible .contact-hub-icon {
+        animation: contactBounce 0.9s var(--ease-standard) infinite;
+    }
+
+    .contact-hub-item.is-ai:hover .contact-hub-icon svg,
+    .contact-hub-item.is-ai:focus-visible .contact-hub-icon svg {
+        animation: contactSparkle 1.4s ease-in-out infinite;
+    }
+
+}
+
+@keyframes contactRing {
+    0% { opacity: 0.55; box-shadow: 0 0 0 0 var(--hub-color); }
+    100% { opacity: 0; box-shadow: 0 0 0 12px var(--hub-color); }
+}
+
+@keyframes contactRinging {
+    0%, 50%, 100% { transform: rotate(0); }
+    10%, 30% { transform: rotate(-14deg); }
+    20%, 40% { transform: rotate(14deg); }
+}
+
+@keyframes contactBounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-4px) scale(1.06); }
+    70% { transform: translateY(1px); }
+}
+
+@keyframes contactSparkle {
+    0%, 100% { transform: rotate(0) scale(1); }
+    50% { transform: rotate(18deg) scale(1.15); }
+}
+
+@media (max-width: 700px) {
+
+    .contact-hub {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .contact-hub-toggle {
+        width: 54px;
+        height: 54px;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .contact-hub-toggle::before,
+    .contact-hub-item {
+        animation: none;
+    }
+
+    .contact-hub-item:hover,
+    .contact-hub-toggle:hover {
+        transform: none;
+    }
+
+}
+
+
+/* Thanh tiến độ khi chuyển trang (ui-effects.js setupPageProgress): mảnh, nâu ánh kim, sát mép trên cửa sổ */
+.page-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 6000;
+
+    height: 3px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    transition: opacity 0.35s ease;
+}
+
+.page-progress.is-active {
+    opacity: 1;
+}
+
+.page-progress.is-done {
+    opacity: 0;
+}
+
+.page-progress i {
+    position: relative;
+
+    display: block;
+
+    height: 100%;
+
+    background: linear-gradient(90deg, #8a5a22, #c79a5b 60%, #f1dcb2);
+
+    box-shadow: 0 0 10px rgba(199, 154, 91, 0.75);
+
+    transform: scaleX(0);
+    transform-origin: left;
+
+    transition: transform 0.3s ease;
+}
+
+
 .chatbot-panel {
     position: absolute;
 
@@ -958,4 +1339,126 @@ img {
 
 .state-box p:last-child {
     margin-bottom: 0;
+}
+
+
+/* ================= CHẤM MÀU PHIÊN BẢN (ui.js variantColorDotHtml, kế hoạch v5 GĐ2) ================= */
+
+.color-dot {
+    display: inline-block;
+    flex-shrink: 0;
+
+    width: 18px;
+    height: 18px;
+
+    border-radius: 50%;
+    border: 1px solid rgba(17, 19, 24, 0.18);
+}
+
+.color-dot.is-unknown {
+    background: repeating-linear-gradient(45deg, #d4d4d8 0 3px, #f4f4f5 3px 6px);
+}
+
+.product-colors {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    margin: 6px 0 2px;
+}
+
+.product-colors .color-dot {
+    width: 14px;
+    height: 14px;
+}
+
+.product-color {
+    display: inline-flex;
+}
+
+.product-color-more {
+    font-size: 12px;
+    color: #6b6f78;
+}
+
+
+/* ================= Ô CHỌN TỈNH / PHƯỜNG (js/core/vn-address.js) ================= */
+
+.vn-combo {
+    position: relative;
+}
+
+.vn-combo input:disabled {
+    background: var(--gray-100);
+    cursor: not-allowed;
+}
+
+.vn-combo-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+
+    max-height: 240px;
+    margin: 0;
+    padding: 4px;
+    overflow-y: auto;
+
+    list-style: none;
+
+    background: var(--color-paper);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+}
+
+.vn-combo-list li {
+    padding: 8px 10px;
+
+    border-radius: var(--radius-sm);
+
+    font-size: 13px;
+    font-weight: 400;
+
+    cursor: pointer;
+}
+
+.vn-combo-list li[role="option"]:hover,
+.vn-combo-list li.is-active {
+    background: var(--color-accent-soft);
+}
+
+.vn-combo-list .vn-combo-empty {
+    color: #6b6f78;
+    cursor: default;
+}
+
+.vn-address-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+@media (max-width: 560px) {
+    .vn-address-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* Kế hoạch v5 GĐ10: nhãn "Combo −Xđ" dưới món mua kèm được giảm (giỏ, thanh toán, chi tiết đơn) */
+.combo-tag {
+    display: inline-block;
+
+    margin-top: 4px;
+    padding: 2px 8px;
+
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+
+    color: var(--color-success, #15803d);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-success, #15803d) 12%, transparent);
 }

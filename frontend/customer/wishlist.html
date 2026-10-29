@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Sản phẩm yêu thích - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/account.css">
+    <link rel="stylesheet" href="../css/customer/wishlist.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body data-account-page="wishlist">
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+    <section class="page-hero account-hero-bar">
+
+        <div class="container">
+
+            <nav class="breadcrumb" aria-label="Đường dẫn">
+                <a href="../index.html">Trang chủ</a>
+                <span aria-hidden="true">/</span>
+                <a href="account.html">Tài khoản</a>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">Yêu thích</span>
+            </nav>
+
+            <h1>Sản phẩm yêu thích</h1>
+
+        </div>
+
+    </section>
+
+
+    <section class="section account-section">
+
+        <div class="container account-layout">
+
+            <div id="accountSidebarRoot"></div>
+
+
+            <div class="account-main">
+
+                <p class="wishlist-note">POY gửi email cho bạn khi sản phẩm trong danh sách này giảm giá.</p>
+
+                <div id="wishLoading" class="wish-grid" aria-busy="true" aria-label="Đang tải">
+                    <div class="skeleton-block"></div>
+                    <div class="skeleton-block"></div>
+                    <div class="skeleton-block"></div>
+                </div>
+
+                <div id="wishError" class="state-box" hidden>
+                    <p>Không tải được danh sách yêu thích. Vui lòng thử lại.</p>
+                    <button type="button" class="btn btn-dark" id="wishRetry">THỬ LẠI</button>
+                </div>
+
+                <div id="wishEmpty" class="state-box empty-state" hidden>
+                    <h3>Bạn chưa lưu sản phẩm nào</h3>
+                    <p>Bấm biểu tượng trái tim trên thẻ sản phẩm để lưu lại và nhận thông báo khi giảm giá.</p>
+                    <a href="products.html" class="btn btn-dark">XEM SẢN PHẨM</a>
+                </div>
+
+                <div id="wishGrid" class="wish-grid" hidden></div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/account-sidebar.js"></script>
+<script src="../js/customer/wishlist.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
+
+</body>
+
+</html>

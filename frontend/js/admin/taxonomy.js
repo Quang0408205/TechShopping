@@ -97,6 +97,48 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     form.addEventListener("submit", save);
 
+    /* Chỉ trang Danh mục có nút tải ảnh: dùng chung chỗ lưu ảnh sản phẩm, điền link vào ô ảnh */
+    const imageFile = document.getElementById("taxImageFile");
+
+    if (imageFile) {
+
+        field("taxImage").addEventListener("input", showImagePreview);
+
+        imageFile.addEventListener("change", async function () {
+
+            const file = imageFile.files[0];
+
+            imageFile.value = "";
+
+            if (!file) {
+                return;
+            }
+
+            const formData = new FormData();
+
+            formData.append("file", file);
+
+            try {
+
+                const uploaded = await apiRequest("/admin/uploads/product-images", { method: "POST", body: formData, auth: true });
+
+                field("taxImage").value = uploaded.url;
+
+                showImagePreview();
+
+            } catch (error) {
+
+                handleError(error, function (message) {
+                    formError.textContent = message;
+                    formError.hidden = false;
+                });
+
+            }
+
+        });
+
+    }
+
 
     tbody.addEventListener("click", function (event) {
 
@@ -364,6 +406,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         field("taxDescription").value = item ? item.description || "" : "";
         field("taxActive").checked = item ? item.isActive !== false : true;
 
+        showImagePreview();
+
         if (config.hasParent) {
             fillParentOptions(item);
             field("taxOrder").value = item && item.displayOrder != null ? item.displayOrder : "";
@@ -376,6 +420,25 @@ document.addEventListener("DOMContentLoaded", async function () {
         formPanel.scrollIntoView({ behavior: "smooth", block: "start" });
 
         field("taxName").focus({ preventScroll: true });
+
+    }
+
+
+    function showImagePreview() {
+
+        const preview = document.getElementById("taxImagePreview");
+
+        if (!preview) {
+            return;
+        }
+
+        const url = field("taxImage").value.trim();
+
+        preview.hidden = !isSafeHttpUrl(url);
+
+        if (!preview.hidden) {
+            preview.src = url;
+        }
 
     }
 

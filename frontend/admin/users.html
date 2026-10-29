@@ -62,9 +62,83 @@
                     <option value="false">Đã khoá</option>
                 </select>
 
+                <div class="admin-quick-dates" id="userQuickDates" role="group" aria-label="Khoảng ngày tạo tài khoản">
+                    <button type="button" data-range="today">Hôm nay</button>
+                    <button type="button" data-range="7d">7 ngày</button>
+                    <button type="button" data-range="month">Tháng này</button>
+                    <button type="button" data-range="all">Mọi ngày</button>
+                </div>
+
+                <label class="admin-date-filter">
+                    Tạo từ
+                    <input type="date" id="userFromDate" aria-label="Tạo từ ngày">
+                </label>
+
+                <label class="admin-date-filter">
+                    đến
+                    <input type="date" id="userToDate" aria-label="Tạo đến ngày">
+                </label>
+
+                <select id="userSort" aria-label="Sắp xếp">
+                    <option value="createdAt,desc">Mới tạo trước</option>
+                    <option value="createdAt,asc">Tạo lâu nhất trước</option>
+                </select>
+
                 <button type="submit" class="btn btn-dark">TÌM</button>
 
             </form>
+
+            <p id="userFilterError" class="form-error" role="alert" hidden></p>
+
+
+            <!-- Tạo tài khoản quản trị viên (chỉ ADMIN, tab Nội bộ); nhân viên / quản lý vẫn tuyển ở trang Nhân viên -->
+            <section class="admin-panel" id="adminCreatePanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Tạo quản trị viên</h2>
+                </div>
+
+                <form id="adminCreateForm" novalidate>
+
+                    <p id="adminCreateError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="newAdminFullname">Họ tên *</label>
+                            <input type="text" id="newAdminFullname" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newAdminEmail">Email *</label>
+                            <input type="email" id="newAdminEmail" maxlength="120" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newAdminUsername">Tên đăng nhập *</label>
+                            <input type="text" id="newAdminUsername" minlength="3" maxlength="50" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="newAdminPhone">Số điện thoại</label>
+                            <input type="tel" id="newAdminPhone" maxlength="20" autocomplete="off">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label>Mật khẩu tạm</label>
+                            <p class="admin-field-hint">Hệ thống tạo mật khẩu ngẫu nhiên và chỉ hiện một lần sau khi tạo. Người đó phải đổi mật khẩu ở lần đăng nhập đầu, quá 7 ngày chưa đổi thì mật khẩu hết hạn. Quản trị viên có toàn quyền hệ thống: chỉ tạo cho người thật sự cần.</p>
+                        </div>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="adminCreateSaveBtn">TẠO QUẢN TRỊ VIÊN</button>
+                        <button type="button" class="btn btn-outline-dark" id="adminCreateCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
 
 
             <!-- Phân quyền một tài khoản (mở từ nút "Phân quyền" trong bảng) -->
@@ -107,6 +181,7 @@
                 <div class="admin-panel-header">
                     <h2>Tài khoản</h2>
                     <span class="admin-row-count" id="userRowCount"></span>
+                    <button type="button" class="btn btn-dark" id="adminCreateBtn" hidden>+ TẠO QUẢN TRỊ VIÊN</button>
                 </div>
 
                 <div class="admin-table-wrapper">

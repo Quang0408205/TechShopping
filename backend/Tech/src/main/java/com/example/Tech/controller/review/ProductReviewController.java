@@ -7,6 +7,7 @@ import com.example.Tech.dto.response.review.ReviewResponse;
 import com.example.Tech.dto.response.review.ReviewSummaryResponse;
 import com.example.Tech.service.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -15,6 +16,8 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,8 +42,11 @@ public class ProductReviewController {
     public ResponseEntity<ApiResult<PageResponse<ReviewResponse>>> list(
             @PathVariable Long productId,
             @Valid @ParameterObject ReviewSearchRequest filter,
-            @ParameterObject @PageableDefault(size = 10) Pageable pageable) {
-        return ResponseEntity.ok(ApiResult.ok(reviewService.listForProduct(productId, filter, pageable)));
+            @ParameterObject @PageableDefault(size = 10) Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt) {
+        // a valid token (optional here) only fills likedByMe
+        Long viewerId = jwt == null ? null : Long.valueOf(jwt.getSubject());
+        return ResponseEntity.ok(ApiResult.ok(reviewService.listForProduct(productId, filter, pageable, viewerId)));
     }
 
     @GetMapping("/summary")

@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="css/customer-theme.css">
     <link rel="stylesheet" href="css/home.css">
+    <link rel="stylesheet" href="css/customer/catalog-extras.css">
 
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
@@ -19,6 +20,50 @@
 
 <body>
 
+<!-- Màn hình mở đầu (kế hoạch v6 B5): lần đầu mỗi phiên, ~2,5 giây; bỏ qua khi giảm chuyển động. Điều khiển ở js/home.js -->
+<script>
+    (function () {
+        try {
+            if (!sessionStorage.getItem("poy_intro_seen") && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                document.documentElement.classList.add("has-intro");
+                window.POY_INTRO_T0 = performance.now();
+                sessionStorage.setItem("poy_intro_seen", "1");
+            }
+        } catch (error) { /* trình duyệt chặn lưu trữ: không hiện */ }
+    })();
+</script>
+
+<div class="intro" id="intro" role="status" aria-label="Đang mở POY">
+    <div class="intro-curtain intro-curtain--top"></div>
+    <div class="intro-curtain intro-curtain--bottom"></div>
+    <div class="intro-stage">
+        <svg class="intro-mark" viewBox="0 0 360 120" aria-hidden="true">
+            <defs>
+                <linearGradient id="introGold" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#f1dcb2"/>
+                    <stop offset="0.45" stop-color="#c79a5b"/>
+                    <stop offset="1" stop-color="#8a5a22"/>
+                </linearGradient>
+                <linearGradient id="introShine" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+                    <stop offset="0.5" stop-color="#fff" stop-opacity="0.9"/>
+                    <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <clipPath id="introClip">
+                    <text x="180" y="98" text-anchor="middle" class="intro-word">POY</text>
+                </clipPath>
+            </defs>
+            <text x="180" y="98" text-anchor="middle" class="intro-word intro-word--fill">POY</text>
+            <text x="180" y="98" text-anchor="middle" class="intro-word intro-word--line">POY</text>
+            <g clip-path="url(#introClip)">
+                <rect class="intro-shine" x="-140" y="0" width="110" height="120" fill="url(#introShine)"/>
+            </g>
+        </svg>
+        <p class="intro-tag" aria-hidden="true"><span>ĐỈNH CAO CÔNG NGHỆ</span></p>
+    </div>
+    <button type="button" class="intro-skip" id="introSkip">Bỏ qua</button>
+</div>
+
 <!-- ================= HEADER ================= -->
 
 <div data-include="header" data-active="home"></div>
@@ -26,13 +71,15 @@
 
 <main>
 
-<!-- ================= 1. HERO (carousel: js/customer/ui-effects.js) ================= -->
+<!-- ================= 1. HERO TOÀN MÀN HÌNH (carousel: js/customer/ui-effects.js, dịch theo chuột: js/home.js) ================= -->
 
 <section class="hero" aria-roledescription="carousel" aria-label="Sản phẩm nổi bật">
 
     <div class="hero-track">
 
         <article class="hero-slide is-active" aria-roledescription="slide" aria-label="1 / 3">
+
+            <span class="hero-word" aria-hidden="true">IPHONE</span>
 
             <div class="container hero-slide-inner">
 
@@ -64,6 +111,8 @@
 
         <article class="hero-slide" aria-roledescription="slide" aria-label="2 / 3" aria-hidden="true">
 
+            <span class="hero-word" aria-hidden="true">MACBOOK</span>
+
             <div class="container hero-slide-inner">
 
                 <div class="hero-text">
@@ -93,6 +142,8 @@
 
 
         <article class="hero-slide" aria-roledescription="slide" aria-label="3 / 3" aria-hidden="true">
+
+            <span class="hero-word" aria-hidden="true">AIRPODS</span>
 
             <div class="container hero-slide-inner">
 
@@ -126,26 +177,339 @@
 
     <div class="container hero-controls">
 
-        <button type="button" class="hero-arrow" data-hero-prev aria-label="Slide trước">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+        <div class="hero-count" aria-hidden="true"><b data-hero-current>01</b><span>/ 03</span></div>
 
         <div class="hero-dots">
-            <button type="button" data-hero-dot="0" aria-label="Xem slide 1" aria-current="true"></button>
-            <button type="button" data-hero-dot="1" aria-label="Xem slide 2"></button>
-            <button type="button" data-hero-dot="2" aria-label="Xem slide 3"></button>
+            <button type="button" data-hero-dot="0" aria-label="Xem slide 1" aria-current="true"><i></i></button>
+            <button type="button" data-hero-dot="1" aria-label="Xem slide 2"><i></i></button>
+            <button type="button" data-hero-dot="2" aria-label="Xem slide 3"><i></i></button>
         </div>
 
-        <button type="button" class="hero-arrow" data-hero-next aria-label="Slide sau">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
+        <div class="hero-arrows">
+            <button type="button" class="hero-arrow" data-hero-prev aria-label="Slide trước">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="hero-arrow" data-hero-next aria-label="Slide sau">
+                <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+        </div>
+
+    </div>
+
+    <a class="hero-scroll" href="#brandMarquee" aria-label="Cuộn xuống"><span></span></a>
+
+</section>
+
+
+<!-- ================= 2. DẢI THƯƠNG HIỆU CHẠY NGANG (js/home.js, GET /brands; lỗi → ẩn) ================= -->
+
+<section class="brand-marquee" id="brandMarquee" aria-label="Thương hiệu" hidden>
+    <div class="brand-marquee-track" id="brandMarqueeTrack"></div>
+</section>
+
+
+<!-- ================= 3. SẢN PHẨM ĐÃ XEM (js/home.js, localStorage; ẩn khi chưa xem gì) ================= -->
+
+<section class="section recent-viewed" id="recentViewed" aria-label="Sản phẩm đã xem" hidden>
+
+    <div class="container">
+
+        <div class="section-heading section-heading--row">
+
+            <div>
+                <span class="section-label">GẦN ĐÂY</span>
+                <h2>Sản phẩm đã xem</h2>
+            </div>
+
+            <button type="button" class="recent-clear" id="recentClear">Xóa lịch sử</button>
+
+        </div>
+
+        <div class="recent-list" id="recentList"></div>
 
     </div>
 
 </section>
 
 
-<!-- ================= 2. LỢI ÍCH ================= -->
+<!-- ================= 3. FLASH SALE (js/home.js, GET /promotions/flash-sale; ẩn khi không có khuyến mãi đang chạy) ================= -->
+
+<section class="section flash-sale" id="flashSale" aria-label="Flash sale" hidden>
+
+    <div class="container flash-layout">
+
+        <div class="flash-intro">
+
+            <div class="section-heading">
+                <span class="section-label">ƯU ĐÃI GIỚI HẠN</span>
+                <h2>Flash sale</h2>
+                <p>Giá ưu đãi đang chạy, kết thúc khi đồng hồ về 0.</p>
+            </div>
+
+            <div class="flash-timer">
+                <span>Kết thúc sau</span>
+                <div class="countdown" id="flashCountdown" role="timer" aria-label="Thời gian còn lại của flash sale">
+                    <span><b data-unit="d">0</b>ngày</span>
+                    <span><b data-unit="h">00</b>giờ</span>
+                    <span><b data-unit="m">00</b>phút</span>
+                    <span><b data-unit="s">00</b>giây</span>
+                </div>
+            </div>
+
+            <div class="flash-nav">
+                <button type="button" class="flash-nav-btn" data-flash-step="-1" aria-label="Sản phẩm trước">←</button>
+                <button type="button" class="flash-nav-btn" data-flash-step="1" aria-label="Sản phẩm sau">→</button>
+            </div>
+
+        </div>
+
+        <div class="flash-track" id="flashSaleGrid"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 4. DANH MỤC DẠNG BENTO (js/home.js; số sản phẩm: GET /categories/product-counts) ================= -->
+
+<section class="categories section">
+
+    <div class="container">
+
+        <div class="section-heading section-heading--row">
+
+            <div>
+                <span class="section-label">DANH MỤC</span>
+                <h2>Mua sắm theo danh mục</h2>
+            </div>
+
+            <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
+
+        </div>
+
+
+        <!-- js/home.js: một thẻ cho mỗi danh mục đang hiển thị; ảnh = ảnh ADMIN tải lên ở trang Danh mục (không có thì biểu tượng) -->
+        <div class="category-grid" aria-busy="true">
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 4b. MUA THEO NHU CẦU (js/home.js; số sản phẩm thật từ GET /categories/{id}/filters; lỗi → ẩn) ================= -->
+
+<section class="needs section" id="homeNeeds" aria-label="Mua theo nhu cầu" hidden>
+
+    <div class="container">
+
+        <div class="section-heading">
+            <span class="section-label">NHU CẦU</span>
+            <h2>Mua theo nhu cầu của bạn</h2>
+        </div>
+
+        <div class="needs-grid" id="needsGrid"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 5. TRƯNG BÀY: DẢI CUỘN NGANG (nút ← →, kéo chuột, vuốt; js/home.js) ================= -->
+
+<section class="showcase" id="showcase" aria-label="Tâm điểm công nghệ" hidden>
+
+    <div class="showcase-sticky">
+
+        <div class="container showcase-head">
+
+            <div class="section-heading">
+                <span class="section-label">TRƯNG BÀY</span>
+                <h2>Tâm điểm công nghệ</h2>
+                <p>Những sản phẩm được khách xem nhiều nhất tại POY.</p>
+            </div>
+
+            <div class="showcase-tools">
+                <div class="showcase-progress" aria-hidden="true"><i id="showcaseProgress"></i></div>
+                <button type="button" class="showcase-nav" data-showcase-step="-1" aria-label="Sản phẩm trước">←</button>
+                <button type="button" class="showcase-nav" data-showcase-step="1" aria-label="Sản phẩm sau">→</button>
+            </div>
+
+        </div>
+
+        <div class="showcase-viewport">
+            <div class="showcase-track" id="showcaseTrack"></div>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 6. SẢN PHẨM NỔI BẬT (tab: js/home.js) ================= -->
+
+<section class="products-preview section">
+
+    <div class="container">
+
+        <div class="section-heading section-heading--row">
+
+            <div>
+                <span class="section-label">SẢN PHẨM</span>
+                <h2>Lựa chọn hàng đầu</h2>
+            </div>
+
+            <div class="home-tabs" role="tablist" aria-label="Lọc sản phẩm">
+                <button type="button" role="tab" class="home-tab" data-home-sort="id,asc" aria-selected="true" aria-controls="featuredProductGrid">Nổi bật</button>
+                <button type="button" role="tab" class="home-tab" data-home-sort="id,desc" aria-selected="false" aria-controls="featuredProductGrid">Mới về</button>
+                <button type="button" role="tab" class="home-tab" data-home-sort="basePrice,asc" aria-selected="false" aria-controls="featuredProductGrid">Giá tốt</button>
+            </div>
+
+        </div>
+
+
+        <div class="product-grid" id="featuredProductGrid" role="tabpanel" aria-live="polite">
+
+            <!-- js/home.js: 4 sản phẩm từ GET /api/v1/products theo tab đang chọn -->
+
+        </div>
+
+
+        <div class="view-all">
+
+            <a href="customer/products.html" class="btn btn-dark">
+                Xem tất cả sản phẩm
+            </a>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 7. COMBO NỔI BẬT (js/home.js, GET /combos/featured; ẩn khi không có combo đang chạy) ================= -->
+
+<section class="section featured-combos" id="featuredCombos" aria-label="Combo nổi bật" hidden>
+
+    <div class="container">
+
+        <div class="section-heading">
+            <span class="section-label">MUA KÈM TIẾT KIỆM</span>
+            <h2>Combo nổi bật</h2>
+            <p>Mua sản phẩm chính cùng phụ kiện đi kèm, giá giảm tự động trong giỏ hàng.</p>
+        </div>
+
+        <div class="combo-grid" id="comboGrid"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 8. SỐ LIỆU ĐẾM TĂNG (js/home.js, số thật từ API; mục nào lỗi thì ẩn) ================= -->
+
+<section class="stats" id="homeStats" aria-label="POY qua những con số" hidden>
+
+    <div class="container stats-grid">
+
+        <div class="stat" data-stat="products" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7l9-4 9 4-9 4Z"/><path d="M3 7v10l9 4 9-4V7M12 11v10"/></svg><b data-count>0</b><span>sản phẩm đang bán</span></div>
+        <div class="stat" data-stat="brands" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9Z"/></svg><b data-count>0</b><span>thương hiệu chính hãng</span></div>
+        <div class="stat" data-stat="stores" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.800 12 21 12 21Z"/><circle cx="12" cy="9.500" r="2.500"/></svg><b data-count>0</b><span>chi nhánh nhận hàng</span></div>
+        <div class="stat" data-stat="categories" hidden><svg class="stat-icon" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><b data-count>0</b><span>danh mục sản phẩm</span></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 9. BANNER ĐÔI ================= -->
+
+<section class="promo-banners">
+
+    <div class="container promo-grid">
+
+        <a href="customer/products.html?category=laptop" class="promo-card promo-card--warm">
+
+            <div class="promo-text">
+                <span class="promo-label">Trả góp 0%</span>
+                <h3>Lãi suất 0%, không cần trả trước</h3>
+                <p>Kỳ hạn 3, 6, 9 hoặc 12 tháng cho đơn từ 3.000.000đ.</p>
+                <span class="promo-link">Chọn laptop</span>
+            </div>
+
+            <img src="assets/images/banner-macbook-pro.webp" alt="" width="600" height="383" loading="lazy">
+
+        </a>
+
+        <!-- Lối tắt tới Flash sale (js/home.js): có khuyến mãi thật thì hiện số sản phẩm đang giảm, không thì chữ tĩnh -->
+        <a href="customer/products.html" class="promo-card promo-card--dark" id="promoFlash">
+
+            <div class="promo-text">
+                <span class="promo-label">Ưu đãi</span>
+                <h3 id="promoFlashTitle">Giá tốt cập nhật mỗi tuần</h3>
+                <p id="promoFlashText">Theo dõi các chương trình khuyến mãi đang chạy tại POY.</p>
+                <span class="promo-link" id="promoFlashLink">Xem sản phẩm</span>
+            </div>
+
+            <img src="assets/images/hero-airpods-max.webp" alt="" width="438" height="479" loading="lazy">
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 10. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
+
+<section class="section recommendation-preview">
+
+    <div class="container">
+
+        <div class="section-heading section-heading--row">
+
+            <div>
+                <span class="section-label">DÀNH RIÊNG CHO BẠN</span>
+                <h2>Gợi ý dành cho bạn</h2>
+                <p>Những sản phẩm mới nhất tại POY, được chọn cho bạn.</p>
+            </div>
+
+            <a href="customer/recommendation.html" class="link-arrow">Xem tất cả gợi ý</a>
+
+        </div>
+
+
+        <div class="product-grid" id="personalRecommendationGrid">
+
+            <!-- js/home.js: 4 sản phẩm mới nhất từ GET /api/v1/products -->
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 11. ĐÁNH GIÁ THẬT (js/home.js, GET /reviews/highlights; ẩn khi chưa có) ================= -->
+
+<section class="reviews section" id="homeReviews" aria-label="Khách hàng nói gì" hidden>
+
+    <div class="container">
+
+        <div class="section-heading">
+            <span class="section-label">KHÁCH HÀNG NÓI GÌ</span>
+            <h2>Mua sắm yên tâm tại POY</h2>
+        </div>
+
+        <div class="review-grid" id="homeReviewGrid"></div>
+
+    </div>
+
+</section>
+
+
+<!-- ================= 12. LỢI ÍCH + DỊCH VỤ ================= -->
 
 <section class="benefits">
 
@@ -195,249 +559,6 @@
 
 </section>
 
-
-<!-- ================= 3. DANH MỤC (bento) ================= -->
-
-<section class="categories section">
-
-    <div class="container">
-
-        <div class="section-heading section-heading--row">
-
-            <div>
-                <span class="section-label">DANH MỤC</span>
-                <h2>Mua sắm theo danh mục</h2>
-            </div>
-
-            <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
-
-        </div>
-
-
-        <div class="category-grid">
-
-            <a href="customer/products.html?category=phone" class="category-card category-card--large">
-                <div class="category-text">
-                    <h3>Điện thoại</h3>
-                    <p>iPhone, Samsung Galaxy, Xiaomi, OPPO</p>
-                    <span class="category-more">Khám phá</span>
-                </div>
-                <img src="assets/images/category-phone.webp" alt="" width="503" height="600" loading="lazy">
-            </a>
-
-            <a href="customer/products.html?category=laptop" class="category-card category-card--wide">
-                <div class="category-text">
-                    <h3>Laptop</h3>
-                    <p>MacBook, Asus, Dell, Lenovo, HP</p>
-                    <span class="category-more">Khám phá</span>
-                </div>
-                <img src="assets/images/category-laptop.webp" alt="" width="600" height="378" loading="lazy">
-            </a>
-
-            <a href="customer/products.html?category=tablet" class="category-card">
-                <div class="category-text">
-                    <h3>Máy tính bảng</h3>
-                    <span class="category-more">Khám phá</span>
-                </div>
-                <img src="assets/images/category-tablet.webp" alt="" width="545" height="600" loading="lazy">
-            </a>
-
-            <a href="customer/products.html?category=accessory" class="category-card">
-                <div class="category-text">
-                    <h3>Phụ kiện</h3>
-                    <span class="category-more">Khám phá</span>
-                </div>
-                <img src="assets/images/category-accessory.webp" alt="" width="329" height="474" loading="lazy">
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 4. THƯƠNG HIỆU ================= -->
-<!-- MOCK: chưa có API thương hiệu nổi bật; link tìm theo tên hãng -->
-
-<section class="brands" aria-label="Thương hiệu">
-
-    <div class="container brands-row">
-
-        <span class="brands-label">Thương hiệu</span>
-
-        <div class="brands-list">
-            <a href="customer/products.html?search=Apple">Apple</a>
-            <a href="customer/products.html?search=Samsung">Samsung</a>
-            <a href="customer/products.html?search=Xiaomi">Xiaomi</a>
-            <a href="customer/products.html?search=OPPO">OPPO</a>
-            <a href="customer/products.html?search=Asus">Asus</a>
-            <a href="customer/products.html?search=Dell">Dell</a>
-            <a href="customer/products.html?search=Lenovo">Lenovo</a>
-            <a href="customer/products.html?search=HP">HP</a>
-            <a href="customer/products.html?search=Acer">Acer</a>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 5. SẢN PHẨM NỔI BẬT (tab: js/home.js) ================= -->
-
-<section class="products-preview section">
-
-    <div class="container">
-
-        <div class="section-heading section-heading--row">
-
-            <div>
-                <span class="section-label">SẢN PHẨM</span>
-                <h2>Lựa chọn hàng đầu</h2>
-            </div>
-
-            <div class="home-tabs" role="tablist" aria-label="Lọc sản phẩm">
-                <button type="button" role="tab" class="home-tab" data-home-sort="id,asc" aria-selected="true" aria-controls="featuredProductGrid">Nổi bật</button>
-                <button type="button" role="tab" class="home-tab" data-home-sort="id,desc" aria-selected="false" aria-controls="featuredProductGrid">Mới về</button>
-                <button type="button" role="tab" class="home-tab" data-home-sort="basePrice,asc" aria-selected="false" aria-controls="featuredProductGrid">Giá tốt</button>
-            </div>
-
-        </div>
-
-
-        <div class="product-grid" id="featuredProductGrid" role="tabpanel" aria-live="polite">
-
-            <!-- js/home.js: 4 sản phẩm từ GET /api/v1/products theo tab đang chọn -->
-
-        </div>
-
-
-        <div class="view-all">
-
-            <a href="customer/products.html" class="btn btn-dark">
-                Xem tất cả sản phẩm
-            </a>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 6. BANNER ĐÔI ================= -->
-
-<section class="promo-banners">
-
-    <div class="container promo-grid">
-
-        <a href="customer/products.html?category=laptop" class="promo-card promo-card--warm">
-
-            <div class="promo-text">
-                <span class="promo-label">Trả góp 0%</span>
-                <h3>Lãi suất 0%, không cần trả trước</h3>
-                <p>Kỳ hạn 3, 6, 9 hoặc 12 tháng cho đơn từ 3.000.000đ.</p>
-                <span class="promo-link">Chọn laptop</span>
-            </div>
-
-            <img src="assets/images/banner-macbook-pro.webp" alt="" width="600" height="383" loading="lazy">
-
-        </a>
-
-        <!-- MOCK: chưa có API chương trình ưu đãi; đếm ngược tới cuối tuần (js/customer/ui-effects.js) -->
-        <a href="customer/products.html" class="promo-card promo-card--dark">
-
-            <div class="promo-text">
-                <span class="promo-label">Ưu đãi tuần này</span>
-                <h3>Giá tốt cập nhật mỗi tuần</h3>
-                <div class="countdown" data-countdown-week aria-label="Thời gian còn lại của tuần ưu đãi">
-                    <span><b data-unit="d">0</b>ngày</span>
-                    <span><b data-unit="h">00</b>giờ</span>
-                    <span><b data-unit="m">00</b>phút</span>
-                    <span><b data-unit="s">00</b>giây</span>
-                </div>
-                <span class="promo-link">Xem sản phẩm</span>
-            </div>
-
-            <img src="assets/images/hero-airpods-max.webp" alt="" width="438" height="479" loading="lazy">
-
-        </a>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 7. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
-
-<section class="section recommendation-preview">
-
-    <div class="container">
-
-        <div class="section-heading section-heading--row">
-
-            <div>
-                <span class="section-label">DÀNH RIÊNG CHO BẠN</span>
-                <h2>Gợi ý dành cho bạn</h2>
-                <p>Những sản phẩm mới nhất tại POY, được chọn cho bạn.</p>
-            </div>
-
-            <a href="customer/recommendation.html" class="link-arrow">Xem tất cả gợi ý</a>
-
-        </div>
-
-
-        <div class="product-grid" id="personalRecommendationGrid">
-
-            <!-- js/home.js: 4 sản phẩm mới nhất từ GET /api/v1/products (gợi ý cá nhân hoá thật ở Phase 8) -->
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 8. ĐÁNH GIÁ ================= -->
-<!-- MOCK: chưa có API đánh giá cửa hàng; thay bằng dữ liệu thật trước khi đưa lên mạng -->
-
-<section class="reviews section">
-
-    <div class="container">
-
-        <div class="section-heading">
-            <span class="section-label">KHÁCH HÀNG NÓI GÌ</span>
-            <h2>Mua sắm yên tâm tại POY</h2>
-        </div>
-
-        <div class="review-grid">
-
-            <figure class="review-card">
-                <div class="review-stars" role="img" aria-label="5 trên 5 sao">★★★★★</div>
-                <blockquote>Đặt trả góp MacBook, nhân viên gọi xác nhận trong ngày, nhận máy ở cửa hàng gần nhà rất tiện.</blockquote>
-                <figcaption><strong>Minh Anh</strong><span>TP. Hồ Chí Minh · MacBook Air</span></figcaption>
-            </figure>
-
-            <figure class="review-card">
-                <div class="review-stars" role="img" aria-label="5 trên 5 sao">★★★★★</div>
-                <blockquote>Tai nghe bị lỗi một bên, gửi yêu cầu bảo hành ngay trên đơn hàng và được xử lý nhanh.</blockquote>
-                <figcaption><strong>Quốc Bảo</strong><span>Hà Nội · Tai nghe</span></figcaption>
-            </figure>
-
-            <figure class="review-card">
-                <div class="review-stars" role="img" aria-label="4 trên 5 sao">★★★★<span aria-hidden="true">★</span></div>
-                <blockquote>Phần gợi ý sản phẩm giúp mình chọn được chiếc điện thoại vừa ngân sách, giao hàng đúng hẹn.</blockquote>
-                <figcaption><strong>Thu Hà</strong><span>Đà Nẵng · Điện thoại</span></figcaption>
-            </figure>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 9. DỊCH VỤ ================= -->
 
 <section class="services-preview section">
 
@@ -516,7 +637,9 @@
 <script src="js/core/layout.js"></script>
 <script src="js/core/main.js"></script>
 <script src="js/home.js"></script>
+<script src="js/customer/catalog-extras.js"></script>
 <script src="js/customer/chatbot.js"></script>
+<script src="js/customer/compare-wishlist.js"></script>
 <script src="js/customer/ui-effects.js"></script>
 
 </body>

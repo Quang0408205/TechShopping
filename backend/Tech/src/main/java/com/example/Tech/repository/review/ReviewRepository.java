@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,11 +21,15 @@ public interface ReviewRepository extends JpaRepository<Review, Long>, JpaSpecif
     @EntityGraph(attributePaths = {"user", "product", "hiddenBy"})
     Page<Review> findAll(Specification<Review> spec, Pageable pageable);
 
-    Optional<Review> findByUser_IdAndProduct_Id(Long userId, Long productId);
-
-    boolean existsByUser_IdAndProduct_Id(Long userId, Long productId);
+    /** An account may review a product many times; this only spaces reviews out (ReviewServiceImpl.create). */
+    boolean existsByUser_IdAndCreatedAtAfter(Long userId, LocalDateTime after);
 
     List<Review> findAllByProduct_IdAndHiddenFalseOrderByCreatedAtDesc(Long productId);
+
+    /** Home page: newest visible reviews with at least {@code minRating} stars of products still on sale. */
+    @Query("select r from Review r join fetch r.user join fetch r.product p where r.hidden = false "
+            + "and r.rating >= :minRating and p.deletedAt is null and p.active = true order by r.createdAt desc, r.id desc")
+    List<Review> findHighlights(@Param("minRating") short minRating, Pageable pageable);
 
     /** The caller's own review (any visibility) with its product; another account's id behaves as missing. */
     @EntityGraph(attributePaths = {"user", "product"})

@@ -56,9 +56,35 @@
 
             <div class="account-main">
 
-                <p id="justPlacedBanner" class="form-success" hidden>
-                    Đặt hàng thành công! Đơn hàng của bạn đang được xử lý.
-                </p>
+                <!-- Vừa đặt xong (?justPlaced=1; chỉ đơn không chờ thanh toán trực tuyến): lời cảm ơn + các bước tiếp theo -->
+                <section id="justPlacedBanner" class="placed-hero" role="status" hidden>
+
+                    <span class="placed-confetti" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+                    </span>
+
+                    <svg class="placed-check" viewBox="0 0 52 52" width="64" height="64" aria-hidden="true">
+                        <circle class="placed-check-ring" cx="26" cy="26" r="24" fill="none" stroke-width="3"/>
+                        <path class="placed-check-tick" d="M15 27l8 8 15-17" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+
+                    <h2>Đặt hàng thành công!</h2>
+
+                    <p class="placed-lead">Cảm ơn bạn đã mua sắm tại POY. Đơn hàng của bạn đang được xử lý, chúng tôi đã gửi email xác nhận tới hộp thư của bạn.</p>
+
+                    <ol class="placed-steps" aria-label="Các bước tiếp theo">
+                        <li class="is-done"><span aria-hidden="true">✓</span>Đặt hàng</li>
+                        <li class="is-current"><span aria-hidden="true">2</span>Xác nhận đơn</li>
+                        <li><span aria-hidden="true">3</span>Giao hàng</li>
+                        <li><span aria-hidden="true">4</span>Hoàn tất</li>
+                    </ol>
+
+                    <div class="placed-actions">
+                        <a href="products.html" class="btn btn-dark">TIẾP TỤC MUA SẮM</a>
+                        <a href="orders.html" class="btn btn-outline-dark">XEM ĐƠN CỦA TÔI</a>
+                    </div>
+
+                </section>
 
                 <div id="orderNotFound" class="state-box empty-state" hidden>
                     <h3>Không tìm thấy đơn hàng</h3>
@@ -95,7 +121,10 @@
 
                         <div class="order-detail-main">
 
-                            <div class="order-detail-items" id="orderItemsList"></div>
+                            <div class="order-items-card">
+                                <h3 class="order-items-title">Sản phẩm <span id="orderItemCount"></span></h3>
+                                <div class="order-detail-items" id="orderItemsList"></div>
+                            </div>
 
                             <!-- Phase 5: hợp đồng trả góp + lịch các kỳ -->
                             <div class="order-installment" id="orderInstallmentBlock" hidden>
@@ -111,15 +140,12 @@
 
                         <div class="order-detail-side">
 
-                            <!-- Phase 5: chỉ khi đơn chuyển khoản đang chờ tiền -->
+                            <!-- Phase 5: chỉ khi đơn chuyển khoản / thẻ (kế hoạch v5 GĐ5) đang chờ tiền -->
                             <div class="order-detail-block order-transfer" id="orderTransferBlock" hidden>
-                                <h4>Thông tin chuyển khoản</h4>
-                                <img id="orderTransferQr" class="order-transfer-qr" alt="Mã QR chuyển khoản" hidden>
-                                <p id="orderTransferQrError" class="order-transfer-qr-error" hidden>
-                                    Không tải được mã QR, vui lòng chuyển khoản theo thông tin bên dưới.
-                                </p>
+                                <h4 id="orderTransferTitle">Chờ chuyển khoản</h4>
                                 <dl class="order-facts" id="orderTransferFacts"></dl>
                                 <p id="orderTransferDeadline" class="order-transfer-deadline"></p>
+                                <a id="orderTransferPayLink" href="payment.html" class="btn btn-dark order-transfer-pay">XEM MÃ QR VÀ THANH TOÁN</a>
                             </div>
 
                             <div class="order-detail-block">
@@ -152,6 +178,19 @@
                                     <span>Tạm tính</span>
                                     <strong id="orderSubtotal"></strong>
                                 </div>
+                                <div class="checkout-total-row checkout-total-voucher" id="orderComboRow" hidden>
+                                    <span>Giảm combo <small id="orderComboNames"></small></span>
+                                    <strong id="orderComboDiscount"></strong>
+                                </div>
+                                <div class="checkout-total-row checkout-total-voucher" id="orderVoucherRow" hidden>
+                                    <span>Voucher <span id="orderVoucherCode"></span></span>
+                                    <strong id="orderVoucherDiscount"></strong>
+                                </div>
+                                <!-- Kế hoạch v5 GĐ6: điểm đã dùng + điểm được cộng khi giao -->
+                                <div class="checkout-total-row checkout-total-voucher" id="orderPointsRow" hidden>
+                                    <span>Điểm tích luỹ (<span id="orderPointsUsed"></span> điểm)</span>
+                                    <strong id="orderPointsDiscount"></strong>
+                                </div>
                                 <div class="checkout-total-row">
                                     <span>Phí vận chuyển</span>
                                     <strong id="orderShippingFee"></strong>
@@ -160,6 +199,13 @@
                                     <span>Tổng cộng</span>
                                     <span id="orderTotal"></span>
                                 </div>
+                                <p class="order-points-earned" id="orderPointsEarned" hidden></p>
+                            </div>
+
+                            <!-- Kế hoạch v5 GĐ6: đơn đã giao / đã huỷ mua lại được -->
+                            <div class="order-detail-actions" id="orderBuyAgain" hidden>
+                                <button type="button" class="btn btn-dark" id="orderBuyAgainBtn">MUA LẠI</button>
+                                <p>Thêm các sản phẩm của đơn này vào giỏ với giá hiện tại.</p>
                             </div>
 
                             <!-- Chỉ hiện khi đơn còn "Chờ xác nhận" (cancellable) -->
@@ -197,6 +243,7 @@
 <script src="../js/customer/order-after-sales.js"></script>
 <script src="../js/customer/order-detail.js"></script>
 <script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
 <script src="../js/customer/ui-effects.js"></script>
 
 </body>

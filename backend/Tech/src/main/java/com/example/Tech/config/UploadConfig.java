@@ -14,7 +14,7 @@ import java.time.Duration;
  * File names are random and never reused, so browsers may cache them for a long time.
  */
 @Configuration
-@EnableConfigurationProperties(UploadProperties.class)
+@EnableConfigurationProperties({UploadProperties.class, CloudinaryProperties.class})
 @RequiredArgsConstructor
 public class UploadConfig implements WebMvcConfigurer {
 

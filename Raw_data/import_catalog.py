@@ -7,9 +7,8 @@ Lần chạy đầu trên database có catalogue seed cũ (877 sản phẩm, xem
   * sản phẩm cũ không còn trong CSV bị ẩn (is_active = false), không xoá;
   * thương hiệu bị tách ("iPhone (Apple)", "MacBook"...) được gộp về tên chuẩn, thương hiệu
     không còn sản phẩm đang bán bị ẩn.
-Điểm / số lượt đánh giá của TGDĐ ghi vào products.tgdd_rating / tgdd_review_count (chỉ để hiển thị);
-products.rating / total_reviews là đánh giá thật trên web, importer không đụng tới
-(cần migration database/migrations/product_tgdd_rating.sql với database cũ).
+Không nạp điểm / số lượt đánh giá của TGDĐ (bỏ từ kế hoạch v4, migration reviews_own_only.sql):
+products.rating / total_reviews là đánh giá thật trên web, importer không đụng tới.
 Mọi thứ chạy trong một transaction; --dry-run chạy hết rồi rollback để xem trước số liệu.
 """
 
@@ -31,6 +30,7 @@ import psycopg
 
 INPUT_FILE = Path(__file__).with_name("tgdd_products_cleaned.csv")
 LEGACY_FILE = Path(__file__).with_name("legacy_seed_products.csv")
+MERGE_FILE = Path(__file__).resolve().parent.parent / "database" / "migrations" / "merge_product_variants.sql"
 SKU_PREFIX = "TGDD-"
 LEGACY_SKU_PREFIX = "TGDD-OLD-"
 # Trang chủ TGDĐ: crawler gán nhầm cho vài dòng lỗi, không dùng làm khoá đối chiếu.
@@ -83,7 +83,7 @@ REQUIRED_COLUMNS = {
     "brands": {"brand_id", "name", "slug", "is_active"},
     "products": {
         "product_id", "name", "slug", "sku", "description", "brand_id", "category_id",
-        "base_price", "tgdd_rating", "tgdd_review_count", "is_active", "updated_at",
+        "base_price", "is_active", "updated_at",
     },
     "product_variants": {
         "variant_id", "product_id", "variant_name", "sku_variant", "price",
@@ -497,6 +497,8 @@ class Importer:
         price = int(price)
 
         sku = f"{SKU_PREFIX}{source_key}"[:50]
+        if self.update_merged_variant(sku, price, row):
+            return
         found, outcome = self.find_product(sku, url)
         category_id = upsert_category(cursor, category_name)
         brand_name = canonical_brand(row.get("brand"))
@@ -509,8 +511,6 @@ class Importer:
         if not brand_name:
             self.stats["brand_missing"] += 1
         brand_id = self.brands.resolve(brand_name)
-        rating = optional_number(row.get("rating"))
-        review_count = optional_number(row.get("review_count"), integer=True)
         description = nonempty(row.get("description")) or None
 
         if found:
@@ -521,24 +521,21 @@ class Importer:
                     name = %s, sku = %s,
                     description = COALESCE(%s, description),
                     brand_id = %s, category_id = %s, base_price = %s,
-                    tgdd_rating = COALESCE(%s, tgdd_rating),
-                    tgdd_review_count = COALESCE(%s, tgdd_review_count),
                     updated_at = current_timestamp
                 WHERE product_id = %s
                 """,
-                (name, sku, description, brand_id, category_id, price, rating, review_count, product_id),
+                (name, sku, description, brand_id, category_id, price, product_id),
             )
         else:
             cursor.execute(
                 """
                 INSERT INTO products
-                    (name, slug, sku, description, brand_id, category_id, base_price,
-                     tgdd_rating, tgdd_review_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, COALESCE(%s, 0))
+                    (name, slug, sku, description, brand_id, category_id, base_price)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING product_id
                 """,
                 (name, unique_slug(cursor, name, source_key), sku, description, brand_id,
-                 category_id, price, rating, review_count),
+                 category_id, price),
             )
             product_id = cursor.fetchone()[0]
         self.stats[outcome] += 1
@@ -550,15 +547,38 @@ class Importer:
         self.save_images(product_id, name, row)
         self.save_specifications(product_id, specifications)
 
+    def update_merged_variant(self, sku, price, row):
+        """Dòng CSV mà phiên bản đã được gộp vào sản phẩm khác (merge_product_variants.sql): chỉ cập nhật giá
+        phiên bản đó, không tạo lại sản phẩm phụ."""
+        cursor = self.cursor
+        cursor.execute(
+            """
+            SELECT v.variant_id FROM product_variants v JOIN products p ON p.product_id = v.product_id
+            WHERE v.sku_variant = %s AND p.sku IS DISTINCT FROM %s
+            """,
+            (f"{sku}-V1"[:50], sku),
+        )
+        merged = cursor.fetchone()
+        if not merged:
+            return False
+        cursor.execute(
+            "UPDATE product_variants SET price = %s, updated_at = current_timestamp WHERE variant_id = %s",
+            (price, merged[0]),
+        )
+        self.stats["merged_variant_updated"] += 1
+        return True
+
     def save_variant(self, product_id, category_id, sku, price, row, specifications):
         cursor = self.cursor
         color, storage, ram = variant_details(row, specifications)
         cursor.execute(
             """
             SELECT variant_id, color, storage, ram FROM product_variants
-            WHERE product_id = %s ORDER BY variant_id LIMIT 1
+            WHERE product_id = %s
+            -- sản phẩm đã gộp có nhiều phiên bản: đúng phiên bản của dòng này trước, không thì phiên bản đầu
+            ORDER BY (sku_variant = %s) DESC, variant_id LIMIT 1
             """,
-            (product_id,),
+            (product_id, f"{sku}-V1"[:50]),
         )
         existing = cursor.fetchone()
         if existing:
@@ -704,6 +724,22 @@ class Importer:
         return hidden
 
 
+def merge_variants(cursor):
+    """Chạy database/migrations/merge_product_variants.sql trong cùng transaction (nên --dry-run vẫn rollback được):
+    gộp các sản phẩm vừa nạp chỉ khác RAM / bộ nhớ ở cuối tên, bỏ phiên bản trùng."""
+    sql = MERGE_FILE.read_text(encoding="utf-8")
+    # bỏ begin / commit của file: importer tự quản lý transaction
+    sql = "\n".join(line for line in sql.splitlines() if line.strip().lower() not in ("begin;", "commit;"))
+    cursor.execute(sql)  # không có tham số → psycopg gửi cả file một lần (nhiều câu lệnh)
+    while cursor.nextset():
+        pass
+    row = cursor.fetchone() if cursor.description else None
+    if not row:
+        return "-"
+    names = [column.name for column in cursor.description]
+    return ", ".join(f"{name} = {value}" for name, value in zip(names, row))
+
+
 def main():
     # Console Windows mặc định không phải UTF-8: in tiếng Việt sẽ lỗi UnicodeEncodeError
     sys.stdout.reconfigure(encoding="utf-8")
@@ -729,6 +765,7 @@ def main():
             for row in rows:
                 importer.import_row(row)
             hidden_brands = importer.finish()
+            merge_summary = merge_variants(cursor)
         if args.dry_run:
             connection.rollback()
 
@@ -745,6 +782,8 @@ def main():
     print(f"  Ảnh thêm mới: {stats['images_added']}; sản phẩm ghi lại thông số: {stats['products_with_specs']}")
     print(f"  Thương hiệu bị ẩn vì không còn sản phẩm đang bán ({stats['brands_hidden']}): "
           f"{', '.join(hidden_brands) or '-'}")
+    print(f"  Phiên bản đã gộp trước đó, chỉ cập nhật giá: {stats['merged_variant_updated']}")
+    print(f"  Gộp phiên bản (merge_product_variants.sql): {merge_summary}")
 
 
 if __name__ == "__main__":

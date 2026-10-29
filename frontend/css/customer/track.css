@@ -1,0 +1,214 @@
+/* Trang theo dõi đơn hàng công khai (link trong email) */
+
+.track-container {
+    max-width: 760px;
+}
+
+.track-card {
+    background: var(--color-paper);
+    border: 1px solid var(--gray-200);
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 8px 30px rgba(17, 19, 24, 0.06);
+}
+
+.track-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 28px;
+}
+
+.track-label {
+    display: block;
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.track-head h2 {
+    margin: 2px 0;
+    font-size: 26px;
+    letter-spacing: 1px;
+}
+
+.track-date {
+    font-size: 13px;
+    color: var(--gray-600);
+}
+
+.track-status {
+    padding: 7px 16px;
+    border-radius: 999px;
+    background: var(--gray-100);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.track-status[data-status="DELIVERED"] {
+    background: #e7f6ec;
+    color: #1b7a3a;
+}
+
+.track-status[data-status="CANCELLED"] {
+    background: #fdecec;
+    color: #b42318;
+}
+
+.track-steps {
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.track-steps li {
+    position: relative;
+    text-align: center;
+    padding-top: 30px;
+    color: var(--gray-500);
+    font-size: 13px;
+}
+
+.track-steps li strong {
+    display: block;
+    font-weight: 600;
+}
+
+.track-steps li small {
+    display: block;
+    min-height: 16px;
+    margin-top: 2px;
+}
+
+.track-steps li::before {
+    content: "";
+    position: absolute;
+    top: 9px;
+    left: -50%;
+    width: 100%;
+    height: 3px;
+    background: var(--gray-200);
+}
+
+.track-steps li:first-child::before {
+    display: none;
+}
+
+.track-dot {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 21px;
+    height: 21px;
+    margin-left: -10px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    border: 4px solid var(--color-paper);
+    box-shadow: 0 0 0 1px var(--gray-300);
+}
+
+.track-steps li.is-done {
+    color: var(--color-ink);
+}
+
+.track-steps li.is-done::before,
+.track-steps li.is-done .track-dot {
+    background: var(--color-ink);
+}
+
+.track-steps li.is-current .track-dot {
+    box-shadow: 0 0 0 4px rgba(17, 19, 24, 0.15);
+}
+
+.track-cancelled {
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #fdecec;
+    color: #b42318;
+    font-size: 14px;
+}
+
+.track-info {
+    margin: 0 0 24px;
+    padding: 16px;
+    background: var(--gray-50);
+    border-radius: 12px;
+    display: grid;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.track-info div {
+    display: flex;
+    gap: 12px;
+}
+
+.track-info dt {
+    flex: 0 0 110px;
+    color: var(--gray-600);
+}
+
+.track-info dd {
+    margin: 0;
+    font-weight: 500;
+}
+
+.track-items-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.track-items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.track-items li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 14px;
+}
+
+.track-items small {
+    color: var(--gray-600);
+}
+
+.track-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 16px;
+}
+
+.track-total strong {
+    font-size: 22px;
+}
+
+@media (max-width: 560px) {
+
+    .track-card {
+        padding: 20px 16px;
+    }
+
+    .track-steps li {
+        font-size: 11px;
+    }
+
+    .track-info div {
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .track-info dt {
+        flex: none;
+    }
+
+}

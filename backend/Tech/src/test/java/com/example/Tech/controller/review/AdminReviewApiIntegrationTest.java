@@ -197,6 +197,29 @@ class AdminReviewApiIntegrationTest {
         return ids;
     }
 
+    @Test
+    void homeHighlights_public_fourStarsUp_newestFirst_hiddenOnesLeaveTheList() throws Exception {
+        long laptopReview = highlightIds().get(0);
+        List<Long> ids = highlightIds();
+        assertThat(ids).contains(reviewB, laptopReview).doesNotContain(reviewA).hasSizeLessThanOrEqualTo(6);
+        assertThat(ids.indexOf(laptopReview)).isLessThan(ids.indexOf(reviewB));
+        JsonNode first = data(send(get("/api/v1/reviews/highlights"), null, null)).get(0);
+        assertThat(first.get("productName").asString()).isEqualTo("Laptop ZZAR");
+        assertThat(first.get("authorName").asString()).isEqualTo("Khách Hàng B");
+        assertThat(first.get("rating").asInt()).isEqualTo(4);
+
+        send(patch(URL + "/" + reviewB + "/visibility"), adminToken, visibility(true, "Nội dung quảng cáo"))
+                .andExpect(status().isOk());
+        assertThat(highlightIds()).doesNotContain(reviewB);
+    }
+
+    private List<Long> highlightIds() throws Exception {
+        List<Long> ids = new ArrayList<>();
+        data(send(get("/api/v1/reviews/highlights"), null, null).andExpect(status().isOk()))
+                .forEach(row -> ids.add(row.get("id").asLong()));
+        return ids;
+    }
+
     private long write(String token, Product product, int rating, String comment) throws Exception {
         return data(send(post("/api/v1/reviews"), token,
                 Map.of("productId", product.getId(), "rating", rating, "comment", comment))

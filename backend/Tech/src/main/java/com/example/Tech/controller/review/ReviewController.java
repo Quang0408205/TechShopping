@@ -2,6 +2,7 @@ package com.example.Tech.controller.review;
 
 import com.example.Tech.dto.request.review.ReviewRequest;
 import com.example.Tech.dto.response.common.ApiResult;
+import com.example.Tech.dto.response.review.ReviewLikeResponse;
 import com.example.Tech.dto.response.review.ReviewResponse;
 import com.example.Tech.service.review.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,12 +54,13 @@ public class ReviewController {
     }
 
     @PostMapping
-    @Operation(summary = "Write a review (1–5 stars, 10–2000 characters, up to 5 photos); one per account and product")
+    @Operation(summary = "Write a review (1–5 stars, 10–2000 characters, up to 5 photos); any number per account, at least a minute apart")
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Review created and shown at once"),
             @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (details per field)"),
             @ApiResponse(responseCode = "404", description = "PRODUCT_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "ALREADY_REVIEWED, PRODUCT_NOT_AVAILABLE")
+            @ApiResponse(responseCode = "409", description = "PRODUCT_NOT_AVAILABLE"),
+            @ApiResponse(responseCode = "429", description = "REVIEW_TOO_SOON (another review of this account in the last minute)")
     })
     public ResponseEntity<ApiResult<ReviewResponse>> create(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
@@ -90,6 +92,28 @@ public class ReviewController {
                                        @PathVariable Long id) {
         reviewService.delete(userId(jwt), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/like")
+    @Operation(summary = "Mark a visible review as helpful (idempotent)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "New like count and state"),
+            @ApiResponse(responseCode = "404", description = "REVIEW_NOT_FOUND (missing or hidden)")
+    })
+    public ResponseEntity<ApiResult<ReviewLikeResponse>> like(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResult.ok(reviewService.like(userId(jwt), id)));
+    }
+
+    @DeleteMapping("/{id}/like")
+    @Operation(summary = "Take my helpful mark back (idempotent)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "New like count and state"),
+            @ApiResponse(responseCode = "404", description = "REVIEW_NOT_FOUND (missing or hidden)")
+    })
+    public ResponseEntity<ApiResult<ReviewLikeResponse>> unlike(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt, @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResult.ok(reviewService.unlike(userId(jwt), id)));
     }
 
     /** The access token subject is the user id (see JwtTokenService). */

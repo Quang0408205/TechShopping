@@ -18,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -92,25 +93,25 @@ class ReviewRepositoryTest {
     }
 
     @Test
-    void existsAndFindByUserAndProduct_oneReviewPerAccountPerProduct() {
+    void existsByUserAndCreatedAtAfter_findsOnlyThisAccountsRecentReviews() {
         reviewRepository.save(review(author, product, (short) 4, "Dùng tạm ổn, giao hàng nhanh."));
         entityManager.flush();
         entityManager.clear();
 
-        assertThat(reviewRepository.existsByUser_IdAndProduct_Id(author.getId(), product.getId())).isTrue();
-        assertThat(reviewRepository.existsByUser_IdAndProduct_Id(otherAuthor.getId(), product.getId())).isFalse();
-        assertThat(reviewRepository.findByUser_IdAndProduct_Id(author.getId(), product.getId())).isPresent();
+        LocalDateTime minuteAgo = LocalDateTime.now().minusMinutes(1);
+        assertThat(reviewRepository.existsByUser_IdAndCreatedAtAfter(author.getId(), minuteAgo)).isTrue();
+        assertThat(reviewRepository.existsByUser_IdAndCreatedAtAfter(otherAuthor.getId(), minuteAgo)).isFalse();
+        assertThat(reviewRepository.existsByUser_IdAndCreatedAtAfter(author.getId(), LocalDateTime.now().plusMinutes(1)))
+                .isFalse();
     }
 
     @Test
-    void save_sameAccountAndProductTwice_violatesTheUniqueConstraint() {
+    void save_sameAccountAndProductTwice_isAllowed() {
         reviewRepository.save(review(author, product, (short) 4, "Dùng tạm ổn, giao hàng nhanh."));
+        reviewRepository.save(review(author, product, (short) 2, "Đổi ý, thấy không ưng cho lắm."));
         entityManager.flush();
 
-        assertThatThrownBy(() -> {
-            reviewRepository.save(review(author, product, (short) 2, "Đổi ý, thấy không ưng cho lắm."));
-            entityManager.flush();
-        }).isInstanceOf(DataIntegrityViolationException.class);
+        assertThat(reviewRepository.findMine(author.getId(), product.getId())).hasSize(2);
     }
 
     @Test

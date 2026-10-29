@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CartItemResponse(
         Long cartItemId,
@@ -26,6 +27,15 @@ public record CartItemResponse(
         boolean available,
         @Schema(description = "Units of this variant in all open stores (0 = out of stock)")
         Integer availableQuantity,
-        LocalDateTime addedAt
+        LocalDateTime addedAt,
+        @Schema(description = "Plan v5 GĐ10: combo discount on this line (0 when none)")
+        BigDecimal comboDiscount,
+        @Schema(description = "Names of the combos that discount this line")
+        List<String> comboNames
 ) {
+
+    public CartItemResponse withCombo(BigDecimal discount, List<String> names) {
+        return new CartItemResponse(cartItemId, variantId, productId, productName, productSlug, variantName, imageUrl,
+                unitPrice, originalPrice, quantity, lineTotal, available, availableQuantity, addedAt, discount, names);
+    }
 }

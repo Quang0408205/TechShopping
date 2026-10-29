@@ -41,7 +41,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     boolean existsBySku(String sku);
 
+    /** Excel import: products are matched by their SKU ("Mã SP"), soft-deleted ones included. */
+    Optional<Product> findBySku(String sku);
+
     boolean existsBySkuAndIdNot(String sku, Long id);
+
+    /** Products on sale (not deleted, not hidden) per category: [categoryId, count]. */
+    @Query("select p.category.id, count(p) from Product p where p.deletedAt is null "
+            + "and (p.active is null or p.active = true) and p.category is not null group by p.category.id")
+    List<Object[]> countOnSaleByCategory();
 
     // Soft-deleted products still reference their category/brand through the FK
     boolean existsByCategoryId(Integer categoryId);

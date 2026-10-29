@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Đối soát chuyển khoản - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
+<body class="admin-body" data-page-title="Đối soát chuyển khoản" data-roles="ADMIN">
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="bank-transactions"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <section class="admin-panel" id="bankInfoPanel">
+
+                <div class="admin-panel-header">
+                    <h2>Tài khoản nhận tiền</h2>
+                    <span class="admin-row-count" id="bankAttentionCount"></span>
+                </div>
+
+                <p class="admin-intro" id="bankAccountLine">Đang tải…</p>
+
+                <p class="form-error" id="bankSetupWarning" role="alert" hidden></p>
+
+            </section>
+
+            <section class="admin-panel" id="bankSimulatorPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Giả lập ngân hàng báo tiền về</h2>
+                    <span class="admin-row-count">Chỉ để trình diễn</span>
+                </div>
+
+                <form class="admin-filter-bar" id="bankSimulatorForm">
+
+                    <input type="text" id="bankSimContent" placeholder="Nội dung, ví dụ DH00000042" maxlength="500" aria-label="Nội dung chuyển khoản" required>
+
+                    <input type="number" id="bankSimAmount" placeholder="Số tiền (đ)" min="1" step="1" aria-label="Số tiền" required>
+
+                    <button type="submit" class="btn btn-dark" id="bankSimSubmit">GIẢ LẬP TIỀN VỀ</button>
+
+                </form>
+
+                <p class="admin-intro" id="bankSimResult" hidden></p>
+
+            </section>
+
+            <form class="admin-filter-bar" id="bankFilterForm" role="search">
+
+                <select id="bankStatusFilter" aria-label="Trạng thái giao dịch">
+                    <option value="ATTENTION">Cần xử lý</option>
+                    <option value="">Tất cả</option>
+                    <option value="MATCHED">Đã tự khớp</option>
+                    <option value="RESOLVED">Đã gán tay</option>
+                    <option value="IGNORED">Đã bỏ qua</option>
+                </select>
+
+            </form>
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Giao dịch ngân hàng</h2>
+                    <span class="admin-row-count" id="bankRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table admin-table--wide">
+
+                        <thead>
+                            <tr>
+                                <th>Mã GD</th>
+                                <th>Nhận lúc</th>
+                                <th>Số tiền</th>
+                                <th>Nội dung</th>
+                                <th>Đơn hàng</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="bankTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="bankPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/bank-transactions.js"></script>
+
+</body>
+</html>

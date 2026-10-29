@@ -5,6 +5,8 @@
  * (js/core/cart-store.js → /api/v1/cart). Chưa đăng nhập → mời đăng nhập.
  * Dòng đã ngừng bán: không tính tiền, chỉ còn nút xoá, và chặn thanh toán
  * cho tới khi xoá hết. Mọi dữ liệu đưa vào innerHTML đều escape.
+ * Kế hoạch v5 GĐ5: có đơn chuyển khoản / thẻ còn chờ tiền → khung nhắc phía trên giỏ
+ * (awaiting-payment.js); "Huỷ đơn & lấy lại giỏ" xong thì tải lại giỏ.
  */
 
 document.addEventListener(
@@ -16,6 +18,14 @@ document.addEventListener(
         }
 
         loadCart();
+
+        showAwaitingPaymentNotice(document.getElementById("awaitingPayment"), function () {
+
+            document.getElementById("awaitingPayment").hidden = true;
+
+            loadCart();
+
+        });
 
     }
 );
@@ -173,6 +183,7 @@ function renderCart(summary) {
                             ${escapeHtml(item.name)}
                         </a>
                         <span class="cart-variant">${escapeHtml(item.variantLabel)}</span>
+                        ${item.available && item.comboDiscount > 0 ? comboTagHtml(item) : ""}
                     </div>
                 </td>
 
@@ -217,16 +228,20 @@ function renderCart(summary) {
                 Giỏ hàng có sản phẩm đã ngừng bán hoặc không đủ hàng. Vui lòng xóa hoặc giảm số lượng các sản phẩm này trước khi thanh toán.
             </p>
             <button type="button" class="btn btn-dark" id="checkoutButton" disabled>
-                Tiến hành thanh toán
+                Đặt mua
             </button>
         `
         : `
+            <button type="button" class="order-info-row" id="orderInfoRow" aria-label="Thông tin nhận hàng">
+                <span>${orderInfoSummaryHtml(readOrderInfo())}</span>
+                <span aria-hidden="true">›</span>
+            </button>
             <a
                 href="${escapeHtml(siteUrl("customer/checkout.html"))}"
                 class="btn btn-dark"
                 id="checkoutButton"
             >
-                Tiến hành thanh toán
+                Đặt mua
             </a>
         `;
 
@@ -265,6 +280,15 @@ function renderCart(summary) {
                         ${formatPrice(summary.subtotal)}
                     </strong>
                 </div>
+                ${summary.comboDiscount > 0 ? `
+                <div class="cart-total-row cart-total-combo">
+                    <span>
+                        Giảm combo
+                    </span>
+                    <strong>
+                        −${formatPrice(summary.comboDiscount)}
+                    </strong>
+                </div>` : ""}
                 <div class="cart-total-row">
                     <span>
                         Phí vận chuyển
@@ -273,7 +297,7 @@ function renderCart(summary) {
                         ${summary.shippingFee === 0 ? "Miễn phí" : formatPrice(summary.shippingFee)}
                     </strong>
                 </div>
-                <div class="cart-total-row">
+                <div class="cart-total-row cart-total-final">
                     <span>
                         Tổng cộng
                     </span>
@@ -288,6 +312,14 @@ function renderCart(summary) {
 
 
     bindCartEvents(summary.items);
+
+}
+
+
+/* Nhãn "Combo" dưới tên món mua kèm được giảm (kế hoạch v5 GĐ10) */
+function comboTagHtml(item) {
+
+    return `<span class="combo-tag" title="${escapeHtml(item.comboNames.join(", "))}">Combo −${escapeHtml(formatPrice(item.comboDiscount))}</span>`;
 
 }
 
@@ -335,6 +367,50 @@ function bindCartEvents(items) {
             loadCart();
 
         }
+
+    }
+
+
+    /*
+     * Thông tin nhận hàng: bấm dòng thông tin để mở / sửa popup; "Đặt mua" chỉ chuyển sang bước thanh toán
+     * khi đã có thông tin hợp lệ, chưa có thì mở popup trước rồi mới chuyển.
+     */
+
+    const infoRow = container.querySelector("#orderInfoRow");
+
+    const checkoutButton = container.querySelector("#checkoutButton");
+
+    if (infoRow) {
+
+        infoRow.addEventListener("click", function () {
+
+            openOrderInfoModal({
+                onSave: function (info) {
+                    infoRow.firstElementChild.innerHTML = orderInfoSummaryHtml(info);
+                }
+            });
+
+        });
+
+    }
+
+    if (checkoutButton && checkoutButton.tagName === "A") {
+
+        checkoutButton.addEventListener("click", function (event) {
+
+            if (readOrderInfo()) {
+                return;
+            }
+
+            event.preventDefault();
+
+            openOrderInfoModal({
+                onSave: function () {
+                    window.location.href = checkoutButton.href;
+                }
+            });
+
+        });
 
     }
 

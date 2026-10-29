@@ -82,8 +82,16 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
+                        // home page blocks: flash sale + featured combos
+                        .requestMatchers(HttpMethod.GET, "/api/v1/promotions/flash-sale", "/api/v1/combos/featured",
+                                "/api/v1/reviews/highlights").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
-                        // recommendations and the chatbot work for guests; a token makes them personal
+                        // plan v7: order progress page opened from the email link (the random token is the key)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/orders/track/*").permitAll()
+                        // bank webhook: no token, the shared key is checked by the controller
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+                        // Stripe webhook: no token, the Stripe-Signature header is checked by CardPaymentService
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/stripe/webhook").permitAll()                        // recommendations and the chatbot work for guests; a token makes them personal
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/chat/*/messages").permitAll()

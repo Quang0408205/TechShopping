@@ -57,7 +57,8 @@ const STAFF_DELIVERY_TYPE_LABELS = {
 const STAFF_PAYMENT_METHOD_LABELS = {
     COD: "Tiền mặt khi nhận hàng",
     BANK_TRANSFER: "Chuyển khoản",
-    INSTALLMENT: "Trả góp"
+    INSTALLMENT: "Trả góp",
+    CARD: "Thẻ quốc tế (Stripe)"
 };
 
 
@@ -655,6 +656,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "Chờ nhận tiền chuyển khoản";
         }
 
+        if (order.paymentMethod === "CARD" && order.payment && order.payment.status !== "PAID") {
+            return "Chờ khách thanh toán thẻ";
+        }
+
         if (order.installment && order.installment.status !== "APPROVED") {
             return "Chờ duyệt trả góp";
         }
@@ -677,6 +682,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <td>
                         ${escapeHtml(item.productName)}
                         <span class="admin-subtext">${escapeHtml(item.variantName || "")}</span>
+                        ${Number(item.comboDiscount) > 0 ? `<span class="admin-subtext">Combo −${escapeHtml(formatPrice(Number(item.comboDiscount)))}</span>` : ""}
                     </td>
                     <td>${escapeHtml(formatPrice(Number(item.unitPrice)))}${oldPrice}</td>
                     <td>${escapeHtml(String(item.quantity))}</td>
@@ -709,6 +715,13 @@ document.addEventListener("DOMContentLoaded", async function () {
             ["Giao tới", escapeHtml(order.shippingAddress)],
             ["Ghi chú", order.note ? escapeHtml(order.note) : "—"],
             ["Tạm tính", escapeHtml(formatPrice(Number(order.subtotal)))],
+            ...(Number(order.comboDiscount) > 0
+                ? [["Giảm combo", "−" + escapeHtml(formatPrice(Number(order.comboDiscount))) +
+                    ((order.combos || []).length ? " (" + escapeHtml(order.combos.map(function (combo) { return combo.name; }).join(", ")) + ")" : "")]]
+                : []),
+            ...(Number(order.voucherDiscount) > 0
+                ? [["Voucher " + escapeHtml(order.voucherCode || ""), "−" + escapeHtml(formatPrice(Number(order.voucherDiscount)))]]
+                : []),
             ["Phí giao hàng", Number(order.shippingFee) > 0 ? escapeHtml(formatPrice(Number(order.shippingFee))) : "Miễn phí"],
             ["Mã vận đơn", trackingHtml],
             ["SĐT tài khoản khách", customerPhone ? escapeHtml(customerPhone) : "—"]

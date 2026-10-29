@@ -22,6 +22,8 @@ public record OrderItemResponse(
         @Schema(description = "(originalPrice − unitPrice) × quantity")
         BigDecimal discountAmount,
         @Schema(description = "unitPrice × quantity")
-        BigDecimal subtotal
+        BigDecimal subtotal,
+        @Schema(description = "Plan v5 GĐ10: combo discount on this line (0 when none)")
+        BigDecimal comboDiscount
 ) {
 }

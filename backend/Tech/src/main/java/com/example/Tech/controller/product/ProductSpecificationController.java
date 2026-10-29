@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -40,6 +41,18 @@ public class ProductSpecificationController {
     })
     public ResponseEntity<ApiResult<List<ProductSpecificationResponse>>> getByProduct(@PathVariable Long productId) {
         return ResponseEntity.ok(ApiResult.ok(specificationService.getByProductId(productId)));
+    }
+
+    @GetMapping("/categories/{categoryId}/spec-names")
+    @Operation(summary = "Specification names most used in a category",
+            description = "Template for the admin product form; most used first, at most 30")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Names returned (empty when the category has none)"),
+            @ApiResponse(responseCode = "404", description = "CATEGORY_NOT_FOUND")
+    })
+    public ResponseEntity<ApiResult<List<String>>> getCommonNames(@PathVariable Integer categoryId,
+                                                                  @RequestParam(defaultValue = "15") int limit) {
+        return ResponseEntity.ok(ApiResult.ok(specificationService.getCommonNames(categoryId, limit)));
     }
 
     @GetMapping("/product-specifications/{id}")

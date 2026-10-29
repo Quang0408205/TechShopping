@@ -45,8 +45,8 @@
             <button type="button" class="mega-toggle" aria-label="Danh mục sản phẩm" aria-expanded="false" aria-controls="megaMenu">
                 <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
+            <div class="nav-cats" id="navCats"></div>
             <a href="{{ROOT}}customer/services.html" data-page="services">Dịch vụ</a>
-            <a href="{{ROOT}}customer/contact.html" data-page="contact">Liên hệ</a>
         </nav>
 
         <!-- Tìm kiếm sản phẩm: submit → customer/products.html?search=... (main.js) -->
@@ -64,22 +64,40 @@
                 <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M16 16l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             </button>
 
-            <!-- Gợi ý tĩnh (không gọi API): bấm → điền ô tìm kiếm rồi submit như bình thường -->
+            <!-- Kế hoạch v5 GĐ3 (main.js): ô trống → tìm gần đây + tìm nhiều; gõ ≥ 2 ký tự → sản phẩm có ảnh, giá (GET /products/suggest) -->
             <div class="search-suggest" hidden>
-                <span class="search-suggest-label">Tìm nhiều</span>
-                <button type="button" data-suggest="iPhone 17">iPhone 17</button>
-                <button type="button" data-suggest="MacBook Air">MacBook Air</button>
-                <button type="button" data-suggest="Galaxy S25">Galaxy S25</button>
-                <button type="button" data-suggest="iPad">iPad</button>
-                <button type="button" data-suggest="AirPods">AirPods</button>
-                <button type="button" data-suggest="Tai nghe Sony">Tai nghe Sony</button>
-                <button type="button" data-suggest="Chuột Logitech">Chuột Logitech</button>
+                <div class="search-suggest-section" data-suggest-recent hidden>
+                    <span class="search-suggest-label">
+                        Tìm gần đây
+                        <button type="button" class="search-suggest-clear" data-clear-recent>Xoá</button>
+                    </span>
+                    <div class="search-suggest-chips" data-recent-list></div>
+                </div>
+                <div class="search-suggest-section" data-suggest-popular>
+                    <span class="search-suggest-label">Tìm nhiều</span>
+                    <div class="search-suggest-chips">
+                        <button type="button" data-suggest="iPhone 17">iPhone 17</button>
+                        <button type="button" data-suggest="MacBook Air">MacBook Air</button>
+                        <button type="button" data-suggest="Galaxy S25">Galaxy S25</button>
+                        <button type="button" data-suggest="iPad">iPad</button>
+                        <button type="button" data-suggest="AirPods">AirPods</button>
+                        <button type="button" data-suggest="Tai nghe Sony">Tai nghe Sony</button>
+                        <button type="button" data-suggest="Chuột Logitech">Chuột Logitech</button>
+                    </div>
+                </div>
+                <div class="search-suggest-results" data-suggest-results hidden></div>
             </div>
 
         </form>
 
         <!-- Header actions -->
         <div class="header-actions">
+
+            <!-- Yêu thích (js/customer/compare-wishlist.js cập nhật số lượng) -->
+            <a href="{{ROOT}}customer/wishlist.html" class="wish-btn" aria-label="Sản phẩm yêu thích">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/></svg>
+                <span class="wish-badge wishlist-count" hidden>0</span>
+            </a>
 
             <a href="{{ROOT}}customer/cart.html" class="cart-btn" aria-label="Giỏ hàng">
                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 4h2.2l2.1 10.2a1.5 1.5 0 0 0 1.5 1.2h8.4a1.5 1.5 0 0 0 1.5-1.1L20.5 8H6.1" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9.5" cy="19.5" r="1.4" fill="currentColor"/><circle cx="17" cy="19.5" r="1.4" fill="currentColor"/></svg>
@@ -93,32 +111,16 @@
         </div>
 
 
+        <!-- Mega-menu (js/core/main.js, kế hoạch v6 B2): hàng danh mục + 4 khối Hãng / HOT / Mức giá / Nhu cầu -->
         <div class="mega-menu" id="megaMenu" hidden>
 
-            <div class="mega-menu-grid">
+            <div class="container mega-menu-inner">
 
-                <a href="{{ROOT}}customer/products.html?category=phone" class="mega-card">
-                    <img src="{{ROOT}}assets/images/category-phone.webp" alt="" width="503" height="600" loading="lazy">
-                    <span>Điện thoại</span>
-                </a>
+                <div class="mega-cats" role="navigation" aria-label="Danh mục sản phẩm"></div>
 
-                <a href="{{ROOT}}customer/products.html?category=laptop" class="mega-card">
-                    <img src="{{ROOT}}assets/images/category-laptop.webp" alt="" width="600" height="378" loading="lazy">
-                    <span>Laptop</span>
-                </a>
+                <div class="mega-body" aria-live="polite"></div>
 
-                <a href="{{ROOT}}customer/products.html?category=tablet" class="mega-card">
-                    <img src="{{ROOT}}assets/images/category-tablet.webp" alt="" width="545" height="600" loading="lazy">
-                    <span>Máy tính bảng</span>
-                </a>
-
-                <a href="{{ROOT}}customer/products.html?category=accessory" class="mega-card">
-                    <img src="{{ROOT}}assets/images/category-accessory.webp" alt="" width="329" height="474" loading="lazy">
-                    <span>Phụ kiện</span>
-                </a>
-
-                <div class="mega-links">
-                    <span class="mega-links-title">Mua sắm</span>
+                <div class="mega-foot">
                     <a href="{{ROOT}}customer/products.html">Tất cả sản phẩm</a>
                     <a href="{{ROOT}}customer/recommendation.html">Gợi ý cho bạn</a>
                     <a href="{{ROOT}}customer/services.html#chinh-sach-bao-hanh">Bảo hành</a>

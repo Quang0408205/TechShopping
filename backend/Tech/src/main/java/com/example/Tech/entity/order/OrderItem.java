@@ -56,4 +56,41 @@ public class OrderItem {
     /** unit price × quantity. */
     @Column(name = "subtotal", precision = 15, scale = 2, nullable = false)
     private BigDecimal subtotal;
+
+    /** Plan v5: share of the order's voucher discount on this line (refunds pay back subtotal − this share). */
+    @Column(name = "voucher_discount", precision = 15, scale = 2, nullable = false)
+    private BigDecimal voucherDiscount = BigDecimal.ZERO;
+
+    /** Plan v5 GĐ10: combo discount on this line (add-on units bought together with a main product). */
+    @Column(name = "combo_discount", precision = 15, scale = 2, nullable = false)
+    private BigDecimal comboDiscount = BigDecimal.ZERO;
+
+    /** Plan v5 GĐ6: share of the order's loyalty-points discount on this line. */
+    @Column(name = "points_discount", precision = 15, scale = 2, nullable = false)
+    private BigDecimal pointsDiscount = BigDecimal.ZERO;
+
+    /** The line total after the combo discount: what the voucher and the points are worked out on. */
+    public BigDecimal afterCombo() {
+        return subtotal.subtract(comboDiscount == null ? BigDecimal.ZERO : comboDiscount);
+    }
+
+    /** What the customer really paid in money for {@code units} of this line (combo + voucher + points shares split per unit). */
+    public BigDecimal paidFor(int units) {
+        BigDecimal gross = unitPrice.multiply(BigDecimal.valueOf(units));
+        return gross.subtract(shareOf(comboDiscount, units)).subtract(shareOf(voucherDiscount, units))
+                .subtract(shareOf(pointsDiscount, units));
+    }
+
+    /** The points-discount share of {@code units} of this line, in đồng. */
+    public BigDecimal pointsShareFor(int units) {
+        return shareOf(pointsDiscount, units);
+    }
+
+    private BigDecimal shareOf(BigDecimal lineDiscount, int units) {
+        if (lineDiscount == null || lineDiscount.signum() == 0 || quantity == null || quantity == 0) {
+            return BigDecimal.ZERO;
+        }
+        return lineDiscount.multiply(BigDecimal.valueOf(units))
+                .divide(BigDecimal.valueOf(quantity), 0, java.math.RoundingMode.HALF_UP);
+    }
 }

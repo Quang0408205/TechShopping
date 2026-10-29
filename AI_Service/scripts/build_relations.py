@@ -22,6 +22,8 @@ RULES = {
     "Máy Tính Bảng": ("apple pencil", "bàn phím", "sạc", "cáp", "pin sạc dự phòng", "tai nghe", "airpods"),
     "Laptop": ("chuột", "bàn phím", "balo laptop", "túi chống sốc laptop", "tai nghe", "router", "sạc nhanh"),
     "Đồng Hồ Thông Minh": ("sạc", "tai nghe", "airpods", "pin sạc dự phòng"),
+    "Màn Hình Máy Tính": ("cáp", "chuột", "bàn phím", "tai nghe", "loa"),
+    "Máy Tính Để Bàn": ("chuột", "bàn phím", "tai nghe", "loa", "router"),
 }
 APPLE_ONLY = re.compile(r"iphone|lightning|apple pencil|magic keyboard|magic mouse|magsafe iphone", re.IGNORECASE)
 
@@ -30,7 +32,7 @@ def main():
     with connect(readonly=False) as conn:
         products = conn.execute("""
             select p.product_id, p.name, c.name as category, coalesce(b.name, '') as brand,
-                   coalesce(p.tgdd_review_count, 0) as reviews
+                   coalesce(p.total_reviews, 0) as reviews
             from products p join categories c using (category_id) left join brands b using (brand_id)
             where p.deleted_at is null and coalesce(p.is_active, true)
         """).fetchall()

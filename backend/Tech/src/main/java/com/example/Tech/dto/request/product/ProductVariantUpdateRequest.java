@@ -20,7 +20,7 @@ public record ProductVariantUpdateRequest(
         String skuVariant,
 
         @NotNull(message = "Price is required")
-        @DecimalMin(value = "0", message = "Price must not be negative")
+        @DecimalMin(value = "0", inclusive = false, message = "Giá phải lớn hơn 0")
         @Digits(integer = 13, fraction = 2, message = "Price must have at most 13 integer digits and 2 decimals")
         BigDecimal price,
 

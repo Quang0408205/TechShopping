@@ -6,6 +6,7 @@ import com.example.Tech.entity.cart.Cart;
 import com.example.Tech.entity.cart.CartItem;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.service.combo.ComboCalculator;
 import com.example.Tech.service.order.ShippingPolicy;
 import com.example.Tech.service.promotion.PromotionPricingService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,11 @@ public class CartMapper {
     private final Clock clock;
 
     public CartResponse toResponse(Cart cart, List<CartItemResponse> items) {
+        return toResponse(cart, items, null);
+    }
+
+    /** {@code combos}: the combo discounts of the purchasable lines (null = none); keys are cart line ids. */
+    public CartResponse toResponse(Cart cart, List<CartItemResponse> items, ComboCalculator.Result combos) {
         int totalQuantity = items.stream().mapToInt(CartItemResponse::quantity).sum();
         BigDecimal subtotal = items.stream()
                 .filter(CartItemResponse::available)
@@ -39,8 +45,11 @@ public class CartMapper {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         boolean hasUnavailableItems = items.stream().anyMatch(item -> !item.available());
         BigDecimal shippingFee = ShippingPolicy.feeFor(subtotal);
-        return new CartResponse(items, totalQuantity, subtotal, shippingFee, subtotal.add(shippingFee),
-                hasUnavailableItems, cart.getUpdatedAt());
+        BigDecimal comboDiscount = combos == null ? BigDecimal.ZERO : combos.total();
+        List<CartResponse.ComboApplied> applied = combos == null ? List.of() : combos.applied().stream()
+                .map(a -> new CartResponse.ComboApplied(a.comboId(), a.name(), a.units(), a.discount())).toList();
+        return new CartResponse(items, totalQuantity, subtotal, comboDiscount, applied, shippingFee,
+                subtotal.subtract(comboDiscount).add(shippingFee), hasUnavailableItems, cart.getUpdatedAt());
     }
 
     /** availableUnits: the variant's units in all open stores (StockAvailability). */
@@ -63,7 +72,9 @@ public class CartMapper {
                 unitPrice.multiply(BigDecimal.valueOf(item.getQuantity())),
                 isPurchasable(product, unitPrice) && availableUnits >= item.getQuantity(),
                 availableUnits,
-                item.getAddedAt());
+                item.getAddedAt(),
+                BigDecimal.ZERO,
+                List.of());
     }
 
     /** The lower of the manual discount price and any currently active promotion for the variant's product. */

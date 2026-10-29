@@ -28,6 +28,14 @@ public record ProductImageCreateRequest(
 
         @Schema(description = "Defaults to false; true makes this the only primary image of the product. "
                 + "The first image of a product without a primary image always becomes primary")
-        Boolean isPrimary
+        Boolean isPrimary,
+        @Schema(description = "Tên màu (trùng màu của một phiên bản); trống = ảnh chung cho mọi màu")
+        @Size(max = 50, message = "Color must be at most 50 characters")
+        String color
 ) {
+
+    public ProductImageCreateRequest(Long productId, String imageUrl, String altText, Integer displayOrder,
+                                     Boolean isPrimary) {
+        this(productId, imageUrl, altText, displayOrder, isPrimary, null);
+    }
 }

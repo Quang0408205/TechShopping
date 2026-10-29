@@ -56,15 +56,8 @@ document.addEventListener(
 
         cancelButton.addEventListener("click", confirmCancel);
 
-        document.getElementById("orderTransferBlock").addEventListener("click", copyTransferValue);
-
-        /* Không tải được ảnh QR (không có mạng / dịch vụ VietQR lỗi): chỉ còn thông tin chữ */
-        document.getElementById("orderTransferQr").addEventListener("error", function () {
-
-            this.hidden = true;
-
-            document.getElementById("orderTransferQrError").hidden = false;
-
+        document.getElementById("orderBuyAgainBtn").addEventListener("click", function () {
+            buyAgain(orderId, this);
         });
 
 
@@ -181,28 +174,6 @@ document.addEventListener(
         }
 
 
-        async function copyTransferValue(event) {
-
-            const button = event.target.closest("button[data-copy]");
-
-            if (!button) {
-                return;
-            }
-
-            try {
-
-                await navigator.clipboard.writeText(button.dataset.copy);
-
-                showToast("Đã sao chép " + button.dataset.copyLabel + ".", "success");
-
-            } catch (error) {
-
-                showToast("Trình duyệt không cho sao chép, vui lòng chép thủ công.", "error");
-
-            }
-
-        }
-
     }
 );
 
@@ -228,6 +199,8 @@ function renderOrder(order) {
     renderTimeline(order);
 
 
+    document.getElementById("orderItemCount").textContent = "(" + order.items.length + ")";
+
     document.getElementById("orderItemsList").innerHTML =
         order.items.map(function (item) {
 
@@ -242,6 +215,7 @@ function renderOrder(order) {
                             ${escapeHtml(item.variantLabel ? item.variantLabel + " · " : "")}${formatPrice(item.price)} × ${item.quantity}
                             ${item.oldPrice ? `<s class="order-item-old-price">${formatPrice(item.oldPrice)}</s>` : ""}
                         </span>
+                        ${item.comboDiscount > 0 ? `<span class="combo-tag">Combo −${formatPrice(item.comboDiscount)}</span>` : ""}
                     </div>
                     <strong>${formatPrice(item.lineTotal)}</strong>
                 </div>
@@ -267,12 +241,40 @@ function renderOrder(order) {
 
     document.getElementById("orderSubtotal").textContent = formatPrice(order.subtotal);
 
+    document.getElementById("orderComboRow").hidden = !(order.comboDiscount > 0);
+
+    document.getElementById("orderComboNames").textContent = order.combos.map(function (combo) {
+        return combo.name;
+    }).join(", ");
+
+    document.getElementById("orderComboDiscount").textContent = "−" + formatPrice(order.comboDiscount);
+
+    document.getElementById("orderVoucherRow").hidden = !(order.voucherDiscount > 0);
+
+    document.getElementById("orderVoucherCode").textContent = order.voucherCode;
+
+    document.getElementById("orderVoucherDiscount").textContent = "−" + formatPrice(order.voucherDiscount);
+
     document.getElementById("orderShippingFee").textContent =
         order.shippingFee === 0 ? "Miễn phí" : formatPrice(order.shippingFee);
 
     document.getElementById("orderTotal").textContent = formatPrice(order.total);
 
+    document.getElementById("orderPointsRow").hidden = !(order.pointsDiscount > 0);
+
+    document.getElementById("orderPointsUsed").textContent = new Intl.NumberFormat("vi-VN").format(order.pointsUsed);
+
+    document.getElementById("orderPointsDiscount").textContent = "−" + formatPrice(order.pointsDiscount);
+
+    const earned = document.getElementById("orderPointsEarned");
+
+    earned.hidden = !(order.pointsEarned > 0);
+
+    earned.textContent = "Đơn này đã được cộng +" + new Intl.NumberFormat("vi-VN").format(order.pointsEarned) + " điểm tích luỹ.";
+
     document.getElementById("orderActions").hidden = !order.cancellable;
+
+    document.getElementById("orderBuyAgain").hidden = order.status !== "DELIVERED" && order.status !== "CANCELLED";
 
 }
 
@@ -394,6 +396,22 @@ function paymentNotice(order) {
 
     const installment = order.installment;
 
+    if (payment && order.paymentMethod === "CARD") {
+
+        if (payment.status === "PENDING" && order.status === "PENDING") {
+            return { tone: "pending", text: "Đơn hàng đang chờ thanh toán bằng thẻ. Cửa hàng sẽ xác nhận đơn sau khi bạn thanh toán." };
+        }
+
+        if (payment.status === "PAID" && order.status === "PENDING") {
+            return { tone: "success", text: "Đã thanh toán bằng thẻ, đơn hàng đang chờ cửa hàng xác nhận." };
+        }
+
+        if (payment.status === "REFUND_PENDING") {
+            return { tone: "warning", text: "Đơn hàng đã hủy. Số tiền đã thanh toán bằng thẻ sẽ được cửa hàng hoàn lại." };
+        }
+
+    }
+
     if (payment && order.paymentMethod === "BANK_TRANSFER") {
 
         if (payment.status === "PENDING" && order.status === "PENDING") {
@@ -435,13 +453,36 @@ function paymentNotice(order) {
 }
 
 
-/* Khối chuyển khoản: chỉ có khi server gửi bankTransfer (đơn chuyển khoản đang chờ tiền) */
+/* Khối chuyển khoản: chỉ có khi server gửi bankTransfer (đơn chuyển khoản đang chờ tiền); đơn thẻ chờ tiền dùng chung khối */
 
 function renderTransfer(order) {
 
     const block = document.getElementById("orderTransferBlock");
 
     const transfer = order.payment ? order.payment.bankTransfer : null;
+
+    const card = order.payment ? order.payment.card : null;
+
+    block.hidden = !transfer && !card;
+
+    if (card && order.status === "PENDING") {
+
+        document.getElementById("orderTransferTitle").textContent = "Chờ thanh toán thẻ";
+
+        document.getElementById("orderTransferPayLink").href = getPaymentUrl(order.id);
+
+        document.getElementById("orderTransferPayLink").textContent = "THANH TOÁN BẰNG THẺ";
+
+        document.getElementById("orderTransferFacts").innerHTML =
+            factHtml("Số tiền", `<strong>${formatPrice(order.payment.amount)}</strong>`);
+
+        document.getElementById("orderTransferDeadline").textContent = card.payBefore
+            ? "Vui lòng thanh toán trước " + formatOrderDateTime(card.payBefore) + "."
+            : "";
+
+        return;
+
+    }
 
     block.hidden = !transfer;
 
@@ -450,31 +491,18 @@ function renderTransfer(order) {
     }
 
 
-    const qr = document.getElementById("orderTransferQr");
-
-    document.getElementById("orderTransferQrError").hidden = true;
-
-    qr.hidden = !transfer.qrImageUrl;
-
-    if (transfer.qrImageUrl && qr.getAttribute("src") !== transfer.qrImageUrl) {
-        qr.src = transfer.qrImageUrl;
-    }
-
+    /* QR + sao chép nằm ở trang thanh toán riêng; ở đây chỉ nhắc số tiền / nội dung */
+    document.getElementById("orderTransferPayLink").href = getPaymentUrl(order.id);
 
     document.getElementById("orderTransferFacts").innerHTML = [
-        factHtml("Ngân hàng", escapeHtml(transfer.bankName)),
-        factHtml("Số tài khoản", escapeHtml(transfer.accountNumber) + copyButtonHtml(transfer.accountNumber, "số tài khoản")),
-        factHtml("Chủ tài khoản", escapeHtml(transfer.accountName)),
         factHtml("Số tiền", `<strong>${formatPrice(transfer.amount)}</strong>`),
-        factHtml("Nội dung", `<strong>${escapeHtml(transfer.transferContent)}</strong>`
-            + copyButtonHtml(transfer.transferContent, "nội dung chuyển khoản"))
+        factHtml("Nội dung", `<strong>${escapeHtml(transfer.transferContent)}</strong>`)
     ].join("");
 
 
     document.getElementById("orderTransferDeadline").textContent = transfer.payBefore
-        ? "Vui lòng chuyển khoản trước " + formatOrderDateTime(transfer.payBefore)
-            + " và ghi đúng nội dung để cửa hàng đối chiếu."
-        : "Vui lòng ghi đúng nội dung để cửa hàng đối chiếu.";
+        ? "Vui lòng chuyển khoản trước " + formatOrderDateTime(transfer.payBefore) + "."
+        : "";
 
 }
 

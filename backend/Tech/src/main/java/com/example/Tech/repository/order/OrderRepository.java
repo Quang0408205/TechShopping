@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecificationExecutor<Order> {
@@ -37,5 +38,13 @@ public interface OrderRepository extends JpaRepository<Order, Long>, JpaSpecific
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(Long id);
 
+    /** Plan v7: the public tracking link; the store is loaded with the order. */
+    @EntityGraph(attributePaths = "store")
+    Optional<Order> findByTrackingToken(String trackingToken);
+
     boolean existsByStoreId(Integer storeId);
+
+    /** Plan v5 GĐ6: number of my orders per status (rows of [OrderStatus, Long]). */
+    @Query("select o.status, count(o) from Order o where o.user.id = :userId group by o.status")
+    List<Object[]> countByStatusForUser(Long userId);
 }

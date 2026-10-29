@@ -122,6 +122,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         newStockInButton.hidden = true;
 
+        document.getElementById("stockImportBtn").hidden = true;
+
         renderHead(false);
 
         tbody.innerHTML = adminEmptyRow(5,
@@ -168,6 +170,46 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     newStockInButton.addEventListener("click", function () {
         openStockIn(null);
+    });
+
+    /* Nhập kho bằng Excel (kế hoạch v4 bước 7): vào chi nhánh đang chọn; mỗi dòng là một lần nhập kho */
+    const importPanel = document.getElementById("stockImportPanel");
+
+    const importStoreId = function () {
+        return selectedStoreId();
+    };
+
+    mountExcelImport(document.getElementById("stockImportRoot"), {
+        hint: "Mỗi dòng sheet NhapKho là một lần nhập kho (SKU phiên bản + số lượng), ghi vào sổ kho của chi nhánh đang chọn. "
+            + "Bấm KIỂM TRA trước: có lỗi thì không nhập dòng nào.",
+        templatePath: "/admin/stores/" + encodeURIComponent(isAdmin ? "0" : String(staff.storeId)) + "/inventory/import-template",
+        templateName: "mau-nhap-kho.xlsx",
+        importPath: function () {
+            const storeId = importStoreId();
+            return storeId ? "/admin/stores/" + encodeURIComponent(storeId) + "/inventory/import" : null;
+        },
+        missingTarget: "Hãy chọn một chi nhánh ở ô Chi nhánh phía trên (không chọn \"Tất cả chi nhánh\") rồi bấm lại.",
+        labels: { stockIns: "Lần nhập kho", units: "Tổng số lượng", variants: "Phiên bản" },
+        onApplied: function () {
+            histories = new Map();
+            reloadFromFirstPage();
+        }
+    });
+
+    document.getElementById("stockImportBtn").addEventListener("click", function () {
+        const storeId = importStoreId();
+        document.getElementById("stockImportTitle").textContent = "Nhập kho từ Excel" + (storeId ? " — " + storeName(storeId) : "");
+        importPanel.hidden = false;
+        importPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    document.getElementById("stockImportClose").addEventListener("click", function () {
+        importPanel.hidden = true;
+    });
+
+    storeFilter.addEventListener("change", function () {
+        const storeId = importStoreId();
+        document.getElementById("stockImportTitle").textContent = "Nhập kho từ Excel" + (storeId ? " — " + storeName(storeId) : "");
     });
 
     document.getElementById("stockInCancelBtn").addEventListener("click", closeStockIn);

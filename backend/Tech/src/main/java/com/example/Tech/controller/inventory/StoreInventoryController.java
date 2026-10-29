@@ -5,7 +5,9 @@ import com.example.Tech.dto.request.inventory.StockInRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.inventory.InventoryItemResponse;
+import com.example.Tech.dto.response.excel.ExcelImportResponse;
 import com.example.Tech.dto.response.inventory.StockMovementResponse;
+import com.example.Tech.service.impl.inventory.StockImportService;
 import com.example.Tech.service.inventory.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -18,6 +20,9 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,7 +32,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.nio.charset.StandardCharsets;
 
 /**
  * Stock of one store. STAFF + ADMIN by URL (SecurityConfig) and @PreAuthorize; the service then limits a STAFF
@@ -47,6 +57,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StoreInventoryController {
 
     private final InventoryService inventoryService;
+    private final StockImportService stockImportService;
 
     @GetMapping
     @Operation(summary = "Stock of the store, by product name by default",
@@ -73,6 +84,31 @@ public class StoreInventoryController {
             @PathVariable Integer storeId,
             @Valid @RequestBody StockInRequest request) {
         return ResponseEntity.ok(ApiResult.ok(inventoryService.stockIn(userId(jwt), storeId, request)));
+    }
+
+    @GetMapping("/import-template")
+    @Operation(summary = "Download the .xlsx template for a stock-in by Excel (sheet NhapKho)")
+    public ResponseEntity<byte[]> importTemplate(@PathVariable Integer storeId) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename("mau-nhap-kho.xlsx", StandardCharsets.UTF_8).build().toString())
+                .body(stockImportService.template());
+    }
+
+    @PostMapping(value = "/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Nhập kho bằng Excel: one stock-in per row",
+            description = "dryRun=true (default) only checks and reports; any row error → nothing is stocked in")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Checked (and stocked in when applied = true)"),
+            @ApiResponse(responseCode = "400", description = "EXCEL_INVALID_FILE")
+    })
+    public ResponseEntity<ApiResult<ExcelImportResponse>> importStock(
+            @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+            @PathVariable Integer storeId,
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(defaultValue = "true") boolean dryRun) {
+        return ResponseEntity.ok(ApiResult.ok(stockImportService.importStock(userId(jwt), storeId, file, dryRun)));
     }
 
     @GetMapping("/{variantId}/movements")

@@ -10,13 +10,16 @@ import com.example.Tech.entity.product.ProductSpecification;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.mapper.product.ProductSpecificationMapper;
+import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.product.ProductSpecificationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,17 +35,41 @@ import static org.mockito.Mockito.when;
 class ProductSpecificationServiceImplTest {
 
     @Mock
+    private com.example.Tech.service.product.ProductFilterService filterService;
+
+    @Mock
     private ProductSpecificationRepository specificationRepository;
 
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
+    @Mock
+    private ProductVariantRepository variantRepository;
+
     private ProductSpecificationServiceImpl specificationService;
 
     @BeforeEach
     void setUp() {
-        specificationService = new ProductSpecificationServiceImpl(specificationRepository, productRepository,
-                new ProductSpecificationMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)));
+        specificationService = new ProductSpecificationServiceImpl(specificationRepository, productRepository, variantRepository, categoryRepository,
+                new ProductSpecificationMapper(), new ReadCache(null, null, new CacheProperties(false, null, null, null)), filterService);
+    }
+
+    @Test
+    void getCommonNames_capsTheLimit_andUnknownCategoryIs404() {
+        when(categoryRepository.existsById(4)).thenReturn(true);
+        when(specificationRepository.findCommonNamesByCategoryId(4, PageRequest.of(0, 60)))
+                .thenReturn(List.of("Màn hình", "Chip"));
+
+        assertThat(specificationService.getCommonNames(4, 500)).containsExactly("Màn hình", "Chip");
+
+        when(categoryRepository.existsById(99)).thenReturn(false);
+        assertThatThrownBy(() -> specificationService.getCommonNames(99, 15))
+                .isInstanceOf(BusinessException.class)
+                .extracting(e -> ((BusinessException) e).getErrorCode())
+                .isEqualTo(ErrorCode.CATEGORY_NOT_FOUND);
     }
 
     @Test

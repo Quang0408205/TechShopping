@@ -23,7 +23,8 @@ public record SalesReportResponse(
         List<PaymentSlice> byPaymentMethod,
         List<StoreRow> byStore,
         List<EmployeeRow> byEmployee,
-        List<ProductRow> topProducts
+        List<ProductRow> topProducts,
+        List<ComboRow> byCombo
 ) {
 
     public record Summary(
@@ -52,7 +53,7 @@ public record SalesReportResponse(
     public record CategorySlice(Integer categoryId, String categoryName, long units, BigDecimal revenue) {
     }
 
-    /** paymentMethod: COD / BANK_TRANSFER / INSTALLMENT. */
+    /** paymentMethod: COD / BANK_TRANSFER / INSTALLMENT / CARD. */
     public record PaymentSlice(String paymentMethod, long orders, BigDecimal revenue) {
     }
 
@@ -83,6 +84,10 @@ public record SalesReportResponse(
             BigDecimal commission,
             BigDecimal refundAmount
     ) {
+    }
+
+    /** Plan v5 GĐ10: combos applied on delivered orders; revenue = the totals of those orders (an order with two combos is in both rows). */
+    public record ComboRow(Long comboId, String comboName, long orders, long units, BigDecimal discount, BigDecimal revenue) {
     }
 
     public record ProductRow(Long productId, String productName, String categoryName, long units, BigDecimal revenue) {

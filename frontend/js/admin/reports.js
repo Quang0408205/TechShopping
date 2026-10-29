@@ -16,7 +16,8 @@
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng",
     BANK_TRANSFER: "Chuyển khoản",
-    INSTALLMENT: "Trả góp"
+    INSTALLMENT: "Trả góp",
+    CARD: "Thẻ quốc tế"
 };
 
 
@@ -275,6 +276,19 @@ document.addEventListener(
                     </tr>
                 `;
             }).join("") || adminEmptyRow(5, "Chưa có đơn đã giao trong khoảng này.");
+
+
+            document.querySelector("#reportCombosTable tbody").innerHTML = (report.byCombo || []).map(function (row) {
+                return `
+                    <tr>
+                        <td>${escapeHtml(row.comboName)}</td>
+                        <td class="admin-number">${row.orders}</td>
+                        <td class="admin-number">${row.units}</td>
+                        <td class="admin-number">${escapeHtml(formatPrice(row.discount))}</td>
+                        <td class="admin-number">${escapeHtml(formatPrice(row.revenue))}</td>
+                    </tr>
+                `;
+            }).join("") || adminEmptyRow(5, "Chưa có đơn nào áp combo trong khoảng này.");
 
         }
 

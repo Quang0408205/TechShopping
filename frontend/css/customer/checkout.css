@@ -220,6 +220,11 @@
     display: none;
 }
 
+.checkout-form .vn-address-row label {
+    display: block;
+    margin-bottom: var(--space-1);
+}
+
 .pickup-store-info {
     padding: 12px 14px;
 
@@ -252,12 +257,9 @@
 }
 
 
-/* ---- Tóm tắt đơn (dính khi cuộn) ---- */
+/* ---- Tóm tắt đơn (cuộn cùng form, không dính: kế hoạch v6 B1) ---- */
 
 .checkout-summary {
-    position: sticky;
-    top: 96px;
-
     padding: var(--space-3);
 
     border-radius: var(--radius-lg);
@@ -378,4 +380,352 @@
         grid-template-columns: 1fr;
     }
 
+}
+
+
+/* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+
+.checkout-voucher {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    margin: var(--space-2) 0;
+    padding: var(--space-2) 0;
+
+    border-top: 1px dashed var(--surface-warm-strong);
+    border-bottom: 1px dashed var(--surface-warm-strong);
+}
+
+.checkout-voucher-input {
+    display: flex;
+    gap: 8px;
+}
+
+.checkout-voucher-input[hidden],
+.checkout-voucher-applied[hidden],
+.checkout-total-voucher[hidden] {
+    display: none;
+}
+
+.checkout-voucher-input input {
+    flex: 1;
+    min-width: 0;
+    min-height: 42px;
+    padding: 8px 12px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background: #fff;
+
+    font: inherit;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.checkout-voucher-input .btn {
+    min-height: 42px;
+    padding: 0 14px;
+
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.checkout-voucher-applied {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-md);
+    background: var(--color-success-bg);
+
+    font-size: 13px;
+}
+
+.checkout-voucher-tag {
+    padding: 2px 8px;
+
+    border-radius: var(--radius-full);
+    background: var(--color-success);
+    color: #fff;
+
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+.checkout-voucher-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.checkout-voucher-remove,
+.checkout-voucher-pick {
+    border: 0;
+    background: none;
+
+    font: inherit;
+    cursor: pointer;
+}
+
+.checkout-voucher-remove {
+    color: var(--color-danger);
+    font-weight: 600;
+}
+
+.checkout-voucher-pick {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 0;
+
+    color: var(--color-accent-strong);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+}
+
+.checkout-voucher-message {
+    margin: 0;
+
+    font-size: 13px;
+}
+
+.checkout-voucher-message.is-error {
+    color: var(--color-danger);
+}
+
+.checkout-voucher-message.is-success {
+    color: var(--color-success);
+}
+
+.checkout-total-voucher strong {
+    color: var(--color-success);
+}
+
+
+/* Hộp "Chọn voucher" */
+
+.modal-box.voucher-modal {
+    max-width: 580px;
+    max-height: min(85vh, 720px);
+    padding: 0;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.voucher-modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    padding: 16px 20px 20px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.modal-box .voucher-modal-empty {
+    margin: 0;
+
+    color: #6b6f78;
+    text-align: center;
+}
+
+.voucher-card {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    gap: 14px;
+
+    padding: 12px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    background: #fff;
+}
+
+.voucher-card.is-disabled {
+    opacity: 0.6;
+}
+
+.voucher-card-badge {
+    flex-shrink: 0;
+
+    width: 72px;
+    height: 72px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: var(--radius-md);
+    background: var(--color-accent-strong);
+    color: #fff;
+
+    /* mép răng cưa như vé */
+    -webkit-mask: radial-gradient(circle 5px at right, transparent 98%, #000) right / 100% 14px repeat-y;
+            mask: radial-gradient(circle 5px at right, transparent 98%, #000) right / 100% 14px repeat-y;
+}
+
+.voucher-card-badge strong {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.voucher-card-badge span {
+    margin-top: 4px;
+
+    font-size: 11px;
+    letter-spacing: 0.08em;
+}
+
+.voucher-card-info {
+    flex: 1;
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    font-size: 13px;
+}
+
+.voucher-card-code {
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--color-accent-strong);
+}
+
+.voucher-card-muted {
+    color: #6b6f78;
+}
+
+.voucher-card-good {
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.voucher-card-why {
+    color: var(--color-danger);
+}
+
+.voucher-card .btn {
+    flex-shrink: 0;
+
+    padding: 8px 14px;
+
+    font-size: 12px;
+}
+
+@media (max-width: 480px) {
+
+    .voucher-card {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .voucher-card-badge {
+        width: 56px;
+        height: 56px;
+    }
+
+    .voucher-card-badge strong {
+        font-size: 16px;
+    }
+
+    .voucher-card .btn {
+        width: 100%;
+    }
+
+}
+
+
+/* ---- Kế hoạch v5 GĐ5: thẻ quốc tế (Stripe, chế độ thử) ---- */
+
+.payment-test-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 8px;
+    border-radius: 999px;
+    background: #fff4dc;
+    color: #8a5a00;
+    font-size: 11px;
+    font-style: normal;
+    font-weight: 700;
+    vertical-align: 2px;
+}
+
+
+/* ---- Kế hoạch v5 GĐ6: dùng điểm tích luỹ ---- */
+
+.checkout-points {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    margin: 12px 0 16px;
+    padding: 12px 14px;
+    border: 1px dashed #d6b48c;
+    border-radius: 10px;
+    background: #fcf6ee;
+    cursor: pointer;
+}
+
+.checkout-points:has(input:checked) {
+    border-style: solid;
+    border-color: #b87333;
+    background: #f8ecdc;
+}
+
+.checkout-points input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: #111;
+}
+
+.checkout-points-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #111;
+    color: #e8b27a;
+}
+
+.checkout-points-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.checkout-points-text strong {
+    font-size: 14px;
+}
+
+.checkout-points-text small {
+    color: var(--text-muted, #5f5f68);
+    font-size: 12px;
+}
+
+.checkout-points-value {
+    color: #8a5a22;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.checkout-points.is-disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
 }

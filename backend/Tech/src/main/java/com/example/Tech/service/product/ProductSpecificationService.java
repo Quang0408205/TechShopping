@@ -17,4 +17,7 @@ public interface ProductSpecificationService {
     ProductSpecificationResponse update(Long id, ProductSpecificationUpdateRequest request);
 
     void delete(Long id);
+
+    /** Up to {@code limit} specification names most used by the category's products, most used first. */
+    List<String> getCommonNames(Integer categoryId, int limit);
 }

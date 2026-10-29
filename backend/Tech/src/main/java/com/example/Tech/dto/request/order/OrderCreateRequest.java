@@ -5,6 +5,9 @@ import com.example.Tech.entity.order.DeliveryType;
 import com.example.Tech.entity.order.PaymentMethod;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -34,7 +37,7 @@ public record OrderCreateRequest(
         @Size(max = 1000, message = "Note must be at most 1000 characters")
         String note,
 
-        @Schema(description = "COD, BANK_TRANSFER or INSTALLMENT", example = "COD")
+        @Schema(description = "COD, BANK_TRANSFER, INSTALLMENT or CARD (Stripe, test mode)", example = "COD")
         @NotNull(message = "Payment method is required")
         PaymentMethod paymentMethod,
 
@@ -47,8 +50,65 @@ public record OrderCreateRequest(
 
         @Schema(description = "Open store to pick the order up at; required for PICKUP, must be absent otherwise",
                 example = "1")
-        Integer pickupStoreId
+        Integer pickupStoreId,
+
+        @Schema(description = "Optional, HOME_DELIVERY only: province / city of the 2-level address (since 2025-07-01)",
+                example = "Thành phố Hồ Chí Minh")
+        @Size(max = 100, message = "Shipping province must be at most 100 characters")
+        String shippingProvince,
+
+        @Schema(description = "Optional, HOME_DELIVERY only: ward / commune", example = "Phường Chợ Quán")
+        @Size(max = 100, message = "Shipping ward must be at most 100 characters")
+        String shippingWard,
+
+        @Schema(description = "Optional voucher code (plan v5); re-checked against the cart when the order is placed",
+                example = "POY10")
+        @Size(max = 30, message = "Mã voucher tối đa 30 ký tự")
+        String voucherCode,
+
+        @Schema(description = "Optional loyalty points to spend (plan v5 GĐ6): 1 point = 1.000đ, at most 10% of the goods "
+                + "after the voucher and at most the balance", example = "200")
+        @Min(value = 0, message = "Số điểm không được âm")
+        @Max(value = 1_000_000, message = "Số điểm quá lớn")
+        Integer pointsToUse,
+
+        @Schema(description = "Plan v7: where the order mails go (placed, confirmed, shipping…); when absent the account's "
+                + "email is used", example = "an@example.com")
+        @Email(message = "Email chưa hợp lệ")
+        @Size(max = 255, message = "Email tối đa 255 ký tự")
+        String contactEmail
 ) {
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId,
+                              String shippingProvince, String shippingWard, String voucherCode, Integer pointsToUse) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, shippingProvince, shippingWard, voucherCode, pointsToUse, null);
+    }
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId,
+                              String shippingProvince, String shippingWard, String voucherCode) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, shippingProvince, shippingWard, voucherCode, null);
+    }
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId,
+                              String shippingProvince, String shippingWard) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, shippingProvince, shippingWard, null);
+    }
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, null, null);
+    }
 
     /** Home delivery checkout with installment data (or null). */
     public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,

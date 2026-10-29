@@ -77,4 +77,8 @@ public interface InventoryRepository extends JpaRepository<Inventory, InventoryI
     /** Rows of open stores for the given variants, with the store. */
     @Query("select i from Inventory i join fetch i.store s where s.active = true and i.id.variantId in :variantIds")
     List<Inventory> findOpenStoreRows(@Param("variantIds") Collection<Long> variantIds);
+
+    /** Rows of open stores for every variant of one product, with the store. */
+    @Query("select i from Inventory i join fetch i.store s where s.active = true and i.variant.product.id = :productId")
+    List<Inventory> findOpenStoreRowsByProductId(@Param("productId") Long productId);
 }

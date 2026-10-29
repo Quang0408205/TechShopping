@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title id="pageTitle">Thanh toán đơn hàng - POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/orders.css">
+    <link rel="stylesheet" href="../css/customer/payment.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body>
+
+
+<div data-include="header" data-active="account"></div>
+
+
+<main>
+
+    <section class="section pay-section">
+
+        <div class="container pay-container">
+
+            <div id="payLoading" class="state-box">
+                <p>Đang tải thông tin thanh toán…</p>
+            </div>
+
+            <div id="payError" hidden></div>
+
+            <div id="payNotFound" class="state-box empty-state" hidden>
+                <h3>Không tìm thấy đơn hàng</h3>
+                <p>Đơn hàng này không tồn tại hoặc không thuộc tài khoản của bạn.</p>
+                <a href="orders.html" class="btn btn-dark">VỀ DANH SÁCH ĐƠN HÀNG</a>
+            </div>
+
+
+            <!-- Đang chờ tiền: chuyển khoản (thông tin trên, QR dưới) hoặc thẻ quốc tế (nút mở Stripe) -->
+            <div id="payWaiting" class="pay-card" hidden>
+
+                <header class="pay-head">
+
+                    <ol class="pay-steps" aria-label="Các bước">
+                        <li class="is-done"><span aria-hidden="true">✓</span>Đặt hàng</li>
+                        <li class="is-current" aria-current="step"><span>2</span>Thanh toán</li>
+                        <li><span>3</span>Hoàn tất</li>
+                    </ol>
+
+                    <p class="pay-success-line">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Đặt hàng thành công, còn một bước nữa
+                    </p>
+                    <h1>Thanh toán đơn <span id="payOrderCode"></span></h1>
+                    <p class="pay-method-line" id="payMethodLine"></p>
+                    <p class="pay-amount" id="payAmount"></p>
+                    <p class="pay-deadline" id="payDeadline"></p>
+
+                </header>
+
+
+                <!-- Chuyển khoản ngân hàng -->
+                <div class="pay-body" id="payTransferBody" hidden>
+
+                    <div class="pay-qr-box">
+                        <p class="pay-qr-title">Quét mã để chuyển khoản</p>
+                        <div class="pay-qr-frame">
+                            <img id="payQr" class="pay-qr" alt="Mã QR chuyển khoản" hidden>
+                            <p id="payQrError" class="pay-qr-error" hidden>
+                                Không tải được mã QR, vui lòng chuyển khoản theo thông tin bên trên.
+                            </p>
+                        </div>
+                        <p class="pay-qr-hint">Mở app ngân hàng hoặc ví điện tử → Quét mã QR. Số tiền và nội dung đã điền sẵn.</p>
+                    </div>
+
+                    <div class="pay-info">
+
+                        <dl class="pay-facts" id="payFacts"></dl>
+
+                        <p class="pay-note">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>
+                            <span>Ghi đúng <strong>nội dung</strong> và <strong>số tiền</strong> để đơn được xác nhận tự động.</span>
+                        </p>
+
+                        <!-- Chế độ thử nghiệm (PAYMENT_SIMULATOR_ENABLED): giả lập ngân hàng báo đã nhận tiền -->
+                        <div class="pay-sandbox" id="paySandbox" hidden>
+                            <button type="button" class="btn btn-dark" id="paySandboxBtn">Mô phỏng ngân hàng đã nhận tiền <span id="paySandboxLeft"></span></button>
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Thẻ quốc tế (Stripe Checkout) -->
+                <div class="pay-body pay-body--card" id="payCardBody" hidden>
+
+                    <p class="pay-notice" id="payCardNotice" role="status" hidden></p>
+
+                    <div class="pay-card-box">
+
+                        <span class="pay-card-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>
+                        </span>
+
+                        <div class="pay-card-text">
+                            <strong>Thanh toán bằng thẻ Visa / Mastercard</strong>
+                            <span>Bạn sẽ được chuyển sang trang thanh toán bảo mật của Stripe, xong sẽ tự quay lại đây.</span>
+                        </div>
+
+                        <button type="button" class="btn btn-dark pay-card-btn" id="payCardBtn">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                            <span>Thanh toán bằng thẻ</span>
+                        </button>
+
+                    </div>
+
+                    <div class="pay-test-card" id="payCardTest" hidden>
+                        <p><strong>Chế độ thử (Stripe Test):</strong> không trừ tiền thật. Dùng thẻ thử:</p>
+                        <dl class="pay-facts">
+                            <div class="pay-fact"><dt>Số thẻ</dt><dd>4242 4242 4242 4242</dd><button type="button" class="pay-copy" data-copy="4242424242424242" data-copy-label="số thẻ thử">Sao chép</button></div>
+                            <div class="pay-fact"><dt>Hết hạn / CVC</dt><dd>Ngày bất kỳ trong tương lai / 3 số bất kỳ</dd></div>
+                        </dl>
+                    </div>
+
+                </div>
+
+
+                <footer class="pay-foot">
+
+                    <p class="pay-waiting" id="payWaitingLine"><i class="pay-dot"></i> <span id="payWaitingText">Đang chờ nhận tiền… Trang tự cập nhật khi cửa hàng nhận được tiền.</span></p>
+
+                    <div class="pay-foot-actions">
+                        <a href="order-detail.html" id="payViewOrder" class="pay-link">Xem chi tiết đơn hàng</a>
+                        <button type="button" class="pay-cancel" id="payCancelBtn">Huỷ thanh toán</button>
+                    </div>
+
+                </footer>
+
+            </div>
+
+
+            <!-- Đã nhận tiền -->
+            <div id="payDone" class="pay-card pay-card--state" hidden>
+                <div class="pay-state-icon pay-state-icon--ok">✓</div>
+                <h2>Đã nhận được thanh toán</h2>
+                <p id="payDoneText"></p>
+                <a href="order-detail.html" id="payDoneLink" class="btn btn-dark">XEM ĐƠN HÀNG</a>
+            </div>
+
+
+            <!-- Đơn không còn chờ tiền (đã huỷ, đã đổi cách thanh toán…) -->
+            <div id="payClosed" class="pay-card pay-card--state" hidden>
+                <div class="pay-state-icon">!</div>
+                <h2 id="payClosedTitle"></h2>
+                <p id="payClosedText"></p>
+                <a href="order-detail.html" id="payClosedLink" class="btn btn-dark">XEM ĐƠN HÀNG</a>
+            </div>
+
+        </div>
+
+    </section>
+
+</main>
+
+
+<div data-include="footer"></div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/order-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/awaiting-payment.js"></script>
+<script src="../js/customer/payment.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
+<script src="../js/customer/ui-effects.js"></script>
+
+</body>
+</html>
