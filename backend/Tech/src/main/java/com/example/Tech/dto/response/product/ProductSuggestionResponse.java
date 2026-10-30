@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
-/** One row of the search box suggestions (plan v5 GĐ3). */
+/** One row of the search box suggestions. */
 public record ProductSuggestionResponse(
         Long id,
         String name,

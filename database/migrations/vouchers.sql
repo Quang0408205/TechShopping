@@ -1,4 +1,4 @@
--- Kế hoạch v5 GĐ4: voucher giảm % cho đơn hàng (do ADMIN tạo), nhập mã hoặc chọn ở trang thanh toán.
+-- Voucher giảm % cho đơn hàng (do ADMIN tạo), nhập mã hoặc chọn ở trang thanh toán.
 -- - Giảm % trên tiền hàng đã trừ khuyến mãi sản phẩm (không giảm phí ship), có mức giảm tối đa (NULL = không giới hạn),
 --   đơn tối thiểu tính trên phần hàng thuộc phạm vi; phạm vi = toàn đơn hoặc một số danh mục (voucher_categories).
 -- - Lượt dùng: tổng lượt (NULL = không giới hạn) + mỗi khách; đơn huỷ trước khi giao trả lại lượt (released_at).

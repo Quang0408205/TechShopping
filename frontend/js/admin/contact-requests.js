@@ -1,4 +1,4 @@
-/* ================= LIÊN HỆ KHÁCH HÀNG (admin/contact-requests.html) — kiemthu GĐ7 ================= */
+/* ================= LIÊN HỆ KHÁCH HÀNG (admin/contact-requests.html) ================= */
 
 /*
  * API thật (một hộp thư chung cho nhân viên / quản lý mọi chi nhánh; ADMIN chỉ xem):

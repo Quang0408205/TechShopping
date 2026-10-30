@@ -1,4 +1,4 @@
-/* ================= HẠNG THÀNH VIÊN (admin/loyalty.html, kế hoạch v5 GĐ6) ================= */
+/* ================= HẠNG THÀNH VIÊN (admin/loyalty.html) ================= */
 
 /*
  * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB):

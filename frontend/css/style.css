@@ -489,7 +489,7 @@ img {
     background: var(--color-accent-strong);
 }
 
-/* Nút liên hệ gộp (ui-effects.js, kế hoạch v6 B1): thay bong bóng Zalo riêng; nút chatbot cũ được ẩn, "Trợ lý AI" bấm hộ nó */
+/* Nút liên hệ gộp (ui-effects.js): thay bong bóng Zalo riêng; nút chatbot cũ được ẩn, "Trợ lý AI" bấm hộ nó */
 .has-contact-hub .chatbot-launcher {
     display: none;
 }
@@ -1000,7 +1000,7 @@ img {
     font-style: italic;
 }
 
-/* Trợ lý tra cứu (GĐ7): kết quả sản phẩm + link trong câu trả lời */
+/* Trợ lý tra cứu: kết quả sản phẩm + link trong câu trả lời */
 .chatbot-products {
     margin: 8px 0 0;
     padding: 0;
@@ -1342,7 +1342,7 @@ img {
 }
 
 
-/* ================= CHẤM MÀU PHIÊN BẢN (ui.js variantColorDotHtml, kế hoạch v5 GĐ2) ================= */
+/* ================= CHẤM MÀU PHIÊN BẢN (ui.js variantColorDotHtml) ================= */
 
 .color-dot {
     display: inline-block;
@@ -1447,7 +1447,7 @@ img {
 }
 
 
-/* Kế hoạch v5 GĐ10: nhãn "Combo −Xđ" dưới món mua kèm được giảm (giỏ, thanh toán, chi tiết đơn) */
+/* Nhãn "Combo −Xđ" dưới món mua kèm được giảm (giỏ, thanh toán, chi tiết đơn) */
 .combo-tag {
     display: inline-block;
 

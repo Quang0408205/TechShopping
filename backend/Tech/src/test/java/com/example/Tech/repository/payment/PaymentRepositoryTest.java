@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Checks the payment group mapping (Phase 5 columns, enums as text, partial unique index, CHECKs) against the real
+ * Checks the payment group mapping (enums as text, partial unique index, CHECKs) against the real
  * PostgreSQL test database. Every test is rolled back; a test that expects the database to refuse a row does it
  * last, because PostgreSQL aborts the transaction after the error.
  */

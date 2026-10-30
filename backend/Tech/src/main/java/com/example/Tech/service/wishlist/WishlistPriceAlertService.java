@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plan v7 GĐ4: compares the price of every saved product with the item's mark and mails each customer once with the
+ * Compares the price of every saved product with the item's mark and mails each customer once with the
  * products that got cheaper. The mark goes down after a drop and up when the price rises again, so a later drop is
  * reported again. Run by the hourly job and by ADMIN (demo).
  */

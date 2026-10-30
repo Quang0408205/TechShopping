@@ -23,7 +23,7 @@ import java.util.TreeMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** Plan v5 GĐ7: signed Cloudinary calls, checked against a local stand-in server (no real keys needed). */
+/** Signed Cloudinary calls, checked against a local stand-in server (no real keys needed). */
 class CloudinaryHttpClientTest {
 
     private static final Clock CLOCK = Clock.fixed(Instant.ofEpochSecond(1790000000L), ZoneOffset.UTC);

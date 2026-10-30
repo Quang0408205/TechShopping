@@ -11,13 +11,13 @@ import java.util.function.ToIntFunction;
 import java.util.regex.Pattern;
 
 /**
- * Picks the store that handles a home-delivery order from the shipping address text (Phase 7). There is no map
+ * Picks the store that handles a home-delivery order from the shipping address text. There is no map
  * service in the project (like payments, it is simulated), so "nearest" means: the address names the store's
  * district and city (score 3), its district only (2) or its city only (1). Both sides are compared without
  * accents, case or punctuation, with whole-word matching ("Quận 1" does not match "Quận 10"), and common short
  * forms are expanded (Q.1 / Q1 → quận 1, TP / Tp. → thành phố, HCM / TPHCM / Sài Gòn → Hồ Chí Minh, HN → Hà Nội).
  * Ties and addresses that match nothing go to the open store with the lowest id; an empty list gives empty.
- * Plan v3 GĐ E: the caller passes only the stores holding the whole order, and may break ties by stock first.
+ * The caller passes only the stores holding the whole order, and may break ties by stock first.
  */
 public final class NearestStoreResolver {
 

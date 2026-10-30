@@ -20,7 +20,7 @@ spring:
       # Streamed chatbot answers (POST /api/v1/chat/stream) run as async requests; one answer with product search took ~2 minutes on a 4 GB GPU
       request-timeout: 300s
   mail:
-    # Plan v7: order emails through SMTP (Gmail + an App Password by default); empty username = mail is not sent
+    # Order emails through SMTP (Gmail + an App Password by default); empty username = mail is not sent
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
     username: ${MAIL_USERNAME:}
@@ -69,7 +69,7 @@ app:
     dir: ${APP_UPLOAD_DIR:uploads}
     # Origin the browser uses to reach this API; stored image URLs start with it
     public-base-url: ${APP_PUBLIC_BASE_URL:http://localhost:8080}
-    # Plan v5 GĐ7: account avatars on Cloudinary (square crop around the face, compressed); any key empty = local disk.
+    # Account avatars on Cloudinary (square crop around the face, compressed); any key empty = local disk.
     # Product / review / after-sales photos always stay on the disk
     cloudinary:
       cloud-name: ${CLOUDINARY_CLOUD_NAME:}
@@ -92,6 +92,11 @@ app:
     webhook:
       secret: ${PAYMENT_WEBHOOK_SECRET:}
       simulator-enabled: ${PAYMENT_SIMULATOR_ENABLED:false}
+    # Installment partners are simulated: seconds until a partner answers an application by itself (negative = never,
+    # the partner console of STAFF / ADMIN answers instead). The answer reaches the shop through the same code as
+    # POST /api/v1/payments/installment/webhook, which needs the webhook secret above
+    installment:
+      auto-decide-seconds: ${INSTALLMENT_AUTO_DECIDE_SECONDS:6}
     # Card payments through Stripe Checkout, TEST keys only (Stripe pays out to no Vietnamese bank). Empty secret key =
     # the "Thẻ quốc tế" method is hidden. Webhook: POST /api/v1/payments/stripe/webhook, signed with the whsec_ key
     stripe:
@@ -115,7 +120,7 @@ app:
     # An account may write any number of reviews, but two must be at least this many seconds apart (0 = off)
     min-interval-seconds: ${REVIEW_MIN_INTERVAL_SECONDS:60}
   mail:
-    # Plan v7: emails about an order (placed, confirmed, shipping, delivered, cancelled). Sent after the order
+    # Emails about an order (placed, confirmed, shipping, delivered, cancelled). Sent after the order
     # transaction commits, on another thread; a failed mail never fails the order (see email_log)
     enabled: ${MAIL_ENABLED:true}
     from-name: ${MAIL_FROM_NAME:POY}
@@ -128,7 +133,7 @@ app:
     window: 1h
     async: true
   wishlist:
-    # Plan v7 GĐ4: hourly check that mails customers about price drops of the products they saved
+    # Hourly check that mails customers about price drops of the products they saved
     alerts-enabled: ${WISHLIST_ALERTS_ENABLED:true}
     alert-cron: ${WISHLIST_ALERT_CRON:0 0 * * * *}
   contact:
@@ -148,7 +153,7 @@ app:
       refresh-per-ip: ${REFRESH_LIMIT_PER_IP:60}
       refresh-window: 1m
   search:
-    # Plan v5: suggestions under the search box (GET /products/suggest), per client IP; generous because behind the
+    # Suggestions under the search box (GET /products/suggest), per client IP; generous because behind the
     # deploy proxy every visitor shares the proxy's IP
     suggest-per-ip: ${SUGGEST_LIMIT_PER_IP:600}
     suggest-window: 1m

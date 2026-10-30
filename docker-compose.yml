@@ -23,7 +23,7 @@ services:
       - ./database/migrations/product_base_names.sql:/docker-entrypoint-initdb.d/04b_product_base_names.sql:ro
       # Khách mẫu của 04 thành họ tên / số điện thoại / địa chỉ như người thật (bỏ dấu "TÀI KHOẢN MẪU"); chạy trước 07
       - ./database/docker-init/04c_sample_customer_names.sql:/docker-entrypoint-initdb.d/04c_sample_customer_names.sql:ro
-      # Kế hoạch v4: gộp sản phẩm chỉ khác RAM / bộ nhớ thành một sản phẩm nhiều phiên bản, bỏ phiên bản giá 0
+      # Gộp sản phẩm chỉ khác RAM / bộ nhớ thành một sản phẩm nhiều phiên bản, bỏ phiên bản giá 0
       - ./database/migrations/merge_product_variants.sql:/docker-entrypoint-initdb.d/05_merge_product_variants.sql:ro
       # Chi nhánh mẫu: cửa hàng mẫu của 04 thành POY Quận 1, thêm 5 chi nhánh TP.HCM / Hà Nội / Đà Nẵng (demo)
       - ./database/docker-init/05b_sample_stores.sql:/docker-entrypoint-initdb.d/05b_sample_stores.sql:ro
@@ -81,7 +81,7 @@ services:
       # Thẻ quốc tế qua Stripe Checkout, chỉ dùng khoá Test (sk_test_…); trống = ẩn hình thức này
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      # Email đơn hàng (kế hoạch v7): Gmail SMTP + App Password; MAIL_USERNAME trống = không gửi (ghi SKIPPED trong email_log)
+      # Email đơn hàng: Gmail SMTP + App Password; MAIL_USERNAME trống = không gửi (ghi SKIPPED trong email_log)
       MAIL_ENABLED: ${MAIL_ENABLED:-true}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}

@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v7 GĐ4: the logged-in customer's wishlist, and the ADMIN trigger of the price-drop check. */
+/** The logged-in customer's wishlist, and the ADMIN trigger of the price-drop check. */
 @RestController
 @RequiredArgsConstructor
 @Tag(name = "Wishlist", description = "Saved (favourite) products and price-drop emails")

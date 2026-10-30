@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Plan v3: deleting a category with its products (only when none has a sales / stock / review history) and a hidden
+ * Deleting a category with its products (only when none has a sales / stock / review history) and a hidden
  * category taking its products off the shop. Over HTTP against the test database (rolled back).
  */
 @SpringBootTest

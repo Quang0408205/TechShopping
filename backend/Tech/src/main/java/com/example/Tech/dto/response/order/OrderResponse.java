@@ -29,14 +29,14 @@ public record OrderResponse(
         int totalQuantity,
         @Schema(description = "Sum of the item subtotals")
         BigDecimal subtotal,
-        @Schema(description = "Plan v5 GĐ10: total combo discount, taken off before the voucher")
+        @Schema(description = "Total combo discount, taken off before the voucher")
         BigDecimal comboDiscount,
         @Schema(description = "Combos applied to the order (name copied at checkout)")
         List<ComboApplied> combos,
-        @Schema(description = "Plan v5: voucher used (null when none) and the amount it took off the goods")
+        @Schema(description = "Voucher used (null when none) and the amount it took off the goods")
         String voucherCode,
         BigDecimal voucherDiscount,
-        @Schema(description = "Plan v5 GĐ6: loyalty points spent and the amount they took off (1 point = 1.000đ)")
+        @Schema(description = "Loyalty points spent and the amount they took off (1 point = 1.000đ)")
         int pointsUsed,
         BigDecimal pointsDiscount,
         @Schema(description = "Points credited when the order was delivered (0 before)")

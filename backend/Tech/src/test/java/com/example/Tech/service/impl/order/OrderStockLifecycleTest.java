@@ -73,7 +73,7 @@ class OrderStockLifecycleTest {
         assertInvalid(DeliveryType.HOME_DELIVERY, null, null, "shippingAddress");
     }
 
-    // plan v3 GĐ E: one open store must hold the whole order; variant 10 × 2 and variant 20 × 1 below
+    // One open store must hold the whole order; variant 10 × 2 and variant 20 × 1 below
     private static final Map<Long, Integer> NEEDED = Map.of(10L, 2, 20L, 1);
     private static final Map<Long, String> LABELS = Map.of(10L, "Điện thoại - Đen", 20L, "Ốp lưng - Trong");
 

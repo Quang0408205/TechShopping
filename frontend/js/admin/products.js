@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         openForm(null);
     });
 
-    /* Nhập Excel (kế hoạch v4 bước 6): POST /admin/products/import?dryRun= */
+    /* Nhập Excel: POST /admin/products/import?dryRun= */
     const importPanel = document.getElementById("productImportPanel");
 
     mountExcelImport(document.getElementById("productImportRoot"), {

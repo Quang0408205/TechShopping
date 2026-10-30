@@ -68,7 +68,7 @@ public class CustomerProfile {
     @Column(name = "total_spent", precision = 15, scale = 2, nullable = false)
     private BigDecimal totalSpent = BigDecimal.ZERO;
 
-    /** Plan v5 GĐ6: highest tier reached (never goes down); code of loyalty_tiers. */
+    /** Highest tier reached (never goes down); code of loyalty_tiers. */
     @Column(name = "tier_code", length = 20, nullable = false)
     private String tierCode = "MEMBER";
 

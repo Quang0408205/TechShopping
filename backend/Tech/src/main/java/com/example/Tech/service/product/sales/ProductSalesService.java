@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Plan v8: "Đã bán N" and the "Bán chạy" label on the product cards, from real orders (status not CANCELLED).
+ * "Đã bán N" and the "Bán chạy" label on the product cards, from real orders (status not CANCELLED).
  * The top-seller list is computed for the whole shop and kept for a few minutes.
  */
 @Service

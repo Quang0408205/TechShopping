@@ -1,4 +1,4 @@
-/* ================= VOUCHER (admin/vouchers.html, kế hoạch v5 GĐ4) ================= */
+/* ================= VOUCHER (admin/vouchers.html) ================= */
 
 /*
  * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):

@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService {
         User user = currentUserLoader.load(userId);
         String previousAvatar = user.getAvatarUrl();
         String avatar = request.avatarUrl() == null || request.avatarUrl().isBlank() ? null : request.avatarUrl().trim();
-        // only avatars this server stored; an unchanged old value (set before GĐ5) may stay as it is
+        // only avatars this server stored; an unchanged old value (set before) may stay as it is
         if (avatar != null && !avatar.equals(previousAvatar) && !imageStorageService.isStoredAvatar(avatar)) {
             throw BusinessException.invalidField("avatarUrl", "Ảnh đại diện phải được tải lên từ trang Tài khoản");
         }

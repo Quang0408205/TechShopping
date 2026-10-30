@@ -1,4 +1,4 @@
-/* ================= ĐƠN ĐANG CHỜ THANH TOÁN (kế hoạch v5 GĐ5) ================= */
+/* ================= ĐƠN ĐANG CHỜ THANH TOÁN ================= */
 
 /*
  * Giỏ hàng xoá ngay khi đặt đơn, nên khách bấm Back từ trang thanh toán sẽ thấy giỏ trống.

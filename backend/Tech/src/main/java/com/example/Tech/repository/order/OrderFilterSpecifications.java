@@ -67,7 +67,7 @@ public final class OrderFilterSpecifications {
     }
 
     /**
-     * Plan v5 GĐ6, purchase history: the customer's own orders, optionally limited to some statuses and to a keyword
+     * Purchase history: the customer's own orders, optionally limited to some statuses and to a keyword
      * (order code / id, or a product name in the order).
      */
     public static Specification<Order> history(Long userId, Collection<OrderStatus> statuses, String keyword) {

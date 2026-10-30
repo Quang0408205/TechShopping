@@ -29,7 +29,7 @@ create unique index if not exists uq_payments_order_main on payments(order_id) w
 create index if not exists idx_installment_orders_status on installment_orders(status);
 create index if not exists idx_installment_payments_due on installment_payments(status, due_date);
 
--- đơn COD / chuyển khoản đặt trước phase 5 chưa có bản ghi thanh toán: tạo theo trạng thái đơn
+-- đơn COD / chuyển khoản đã đặt từ trước chưa có bản ghi thanh toán: tạo theo trạng thái đơn
 insert into payments (order_id, amount, payment_method, status, paid_at)
 select o.order_id,
        o.total_amount,

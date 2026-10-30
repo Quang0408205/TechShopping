@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/** Public lookup of an order by the random token in its email link (plan v7). A wrong or malformed token is a 404. */
+/** Public lookup of an order by the random token in its email link. A wrong or malformed token is a 404. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

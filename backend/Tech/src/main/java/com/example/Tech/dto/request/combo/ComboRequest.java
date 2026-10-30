@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** Create / replace a combo (ADMIN, plan v5 GĐ10): one main product and 1–10 add-ons, each with its own discount. */
+/** Create / replace a combo (ADMIN): one main product and 1–10 add-ons, each with its own discount. */
 public record ComboRequest(
 
         @NotBlank(message = "Vui lòng nhập tên combo")

@@ -40,7 +40,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-/** Plan v5 GĐ10: combo management, ADMIN only (re-checked in the database on every call). */
+/** Combo management, ADMIN only (re-checked in the database on every call). */
 @Slf4j
 @Service
 @RequiredArgsConstructor

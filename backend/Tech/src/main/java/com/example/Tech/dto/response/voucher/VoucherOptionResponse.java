@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** A voucher as the customer sees it at checkout, evaluated against the current cart (plan v5 GĐ4). */
+/** A voucher as the customer sees it at checkout, evaluated against the current cart. */
 public record VoucherOptionResponse(
         Long id,
         String code,

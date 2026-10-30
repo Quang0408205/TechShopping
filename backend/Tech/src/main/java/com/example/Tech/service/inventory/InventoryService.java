@@ -11,7 +11,7 @@ import com.example.Tech.dto.response.inventory.StockMovementResponse;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Per-store stock (Phase 7). Every method is store-scoped through StoreAccessGuard: ADMIN → any store,
+ * Per-store stock. Every method is store-scoped through StoreAccessGuard: ADMIN → any store,
  * STAFF → only the store of their current assignment. Every quantity change also appends a stock_movements row.
  */
 public interface InventoryService {

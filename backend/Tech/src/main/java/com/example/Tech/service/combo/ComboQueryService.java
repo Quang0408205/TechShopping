@@ -31,7 +31,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Plan v5 GĐ10, public: the combos a product page offers ("Mua kèm tiết kiệm"). */
+/** Public: the combos a product page offers ("Mua kèm tiết kiệm"). */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

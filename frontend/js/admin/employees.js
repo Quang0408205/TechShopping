@@ -18,7 +18,7 @@
  *   POST   /branch/employees/{id}/deactivate                   cho nghỉ (khoá tài khoản)
  *
  * Tuyển nhân sự luôn tạo tài khoản MỚI, không chọn tài khoản khách có sẵn. Vị trí tại chi nhánh do backend
- * đặt theo vai trò (kế hoạch v3 GĐ D): "Nhân viên chi nhánh" hoặc "Quản lý chi nhánh"; form không gửi vị trí.
+ * đặt theo vai trò: "Nhân viên chi nhánh" hoặc "Quản lý chi nhánh"; form không gửi vị trí.
  */
 
 const EMPLOYEE_PAGE_SIZE = 20;

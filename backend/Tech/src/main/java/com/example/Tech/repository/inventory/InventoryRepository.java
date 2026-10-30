@@ -62,7 +62,7 @@ public interface InventoryRepository extends JpaRepository<Inventory, InventoryI
     @Query("delete from Inventory i where i.id.variantId = :variantId")
     int deleteAllByVariantId(@Param("variantId") Long variantId);
 
-    // Plan v3 GĐ E: what customers can still buy = stock of OPEN stores only (no reservation)
+    // What customers can still buy = stock of OPEN stores only (no reservation)
 
     /** [productId, sum of quantity] over open stores. */
     @Query("select i.variant.product.id, sum(i.quantity) from Inventory i where i.store.active = true "

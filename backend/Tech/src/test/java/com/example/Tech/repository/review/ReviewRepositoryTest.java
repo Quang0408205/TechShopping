@@ -26,8 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Checks the Review / ReviewImage mapping, and the migration's CHECK constraints, against the real
- * PostgreSQL test database (techshopping_test). This is Việc 0d step R1 (schema + entity + repository
- * only, 2026-10-05); no API/UI reads or writes these tables yet.
+ * PostgreSQL test database (techshopping_test).
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

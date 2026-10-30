@@ -23,7 +23,7 @@ public record OrderItemResponse(
         BigDecimal discountAmount,
         @Schema(description = "unitPrice × quantity")
         BigDecimal subtotal,
-        @Schema(description = "Plan v5 GĐ10: combo discount on this line (0 when none)")
+        @Schema(description = "Combo discount on this line (0 when none)")
         BigDecimal comboDiscount
 ) {
 }

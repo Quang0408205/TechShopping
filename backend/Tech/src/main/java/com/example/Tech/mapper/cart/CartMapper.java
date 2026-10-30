@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * Builds the cart response. Prices always come from the variant at read time (cart_items has no price
  * column); a line is available only while its product is not deleted, not hidden, has a price and the open
- * stores hold enough units (plan v3 GD E).
+ * stores hold enough units.
  * The shipping fee is the one checkout charges (ShippingPolicy). Checkout (OrderServiceImpl) uses the same
  * unitPrice / isPurchasable rules.
  */

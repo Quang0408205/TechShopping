@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Plan v5 GĐ4, customer side: the vouchers running now evaluated against the cart, a preview for a typed code,
+ * Customer side: the vouchers running now evaluated against the cart, a preview for a typed code,
  * and the order hooks (apply when the order is placed, give the use back when it is cancelled before delivery).
  */
 @Slf4j

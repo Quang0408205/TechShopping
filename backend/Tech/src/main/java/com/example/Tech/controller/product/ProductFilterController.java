@@ -25,7 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Product filters", description = "Spec filters and needs (plan v5 stage 9)")
+@Tag(name = "Product filters", description = "Spec filters and needs")
 public class ProductFilterController {
 
     private final ProductFilterService filterService;

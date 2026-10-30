@@ -16,7 +16,7 @@ import java.util.TreeMap;
 import java.util.function.ToIntFunction;
 
 /**
- * Plan v3 GĐ E: what customers can buy. Only OPEN stores count, and nothing is reserved: an order takes its
+ * What customers can buy. Only OPEN stores count, and nothing is reserved: an order takes its
  * stock when staff confirm it (OrderStockLifecycle), so these numbers can be overtaken by a concurrent order and
  * the confirmation still re-checks under a lock.
  */

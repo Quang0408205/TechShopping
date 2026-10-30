@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** GET /categories/product-counts (kế hoạch v6 B1): products on sale per category, public. */
+/** GET /categories/product-counts: products on sale per category, public. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

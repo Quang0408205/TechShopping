@@ -212,6 +212,18 @@ function setupSidebarToggle() {
     }
 
 
+    /* Giữ vị trí cuộn của menu giữa các trang (menu dài, mục cuối không bị nhảy về đầu) */
+    try {
+        sidebar.scrollTop = Number(sessionStorage.getItem("poy_admin_nav_scroll")) || 0;
+    } catch (error) { }
+
+    window.addEventListener("pagehide", function () {
+        try {
+            sessionStorage.setItem("poy_admin_nav_scroll", String(sidebar.scrollTop));
+        } catch (error) { }
+    });
+
+
     /* Nền mờ phía sau menu khi menu trượt ra (màn hình dưới 1024px) */
     const backdrop = document.createElement("div");
 
@@ -330,7 +342,7 @@ function storeOptionLabel(store) {
 
 
 /*
- * Bộ lọc chi nhánh THẬT (Phase 7): ADMIN chọn được mọi chi nhánh (đọc API);
+ * Bộ lọc chi nhánh THẬT: ADMIN chọn được mọi chi nhánh (đọc API);
  * nhân viên / quản lý chi nhánh bị khoá cứng vào chi nhánh của mình.
  * extraOptions: [{ value, label }] thêm sau danh sách (chỉ ADMIN).
  * Trả về Promise; lỗi tải danh sách → chỉ còn "Tất cả chi nhánh" (ném lại lỗi).

@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 
-/** Plan v8: "Còn hàng tại cửa hàng nào" on the product page, from the stock of the open stores. */
+/** "Còn hàng tại cửa hàng nào" on the product page, from the stock of the open stores. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

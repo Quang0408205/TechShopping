@@ -1,4 +1,4 @@
-/* ================= THẺ SẢN PHẨM SỐNG ĐỘNG (kế hoạch v8 bước 3): XEM NHANH, nghiêng nhẹ ================= */
+/* ================= THẺ SẢN PHẨM SỐNG ĐỘNG: XEM NHANH, nghiêng nhẹ ================= */
 
 /*
  * Gắn bằng uỷ quyền sự kiện nên dùng được cho mọi lưới thẻ (trang chủ, Sản phẩm, chi tiết).

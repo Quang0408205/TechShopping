@@ -113,7 +113,7 @@
 
                     <div class="order-status-timeline" id="orderTimeline"></div>
 
-                    <!-- Phase 5: việc khách cần làm / đang chờ (chuyển khoản, duyệt trả góp) -->
+                    <!-- Việc khách cần làm / đang chờ (chuyển khoản, duyệt trả góp) -->
                     <p id="orderPaymentNotice" class="order-payment-notice" hidden></p>
 
 
@@ -126,21 +126,21 @@
                                 <div class="order-detail-items" id="orderItemsList"></div>
                             </div>
 
-                            <!-- Phase 5: hợp đồng trả góp + lịch các kỳ -->
+                            <!-- Hợp đồng trả góp + lịch các kỳ -->
                             <div class="order-installment" id="orderInstallmentBlock" hidden>
                                 <h4>Trả góp</h4>
                                 <dl class="order-facts" id="orderInstallmentFacts"></dl>
                                 <p class="order-installment-reason" id="orderInstallmentReason" hidden></p>
                                 <div id="orderInstallmentSchedule"></div>
                             </div>
-                            <!-- Phase 6: bảo hành / bảo trì / trả hàng của đơn đã giao (js/customer/order-after-sales.js) -->
+                            <!-- Bảo hành / bảo trì / trả hàng của đơn đã giao (js/customer/order-after-sales.js) -->
                             <div class="after-sales-block" id="orderAfterSales" hidden></div>
 
                         </div>
 
                         <div class="order-detail-side">
 
-                            <!-- Phase 5: chỉ khi đơn chuyển khoản / thẻ (kế hoạch v5 GĐ5) đang chờ tiền -->
+                            <!-- Chỉ khi đơn chuyển khoản / thẻ đang chờ tiền -->
                             <div class="order-detail-block order-transfer" id="orderTransferBlock" hidden>
                                 <h4 id="orderTransferTitle">Chờ chuyển khoản</h4>
                                 <dl class="order-facts" id="orderTransferFacts"></dl>
@@ -186,7 +186,7 @@
                                     <span>Voucher <span id="orderVoucherCode"></span></span>
                                     <strong id="orderVoucherDiscount"></strong>
                                 </div>
-                                <!-- Kế hoạch v5 GĐ6: điểm đã dùng + điểm được cộng khi giao -->
+                                <!-- điểm đã dùng + điểm được cộng khi giao -->
                                 <div class="checkout-total-row checkout-total-voucher" id="orderPointsRow" hidden>
                                     <span>Điểm tích luỹ (<span id="orderPointsUsed"></span> điểm)</span>
                                     <strong id="orderPointsDiscount"></strong>
@@ -202,7 +202,7 @@
                                 <p class="order-points-earned" id="orderPointsEarned" hidden></p>
                             </div>
 
-                            <!-- Kế hoạch v5 GĐ6: đơn đã giao / đã huỷ mua lại được -->
+                            <!-- đơn đã giao / đã huỷ mua lại được -->
                             <div class="order-detail-actions" id="orderBuyAgain" hidden>
                                 <button type="button" class="btn btn-dark" id="orderBuyAgainBtn">MUA LẠI</button>
                                 <p>Thêm các sản phẩm của đơn này vào giỏ với giá hiện tại.</p>

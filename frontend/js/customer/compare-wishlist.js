@@ -1,7 +1,7 @@
 /* ================= YÊU THÍCH + SO SÁNH SẢN PHẨM (dùng chung mọi trang khách hàng) ================= */
 
 /*
- * Kế hoạch v7 GĐ4.
+ *.
  * - Yêu thích: lưu trên server theo tài khoản (GET /wishlist/ids, POST / DELETE /wishlist/{id}) để server gửi email khi
  *   giá giảm. Chưa đăng nhập bấm tim → sang trang đăng nhập rồi quay lại. Số trên biểu tượng tim ở đầu trang = số đã lưu.
  * - So sánh: lưu trên trình duyệt (localStorage poy_compare), tối đa 4 sản phẩm CÙNG danh mục (thông số mới so được với

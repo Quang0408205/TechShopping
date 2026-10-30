@@ -167,7 +167,7 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
-     * Plan v3 GĐ E: a line may not ask for more than the open stores hold. Lowering a quantity is always allowed,
+     * A line may not ask for more than the open stores hold. Lowering a quantity is always allowed,
      * so a customer can fix a line whose stock dropped after it was added.
      */
     private void requireStock(ProductVariant variant, int wanted, int inCart) {

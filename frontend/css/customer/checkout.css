@@ -208,7 +208,7 @@
 }
 
 
-/* ---- Ô địa chỉ / cửa hàng (Phase 7) ---- */
+/* ---- Ô địa chỉ / cửa hàng ---- */
 
 .checkout-delivery-fields {
     display: flex;
@@ -257,7 +257,7 @@
 }
 
 
-/* ---- Tóm tắt đơn (cuộn cùng form, không dính: kế hoạch v6 B1) ---- */
+/* ---- Tóm tắt đơn (cuộn cùng form, không dính) ---- */
 
 .checkout-summary {
     padding: var(--space-3);
@@ -383,7 +383,7 @@
 }
 
 
-/* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+/* ================= VOUCHER ================= */
 
 .checkout-voucher {
     display: flex;
@@ -649,7 +649,7 @@
 }
 
 
-/* ---- Kế hoạch v5 GĐ5: thẻ quốc tế (Stripe, chế độ thử) ---- */
+/* ---- Thẻ quốc tế (Stripe, chế độ thử) ---- */
 
 .payment-test-badge {
     display: inline-block;
@@ -665,7 +665,7 @@
 }
 
 
-/* ---- Kế hoạch v5 GĐ6: dùng điểm tích luỹ ---- */
+/* ---- Dùng điểm tích luỹ ---- */
 
 .checkout-points {
     display: grid;

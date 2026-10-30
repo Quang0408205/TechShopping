@@ -62,6 +62,9 @@ public final class InstallmentFilterSpecifications {
             if (filter.status() != null) {
                 predicates.add(cb.equal(root.get("status"), filter.status()));
             }
+            if (filter.partner() != null && !filter.partner().isBlank()) {
+                predicates.add(cb.equal(root.get("partner").get("code"), filter.partner().trim().toUpperCase(Locale.ROOT)));
+            }
             if (Boolean.TRUE.equals(filter.overdue())) {
                 Subquery<Long> overdue = query.subquery(Long.class);
                 Root<InstallmentPayment> period = overdue.from(InstallmentPayment.class);

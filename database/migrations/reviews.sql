@@ -1,5 +1,5 @@
--- đánh giá sản phẩm (2026-10-05): sao (1-5) + bình luận, admin ẩn/hiện có lý do, tối đa 5 ảnh/đánh giá.
--- Đây là bước R1 của kế hoạch "Đánh giá sản phẩm" (PENDING_WORK.md Việc 0d) — schema theo đúng thiết kế đã
+-- đánh giá sản phẩm: sao (1-5) + bình luận, admin ẩn/hiện có lý do, tối đa 5 ảnh/đánh giá.
+-- Schema theo đúng thiết kế đã
 -- chốt ở docs/TechShopping_v2.sql nhóm 10, đối chiếu lại với docs/techshopping_v3.sql nhóm 11 (thêm 2 CHECK
 -- biên + unique(review_id, display_order) mà v2 chưa có, do nhóm rà soát phát hiện thêm). Giới hạn 5 ảnh /
 -- đánh giá và tính lại products.rating / total_reviews do CODE JAVA kiểm tra lúc ghi (bước sau), KHÔNG dùng

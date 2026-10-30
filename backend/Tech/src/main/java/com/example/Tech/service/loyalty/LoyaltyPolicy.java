@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plan v5 GĐ6 point rules (pure functions). Earn 1 point per {@link #VND_PER_POINT_EARNED} of goods really paid
+ * Point rules (pure functions). Earn 1 point per {@link #VND_PER_POINT_EARNED} of goods really paid
  * (after promotions, voucher and points, shipping excluded) × the tier multiplier, rounded down. Spend: 1 point =
  * {@link #VND_PER_POINT_SPENT}, at most {@link #MAX_REDEEM_PERCENT}% of the goods after the voucher.
  */

@@ -1,4 +1,4 @@
--- Kế hoạch v5 GĐ10: combo "mua kèm giảm giá" (do ADMIN tạo): 1 sản phẩm chính + các món mua kèm, mỗi món một mức giảm
+-- Combo "mua kèm giảm giá" (do ADMIN tạo): 1 sản phẩm chính + các món mua kèm, mỗi món một mức giảm
 -- (% hoặc số tiền trên mỗi sản phẩm). Giỏ đủ món thì server tự giảm; không có mã nhập.
 -- - combos / combo_items theo SẢN PHẨM (mọi phiên bản); thời hạn + bật / tạm dừng như voucher.
 -- - orders.combo_discount + order_items.combo_discount: phần giảm combo chia theo dòng (trả hàng hoàn đúng số tiền thực trả).

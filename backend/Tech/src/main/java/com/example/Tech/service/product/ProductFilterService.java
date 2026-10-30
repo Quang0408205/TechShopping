@@ -5,7 +5,7 @@ import com.example.Tech.dto.response.product.NeedResponse;
 
 import java.util.List;
 
-/** Normalised spec filters + needs of products (plan v5 stage 9). */
+/** Normalised spec filters + needs of products. */
 public interface ProductFilterService {
 
     /** Rebuilds the filter values of one product from its specifications and variants (same transaction as the caller). */

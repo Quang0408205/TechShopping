@@ -21,7 +21,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * A message sent from the Contact page (kiemthu GĐ7, migration 12). The sender may be a guest (user null).
+ * A message sent from the Contact page. The sender may be a guest (user null).
  * Handled by STAFF / BRANCH_MANAGER of any store; ADMIN only reads. handledBy / handledAt = the last change.
  */
 @Entity

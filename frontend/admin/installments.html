@@ -13,7 +13,6 @@
     <title>Trả góp - Quản trị POY</title>
 
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
 
@@ -27,48 +26,46 @@
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Trả góp" data-roles="">
 
-
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="installments"></div>
-
 
     <div class="admin-main">
 
         <div data-include="admin-topbar"></div>
 
-
         <main class="admin-content">
-
 
             <form class="admin-filter-bar" id="installmentFilterForm" role="search">
 
                 <input type="search" id="installmentKeyword" placeholder="Mã đơn, người nhận, SĐT, email khách, CCCD…" maxlength="255" aria-label="Từ khoá">
 
-                <select id="installmentStatusFilter" aria-label="Trạng thái hợp đồng">
+                <select id="installmentStatusFilter" aria-label="Trạng thái hồ sơ">
                     <option value="">Tất cả trạng thái</option>
-                    <option value="PENDING_APPROVAL">Chờ duyệt</option>
-                    <option value="APPROVED">Đã duyệt</option>
-                    <option value="ACTIVE">Đang trả góp</option>
-                    <option value="COMPLETED">Đã trả đủ</option>
-                    <option value="REJECTED">Từ chối</option>
+                    <option value="PENDING_APPROVAL">Chờ đối tác</option>
+                    <option value="APPROVED">Đối tác đã duyệt</option>
+                    <option value="SETTLED">Đã nhận tiền từ đối tác</option>
+                    <option value="REJECTED">Đối tác từ chối</option>
                     <option value="CANCELLED">Đã hủy</option>
+                    <option value="ACTIVE">Hợp đồng cũ: đang trả góp</option>
+                    <option value="COMPLETED">Hợp đồng cũ: đã trả đủ</option>
                 </select>
 
-                <label class="admin-check-filter">
-                    <input type="checkbox" id="installmentOverdueFilter">
-                    Chỉ hợp đồng có kỳ quá hạn
-                </label>
+                <select id="installmentPartnerFilter" aria-label="Đối tác">
+                    <option value="">Tất cả đối tác</option>
+                    <option value="CREDIT_CARD">Thẻ tín dụng</option>
+                    <option value="FINANCE_A">Công ty tài chính A</option>
+                    <option value="FINANCE_B">Công ty tài chính B</option>
+                </select>
 
                 <button type="submit" class="btn btn-dark">TÌM</button>
 
             </form>
 
-
             <section class="admin-panel">
 
                 <div class="admin-panel-header">
-                    <h2>Hợp đồng trả góp</h2>
+                    <h2>Hồ sơ trả góp</h2>
                     <span class="admin-row-count" id="installmentRowCount"></span>
                 </div>
 
@@ -79,9 +76,9 @@
                                 <th></th>
                                 <th>Đơn hàng</th>
                                 <th>Khách hàng</th>
+                                <th>Đối tác</th>
                                 <th>Kỳ hạn</th>
-                                <th>Đã thu / còn lại</th>
-                                <th>Kỳ tiếp theo</th>
+                                <th>Phí đối tác / thực nhận</th>
                                 <th>Trạng thái</th>
                             </tr>
                         </thead>
@@ -93,12 +90,37 @@
 
             </section>
 
+            <!-- Điều kiện và bảng phí của đối tác: chỉ ADMIN (js/admin/installments.js bỏ hidden) -->
+            <section class="admin-panel" id="partnerPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2>Đối tác và phí</h2>
+                    <span class="admin-row-count">Phí mới áp dụng cho hồ sơ được duyệt sau khi lưu</span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table admin-table--wide">
+                        <thead>
+                            <tr>
+                                <th>Đối tác</th>
+                                <th>Nhận đơn từ (đ)</th>
+                                <th>Đến (đ, bỏ trống = không giới hạn)</th>
+                                <th>Phí theo kỳ hạn (tháng=%)</th>
+                                <th>Hoạt động</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="partnerTableBody"></tbody>
+                    </table>
+                </div>
+
+            </section>
+
         </main>
 
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>
@@ -109,4 +131,5 @@
 <script src="../js/admin/installments.js"></script>
 
 </body>
+
 </html>

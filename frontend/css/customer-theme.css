@@ -544,7 +544,7 @@ h4 {
 }
 
 
-/* ---- Mega-menu danh mục (kế hoạch v6 B2): hàng danh mục ngang + 4 khối; dựng ở js/core/main.js ---- */
+/* ---- Mega-menu danh mục: hàng danh mục ngang + 4 khối; dựng ở js/core/main.js ---- */
 
 /* Panel rộng bằng cả header: neo vào .header (sticky), không phải khung 1300px */
 .header-inner {
@@ -1034,7 +1034,7 @@ h4 {
     text-decoration: underline;
 }
 
-/* Kế hoạch v5 GĐ3: dòng sản phẩm gợi ý (ảnh + tên + giá) */
+/* Dòng sản phẩm gợi ý (ảnh + tên + giá) */
 .search-result {
     display: flex;
     align-items: center;
@@ -1296,7 +1296,7 @@ h4 {
 }
 
 
-/* ---- Menu tài khoản trên header khi đã đăng nhập (main.js renderAuthState, kế hoạch v2 GĐ5) ---- */
+/* ---- Menu tài khoản trên header khi đã đăng nhập (main.js renderAuthState) ---- */
 .user-menu {
     position: relative;
 }
@@ -1937,7 +1937,7 @@ h4 {
     aspect-ratio: 1 / 1;
 }
 
-/* Kế hoạch v3 GĐ E: không chi nhánh đang mở nào còn hàng */
+/* Không chi nhánh đang mở nào còn hàng */
 .product-stock-badge {
     position: absolute;
     top: 12px;
@@ -2155,7 +2155,7 @@ div[data-include="header"] {
 }
 
 
-/* ================= ĐƠN ĐANG CHỜ THANH TOÁN (giỏ hàng / checkout, kế hoạch v5 GĐ5) ================= */
+/* ================= ĐƠN ĐANG CHỜ THANH TOÁN (giỏ hàng / checkout) ================= */
 
 .awaiting-pay-slot {
     margin-bottom: 20px;
@@ -2227,7 +2227,7 @@ section.awaiting-pay-slot {
 }
 
 
-/* ================= Yêu thích + so sánh (kế hoạch v7 GĐ4; js/customer/compare-wishlist.js) ================= */
+/* ================= Yêu thích + so sánh (js/customer/compare-wishlist.js) ================= */
 
 /* Biểu tượng tim ở đầu trang: dáng như nút giỏ hàng, nhưng KHÔNG dùng lớp .cart-btn / .cart-count (script giỏ hàng tìm theo lớp đó) */
 .wish-btn {
@@ -2558,7 +2558,7 @@ body.has-compare-bar .chatbot-launcher {
 }
 
 
-/* ================= Thẻ sản phẩm kế hoạch v8: nền ảnh đồng nhất, dòng đánh giá + đã bán, trả góp, nhãn ================= */
+/* ================= Thẻ sản phẩm: nền ảnh đồng nhất, dòng đánh giá + đã bán, trả góp, nhãn ================= */
 
 /* Ảnh cào có nền trắng / xám / xanh nhạt khác nhau: đặt trên cùng một nền ngà, "multiply" để nền trắng của ảnh hoà vào */
 .product-image {

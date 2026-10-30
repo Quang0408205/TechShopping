@@ -1,4 +1,4 @@
-/* ================= TRANG THANH TOÁN (Phase 4–5) ================= */
+/* ================= TRANG THANH TOÁN ================= */
 
 /*
  * Chỉ dành cho người đã đăng nhập.
@@ -6,16 +6,16 @@
  *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
  * - Tóm tắt lấy từ giỏ trên server (/api/v1/cart), kể cả phí ship. Có dòng
  *   ngừng bán thì không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
- * - Trả góp (Phase 5): kỳ hạn, mức tối thiểu, độ dài CCCD và danh sách ngân hàng
- *   lấy từ GET /payments/installment-options; đơn dưới mức tối thiểu (hoặc không
- *   tải được) thì khoá lựa chọn trả góp. Tiền mỗi kỳ = tổng / số kỳ làm tròn
+ * - Trả góp: đối tác (kỳ hạn, khoảng giá trị đơn, có cần thẻ hay không), độ dài CCCD
+ *   và danh sách ngân hàng lấy từ GET /payments/installment-options; chưa có đối tác nào
+ *   nhận đơn (hoặc không tải được) thì khoá lựa chọn trả góp. Tiền mỗi kỳ = tổng / số kỳ làm tròn
  *   xuống, kỳ cuối nhận phần lẻ (giống server).
- * - Hình thức nhận hàng (Phase 7): giao tận nhà (cần địa chỉ; server tự chọn
+ * - Hình thức nhận hàng: giao tận nhà (cần địa chỉ; server tự chọn
  *   chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (chọn 1 cửa hàng đang mở từ
  *   GET /stores, không cần địa chỉ, miễn phí vận chuyển giống server — GET /cart
  *   luôn tính phí giao tận nhà nên tóm tắt tự bỏ phí khi chọn nhận tại cửa hàng).
  *   Không tải được / chưa có cửa hàng nào → khoá lựa chọn nhận tại cửa hàng.
- * - Kế hoạch v3 GĐ E: GET /cart/store-availability cho biết cửa hàng nào có đủ cả giỏ;
+ * - GET /cart/store-availability cho biết cửa hàng nào có đủ cả giỏ;
  *   cửa hàng thiếu hàng hiện "(thiếu hàng)" và không chọn được. Không cửa hàng nào đủ
  *   → báo trước (giao tận nhà cũng sẽ bị 409 OUT_OF_STOCK). Gặp OUT_OF_STOCK lúc đặt
  *   → tải lại giỏ + tình trạng hàng.
@@ -23,7 +23,7 @@
  *   người nhận / hình thức nhận (+ địa chỉ hoặc cửa hàng) / ghi chú / phương thức
  *   thanh toán (+ hồ sơ trả góp); server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang
  *   trang chi tiết đơn.
- * - Kế hoạch v5 GĐ5: "Thẻ quốc tế" (Stripe, chế độ Test) chỉ hiện khi GET /payments/card-options
+ * - "Thẻ quốc tế" (Stripe, chế độ Test) chỉ hiện khi GET /payments/card-options
  *   bật; đơn vượt hạn mức thẻ thì khoá. Đặt xong (chuyển khoản / thẻ) → trang thanh toán; thẻ thì
  *   trang đó tự mở Stripe. Có đơn còn chờ tiền (khách bấm Back) → khung nhắc phía trên.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
@@ -59,6 +59,12 @@ document.addEventListener(
         const installmentHint = document.getElementById("installmentMethodHint");
 
         const installmentBox = document.getElementById("installmentBox");
+
+        const partnerSelect = document.getElementById("installmentPartner");
+
+        const partnerNote = document.getElementById("installmentPartnerNote");
+
+        const cardBankGroup = document.getElementById("cardBankGroup");
 
         const monthsSelect = document.getElementById("installmentMonths");
 
@@ -104,6 +110,8 @@ document.addEventListener(
                 "Vui lòng nhập số nhà, tên đường.",
             pickupStoreId:
                 "Vui lòng chọn cửa hàng đang mở để nhận hàng.",
+            "installment.partner":
+                "Vui lòng chọn đối tác trả góp.",
             "installment.months":
                 "Vui lòng chọn kỳ hạn trả góp.",
             "installment.cardBank":
@@ -131,7 +139,7 @@ document.addEventListener(
             window.location.href = "cart.html";
         });
 
-        /* Kế hoạch v5 GĐ6: điểm tích luỹ của khách; lỗi → null (ẩn ô dùng điểm) */
+        /* điểm tích luỹ của khách; lỗi → null (ẩn ô dùng điểm) */
         const loyaltyPromise = apiRequest("/loyalty/me", { auth: true }).catch(function () { return null; });
 
         /* Thẻ quốc tế: lỗi → null (ẩn lựa chọn) */
@@ -145,7 +153,7 @@ document.addEventListener(
         /* Cửa hàng đang mở (công khai); lỗi → null (khoá "Nhận tại cửa hàng") */
         const storesPromise = loadPickupStores();
 
-        /* Cửa hàng nào có đủ cả giỏ (v3 GĐ E); lỗi → null (không khoá gì, server vẫn kiểm tra) */
+        /* Cửa hàng nào có đủ cả giỏ (v3); lỗi → null (không khoá gì, server vẫn kiểm tra) */
         const stockPromise = loadStoreStock();
 
 
@@ -253,6 +261,8 @@ document.addEventListener(
         });
 
         pickupSelect.addEventListener("change", renderPickupInfo);
+
+        partnerSelect.addEventListener("change", onPartnerChange);
 
         monthsSelect.addEventListener("change", renderPreview);
 
@@ -525,7 +535,7 @@ document.addEventListener(
         }
 
 
-        /* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+        /* ================= VOUCHER ================= */
 
         function showVoucherMessage(text, kind) {
 
@@ -979,10 +989,10 @@ document.addEventListener(
 
                 reason = "Hiện chưa tải được thông tin trả góp. Vui lòng chọn cách thanh toán khác hoặc tải lại trang.";
 
-            } else if (currentTotal < Number(installmentOptions.minOrderTotal)) {
+            } else if (partnersForTotal().length === 0) {
 
-                reason = "Áp dụng cho đơn từ " + formatPrice(Number(installmentOptions.minOrderTotal))
-                    + " (đơn của bạn: " + formatPrice(currentTotal) + ").";
+                reason = "Chưa có đối tác trả góp nhận đơn " + formatPrice(currentTotal) + " (áp dụng cho đơn từ "
+                    + formatPrice(Number(installmentOptions.minOrderTotal)) + ").";
 
             }
 
@@ -1001,10 +1011,10 @@ document.addEventListener(
 
             } else {
 
-                installmentHint.textContent = "Lãi suất 0%, không cần trả trước, kỳ hạn "
-                    + installmentOptions.termsInMonths.join(", ") + " tháng.";
+                installmentHint.textContent = "Lãi suất 0%, không cần trả trước, " + partnersForTotal().length
+                    + " đối tác để chọn.";
 
-                renderMonthOptions();
+                renderPartnerOptions();
 
             }
 
@@ -1019,8 +1029,10 @@ document.addEventListener(
 
             const selected = monthsSelect.value;
 
+            const partner = selectedPartner();
+
             monthsSelect.innerHTML = `<option value="">-- Chọn kỳ hạn --</option>` +
-                installmentOptions.termsInMonths.map(function (months) {
+                (partner ? partner.termsInMonths : []).map(function (months) {
                     return `<option value="${months}">${months} tháng · ${formatPrice(monthlyPaymentOf(months))}/tháng</option>`;
                 }).join("");
 
@@ -1052,6 +1064,80 @@ document.addEventListener(
                 + ". Tổng " + formatPrice(currentTotal) + ", lãi suất 0%.";
 
             preview.hidden = false;
+
+        }
+
+
+        /* Đối tác nhận đơn có giá trị hiện tại (khoảng đơn tối thiểu / tối đa của từng đối tác) */
+        function partnersForTotal() {
+
+            if (!installmentOptions) {
+                return [];
+            }
+
+            return (installmentOptions.partners || []).filter(function (partner) {
+                return currentTotal >= Number(partner.minOrderTotal)
+                    && (partner.maxOrderTotal == null || currentTotal <= Number(partner.maxOrderTotal));
+            });
+
+        }
+
+
+        function selectedPartner() {
+
+            return partnersForTotal().find(function (partner) {
+                return partner.code === partnerSelect.value;
+            }) || null;
+
+        }
+
+
+        /* Giữ đối tác đang chọn khi tổng tiền đổi (nếu còn nhận đơn) */
+        function renderPartnerOptions() {
+
+            const selected = partnerSelect.value;
+
+            partnerSelect.innerHTML = `<option value="">-- Chọn đối tác --</option>` +
+                partnersForTotal().map(function (partner) {
+                    return `<option value="${escapeHtml(partner.code)}">${escapeHtml(partner.name)}</option>`;
+                }).join("");
+
+            partnerSelect.value = selected;
+
+            if (partnerSelect.value !== selected) {
+                partnerSelect.value = "";
+            }
+
+            onPartnerChange();
+
+        }
+
+
+        function onPartnerChange() {
+
+            const partner = selectedPartner();
+
+            cardBankGroup.hidden = !(partner && partner.requiresCardBank);
+
+            if (cardBankGroup.hidden) {
+                bankSelect.value = "";
+            }
+
+            if (partner) {
+
+                partnerNote.textContent = partner.requiresCardBank
+                    ? "Cần thẻ tín dụng của ngân hàng bạn chọn bên dưới. Kỳ hạn: " + partner.termsInMonths.join(", ") + " tháng."
+                    : "Chỉ cần CCCD, không cần thẻ. Kỳ hạn: " + partner.termsInMonths.join(", ") + " tháng.";
+
+                partnerNote.hidden = false;
+
+            } else {
+
+                partnerNote.hidden = true;
+
+            }
+
+            renderMonthOptions();
 
         }
 
@@ -1177,11 +1263,18 @@ document.addEventListener(
 
             if (data.paymentMethod === "INSTALLMENT") {
 
+                const partner = selectedPartner();
+
                 installment = {
+                    partner: partner ? partner.code : null,
                     months: Number(monthsSelect.value) || null,
                     citizenId: citizenInput.value.trim(),
-                    cardBank: bankSelect.value || null
+                    cardBank: partner && partner.requiresCardBank ? bankSelect.value || null : null
                 };
+
+                if (!partner) {
+                    invalid.push("installment.partner");
+                }
 
                 if (!installment.months) {
                     invalid.push("installment.months");
@@ -1194,7 +1287,7 @@ document.addEventListener(
                     invalid.push("installment.citizenId");
                 }
 
-                if (!installment.cardBank) {
+                if (partner && partner.requiresCardBank && !installment.cardBank) {
                     invalid.push("installment.cardBank");
                 }
 

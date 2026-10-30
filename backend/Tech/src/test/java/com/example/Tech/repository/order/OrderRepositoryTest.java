@@ -36,7 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * Checks the Order group mapping (incl. the recipient columns added in Phase 4) against the real PostgreSQL
+ * Checks the Order group mapping (incl. the recipient columns added) against the real PostgreSQL
  * test database (techshopping_test). Every test is rolled back.
  */
 @DataJpaTest

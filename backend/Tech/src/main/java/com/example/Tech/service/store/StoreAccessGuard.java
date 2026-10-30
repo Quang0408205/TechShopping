@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * Store-scoped access for staff (Phase 7): an ADMIN may act on any store; a STAFF or BRANCH_MANAGER member only on
+ * Store-scoped access for staff: an ADMIN may act on any store; a STAFF or BRANCH_MANAGER member only on
  * the store of their current open assignment (employee_assignments). Roles and the assignment are read from the database on
  * every call, so a token issued before a role change or a move to another store cannot reach the old store.
  */

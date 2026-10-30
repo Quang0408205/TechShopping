@@ -71,21 +71,17 @@ public class AdminInstallmentController {
         return ResponseEntity.ok(ApiResult.ok(adminInstallmentService.getById(staffId(jwt), id)));
     }
 
-    @PostMapping("/{id}/periods/{number}/pay")
-    @Operation(summary = "Record period {number} as paid in full (must be the earliest unpaid one)")
+    @PostMapping("/{id}/settle")
+    @Operation(summary = "Record that the partner paid the shop the net amount (the order must be delivered)")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Period recorded; the last one completes the plan"),
-            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (transactionId > 100)"),
+            @ApiResponse(responseCode = "200", description = "Application settled"),
             @ApiResponse(responseCode = "404", description = "INSTALLMENT_NOT_FOUND"),
-            @ApiResponse(responseCode = "409", description = "INVALID_INSTALLMENT_STATUS (plan not ACTIVE), "
-                    + "INSTALLMENT_PERIOD_OUT_OF_ORDER")
+            @ApiResponse(responseCode = "409", description = "INVALID_INSTALLMENT_STATUS (not approved, order not delivered)")
     })
-    public ResponseEntity<ApiResult<AdminInstallmentResponse>> payPeriod(
+    public ResponseEntity<ApiResult<AdminInstallmentResponse>> settle(
             @Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
-            @PathVariable Long id,
-            @PathVariable int number,
-            @Valid @RequestBody(required = false) PaymentConfirmRequest request) {
-        return ResponseEntity.ok(ApiResult.ok(adminInstallmentService.payPeriod(staffId(jwt), id, number, request)));
+            @PathVariable Long id) {
+        return ResponseEntity.ok(ApiResult.ok(adminInstallmentService.settle(staffId(jwt), id)));
     }
 
     /** The access token subject is the user id (see JwtTokenService). */

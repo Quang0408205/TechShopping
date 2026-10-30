@@ -1,7 +1,7 @@
 /* ================= CHI NHÁNH (admin/stores.html) ================= */
 
 /*
- * Chỉ ADMIN, dữ liệu thật (Phase 7):
+ * Chỉ ADMIN, dữ liệu thật:
  *   GET    /admin/stores?keyword&active&page&size   danh sách (theo tên)
  *   POST   /admin/stores                            thêm (201)
  *   PUT    /admin/stores/{id}                       sửa toàn bộ; active=false = tạm đóng

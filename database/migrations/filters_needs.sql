@@ -1,4 +1,4 @@
--- Kế hoạch v5 GĐ9: bộ lọc thông số nâng cao + "Nhu cầu".
+-- Bộ lọc thông số nâng cao + "Nhu cầu".
 -- product_filter_values: giá trị lọc đã chuẩn hoá của sản phẩm (nhóm + nhãn, vd chip = "Snapdragon 8 series");
 --   được dựng lại từ thông số / phiên bản bởi backend (ProductFilterService.reindex), cùng nhóm = HOẶC, khác nhóm = VÀ.
 -- needs / product_needs: nhu cầu của từng danh mục (vd Laptop: Gaming, Đồ hoạ...), 1 sản phẩm nhiều nhu cầu.

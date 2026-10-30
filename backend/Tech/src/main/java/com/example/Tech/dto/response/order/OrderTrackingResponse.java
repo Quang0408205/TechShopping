@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Plan v7: what the public tracking page (opened from the email link) shows. No phone number, no street address,
+ * What the public tracking page (opened from the email link) shows. No phone number, no street address,
  * no account data: only the order code, the products, the money and the progress.
  */
 public record OrderTrackingResponse(

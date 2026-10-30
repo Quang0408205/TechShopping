@@ -1,4 +1,4 @@
-/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests.html) — Phase 6.4 ================= */
+/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests.html) ================= */
 
 /*
  * API thật (STAFF chỉ chi nhánh mình, ADMIN tất cả; backend kiểm tra lại ở mọi request):

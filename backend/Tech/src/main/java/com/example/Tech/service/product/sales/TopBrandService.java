@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.Set;
 
 /**
- * Plan v8: the brands with the most products on sale, for the home page strip. Some crawled products got a product
+ * The brands with the most products on sale, for the home page strip. Some crawled products got a product
  * type as their "brand" (Túi, Đèn, Ốp…); those words are left out so the strip only shows real brands.
  */
 @Service

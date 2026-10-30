@@ -46,6 +46,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -112,7 +113,8 @@ class AdminOrderServiceImplTest {
     void setUp() {
         adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
                 orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
-                statusRecorder, salesRecorder, voucherService, loyaltyService, CLOCK);
+                statusRecorder, salesRecorder, voucherService, loyaltyService,
+                new com.example.Tech.config.PaymentWebhookProperties("secret", true), CLOCK);
         customer = new User();
         customer.setId(CUSTOMER_ID);
         customer.setUsername("khach");
@@ -231,7 +233,7 @@ class AdminOrderServiceImplTest {
 
         verify(orderPaymentLifecycle, never()).checkCanConfirm(any());
         verify(orderPaymentLifecycle, never()).confirmTransfer(any(), any(), any(), any());
-        verify(orderPaymentLifecycle, never()).approveInstallment(any(), any(), any());
+        verify(orderPaymentLifecycle, never()).applyPartnerDecision(any(), anyBoolean(), any(), any(), any(), any());
         verify(orderRepository, never()).saveAndFlush(any());
     }
 
@@ -320,21 +322,33 @@ class AdminOrderServiceImplTest {
         verify(orderPaymentLifecycle).confirmTransfer(order, staff, "FT1", NOW);
         verify(orderPaymentLifecycle).confirmTransfer(order, staff, null, NOW);
         verify(orderPaymentLifecycle).confirmRefund(order, staff, NOW);
-        verify(orderPaymentLifecycle).approveInstallment(order, staff, NOW);
+        verify(orderPaymentLifecycle).applyPartnerDecision(order, true, null, staff, null, NOW);
         verify(orderRepository, times(4)).findByIdForUpdate(5L);
     }
 
     @Test
-    void rejectInstallment_cancelsTheOrder() {
+    void rejectInstallment_isThePartnersAnswer_theOrderStaysPending() {
         Order order = stored(OrderStatus.PENDING);
 
         adminOrderService.rejectInstallment(STAFF_ID, 5L, new InstallmentRejectRequest("Sai CCCD"));
 
-        verify(orderPaymentLifecycle).rejectInstallment(order, staff, "Sai CCCD", NOW);
-        verify(statusRecorder).record(order, OrderStatus.PENDING, OrderStatus.CANCELLED, staff);
-        assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
-        assertThat(order.getCancelledAt()).isEqualTo(NOW);
-        verify(orderRepository).saveAndFlush(order);
+        verify(orderPaymentLifecycle).applyPartnerDecision(order, false, "Sai CCCD", staff, null, NOW);
+        verify(statusRecorder, never()).record(any(), any(), any(), any());
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(order.getCancelledAt()).isNull();
+    }
+
+    @Test
+    void partnerConsole_isOffWhenTheSimulatorIsOff() {
+        AdminOrderServiceImpl off = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
+                orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
+                statusRecorder, salesRecorder, voucherService, loyaltyService,
+                new com.example.Tech.config.PaymentWebhookProperties("secret", false), CLOCK);
+
+        assertThatThrownBy(() -> off.approveInstallment(STAFF_ID, 5L))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.SIMULATOR_DISABLED);
+        verify(orderRepository, never()).findByIdForUpdate(anyLong());
     }
 
     @ParameterizedTest

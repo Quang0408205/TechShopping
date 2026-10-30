@@ -26,7 +26,7 @@ public final class ShippingPolicy {
         return FLAT_FEE;
     }
 
-    /** Picking the order up at a store is free (Phase 7). */
+    /** Picking the order up at a store is free. */
     public static BigDecimal feeFor(BigDecimal subtotal, DeliveryType deliveryType) {
         return deliveryType == DeliveryType.PICKUP ? BigDecimal.ZERO : feeFor(subtotal);
     }

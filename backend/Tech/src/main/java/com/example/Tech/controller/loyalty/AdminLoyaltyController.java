@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v5 GĐ6: membership tiers (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
+/** Membership tiers (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
 @RestController
 @RequestMapping("/api/v1/admin/loyalty/tiers")
 @RequiredArgsConstructor

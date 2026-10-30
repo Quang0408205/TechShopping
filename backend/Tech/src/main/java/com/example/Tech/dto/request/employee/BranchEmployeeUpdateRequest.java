@@ -28,7 +28,7 @@ public record BranchEmployeeUpdateRequest(
         LocalDate hiringDate,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(description = "Ignored since plan v3 (staff are always \"Nhân viên chi nhánh\"); \"Quản lý chi nhánh\" is refused")
+        @Schema(description = "Ignored (staff are always \"Nhân viên chi nhánh\"); \"Quản lý chi nhánh\" is refused")
         String positionAtStore
 ) {
 }

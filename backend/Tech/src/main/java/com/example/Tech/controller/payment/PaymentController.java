@@ -1,5 +1,7 @@
 package com.example.Tech.controller.payment;
 
+import org.springframework.web.bind.annotation.RequestParam;
+import com.example.Tech.service.payment.installment.InstallmentPartnerPolicy;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.payment.CardOptionsResponse;
 import com.example.Tech.dto.response.payment.InstallmentOptionsResponse;
@@ -25,22 +27,16 @@ import java.util.Arrays;
 @Tag(name = "Payments", description = "Payment options (payments are simulated)")
 public class PaymentController {
 
-    private static final InstallmentOptionsResponse INSTALLMENT_OPTIONS = new InstallmentOptionsResponse(
-            InstallmentPolicy.TERMS_IN_MONTHS,
-            InstallmentPolicy.MIN_ORDER_TOTAL,
-            BigDecimal.ZERO,
-            InstallmentPolicy.CITIZEN_ID_LENGTH,
-            Arrays.stream(InstallmentBank.values())
-                    .map(bank -> new InstallmentOptionsResponse.Bank(bank.name(), bank.getDisplayName()))
-                    .toList());
-
     private final CardPaymentService cardPaymentService;
+    private final InstallmentPartnerPolicy installmentPartnerPolicy;
 
     @GetMapping("/installment-options")
-    @Operation(summary = "Installment terms, minimum order total, citizen id length and card banks")
+    @Operation(summary = "Installment partners the customer can choose, with their terms, order range and the card banks",
+            description = "With total, only the partners that accept that order total; the partner fees are never returned")
     @ApiResponse(responseCode = "200", description = "Options returned")
-    public ResponseEntity<ApiResult<InstallmentOptionsResponse>> getInstallmentOptions() {
-        return ResponseEntity.ok(ApiResult.ok(INSTALLMENT_OPTIONS));
+    public ResponseEntity<ApiResult<InstallmentOptionsResponse>> getInstallmentOptions(
+            @RequestParam(required = false) BigDecimal total) {
+        return ResponseEntity.ok(ApiResult.ok(installmentPartnerPolicy.options(total)));
     }
 
     @GetMapping("/card-options")

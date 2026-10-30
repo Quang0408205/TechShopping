@@ -1,4 +1,4 @@
--- Kế hoạch v5 GĐ6: điểm tích luỹ + hạng thành viên.
+-- điểm tích luỹ + hạng thành viên.
 -- - loyalty_tiers: 4 hạng cố định (mã), ADMIN sửa ngưỡng tổng chi tiêu + hệ số nhân điểm. Mặc định Thành viên 0 /
 --   Bạc 50tr / Vàng 150tr / Kim cương 300tr; x1 / x1,2 / x1,5 / x2.
 -- - customer_profiles.tier_code: hạng đã đạt (không tụt khi trả hàng hay khi ADMIN nâng ngưỡng).

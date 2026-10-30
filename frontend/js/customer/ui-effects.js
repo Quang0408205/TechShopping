@@ -57,7 +57,7 @@
 
 
     /*
-     * Nút liên hệ gộp (kế hoạch v6 B1): một nút tròn ở góc phải, bấm xòe ra Chat Zalo / Trợ lý AI / Gọi hotline.
+     * Nút liên hệ gộp: một nút tròn ở góc phải, bấm xòe ra Chat Zalo / Trợ lý AI / Gọi hotline.
      * Thay bong bóng Zalo riêng; nút chatbot cũ vẫn có trong trang (chatbot.js) nhưng được ẩn, "Trợ lý AI" bấm hộ nó.
      */
 
@@ -523,7 +523,7 @@
     /* ---------- Carousel hero (trang chủ) ---------- */
 
     /*
-     * Kế hoạch v6 B5: slide mới quét vào bằng màn che (slide cũ giữ .is-leaving tới khi quét xong), bộ đếm "01 / 03",
+     * Slide mới quét vào bằng màn che (slide cũ giữ .is-leaving tới khi quét xong), bộ đếm "01 / 03",
      * mỗi chấm là một thanh thời gian chạy đúng INTERVAL. Dừng khi rê chuột / focus thì thời gian còn lại được giữ.
      */
 
@@ -865,7 +865,7 @@
 
             });
 
-            /* Nhu cầu + thông số đã tích (kế hoạch v5 GĐ9): mỗi ô một chip, bấm để bỏ ô đó */
+            /* Nhu cầu + thông số đã tích: mỗi ô một chip, bấm để bỏ ô đó */
             scope.querySelectorAll('#specFilters input[type="checkbox"]:checked').forEach(function (box) {
 
                 chips.push({

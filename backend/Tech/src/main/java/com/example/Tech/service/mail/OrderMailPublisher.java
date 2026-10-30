@@ -19,9 +19,13 @@ public class OrderMailPublisher {
 
     private final ApplicationEventPublisher events;
 
-    /** QR / card orders are mailed once the money is in (see {@link #paymentReceived}), not when they are placed. */
+    /**
+     * QR / card / installment orders are mailed once the money is in (see {@link #paymentReceived}: for an installment
+     * order, once the partner approves), not when they are placed.
+     */
     public static boolean paidOnline(Order order) {
-        return order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER || order.getPaymentMethod() == PaymentMethod.CARD;
+        return order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER || order.getPaymentMethod() == PaymentMethod.CARD
+                || order.getPaymentMethod() == PaymentMethod.INSTALLMENT;
     }
 
     public void statusChanged(Order order, OrderStatus to) {

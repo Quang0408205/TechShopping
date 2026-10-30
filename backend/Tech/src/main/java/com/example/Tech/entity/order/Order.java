@@ -32,9 +32,9 @@ import java.util.HexFormat;
 import java.util.List;
 
 /**
- * An order placed from the customer's server cart (Phase 4). Prices are copied into the order and its items
+ * An order placed from the customer's server cart. Prices are copied into the order and its items
  * at checkout, so later catalogue price changes do not affect it. users are only soft-deleted, so user_id
- * (no ON DELETE action) always points to an existing row. store = the branch that handles it (Phase 7).
+ * (no ON DELETE action) always points to an existing row. store = the branch that handles it.
  */
 @Entity
 @Table(name = "orders")
@@ -64,7 +64,7 @@ public class Order {
     @Column(name = "shipping_address", columnDefinition = "text", nullable = false)
     private String shippingAddress;
 
-    /** Plan v5: province / ward picked from the 2-level list (null for pickup and older orders). */
+    /** Province / ward picked from the 2-level list (null for pickup and older orders). */
     @Column(name = "shipping_province", length = 100)
     private String shippingProvince;
 
@@ -85,16 +85,16 @@ public class Order {
     @Column(name = "total_amount", precision = 15, scale = 2, nullable = false)
     private BigDecimal totalAmount;
 
-    /** Plan v5 GĐ10: total combo discount (the sum over the items); taken off before the voucher. */
+    /** Total combo discount (the sum over the items); taken off before the voucher. */
     @Column(name = "combo_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal comboDiscount = BigDecimal.ZERO;
 
-    /** Plan v5 GĐ10: the combos applied (name copied), for the order page and the combo report. */
+    /** The combos applied (name copied), for the order page and the combo report. */
     @OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
     @OrderBy("id")
     private List<OrderCombo> combos = new ArrayList<>();
 
-    /** Plan v5: voucher used at checkout (code + amount copied, so later voucher edits do not change the order). */
+    /** Voucher used at checkout (code + amount copied, so later voucher edits do not change the order). */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voucher_id")
     private Voucher voucher;
@@ -105,7 +105,7 @@ public class Order {
     @Column(name = "voucher_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal voucherDiscount = BigDecimal.ZERO;
 
-    /** Plan v5 GĐ6: loyalty points spent at checkout and the amount they took off (1 point = 1.000đ). */
+    /** Loyalty points spent at checkout and the amount they took off (1 point = 1.000đ). */
     @Column(name = "points_used", nullable = false)
     private int pointsUsed;
 
@@ -116,11 +116,11 @@ public class Order {
     @Column(name = "points_earned", nullable = false)
     private int pointsEarned;
 
-    /** Plan v7: where the order mails go (typed at checkout); null on older orders = the account's email. */
+    /** Where the order mails go (typed at checkout); null on older orders = the account's email. */
     @Column(name = "contact_email", length = 255)
     private String contactEmail;
 
-    /** Plan v7: random code of the public tracking link (customer/track.html?token=…); never shown with the id. */
+    /** Random code of the public tracking link (customer/track.html?token=…); never shown with the id. */
     @Column(name = "tracking_token", length = 64, nullable = false, updatable = false)
     private String trackingToken = newTrackingToken();
 
@@ -144,7 +144,7 @@ public class Order {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
-    /** Store that handles the order and whose stock is used (Phase 7); null for orders placed before it. */
+    /** Store that handles the order and whose stock is used; null for orders placed before it. */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;

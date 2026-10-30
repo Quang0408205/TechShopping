@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * Staff payment actions (/api/v1/admin/orders/{id}/payment|installment/…, /api/v1/admin/installments) over HTTP
  * against the test database (rolled back), with a real STAFF account and orders placed through the real checkout.
- * The STAFF account works at the store the orders are sent to, which has the products in stock (Phase 7.6).
+ * The STAFF account works at the store the orders are sent to, which has the products in stock.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -194,103 +194,109 @@ class AdminPaymentApiIntegrationTest {
     }
 
     @Test
-    void installment_approval_delivery_schedule_andPeriodsInOrder_untilCompleted() throws Exception {
-        long orderId = placeOrder(laptop, "INSTALLMENT", 3);
+    void installment_partnerApproval_paysTheOrder_thenDeliveryAndSettlement() throws Exception {
+        long orderId = placeInstallment(laptop, "CREDIT_CARD", 3);
         send(post(orderUrl(orderId, "payment/confirm")), staffToken, null)
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error.code").value("PAYMENT_NOT_FOUND"));
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INVALID_PAYMENT_STATUS"));
         patchStatus(orderId, "CONFIRMED")
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_APPROVED"));
+        send(get("/api/v1/orders/" + orderId), customerToken, null)
+                .andExpect(jsonPath("$.data.installment.status").value("PENDING_APPROVAL"))
+                .andExpect(jsonPath("$.data.installment.partner").value("CREDIT_CARD"))
+                .andExpect(jsonPath("$.data.payment.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer").doesNotExist());
 
         send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order.installment.status").value("APPROVED"))
                 .andExpect(jsonPath("$.data.order.installment.citizenId").value("0123456789"))
-                .andExpect(jsonPath("$.data.order.installment.reviewedAt", notNullValue()));
+                .andExpect(jsonPath("$.data.order.installment.partnerRef", notNullValue()))
+                .andExpect(jsonPath("$.data.order.installment.feePercent").value(2))
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(200000))
+                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9800000))
+                .andExpect(jsonPath("$.data.order.installment.reviewedAt", notNullValue()))
+                .andExpect(jsonPath("$.data.order.payment.status").value("PAID"));
         send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INVALID_INSTALLMENT_STATUS"));
+        send(get("/api/v1/orders/" + orderId), customerToken, null)
+                .andExpect(jsonPath("$.data.installment.status").value("APPROVED"))
+                .andExpect(jsonPath("$.data.installment.citizenId").value("******6789"))
+                .andExpect(jsonPath("$.data.installment.partnerRef").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.feeAmount").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.netAmount").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.periods.length()").value(0));
         patchStatus(orderId, "CONFIRMED").andExpect(status().isOk());
         patchStatus(orderId, "SHIPPING").andExpect(status().isOk());
 
-        JsonNode list = data(send(get("/api/v1/admin/installments").param("keyword", "DH%08d".formatted(orderId)),
-                staffToken, null).andExpect(status().isOk()));
-        assertThat(list.get("totalElements").asLong()).isEqualTo(1);
-        long planId = list.get("content").get(0).get("installment").get("id").asLong();
-        send(post(periodUrl(planId, 1)), staffToken, null)
+        long installmentId = installmentIdOf(orderId);
+        send(post(settleUrl(installmentId)), staffToken, null)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INVALID_INSTALLMENT_STATUS"));
-
-        LocalDate today = LocalDate.now(clock);
-        patchStatus(orderId, "DELIVERED")
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.order.installment.status").value("ACTIVE"))
-                .andExpect(jsonPath("$.data.order.installment.periods.length()").value(3))
-                .andExpect(jsonPath("$.data.order.installment.periods[0].amount").value(3333333))
-                .andExpect(jsonPath("$.data.order.installment.periods[0].dueDate").value(today.plusMonths(1).toString()))
-                .andExpect(jsonPath("$.data.order.installment.periods[2].amount").value(3333334))
-                .andExpect(jsonPath("$.data.order.installment.periods[2].dueDate").value(today.plusMonths(3).toString()));
-
-        send(get("/api/v1/admin/installments/" + planId), staffToken, null)
+        patchStatus(orderId, "DELIVERED").andExpect(status().isOk());
+        send(get("/api/v1/admin/installments/" + installmentId), staffToken, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order.id").value(orderId))
                 .andExpect(jsonPath("$.data.order.status").value("DELIVERED"))
                 .andExpect(jsonPath("$.data.customer.username").value("pay.customer"))
-                .andExpect(jsonPath("$.data.nextPeriod.number").value(1));
-        send(post(periodUrl(planId, 2)), staffToken, null)
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_PERIOD_OUT_OF_ORDER"))
-                .andExpect(jsonPath("$.error.message").value("Kỳ tiếp theo cần ghi nhận là kỳ 1"));
-        send(post(periodUrl(planId, 1)), staffToken, Map.of("transactionId", "KY1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.installment.periods[0].status").value("PAID"))
-                .andExpect(jsonPath("$.data.installment.periods[0].paidDate").value(today.toString()))
-                .andExpect(jsonPath("$.data.installment.paidPeriods").value(1))
-                .andExpect(jsonPath("$.data.installment.remainingAmount").value(6666667))
-                .andExpect(jsonPath("$.data.nextPeriod.number").value(2));
-        send(post(periodUrl(planId, 1)), staffToken, null)
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_PERIOD_OUT_OF_ORDER"));
-        send(post(periodUrl(planId, 2)), staffToken, null).andExpect(status().isOk());
-        send(post(periodUrl(planId, 3)), staffToken, null)
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.installment.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data.installment.remainingAmount").value(0))
                 .andExpect(jsonPath("$.data.nextPeriod").doesNotExist());
-        send(post(periodUrl(planId, 3)), staffToken, null)
+        send(post(settleUrl(installmentId)), customerToken, null).andExpect(status().isForbidden());
+        send(post(settleUrl(installmentId)), staffToken, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.installment.status").value("SETTLED"))
+                .andExpect(jsonPath("$.data.installment.settledAt", notNullValue()))
+                .andExpect(jsonPath("$.data.installment.netAmount").value(9800000));
+        send(post(settleUrl(installmentId)), staffToken, null)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INVALID_INSTALLMENT_STATUS"));
-
-        Number periodPayments = (Number) entityManager.createNativeQuery(
-                        "select count(*) from payments where order_id = :id and installment_payment_id is not null "
-                                + "and status = 'PAID' and payment_method = 'INSTALLMENT'")
-                .setParameter("id", orderId)
-                .getSingleResult();
-        assertThat(periodPayments.longValue()).isEqualTo(3);
-        send(get("/api/v1/orders/" + orderId), customerToken, null)
-                .andExpect(jsonPath("$.data.installment.status").value("COMPLETED"))
-                .andExpect(jsonPath("$.data.installment.citizenId").value("******6789"));
     }
 
     @Test
-    void installment_rejected_withAReason_cancelsTheOrder() throws Exception {
-        long orderId = placeOrder(laptop, "INSTALLMENT", 6);
+    void installment_partnerRejection_keepsTheOrder_andTheCustomerCanChooseAnotherPartner() throws Exception {
+        long orderId = placeInstallment(laptop, "CREDIT_CARD", 6);
 
         send(post(orderUrl(orderId, "installment/reject")), staffToken, Map.of("reason", "  "))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.details.reason").exists());
         send(post(orderUrl(orderId, "installment/reject")), staffToken, Map.of("reason", " Không xác minh được CCCD "))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.order.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.data.order.cancelledAt", notNullValue()))
+                .andExpect(jsonPath("$.data.order.status").value("PENDING"))
                 .andExpect(jsonPath("$.data.order.installment.status").value("REJECTED"))
-                .andExpect(jsonPath("$.data.order.installment.rejectionReason").value("Không xác minh được CCCD"));
-        send(get("/api/v1/orders/" + orderId), customerToken, null)
-                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
-                .andExpect(jsonPath("$.data.installment.rejectionReason").value("Không xác minh được CCCD"));
+                .andExpect(jsonPath("$.data.order.installment.rejectionReason").value("Không xác minh được CCCD"))
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").doesNotExist());
+        patchStatus(orderId, "CONFIRMED")
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_APPROVED"));
         send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
                 .andExpect(status().isConflict());
+
+        send(post("/api/v1/orders/" + orderId + "/installment/resubmit"), staffToken,
+                Map.of("months", 6, "citizenId", "0123456781", "partner", "FINANCE_A"))
+                .andExpect(status().isNotFound());
+        send(post("/api/v1/orders/" + orderId + "/installment/resubmit"), customerToken,
+                Map.of("months", 3, "citizenId", "0123456781", "partner", "FINANCE_A"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.months']").exists());
+        send(post("/api/v1/orders/" + orderId + "/installment/resubmit"), customerToken,
+                Map.of("months", 6, "citizenId", "0123456781", "partner", "FINANCE_A"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.installment.status").value("PENDING_APPROVAL"))
+                .andExpect(jsonPath("$.data.installment.partner").value("FINANCE_A"))
+                .andExpect(jsonPath("$.data.installment.attemptCount").value(2))
+                .andExpect(jsonPath("$.data.installment.rejectionReason").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.cardBank").doesNotExist());
+        send(post("/api/v1/orders/" + orderId + "/installment/resubmit"), customerToken,
+                Map.of("months", 6, "citizenId", "0123456781", "partner", "FINANCE_A"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INVALID_INSTALLMENT_STATUS"));
+
+        send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.installment.feePercent").value(4))
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(400000))
+                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9600000));
 
         long codOrder = placeOrder(mouse, "COD", null);
         send(post(orderUrl(codOrder, "installment/approve")), staffToken, null)
@@ -299,9 +305,37 @@ class AdminPaymentApiIntegrationTest {
     }
 
     @Test
-    void installmentList_filtersByStatusAndOverdue_staffOnly() throws Exception {
-        long waiting = placeOrder(laptop, "INSTALLMENT", 3);
-        long approved = placeOrder(laptop, "INSTALLMENT", 6);
+    void installment_rejected_thenTheCustomerCancelsThePayment_andTheOrderIsCancelled() throws Exception {
+        long orderId = placeInstallment(laptop, "FINANCE_B", 3);
+        send(post("/api/v1/orders/" + orderId + "/cancel-payment"), customerToken, null)
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error.code").value("INVALID_PAYMENT_STATUS"));
+
+        send(post(orderUrl(orderId, "installment/reject")), staffToken, Map.of("reason", "Hạn mức không đủ"))
+                .andExpect(status().isOk());
+        send(post("/api/v1/orders/" + orderId + "/cancel-payment"), customerToken, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.payment.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.installment.status").value("REJECTED"));
+    }
+
+    @Test
+    void installment_cancelledByStaffAfterApproval_withdrawsTheApplication_andOwesNoRefund() throws Exception {
+        long orderId = placeInstallment(laptop, "CREDIT_CARD", 3);
+        send(post(orderUrl(orderId, "installment/approve")), staffToken, null).andExpect(status().isOk());
+        patchStatus(orderId, "CONFIRMED").andExpect(status().isOk());
+
+        patchStatus(orderId, "CANCELLED")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.order.installment.status").value("CANCELLED"))
+                .andExpect(jsonPath("$.data.order.payment.status").value("CANCELLED"));
+    }
+
+    @Test
+    void installmentList_filtersByStatusAndPartner_staffOnly() throws Exception {
+        long waiting = placeInstallment(laptop, "CREDIT_CARD", 3);
+        long approved = placeInstallment(laptop, "FINANCE_A", 6);
         send(post(orderUrl(approved, "installment/approve")), staffToken, null).andExpect(status().isOk());
 
         send(get("/api/v1/admin/installments"), customerToken, null)
@@ -309,20 +343,8 @@ class AdminPaymentApiIntegrationTest {
         assertOrderIds(searchInstallments("status", "PENDING_APPROVAL", "keyword", "pay.customer"), waiting);
         assertOrderIds(searchInstallments("status", "APPROVED", "keyword", "pay.customer"), approved);
         assertOrderIds(searchInstallments("keyword", "0123456789"), approved, waiting);
-        assertOrderIds(searchInstallments("overdue", "true", "keyword", "pay.customer"));
-
-        // move the schedule into the past: the first period becomes overdue
-        patchStatus(approved, "CONFIRMED").andExpect(status().isOk());
-        patchStatus(approved, "SHIPPING").andExpect(status().isOk());
-        patchStatus(approved, "DELIVERED").andExpect(status().isOk());
-        entityManager.createNativeQuery("update installment_payments set due_date = due_date - interval '2 months' "
-                        + "where installment_id = (select installment_id from installment_orders where order_id = :id)")
-                .setParameter("id", approved)
-                .executeUpdate();
-        entityManager.clear();
-        JsonNode overdue = searchInstallments("overdue", "true", "keyword", "pay.customer");
-        assertOrderIds(overdue, approved);
-        assertThat(overdue.get("content").get(0).get("nextPeriod").get("overdue").asBoolean()).isTrue();
+        assertOrderIds(searchInstallments("partner", "FINANCE_A", "keyword", "pay.customer"), approved);
+        assertOrderIds(searchInstallments("partner", "CREDIT_CARD", "keyword", "pay.customer"), waiting);
         send(get("/api/v1/admin/installments").param("status", "LOST"), staffToken, null)
                 .andExpect(status().isBadRequest());
         send(get("/api/v1/admin/installments/999999999"), staffToken, null)
@@ -332,28 +354,40 @@ class AdminPaymentApiIntegrationTest {
 
     @Test
     void installments_ofOrdersOutsideTheStaffMembersStore_areHiddenAndRefused() throws Exception {
-        long own = placeOrder(laptop, "INSTALLMENT", 3);
-        long other = placeOrder(laptop, "INSTALLMENT", 6);
+        long own = placeInstallment(laptop, "CREDIT_CARD", 3);
+        long other = placeInstallment(laptop, "CREDIT_CARD", 6);
         entityManager.createNativeQuery("update orders set store_id = null where order_id = :id")
                 .setParameter("id", other)
                 .executeUpdate();
         entityManager.clear();
 
         assertOrderIds(searchInstallments("keyword", "pay.customer"), own);
-        Number otherPlanId = (Number) entityManager.createNativeQuery(
-                        "select installment_id from installment_orders where order_id = :id")
-                .setParameter("id", other)
-                .getSingleResult();
+        long otherPlanId = installmentIdOf(other);
         send(get("/api/v1/admin/installments/" + otherPlanId), staffToken, null)
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.error.code").value("ACCESS_DENIED"));
-        send(post(periodUrl(otherPlanId.longValue(), 1)), staffToken, null)
+        send(post(settleUrl(otherPlanId)), staffToken, null)
                 .andExpect(status().isForbidden());
         send(post(orderUrl(other, "installment/approve")), staffToken, null)
                 .andExpect(status().isForbidden());
     }
 
     private long placeOrder(ProductVariant variant, String method, Integer months) throws Exception {
+        return place(variant, method, null);
+    }
+
+    private long placeInstallment(ProductVariant variant, String partner, int months) throws Exception {
+        Map<String, Object> installment = new HashMap<>();
+        installment.put("months", months);
+        installment.put("citizenId", "0123456789");
+        installment.put("partner", partner);
+        if (partner.equals("CREDIT_CARD")) {
+            installment.put("cardBank", "VCB");
+        }
+        return place(variant, "INSTALLMENT", installment);
+    }
+
+    private long place(ProductVariant variant, String method, Map<String, Object> installment) throws Exception {
         send(post("/api/v1/cart/items"), customerToken, Map.of("variantId", variant.getId(), "quantity", 1))
                 .andExpect(status().isOk());
         Map<String, Object> body = new HashMap<>();
@@ -361,10 +395,16 @@ class AdminPaymentApiIntegrationTest {
         body.put("recipientPhone", "0901234567");
         body.put("shippingAddress", "12 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh");
         body.put("paymentMethod", method);
-        if (months != null) {
-            body.put("installment", Map.of("months", months, "citizenId", "0123456789", "cardBank", "VCB"));
+        if (installment != null) {
+            body.put("installment", installment);
         }
         return data(send(post("/api/v1/orders"), customerToken, body).andExpect(status().isCreated())).get("id").asLong();
+    }
+
+    private long installmentIdOf(long orderId) {
+        return ((Number) entityManager.createNativeQuery("select installment_id from installment_orders where order_id = :id")
+                .setParameter("id", orderId)
+                .getSingleResult()).longValue();
     }
 
     private ResultActions patchStatus(long orderId, String newStatus) throws Exception {
@@ -389,8 +429,8 @@ class AdminPaymentApiIntegrationTest {
         return "/api/v1/admin/orders/" + orderId + "/" + action;
     }
 
-    private static String periodUrl(long planId, int number) {
-        return "/api/v1/admin/installments/" + planId + "/periods/" + number + "/pay";
+    private static String settleUrl(long planId) {
+        return "/api/v1/admin/installments/" + planId + "/settle";
     }
 
     private JsonNode register(String username) throws Exception {

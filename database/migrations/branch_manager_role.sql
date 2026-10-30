@@ -1,4 +1,4 @@
--- Kế hoạch v2 / GĐ1 (2026-10-10): vai trò BRANCH_MANAGER. Chạy lại nhiều lần vẫn an toàn.
+-- vai trò BRANCH_MANAGER. Chạy lại nhiều lần vẫn an toàn.
 -- ⚠ Đổi role của dữ liệu thật: SAO LƯU DB trước khi chạy (pg_dump).
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/branch_manager_role.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/branch_manager_role.sql

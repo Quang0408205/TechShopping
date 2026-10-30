@@ -171,7 +171,7 @@ const AUTH_STORAGE_KEY =
     IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
 
 /*
- * Giỏ hàng nằm trên server từ Phase 3. Hai khoá cũ chỉ còn để dọn một lần
+ * Giỏ hàng nằm trên server từ. Hai khoá cũ chỉ còn để dọn một lần
  * (js/core/cart-store.js): "poy_cart_<userId>" (F2, chuyển lên server) và
  * "poy_cart" (kiểu cũ theo tên sản phẩm, bỏ đi).
  */
@@ -303,7 +303,7 @@ const API_ERROR_MESSAGES = {
     RESOURCE_IN_USE:
         "Dữ liệu đang được sử dụng, không thể xoá.",
 
-    /* Kế hoạch v3 GĐ C: danh mục / thương hiệu */
+    /* Danh mục / thương hiệu */
 
     DUPLICATE_CATEGORY:
         "Slug danh mục đã được dùng. Hãy đổi slug hoặc tên khác.",
@@ -334,7 +334,7 @@ const API_ERROR_MESSAGES = {
     IMAGE_TOO_LARGE:
         "Ảnh quá lớn (tối đa 5 MB).",
 
-    /* Giỏ hàng (Phase 3) */
+    /* Giỏ hàng */
 
     PRODUCT_VARIANT_NOT_FOUND:
         "Phiên bản sản phẩm không tồn tại hoặc đã ngừng kinh doanh.",
@@ -348,7 +348,7 @@ const API_ERROR_MESSAGES = {
     CART_LIMIT_EXCEEDED:
         "Giỏ hàng đã đủ 50 sản phẩm khác nhau. Vui lòng xóa bớt trước khi thêm mới.",
 
-    /* Đơn hàng (Phase 4) */
+    /* Đơn hàng */
 
     ORDER_NOT_FOUND:
         "Không tìm thấy đơn hàng.",

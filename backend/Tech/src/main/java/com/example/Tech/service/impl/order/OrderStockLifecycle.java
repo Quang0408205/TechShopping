@@ -31,9 +31,9 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Store side of an order's life (Phase 7), in the same shape as OrderPaymentLifecycle: no transaction of its own,
+ * Store side of an order's life, in the same shape as OrderPaymentLifecycle: no transaction of its own,
  * it runs inside the caller's, after the caller has locked the order row. At placement it picks a store holding
- * the whole order (plan v3 GĐ E, read without a lock and nothing reserved); staff confirmation deducts the stock.
+ * the whole order (read without a lock and nothing reserved); staff confirmation deducts the stock.
  */
 @Component
 @RequiredArgsConstructor
@@ -64,7 +64,7 @@ public class OrderStockLifecycle {
     }
 
     /**
-     * Sets the delivery type and the store of a new order (plan v3 GĐ E: one store must hold the whole order).
+     * Sets the delivery type and the store of a new order (one store must hold the whole order).
      * PICKUP: the chosen store, which must be open and hold every unit; the shipping address becomes the store's.
      * HOME_DELIVERY: among the open stores holding every unit, the one nearest to the address (NearestStoreResolver),
      * then the one with more units of the ordered variants. 409 OUT_OF_STOCK listing the short items otherwise.

@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
-/** Redis read cache (Phase 10.5). Switched off in the test profile so tests never see each other's cached data. */
+/** Redis read cache. Switched off in the test profile so tests never see each other's cached data. */
 @ConfigurationProperties(prefix = "app.cache")
 public record CacheProperties(Boolean enabled, Duration catalogTtl, Duration productTtl, Duration reportTtl) {
 

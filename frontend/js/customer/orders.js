@@ -1,4 +1,4 @@
-/* ================= LỊCH SỬ MUA HÀNG (Phase 4–5, làm mới ở kế hoạch v5 GĐ6) ================= */
+/* ================= LỊCH SỬ MUA HÀNG ================= */
 
 /*
  * Đơn của tài khoản đang đăng nhập: GET /api/v1/orders (fetchMyOrders, js/core/order-store.js), mới nhất trước,

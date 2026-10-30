@@ -56,7 +56,7 @@ class OrderPlacementConcurrencyTest {
                 + "values ('Điện thoại Đặt Đồng Thời', ?, ?, 5000000) returning product_id", Long.class, TAG, categoryId);
         Long variantId = jdbc.queryForObject("insert into product_variants (product_id, variant_name, price) "
                 + "values (?, 'Mặc định', 5000000) returning variant_id", Long.class, productId);
-        // plan v3 GĐ E: an open store must hold the cart
+        // An open store must hold the cart
         Integer storeId = jdbc.queryForObject("insert into stores (name, address, district, city, is_active) "
                 + "values (?, '1 Đường Test', 'Quận Kho Test', 'Hồ Chí Minh', true) returning store_id", Integer.class, TAG);
         jdbc.update("insert into inventory (store_id, variant_id, quantity) values (?, ?, 10)", storeId, variantId);

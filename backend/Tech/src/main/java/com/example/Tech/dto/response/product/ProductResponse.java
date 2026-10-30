@@ -39,7 +39,7 @@ public record ProductResponse(
         String activePromotionName,
 
         @Schema(description = "Units customers can still buy: stock of every variant in OPEN stores (inventory per "
-                + "store, plan v3). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
+                + "store). 0 = out of stock. stockQuantity is a legacy field and not used for sales")
         Integer availableQuantity,
 
         @Schema(description = "Variants as card choices, cheapest first; only filled by GET /products (null elsewhere)")

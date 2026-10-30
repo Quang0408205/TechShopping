@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v6 B4: the public flash sale and featured combos of the home page. */
+/** The public flash sale and featured combos of the home page. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

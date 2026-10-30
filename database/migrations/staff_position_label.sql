@@ -1,4 +1,4 @@
--- Kế hoạch v3 / GĐ D (2026-10-14): gộp các vị trí nhân viên. Chạy lại nhiều lần vẫn an toàn.
+-- gộp các vị trí nhân viên. Chạy lại nhiều lần vẫn an toàn.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/staff_position_label.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/staff_position_label.sql
 -- Các nhãn "Nhân viên bán hàng / Nhân viên kỹ thuật / Thu ngân" chỉ để hiển thị, không đổi quyền, nên gộp thành

@@ -3,7 +3,7 @@
 /*
  * Dùng chung cho Tài khoản / Lịch sử mua hàng / Yêu cầu dịch vụ. Trang đánh dấu mục đang mở bằng
  * <body data-account-page="profile|loyalty|security|address|orders|service-requests"> (trang Tài khoản đổi
- * giá trị theo hash, xem account.js). Kế hoạch v5 GĐ6: mỗi mục có icon, khối người dùng có nhãn hạng thành viên
+ * giá trị theo hash, xem account.js). mỗi mục có icon, khối người dùng có nhãn hạng thành viên
  * (GET /loyalty/me, dùng chung qua getLoyaltySummary()); điện thoại: menu thành hàng tab cuộn ngang.
  * Tên / email lấy từ phiên đăng nhập (poy_auth) nên phải escape.
  */

@@ -1,23 +1,33 @@
 package com.example.Tech.service.impl.payment;
 
 import com.example.Tech.config.StripeProperties;
-import com.example.Tech.service.payment.StripeGateway;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.order.Order;
+import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.order.PaymentMethod;
 import com.example.Tech.entity.payment.InstallmentBank;
+import com.example.Tech.entity.payment.InstallmentFeeRate;
 import com.example.Tech.entity.payment.InstallmentOrder;
-import com.example.Tech.entity.payment.InstallmentPayment;
-import com.example.Tech.entity.payment.InstallmentPaymentStatus;
+import com.example.Tech.entity.payment.InstallmentPartner;
+import com.example.Tech.entity.payment.InstallmentPartnerType;
 import com.example.Tech.entity.payment.InstallmentStatus;
 import com.example.Tech.entity.payment.Payment;
 import com.example.Tech.entity.payment.PaymentStatus;
 import com.example.Tech.entity.user.User;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
+import com.example.Tech.repository.payment.InstallmentFeeRateRepository;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
-import com.example.Tech.repository.payment.InstallmentPaymentRepository;
+import com.example.Tech.repository.payment.InstallmentPartnerRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
+import com.example.Tech.service.mail.OrderMailPublisher;
+import com.example.Tech.service.payment.StripeGateway;
+import com.example.Tech.service.payment.installment.CreditCardInstallmentProvider;
+import com.example.Tech.service.payment.installment.FinanceInstallmentProvider;
+import com.example.Tech.service.payment.installment.InstallmentAutoDecider;
+import com.example.Tech.service.payment.installment.InstallmentFeePolicy;
+import com.example.Tech.service.payment.installment.InstallmentPartnerPolicy;
+import com.example.Tech.service.payment.installment.InstallmentProviderRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +36,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,14 +50,15 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class OrderPaymentLifecycleTest {
 
-    private static final InstallmentRequest SIX_MONTHS = new InstallmentRequest(6, " 0123456789 ", InstallmentBank.MB);
+    private static final InstallmentRequest SIX_MONTHS_CARD =
+            new InstallmentRequest(6, " 0123456789 ", InstallmentBank.MB, "CREDIT_CARD");
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 10, 3, 10, 0);
 
     @Mock
@@ -55,22 +68,42 @@ class OrderPaymentLifecycleTest {
     private InstallmentOrderRepository installmentOrderRepository;
 
     @Mock
-    private InstallmentPaymentRepository installmentPaymentRepository;
+    private InstallmentPartnerRepository partnerRepository;
+
+    @Mock
+    private InstallmentFeeRateRepository feeRateRepository;
+
+    @Mock
+    private InstallmentAutoDecider autoDecider;
 
     @Mock
     private StripeGateway stripeGateway;
 
     @Mock
-    private com.example.Tech.service.mail.OrderMailPublisher mailPublisher;
+    private OrderMailPublisher mailPublisher;
+
+    private final InstallmentPartner card = partner("CREDIT_CARD", InstallmentPartnerType.CREDIT_CARD, "3000000", null);
+    private final InstallmentPartner financeB = partner("FINANCE_B", InstallmentPartnerType.FINANCE_COMPANY, "3000000", "15000000");
+    private final User staff = new User();
 
     private OrderPaymentLifecycle lifecycle;
 
-    private final User staff = new User();
-
     @BeforeEach
     void setUp() {
-        lifecycle = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, installmentPaymentRepository,
-                new StripeProperties("sk_test_x", null, null, null), stripeGateway, mailPublisher);
+        lifecycle = lifecycle(new StripeProperties("sk_test_x", null, null, null));
+        when(partnerRepository.findById("CREDIT_CARD")).thenReturn(Optional.of(card));
+        when(partnerRepository.findById("FINANCE_B")).thenReturn(Optional.of(financeB));
+        when(feeRateRepository.findOne("CREDIT_CARD", 6)).thenReturn(Optional.of(rate("CREDIT_CARD", 6, "3")));
+        when(feeRateRepository.findOne("CREDIT_CARD", 3)).thenReturn(Optional.of(rate("CREDIT_CARD", 3, "2")));
+        when(feeRateRepository.findOne("FINANCE_B", 3)).thenReturn(Optional.of(rate("FINANCE_B", 3, "3")));
+    }
+
+    private OrderPaymentLifecycle lifecycle(StripeProperties stripe) {
+        InstallmentPartnerPolicy partnerPolicy = new InstallmentPartnerPolicy(partnerRepository, feeRateRepository);
+        InstallmentProviderRegistry registry = new InstallmentProviderRegistry(
+                List.of(new CreditCardInstallmentProvider(), new FinanceInstallmentProvider()));
+        return new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, partnerPolicy,
+                new InstallmentFeePolicy(feeRateRepository), registry, autoDecider, stripe, stripeGateway, mailPublisher);
     }
 
     @Test
@@ -87,12 +120,16 @@ class OrderPaymentLifecycleTest {
         assertThatCode(() -> lifecycle.checkCanConfirm(transfer)).doesNotThrowAnyException();
 
         Order installment = order(PaymentMethod.INSTALLMENT, "9000000");
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(plan(InstallmentStatus.PENDING_APPROVAL, 3)));
-        assertThatThrownBy(() -> lifecycle.checkCanConfirm(installment))
-                .extracting(ex -> ((BusinessException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INSTALLMENT_NOT_APPROVED);
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(plan(InstallmentStatus.APPROVED, 3)));
-        assertThatCode(() -> lifecycle.checkCanConfirm(installment)).doesNotThrowAnyException();
+        for (InstallmentStatus waiting : List.of(InstallmentStatus.PENDING_APPROVAL, InstallmentStatus.REJECTED)) {
+            when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application(waiting)));
+            assertThatThrownBy(() -> lifecycle.checkCanConfirm(installment))
+                    .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                    .isEqualTo(ErrorCode.INSTALLMENT_NOT_APPROVED);
+        }
+        for (InstallmentStatus answered : List.of(InstallmentStatus.APPROVED, InstallmentStatus.SETTLED)) {
+            when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application(answered)));
+            assertThatCode(() -> lifecycle.checkCanConfirm(installment)).doesNotThrowAnyException();
+        }
 
         assertThatCode(() -> lifecycle.checkCanConfirm(order(PaymentMethod.COD, "990000"))).doesNotThrowAnyException();
     }
@@ -110,23 +147,11 @@ class OrderPaymentLifecycleTest {
     }
 
     @Test
-    void onOrderDelivered_approvedInstallment_createsTheScheduleFromTheDeliveryDate_andStarts() {
-        InstallmentOrder plan = plan(InstallmentStatus.APPROVED, 3);
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(plan));
+    void onOrderDelivered_installment_changesNothing_thePartnerCollectsFromTheCustomer() {
+        lifecycle.onOrderDelivered(order(PaymentMethod.INSTALLMENT, "10000000"), staff, NOW);
 
-        lifecycle.onOrderDelivered(order(PaymentMethod.INSTALLMENT, "10000000"), staff, LocalDateTime.of(2027, 1, 31, 15, 0));
-
-        ArgumentCaptor<InstallmentPayment> captor = ArgumentCaptor.forClass(InstallmentPayment.class);
-        verify(installmentPaymentRepository, times(3)).save(captor.capture());
-        assertThat(captor.getAllValues())
-                .extracting(p -> p.getPaymentNumber() + " " + p.getAmount().toPlainString() + " " + p.getDueDate()
-                        + " " + p.getStatus())
-                .containsExactly(
-                        "1 3333333 2027-02-28 PENDING",
-                        "2 3333333 2027-03-31 PENDING",
-                        "3 3333334 2027-04-30 PENDING");
-        assertThat(captor.getAllValues()).allSatisfy(p -> assertThat(p.getInstallment()).isSameAs(plan));
-        assertThat(plan.getStatus()).isEqualTo(InstallmentStatus.ACTIVE);
+        verify(paymentRepository, never()).findByOrderIdAndInstallmentPaymentIsNull(any());
+        verify(installmentOrderRepository, never()).findByOrderId(any());
     }
 
     @Test
@@ -174,86 +199,131 @@ class OrderPaymentLifecycleTest {
     }
 
     @Test
-    void approveAndReject_onlyAPlanWaitingForApproval() {
+    void partnerApproval_fixesTheFee_paysTheMainPayment_andMailsTheCustomer() {
+        Order order = order(PaymentMethod.INSTALLMENT, "30000000");
+        InstallmentOrder application = application(InstallmentStatus.PENDING_APPROVAL);
+        application.setPartnerRef("CC-1");
+        Payment payment = payment(PaymentMethod.INSTALLMENT, PaymentStatus.PENDING);
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
+        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L)).thenReturn(Optional.of(payment));
+
+        boolean applied = lifecycle.applyPartnerDecision(order, true, null, staff, "evt-1", NOW);
+
+        assertThat(applied).isTrue();
+        assertThat(application.getStatus()).isEqualTo(InstallmentStatus.APPROVED);
+        assertThat(application.getFeePercent()).isEqualByComparingTo("3");
+        assertThat(application.getFeeAmount()).isEqualByComparingTo("900000");
+        assertThat(application.getNetAmount()).isEqualByComparingTo("29100000");
+        assertThat(application.getReviewedBy()).isSameAs(staff);
+        assertThat(application.getReviewedAt()).isEqualTo(NOW);
+        assertThat(application.getLastEventId()).isEqualTo("evt-1");
+        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
+        assertThat(payment.getPaidAt()).isEqualTo(NOW);
+        assertThat(payment.getTransactionId()).isEqualTo("CC-1");
+        verify(mailPublisher).paymentReceived(order);
+    }
+
+    @Test
+    void partnerAnswer_repeatedEventIsIgnored_otherAnswersOnlyWhileWaiting() {
         Order order = order(PaymentMethod.INSTALLMENT, "9000000");
-        InstallmentOrder approved = plan(InstallmentStatus.PENDING_APPROVAL, 3);
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(approved));
-        lifecycle.approveInstallment(order, staff, NOW);
-        assertThat(approved.getStatus()).isEqualTo(InstallmentStatus.APPROVED);
-        assertThat(approved.getReviewedBy()).isSameAs(staff);
-        assertThat(approved.getReviewedAt()).isEqualTo(NOW);
-        assertThatThrownBy(() -> lifecycle.rejectInstallment(order, staff, "x", NOW))
+        InstallmentOrder application = application(InstallmentStatus.APPROVED);
+        application.setLastEventId("evt-1");
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
+
+        assertThat(lifecycle.applyPartnerDecision(order, true, null, null, "evt-1", NOW)).isFalse();
+        assertThatThrownBy(() -> lifecycle.applyPartnerDecision(order, false, "x", null, "evt-2", NOW))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INSTALLMENT_STATUS);
 
-        InstallmentOrder rejected = plan(InstallmentStatus.PENDING_APPROVAL, 3);
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(rejected));
-        lifecycle.rejectInstallment(order, staff, "  Sai CCCD ", NOW);
-        assertThat(rejected.getStatus()).isEqualTo(InstallmentStatus.REJECTED);
-        assertThat(rejected.getRejectionReason()).isEqualTo("Sai CCCD");
-
         when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> lifecycle.approveInstallment(order, staff, NOW))
+        assertThatThrownBy(() -> lifecycle.applyPartnerDecision(order, true, null, null, "evt-3", NOW))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INSTALLMENT_NOT_FOUND);
     }
 
     @Test
-    void payPeriod_recordsTheEarliestUnpaidPeriod_withAPaidPayment_lastOneCompletesThePlan() {
-        Order order = order(PaymentMethod.INSTALLMENT, "6000000");
-        InstallmentOrder plan = plan(InstallmentStatus.ACTIVE, 2);
-        plan.setOrder(order);
-        InstallmentPayment first = period(plan, 1);
-        InstallmentPayment second = period(plan, 2);
-        when(installmentPaymentRepository.findAllByInstallmentIdOrderByPaymentNumber(plan.getId()))
-                .thenReturn(List.of(first, second));
+    void partnerRejection_keepsTheOrderAndTheMainPaymentPending_withTheReason() {
+        Order order = order(PaymentMethod.INSTALLMENT, "9000000");
+        InstallmentOrder application = application(InstallmentStatus.PENDING_APPROVAL);
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
 
-        assertThatThrownBy(() -> lifecycle.payPeriod(plan, 2, staff, null, NOW))
-                .hasMessage("Kỳ tiếp theo cần ghi nhận là kỳ 1")
-                .extracting(ex -> ((BusinessException) ex).getErrorCode())
-                .isEqualTo(ErrorCode.INSTALLMENT_PERIOD_OUT_OF_ORDER);
+        lifecycle.applyPartnerDecision(order, false, "  Sai CCCD ", null, "evt-1", NOW);
 
-        lifecycle.payPeriod(plan, 1, staff, " KY1 ", NOW);
-        assertThat(first.getStatus()).isEqualTo(InstallmentPaymentStatus.PAID);
-        assertThat(first.getPaidDate()).isEqualTo(NOW.toLocalDate());
-        assertThat(plan.getStatus()).isEqualTo(InstallmentStatus.ACTIVE);
-        ArgumentCaptor<Payment> captor = ArgumentCaptor.forClass(Payment.class);
-        verify(paymentRepository).save(captor.capture());
-        Payment payment = captor.getValue();
-        assertThat(payment.getOrder()).isSameAs(order);
-        assertThat(payment.getAmount()).isEqualByComparingTo("3000000");
-        assertThat(payment.getPaymentMethod()).isEqualTo(PaymentMethod.INSTALLMENT);
-        assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
-        assertThat(payment.getInstallmentPayment()).isSameAs(first);
-        assertThat(payment.getConfirmedBy()).isSameAs(staff);
-        assertThat(payment.getTransactionId()).isEqualTo("KY1");
+        assertThat(application.getStatus()).isEqualTo(InstallmentStatus.REJECTED);
+        assertThat(application.getRejectionReason()).isEqualTo("Sai CCCD");
+        assertThat(application.getFeeAmount()).isNull();
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        verify(paymentRepository, never()).findByOrderIdAndInstallmentPaymentIsNull(any());
+        verify(mailPublisher, never()).paymentReceived(any());
+    }
 
-        lifecycle.payPeriod(plan, 2, staff, null, NOW);
-        assertThat(plan.getStatus()).isEqualTo(InstallmentStatus.COMPLETED);
-        assertThatThrownBy(() -> lifecycle.payPeriod(plan, 2, staff, null, NOW))
+    @Test
+    void resubmit_onlyARejectedApplication_goesToTheNewPartner_andCountsTheAttempt() {
+        Order order = order(PaymentMethod.INSTALLMENT, "9000000");
+        InstallmentOrder application = application(InstallmentStatus.REJECTED);
+        application.setRejectionReason("no");
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
+
+        lifecycle.resubmit(order, new InstallmentRequest(3, "0123456781", null, "FINANCE_B"));
+
+        assertThat(application.getStatus()).isEqualTo(InstallmentStatus.PENDING_APPROVAL);
+        assertThat(application.getPartner()).isSameAs(financeB);
+        assertThat(application.getNumMonths()).isEqualTo(3);
+        assertThat(application.getMonthlyPayment()).isEqualByComparingTo("3000000");
+        assertThat(application.getCardBank()).isNull();
+        assertThat(application.getRejectionReason()).isNull();
+        assertThat(application.getAttemptCount()).isEqualTo(2);
+        assertThat(application.getPartnerRef()).startsWith("FB-");
+        verify(autoDecider).scheduleAfterCommit(5L);
+
+        InstallmentOrder waiting = application(InstallmentStatus.PENDING_APPROVAL);
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(waiting));
+        assertThatThrownBy(() -> lifecycle.resubmit(order, SIX_MONTHS_CARD))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INSTALLMENT_STATUS);
     }
 
     @Test
-    void payPeriod_planNotStarted_isRefused() {
-        assertThatThrownBy(() -> lifecycle.payPeriod(plan(InstallmentStatus.APPROVED, 3), 1, staff, null, NOW))
+    void resubmit_theNewPartnerMustAcceptTheOrderTotal() {
+        Order order = order(PaymentMethod.INSTALLMENT, "20000000");
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application(InstallmentStatus.REJECTED)));
+
+        assertThatThrownBy(() -> lifecycle.resubmit(order, new InstallmentRequest(3, "0123456781", null, "FINANCE_B")))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
+    }
+
+    @Test
+    void settle_onlyAnApprovedApplicationOfADeliveredOrder() {
+        Order order = order(PaymentMethod.INSTALLMENT, "9000000");
+        InstallmentOrder application = application(InstallmentStatus.APPROVED);
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> lifecycle.settle(order, staff, NOW))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_INSTALLMENT_STATUS);
-        verify(paymentRepository, never()).save(any());
+
+        order.setStatus(OrderStatus.DELIVERED);
+        lifecycle.settle(order, staff, NOW);
+        assertThat(application.getStatus()).isEqualTo(InstallmentStatus.SETTLED);
+        assertThat(application.getSettledAt()).isEqualTo(NOW);
+        assertThat(application.getSettledBy()).isSameAs(staff);
+
+        assertThatThrownBy(() -> lifecycle.settle(order, staff, NOW))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INVALID_INSTALLMENT_STATUS);
     }
 
     @Test
     void card_isRefusedWhenStripeIsOff_orAboveStripesLimit() {
-        OrderPaymentLifecycle off = new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository,
-                installmentPaymentRepository, new StripeProperties("", null, null, null), stripeGateway, mailPublisher);
+        OrderPaymentLifecycle off = lifecycle(new StripeProperties("", null, null, null));
 
         assertThatThrownBy(() -> off.validateSelection(PaymentMethod.CARD, null))
                 .isInstanceOfSatisfying(BusinessException.class,
                         ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CARD_PAYMENT_DISABLED));
         assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.CARD, null)).doesNotThrowAnyException();
-        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("99999999"))).doesNotThrowAnyException();
-        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("100000000")))
+        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("99999999"), null)).doesNotThrowAnyException();
+        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.CARD, new BigDecimal("100000000"), null))
                 .isInstanceOfSatisfying(BusinessException.class,
                         ex -> assertThat(ex.getErrorCode()).isEqualTo(ErrorCode.CARD_AMOUNT_TOO_LARGE));
     }
@@ -288,52 +358,48 @@ class OrderPaymentLifecycleTest {
         verify(stripeGateway).expireSession("cs_test_1");
     }
 
-    private static Payment payment(PaymentMethod method, PaymentStatus status) {
-        Payment payment = new Payment();
-        payment.setPaymentMethod(method);
-        payment.setStatus(status);
-        payment.setAmount(new BigDecimal("990000"));
-        return payment;
-    }
-
-    private static InstallmentOrder plan(InstallmentStatus status, int months) {
-        InstallmentOrder plan = new InstallmentOrder();
-        plan.setId(3L);
-        plan.setStatus(status);
-        plan.setNumMonths(months);
-        return plan;
-    }
-
-    private static InstallmentPayment period(InstallmentOrder plan, int number) {
-        InstallmentPayment period = new InstallmentPayment();
-        period.setInstallment(plan);
-        period.setPaymentNumber(number);
-        period.setAmount(new BigDecimal("3000000"));
-        period.setDueDate(NOW.toLocalDate().plusMonths(number));
-        return period;
-    }
-
     @Test
-    void validateSelection_installmentDataOnlyWithInstallment() {
+    void validateSelection_installmentDataOnlyWithInstallment_andFitsThePartner() {
         assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.COD, null)).doesNotThrowAnyException();
-        assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT, SIX_MONTHS)).doesNotThrowAnyException();
+        assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT, SIX_MONTHS_CARD)).doesNotThrowAnyException();
+        assertThatCode(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
+                new InstallmentRequest(6, "0123456789", InstallmentBank.MB))).doesNotThrowAnyException();
 
-        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.BANK_TRANSFER, SIX_MONTHS)))
+        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.BANK_TRANSFER, SIX_MONTHS_CARD)))
                 .containsOnlyKeys("installment");
         assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT, null)))
                 .containsOnlyKeys("installment");
         assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
-                new InstallmentRequest(5, "0123456789", InstallmentBank.MB))))
-                .containsEntry("installment.months", "Kỳ hạn trả góp phải là 3, 6, 9 hoặc 12 tháng");
+                new InstallmentRequest(5, "0123456789", InstallmentBank.MB, "CREDIT_CARD"))))
+                .containsEntry("installment.months", "Thẻ tín dụng không hỗ trợ kỳ hạn 5 tháng");
+        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
+                new InstallmentRequest(6, "0123456789", null, "CREDIT_CARD"))))
+                .containsOnlyKeys("installment.cardBank");
+        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
+                new InstallmentRequest(3, "0123456789", InstallmentBank.MB, "FINANCE_B"))))
+                .containsOnlyKeys("installment.cardBank");
+        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
+                new InstallmentRequest(3, "0123456789", null, "NO_SUCH_PARTNER"))))
+                .containsOnlyKeys("installment.partner");
+        assertThat(fieldError(() -> lifecycle.validateSelection(PaymentMethod.INSTALLMENT,
+                new InstallmentRequest(3, "0123456789", null, null))))
+                .containsOnlyKeys("installment.partner");
     }
 
     @Test
-    void checkEligible_installmentNeedsThreeMillion_otherMethodsAnyTotal() {
-        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("3000000")))
+    void checkEligible_installmentMustFitThePartnersRange_otherMethodsAnyTotal() {
+        InstallmentRequest financeRequest = new InstallmentRequest(3, "0123456789", null, "FINANCE_B");
+        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("3000000"), SIX_MONTHS_CARD))
                 .doesNotThrowAnyException();
-        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.COD, new BigDecimal("30000")))
+        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("15000000"), financeRequest))
                 .doesNotThrowAnyException();
-        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("2990000")))
+        assertThatCode(() -> lifecycle.checkEligible(PaymentMethod.COD, new BigDecimal("30000"), null))
+                .doesNotThrowAnyException();
+        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("2990000"), SIX_MONTHS_CARD))
+                .extracting(ex -> ((BusinessException) ex).getErrorCode())
+                .isEqualTo(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
+        assertThatThrownBy(() -> lifecycle.checkEligible(PaymentMethod.INSTALLMENT, new BigDecimal("15000001"), financeRequest))
+                .hasMessageContaining("Công ty tài chính B")
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
     }
@@ -353,25 +419,34 @@ class OrderPaymentLifecycleTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PENDING);
         assertThat(payment.getInstallmentPayment()).isNull();
         verify(installmentOrderRepository, never()).save(any());
+        verify(autoDecider, never()).scheduleAfterCommit(any());
     }
 
     @Test
-    void onOrderPlaced_installment_createsAPlanWaitingForApproval_noPayment() {
+    void onOrderPlaced_installment_sendsTheApplicationToThePartner_andKeepsAPendingMainPayment() {
         Order order = order(PaymentMethod.INSTALLMENT, "10000000");
 
-        lifecycle.onOrderPlaced(order, SIX_MONTHS);
+        lifecycle.onOrderPlaced(order, SIX_MONTHS_CARD);
 
         ArgumentCaptor<InstallmentOrder> captor = ArgumentCaptor.forClass(InstallmentOrder.class);
         verify(installmentOrderRepository).save(captor.capture());
-        InstallmentOrder plan = captor.getValue();
-        assertThat(plan.getOrder()).isSameAs(order);
-        assertThat(plan.getNumMonths()).isEqualTo(6);
-        assertThat(plan.getMonthlyPayment()).isEqualByComparingTo("1666666");
-        assertThat(plan.getCitizenId()).isEqualTo("0123456789");
-        assertThat(plan.getCardBank()).isEqualTo(InstallmentBank.MB);
-        assertThat(plan.getStatus()).isEqualTo(InstallmentStatus.PENDING_APPROVAL);
-        assertThat(plan.getInterestRate()).isEqualByComparingTo("0");
-        verify(paymentRepository, never()).save(any());
+        InstallmentOrder application = captor.getValue();
+        assertThat(application.getOrder()).isSameAs(order);
+        assertThat(application.getPartner()).isSameAs(card);
+        assertThat(application.getNumMonths()).isEqualTo(6);
+        assertThat(application.getMonthlyPayment()).isEqualByComparingTo("1666666");
+        assertThat(application.getCitizenId()).isEqualTo("0123456789");
+        assertThat(application.getCardBank()).isEqualTo(InstallmentBank.MB);
+        assertThat(application.getStatus()).isEqualTo(InstallmentStatus.PENDING_APPROVAL);
+        assertThat(application.getInterestRate()).isEqualByComparingTo("0");
+        assertThat(application.getPartnerRef()).startsWith("CC-");
+        assertThat(application.getAttemptCount()).isEqualTo(1);
+        ArgumentCaptor<Payment> payment = ArgumentCaptor.forClass(Payment.class);
+        verify(paymentRepository).save(payment.capture());
+        assertThat(payment.getValue().getPaymentMethod()).isEqualTo(PaymentMethod.INSTALLMENT);
+        assertThat(payment.getValue().getStatus()).isEqualTo(PaymentStatus.PENDING);
+        assertThat(payment.getValue().getAmount()).isEqualByComparingTo("10000000");
+        verify(autoDecider).scheduleAfterCommit(5L);
     }
 
     @ParameterizedTest
@@ -395,20 +470,23 @@ class OrderPaymentLifecycleTest {
 
     @ParameterizedTest
     @CsvSource({
-            "PENDING_APPROVAL, CANCELLED",
-            "APPROVED, CANCELLED",
-            "REJECTED, REJECTED"
+            "PENDING_APPROVAL, CANCELLED, PENDING, CANCELLED",
+            "APPROVED, CANCELLED, PAID, CANCELLED",
+            "SETTLED, CANCELLED, PAID, REFUND_PENDING",
+            "REJECTED, REJECTED, PENDING, CANCELLED"
     })
-    void onOrderCancelled_cancelsAPlanThatHasNotStarted(InstallmentStatus before, InstallmentStatus after) {
+    void onOrderCancelled_withdrawsTheApplication_andOnlyOwesARefundOncePartnerPaid(
+            InstallmentStatus before, InstallmentStatus after, PaymentStatus paymentBefore, PaymentStatus paymentAfter) {
         Order order = order(PaymentMethod.INSTALLMENT, "9000000");
-        InstallmentOrder plan = new InstallmentOrder();
-        plan.setStatus(before);
-        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L)).thenReturn(Optional.empty());
-        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(plan));
+        InstallmentOrder application = application(before);
+        Payment payment = payment(PaymentMethod.INSTALLMENT, paymentBefore);
+        when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L)).thenReturn(Optional.of(payment));
+        when(installmentOrderRepository.findByOrderId(5L)).thenReturn(Optional.of(application));
 
         lifecycle.onOrderCancelled(order);
 
-        assertThat(plan.getStatus()).isEqualTo(after);
+        assertThat(application.getStatus()).isEqualTo(after);
+        assertThat(payment.getStatus()).isEqualTo(paymentAfter);
     }
 
     private static Map<String, String> fieldError(Runnable call) {
@@ -421,11 +499,44 @@ class OrderPaymentLifecycleTest {
         throw new AssertionError("Expected a VALIDATION_ERROR");
     }
 
+    private static Payment payment(PaymentMethod method, PaymentStatus status) {
+        Payment payment = new Payment();
+        payment.setPaymentMethod(method);
+        payment.setStatus(status);
+        payment.setAmount(new BigDecimal("990000"));
+        return payment;
+    }
+
+    private InstallmentOrder application(InstallmentStatus status) {
+        InstallmentOrder application = new InstallmentOrder();
+        application.setId(3L);
+        application.setStatus(status);
+        application.setNumMonths(6);
+        application.setPartner(card);
+        application.setCitizenId("0123456789");
+        return application;
+    }
+
+    private static InstallmentPartner partner(String code, InstallmentPartnerType type, String min, String max) {
+        InstallmentPartner partner = new InstallmentPartner();
+        partner.setCode(code);
+        partner.setName(code.equals("CREDIT_CARD") ? "Thẻ tín dụng" : "Công ty tài chính B");
+        partner.setType(type);
+        partner.setMinOrderTotal(new BigDecimal(min));
+        partner.setMaxOrderTotal(max == null ? null : new BigDecimal(max));
+        return partner;
+    }
+
+    private static InstallmentFeeRate rate(String partner, int months, String percent) {
+        return new InstallmentFeeRate(partner, months, new BigDecimal(percent));
+    }
+
     private static Order order(PaymentMethod method, String total) {
         Order order = new Order();
         order.setId(5L);
         order.setPaymentMethod(method);
         order.setTotalAmount(new BigDecimal(total));
+        order.setStatus(OrderStatus.PENDING);
         return order;
     }
 }

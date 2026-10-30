@@ -326,10 +326,10 @@ function getDisplayPrice(product) {
  * data.content từ GET /products. Giữ đúng markup thẻ cũ (.product-card >
  * .product-image + .product-info); ảnh và tên link sang trang chi tiết
  * (A2). Nút .add-cart vẫn mang data-name /
- * data-price vì giỏ hàng còn lưu theo tên cho tới Phase 3.
+ * data-price vì giỏ hàng còn lưu theo tên cho tới.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
  * không cho thêm vào giỏ. availableQuantity = 0 (không chi nhánh đang mở nào
- * còn hàng, kế hoạch v3 GĐ E) → nhãn "Hết hàng", nút bị khoá.
+ * còn hàng) → nhãn "Hết hàng", nút bị khoá.
  * Thiếu trường này (API cũ) thì coi như còn hàng.
  * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
  * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
@@ -342,7 +342,7 @@ function productCardRatingHtml(product) {
 
     const rating = productRatingSummary(product);
 
-    /* kế hoạch v8: không còn dòng "Chưa có đánh giá" lặp lại trên mọi thẻ; "Đã bán N" do decorateCardSales điền */
+    /* Không còn dòng "Chưa có đánh giá" lặp lại trên mọi thẻ; "Đã bán N" do decorateCardSales điền */
     const sold = '<span class="product-sold" data-sold hidden></span>';
 
     if (!rating) {
@@ -363,7 +363,7 @@ function productCardRatingHtml(product) {
 }
 
 
-/* Kế hoạch v3 GĐ E: sản phẩm / phiên bản không còn ở chi nhánh đang mở nào (thiếu trường = API cũ → còn hàng) */
+/* Sản phẩm / phiên bản không còn ở chi nhánh đang mở nào (thiếu trường = API cũ → còn hàng) */
 
 function isSoldOut(item) {
 
@@ -372,7 +372,7 @@ function isSoldOut(item) {
 }
 
 
-/* ================= MÀU + PHIÊN BẢN (kế hoạch v5 GĐ2) ================= */
+/* ================= MÀU + PHIÊN BẢN ================= */
 
 /*
  * Dữ liệu chỉ có tên màu ("Titan sa mạc", "Đen - Đỏ"…): đổi sang mã màu theo từ khoá (không dấu, khớp
@@ -1144,7 +1144,7 @@ async function fetchCategoryMaps() {
 
     const bySlug = {};
 
-    /* Kế hoạch v3: danh mục ADMIN ẩn → không hiện ở trang khách, sản phẩm của nó cũng không bán */
+    /* Danh mục ADMIN ẩn → không hiện ở trang khách, sản phẩm của nó cũng không bán */
     const hiddenIds = {};
 
 
@@ -1304,7 +1304,7 @@ function categoryVisualHtml(category) {
 /* Sản phẩm khách xem gần nhất: "neo" cho các khu tương tự / mua kèm / nâng cấp ở trang Khuyến nghị */
 const LAST_VIEWED_PRODUCT_KEY = "poy_last_viewed_product";
 
-/* Sản phẩm đã xem (kế hoạch v6 B3): mảng id trong localStorage, mới nhất đứng đầu, tối đa 10 */
+/* Sản phẩm đã xem: mảng id trong localStorage, mới nhất đứng đầu, tối đa 10 */
 const RECENT_VIEWED_KEY = "poy_recent_viewed";
 
 const RECENT_VIEWED_MAX = 10;
@@ -1407,7 +1407,7 @@ function renderRecommendationGrid(container, items, categorySlugById) {
 }
 
 
-/* ================= THÔNG SỐ KỸ THUẬT: NHÓM + HIỂN THỊ GỌN (kế hoạch v8) ================= */
+/* ================= THÔNG SỐ KỸ THUẬT: NHÓM + HIỂN THỊ GỌN ================= */
 
 /* Giá trị không mang thông tin (dữ liệu cào) → ẩn dòng */
 const SPEC_EMPTY_VALUES = ["hãng không công bố", "đang cập nhật", "chưa có thông tin", "-"];
@@ -1538,7 +1538,7 @@ function renderSpecGroups(table, rows) {
 }
 
 
-/* ================= THẺ SẢN PHẨM: TRẢ GÓP + ĐÃ BÁN / BÁN CHẠY (kế hoạch v8) ================= */
+/* ================= THẺ SẢN PHẨM: TRẢ GÓP + ĐÃ BÁN / BÁN CHẠY ================= */
 
 /* Trả góp 0% (từ 3.000.000đ, tối đa 12 kỳ) → "Trả góp 0% · từ 3.499.000đ/tháng"; dưới mức đó → "" */
 function cardInstallmentText(price) {

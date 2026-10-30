@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Plan v5 GĐ10, no I/O: which add-on units of a cart get a combo discount.
+ * No I/O: which add-on units of a cart get a combo discount.
  * <ul>
  *   <li>Per (main product, add-on product) the number of discounted add-on units is at most the number of main
  *       units in the cart (2 phones + 2 cases → both cases; 1 phone + 2 cases → one).</li>

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** A customer's saved products (plan v7 GĐ4). Products taken off sale stay saved but are not listed. */
+/** A customer's saved products. Products taken off sale stay saved but are not listed. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

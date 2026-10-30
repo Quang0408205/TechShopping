@@ -6,7 +6,7 @@ import org.springframework.util.StringUtils;
 import java.time.Duration;
 
 /**
- * Order emails (plan v7). {@code fromAddress} empty = the SMTP username; {@code siteUrl} is where the links of the
+ * Order emails. {@code fromAddress} empty = the SMTP username; {@code siteUrl} is where the links of the
  * mails point (the web shop, not the API). One address receives at most {@code perRecipientLimit} mails per window.
  */
 @ConfigurationProperties(prefix = "app.mail")

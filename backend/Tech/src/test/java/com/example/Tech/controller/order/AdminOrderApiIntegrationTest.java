@@ -60,7 +60,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * /api/v1/admin/orders over HTTP against the test database (rolled back): real STAFF / ADMIN accounts
  * (roles added in the DB, then logged in again so the token carries them), orders placed by a customer
  * through the real checkout. The STAFF account works at store A (Quận 5), where the checkout address sends the
- * orders and where the products are in stock (Phase 7.6). Refresh tokens of the registered users are revoked
+ * orders and where the products are in stock. Refresh tokens of the registered users are revoked
  * afterwards.
  */
 @SpringBootTest
@@ -241,7 +241,7 @@ class AdminOrderApiIntegrationTest {
 
         assertThat(customerProfileRepository.findById(customerId).orElseThrow().getTotalSpent())
                 .isEqualByComparingTo(spentBefore.add(new BigDecimal("15990000")));
-        // Phase 6: one warranty per line, from the delivery day for the product's 12 months
+        // One warranty per line, from the delivery day for the product's 12 months
         List<Warranty> warranties = entityManager.createQuery(
                         "select w from Warranty w where w.orderItem.order.id = :orderId", Warranty.class)
                 .setParameter("orderId", orderId).getResultList();
@@ -250,7 +250,7 @@ class AdminOrderApiIntegrationTest {
             assertThat(warranty.getStartDate()).isEqualTo(today);
             assertThat(warranty.getEndDate()).isEqualTo(today.plusMonths(12));
         });
-        // Phase 10: every change is in the history; the sale goes to the confirming staff member, 1% commission
+        // Every change is in the history; the sale goes to the confirming staff member, 1% commission
         assertThat(historyRepository.findAllByOrder_IdOrderByChangedAtAscIdAsc(orderId)).extracting(
                         h -> h.getOldStatus() + ">" + h.getNewStatus() + ">" + h.getChangedBy().getId())
                 .containsExactly("null>PENDING>" + customerId, "PENDING>CONFIRMED>" + staffId,
@@ -302,7 +302,7 @@ class AdminOrderApiIntegrationTest {
     @Test
     void confirm_withoutEnoughStock_is409_adminMovesTheOrderToAStoreThatHasIt() throws Exception {
         long orderId = placeOrder(phone, 2, "Nguyễn Văn An", "0901234567");
-        // plan v3 GĐ E: placing needs the stock; another sale takes it before staff confirm (nothing is reserved)
+        // Placing needs the stock; another sale takes it before staff confirm (nothing is reserved)
         entityManager.find(Inventory.class, new InventoryId(storeA.getId(), phone.getId())).setQuantity(1);
         entityManager.flush();
 

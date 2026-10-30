@@ -1,4 +1,4 @@
--- Kế hoạch v2 / GĐ7 (2026-10-11): form Liên hệ lưu thật. Chạy lại nhiều lần vẫn an toàn.
+-- form Liên hệ lưu thật. Chạy lại nhiều lần vẫn an toàn.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thứ dưới đây.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/contact_requests.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/contact_requests.sql

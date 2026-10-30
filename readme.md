@@ -74,7 +74,7 @@ Quy tắc chung:
 - **Yêu thích và so sánh:** nút trái tim trên thẻ sản phẩm và trang chi tiết lưu sản phẩm vào danh sách yêu thích của tài khoản (trang riêng, số lượng hiện cạnh biểu tượng trái tim ở đầu trang); khi giá một sản phẩm đã lưu giảm, hệ thống gửi email báo cho khách. Nút cái cân chọn tối đa 4 sản phẩm cùng danh mục để so sánh trên một bảng: giá (đánh dấu rẻ nhất), thương hiệu, đánh giá, bảo hành, tồn kho và từng thông số kỹ thuật, tô nổi các dòng khác nhau và có thể chỉ hiện điểm khác nhau.
 - **Lịch sử mua hàng:** lọc theo trạng thái (kể cả đơn đã huỷ), tìm theo mã đơn hoặc tên sản phẩm; nút "Mua lại" đưa sản phẩm của đơn đã giao / đã huỷ vào giỏ với giá hiện tại và báo sản phẩm nào không còn bán.
 - **Thanh toán:** COD, chuyển khoản qua mã QR VietQR có trang thanh toán riêng (sao chép số tài khoản / số tiền / nội dung, logo ngân hàng, đếm ngược hạn), thẻ quốc tế qua Stripe Checkout ở chế độ thử, trả góp 0% (3 / 6 / 9 / 12 tháng cho đơn từ 3.000.000đ). Đơn chuyển khoản / thẻ chưa trả có nút **Huỷ thanh toán**: đơn bị huỷ, voucher được trả lượt và đúng các sản phẩm của đơn quay lại giỏ. Khách bấm Back sau khi đặt đơn thì giỏ hàng và trang đặt hàng nhắc "Đơn DH… đang chờ thanh toán" kèm hai lựa chọn tiếp tục thanh toán hoặc huỷ đơn lấy lại giỏ.
-- **Đơn hàng:** theo dõi trạng thái, huỷ khi còn chờ xác nhận, xem lịch trả góp. Khi đặt hàng khách nhập email nhận thông tin đơn; mỗi bước của đơn (đã đặt, đã nhận thanh toán, đã xác nhận, đang giao hoặc sẵn sàng tại cửa hàng, đã giao, đã huỷ) gửi một email kèm liên kết mở trang theo dõi đơn không cần đăng nhập.
+- **Đơn hàng:** theo dõi trạng thái, huỷ khi còn chờ xác nhận, xem hồ sơ trả góp và đối tác đang xét. Khi đặt hàng khách nhập email nhận thông tin đơn; mỗi bước của đơn (đã đặt, đã nhận thanh toán, đã xác nhận, đang giao hoặc sẵn sàng tại cửa hàng, đã giao, đã huỷ) gửi một email kèm liên kết mở trang theo dõi đơn không cần đăng nhập.
 - **Hậu mãi:** gửi yêu cầu bảo hành (còn hạn), bảo trì hoặc trả hàng hoàn tiền trong 7 ngày kèm ảnh, theo dõi trạng thái ở trang Yêu cầu dịch vụ.
 - **Đánh giá:** 1–5 sao, nhận xét, tối đa 5 ảnh, viết nhiều đánh giá cho một sản phẩm; hiện nhãn "Đã mua hàng", **phân loại hàng** đã mua, nút **Hữu ích**, lọc theo số sao hoặc có ảnh. Điểm sản phẩm chỉ tính từ đánh giá thật.
 - **Khuyến nghị và trợ lý AI:** gợi ý dành cho bạn, tương tự, mua kèm, nâng cấp (mỗi thẻ có lý do gợi ý); trợ lý chat trả lời bằng tiếng Việt, tra chính sách, tìm sản phẩm theo nhu cầu và ngân sách, tra đơn / giỏ / bảo hành của chính khách.
@@ -82,8 +82,9 @@ Quy tắc chung:
 
 ### Khu nội bộ
 - **Tổng quan theo vai trò:** ADMIN thấy toàn hệ thống (doanh thu, đơn cần xử lý, hàng sắp hết, so sánh chi nhánh); quản lý thấy số liệu chi nhánh; nhân viên thấy "Việc của tôi hôm nay".
-- **Đơn hàng:** lọc theo trạng thái và ngày, đổi trạng thái đúng luồng, mã vận đơn, ghi nhận đã nhận tiền / hoàn tiền, duyệt hoặc từ chối trả góp; xác nhận đơn trừ tồn kho chi nhánh, huỷ đơn hoàn kho.
-- **Trả góp, Bảo hành / Bảo trì / Đổi trả, Liên hệ khách hàng:** các hộp việc có lọc, ghi chú xử lý và lý do từ chối.
+- **Đơn hàng:** lọc theo trạng thái và ngày, đổi trạng thái đúng luồng, mã vận đơn, ghi nhận đã nhận tiền / hoàn tiền; xác nhận đơn trừ tồn kho chi nhánh, huỷ đơn hoàn kho.
+- **Trả góp:** hồ sơ do đối tác xét, theo dõi phí đối tác và tiền thực nhận, ghi nhận khi đối tác chuyển tiền; ADMIN chỉnh điều kiện và bảng phí của từng đối tác.
+- **Bảo hành / Bảo trì / Đổi trả, Liên hệ khách hàng:** các hộp việc có lọc, ghi chú xử lý và lý do từ chối.
 - **Đối soát chuyển khoản:** nhật ký tiền về, gán thủ công hoặc bỏ qua (có lý do), ô giả lập ngân hàng báo tiền để trình diễn.
 - **Tồn kho:** tồn theo chi nhánh, cảnh báo sắp hết / hết hàng, nhập kho, lịch sử nhập xuất, nhập kho từ Excel.
 - **Sản phẩm, Danh mục, Thương hiệu (ADMIN):** thêm sửa, ảnh tải lên, phiên bản và thông số theo danh mục, nhập sản phẩm từ Excel (kiểm tra trước, có lỗi thì không ghi gì).
@@ -121,7 +122,7 @@ Quy tắc chung:
 
 **Thanh toán thẻ (Stripe, chế độ thử).** Stripe không mở tài khoản người bán ở Việt Nam và không chuyển tiền về ngân hàng Việt Nam, nên hình thức "Thẻ quốc tế" chỉ dùng khoá thử (thẻ 4242…, không trừ tiền thật); không có khoá thì hình thức này ẩn. Đặt đơn xong, backend tạo một phiên Stripe Checkout bằng VND với mã đơn và đưa khách sang trang của Stripe; bấm lại nút thanh toán dùng lại phiên còn mở thay vì tạo phiên mới. Stripe chỉ được đưa khách về trang thanh toán của chính cửa hàng (địa chỉ phải thuộc nguồn được phép). Khi khách quay về, backend hỏi Stripe phiên đã trả chưa nên vẫn chạy trên máy cá nhân không có webhook; khi web được chia sẻ qua tên miền công khai, webhook Stripe (kiểm chữ ký, chống gửi lại sau 5 phút) xác nhận cả khi khách đóng trình duyệt. Chỉ ghi nhận đã trả khi đúng số tiền và đơn vị tiền; đơn bị huỷ thì phiên Stripe bị đóng, nếu tiền vẫn về thì khoản thanh toán chuyển sang chờ hoàn tiền.
 
-**Trả góp.** Đơn từ 3.000.000đ chọn kỳ hạn 3 / 6 / 9 / 12 tháng, nhập CCCD và ngân hàng thẻ; nhân viên duyệt hoặc từ chối; lịch các kỳ tính từ ngày giao và được ghi nhận lần lượt.
+**Trả góp.** Đơn từ 3.000.000đ trả góp 0% qua đối tác do khách chọn: thẻ tín dụng (kèm ngân hàng phát hành thẻ) hoặc công ty tài chính (chỉ cần CCCD), mỗi đối tác có kỳ hạn và khoảng giá trị đơn riêng. Đối tác xét hồ sơ và thu tiền hằng tháng của khách; được duyệt thì đơn coi như đã thanh toán và cửa hàng mới xác nhận, bị từ chối thì khách gửi cho đối tác khác hoặc đổi cách thanh toán. Cửa hàng chịu phí đối tác (phần trăm giá trị đơn theo kỳ hạn, chốt lúc duyệt) và nhận số tiền còn lại sau khi giao hàng. Đối tác ở đây là mô phỏng, trả lời qua một cổng chung nên có thể thay bằng đối tác thật.
 
 **Hậu mãi.** Bảo hành dựa trên phiếu bảo hành sinh khi đơn được giao (theo số tháng bảo hành của sản phẩm); bảo trì có thể mất phí; trả hàng trong 7 ngày: duyệt → nhận hàng (chọn món còn bán được để cộng lại kho) → hoàn tiền.
 

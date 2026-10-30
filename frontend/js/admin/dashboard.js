@@ -315,7 +315,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             { href: "orders.html?status=PENDING", label: "Đơn chờ xác nhận", hint: "Kiểm tra hàng, xác nhận hoặc huỷ", count: s.pendingOrders },
             { href: "orders.html?status=CONFIRMED", label: "Đơn chờ giao", hint: "Đã xác nhận, cần chuyển cho đơn vị vận chuyển", count: s.confirmedOrders },
             { href: "orders.html?status=SHIPPING", label: "Đơn đang giao", hint: "Cập nhật khi khách đã nhận", count: s.shippingOrders },
-            { href: "installments.html?status=PENDING_APPROVAL", label: "Trả góp chờ duyệt", hint: "Hồ sơ trả góp cần duyệt", count: installmentsWaiting },
+            { href: "installments.html?status=PENDING_APPROVAL", label: "Trả góp chờ đối tác", hint: "Hồ sơ đang chờ đối tác trả lời", count: installmentsWaiting },
             { href: "service-requests.html", label: "Bảo hành / đổi trả đang mở", hint: "Yêu cầu dịch vụ chưa xong", count: s.openServiceRequests },
             { href: "contact-requests.html", label: "Liên hệ chờ xử lý", hint: "Tin nhắn khách gửi từ trang Liên hệ", count: s.openContactRequests },
             { href: "inventory.html", label: "Sản phẩm sắp hết", hint: s.outOfStockVariants + " phiên bản đã hết hàng", count: s.lowStockVariants }

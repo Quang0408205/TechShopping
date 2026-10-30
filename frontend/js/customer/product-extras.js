@@ -1,4 +1,4 @@
-/* ================= TRANG CHI TIẾT: ĐIỂM NỔI BẬT, CÒN HÀNG TẠI CỬA HÀNG, SO SÁNH VỚI… (kế hoạch v8 bước 2) ================= */
+/* ================= TRANG CHI TIẾT: ĐIỂM NỔI BẬT, CÒN HÀNG TẠI CỬA HÀNG, SO SÁNH VỚI… ================= */
 
 /*
  * Dữ liệu thật cả: điểm nổi bật rút từ bảng thông số, tồn kho từ GET /products/{id}/store-stock,

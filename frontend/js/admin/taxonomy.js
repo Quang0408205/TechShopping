@@ -1,4 +1,4 @@
-/* ================= DANH MỤC / THƯƠNG HIỆU (admin/categories.html, admin/brands.html) — kế hoạch v3 GĐ C ================= */
+/* ================= DANH MỤC / THƯƠNG HIỆU (admin/categories.html, admin/brands.html) ================= */
 
 /*
  * Một file cho cả 2 trang; body[data-taxonomy] chọn cấu hình bên dưới. Chỉ ADMIN (data-roles="ADMIN").

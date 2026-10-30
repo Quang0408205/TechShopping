@@ -3,10 +3,10 @@ package com.example.Tech.service.impl.payment;
 import com.example.Tech.config.StripeProperties;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.entity.order.Order;
+import com.example.Tech.entity.order.OrderStatus;
 import com.example.Tech.entity.order.PaymentMethod;
 import com.example.Tech.entity.payment.InstallmentOrder;
-import com.example.Tech.entity.payment.InstallmentPayment;
-import com.example.Tech.entity.payment.InstallmentPaymentStatus;
+import com.example.Tech.entity.payment.InstallmentPartner;
 import com.example.Tech.entity.payment.InstallmentStatus;
 import com.example.Tech.entity.payment.Payment;
 import com.example.Tech.entity.payment.PaymentStatus;
@@ -15,11 +15,14 @@ import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
-import com.example.Tech.repository.payment.InstallmentPaymentRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
+import com.example.Tech.service.mail.OrderMailPublisher;
 import com.example.Tech.service.payment.InstallmentPolicy;
 import com.example.Tech.service.payment.StripeGateway;
-import com.example.Tech.service.mail.OrderMailPublisher;
+import com.example.Tech.service.payment.installment.InstallmentAutoDecider;
+import com.example.Tech.service.payment.installment.InstallmentFeePolicy;
+import com.example.Tech.service.payment.installment.InstallmentPartnerPolicy;
+import com.example.Tech.service.payment.installment.InstallmentProviderRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,9 +30,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Payment side of the order life cycle. Runs inside the caller's transaction, after the caller has locked the order
@@ -42,12 +43,15 @@ public class OrderPaymentLifecycle {
 
     private final PaymentRepository paymentRepository;
     private final InstallmentOrderRepository installmentOrderRepository;
-    private final InstallmentPaymentRepository installmentPaymentRepository;
+    private final InstallmentPartnerPolicy partnerPolicy;
+    private final InstallmentFeePolicy feePolicy;
+    private final InstallmentProviderRegistry providers;
+    private final InstallmentAutoDecider autoDecider;
     private final StripeProperties stripe;
     private final StripeGateway stripeGateway;
     private final OrderMailPublisher mailPublisher;
 
-    /** Checks that installment data comes with INSTALLMENT and only with it; called before the cart is read. */
+    /** Checks that installment data comes with INSTALLMENT and only with it, and fits its partner; called before the cart is read. */
     public void validateSelection(PaymentMethod method, InstallmentRequest installment) {
         if (method == PaymentMethod.CARD && !stripe.enabled()) {
             throw new BusinessException(ErrorCode.CARD_PAYMENT_DISABLED);
@@ -61,35 +65,34 @@ public class OrderPaymentLifecycle {
         if (installment == null) {
             throw BusinessException.invalidField("installment", "Vui lòng nhập thông tin trả góp");
         }
-        if (!InstallmentPolicy.isAllowedTerm(installment.months())) {
-            throw BusinessException.invalidField("installment.months", "Kỳ hạn trả góp phải là 3, 6, 9 hoặc 12 tháng");
-        }
+        partnerPolicy.resolve(installment);
     }
 
     /**
-     * Installment needs an order total of at least {@link InstallmentPolicy#MIN_ORDER_TOTAL}; a card payment at most
+     * An installment order total must be inside the range of the partner chosen; a card payment at most
      * {@link StripeProperties#MAX_AMOUNT_VND}.
      */
-    public void checkEligible(PaymentMethod method, BigDecimal orderTotal) {
-        if (method == PaymentMethod.INSTALLMENT && !InstallmentPolicy.isEligible(orderTotal)) {
-            throw new BusinessException(ErrorCode.INSTALLMENT_NOT_ELIGIBLE);
+    public void checkEligible(PaymentMethod method, BigDecimal orderTotal, InstallmentRequest installment) {
+        if (method == PaymentMethod.INSTALLMENT) {
+            partnerPolicy.checkAmount(partnerPolicy.resolve(installment), orderTotal);
         }
         if (method == PaymentMethod.CARD && orderTotal.compareTo(BigDecimal.valueOf(StripeProperties.MAX_AMOUNT_VND)) > 0) {
             throw new BusinessException(ErrorCode.CARD_AMOUNT_TOO_LARGE);
         }
     }
 
-    /** COD / BANK_TRANSFER / CARD: one PENDING main payment of the total; INSTALLMENT: a plan waiting for approval. */
+    /**
+     * COD / BANK_TRANSFER / CARD: one PENDING main payment of the total. INSTALLMENT: the same payment (it becomes PAID
+     * when the partner approves) plus the application, sent to the partner the customer chose.
+     */
     public void onOrderPlaced(Order order, InstallmentRequest installment) {
         if (order.getPaymentMethod() == PaymentMethod.INSTALLMENT) {
-            InstallmentOrder plan = new InstallmentOrder();
-            plan.setOrder(order);
-            plan.setNumMonths(installment.months());
-            plan.setMonthlyPayment(InstallmentPolicy.monthlyPayment(order.getTotalAmount(), installment.months()));
-            plan.setCitizenId(installment.citizenId().trim());
-            plan.setCardBank(installment.cardBank());
-            installmentOrderRepository.save(plan);
-            return;
+            InstallmentPartner partner = partnerPolicy.resolve(installment);
+            InstallmentOrder application = new InstallmentOrder();
+            application.setOrder(order);
+            fill(application, partner, installment, order.getTotalAmount());
+            installmentOrderRepository.save(application);
+            autoDecider.scheduleAfterCommit(order.getId());
         }
         Payment payment = new Payment();
         payment.setOrder(order);
@@ -98,7 +101,7 @@ public class OrderPaymentLifecycle {
         paymentRepository.save(payment);
     }
 
-    /** PENDING → CONFIRMED: a bank transfer / card payment must be paid, an installment plan approved. */
+    /** PENDING → CONFIRMED: a bank transfer / card payment must be paid, an installment application approved. */
     public void checkCanConfirm(Order order) {
         String code = OrderMapper.code(order.getId());
         if (order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER || order.getPaymentMethod() == PaymentMethod.CARD) {
@@ -112,16 +115,16 @@ public class OrderPaymentLifecycle {
             }
         } else if (order.getPaymentMethod() == PaymentMethod.INSTALLMENT) {
             boolean approved = installmentOrderRepository.findByOrderId(order.getId())
-                    .map(plan -> plan.getStatus() == InstallmentStatus.APPROVED)
+                    .map(plan -> plan.getStatus() == InstallmentStatus.APPROVED || plan.getStatus() == InstallmentStatus.SETTLED)
                     .orElse(false);
             if (!approved) {
                 throw new BusinessException(ErrorCode.INSTALLMENT_NOT_APPROVED,
-                        "Hợp đồng trả góp của đơn %s chưa được duyệt".formatted(code));
+                        "Hồ sơ trả góp của đơn %s chưa được đối tác duyệt".formatted(code));
             }
         }
     }
 
-    /** Delivered: COD money is collected by the courier; an installment plan starts (schedule from today). */
+    /** Delivered: COD money is collected by the courier. Installment money comes from the partner (see settle). */
     public void onOrderDelivered(Order order, User staff, LocalDateTime now) {
         if (order.getPaymentMethod() == PaymentMethod.COD) {
             paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId())
@@ -131,18 +134,17 @@ public class OrderPaymentLifecycle {
                         payment.setPaidAt(now);
                         payment.setConfirmedBy(staff);
                     });
-        } else if (order.getPaymentMethod() == PaymentMethod.INSTALLMENT) {
-            installmentOrderRepository.findByOrderId(order.getId())
-                    .filter(plan -> plan.getStatus() == InstallmentStatus.APPROVED)
-                    .ifPresent(plan -> startSchedule(plan, order, now.toLocalDate()));
         }
     }
 
     /**
-     * The order was just cancelled: an awaited payment is cancelled, money already received waits for a refund,
-     * a plan that was not started yet is cancelled.
+     * The order was just cancelled: an awaited payment is cancelled, money already received waits for a refund, an
+     * installment application is withdrawn from its partner. An installment order only owes a refund once the partner
+     * has paid the shop.
      */
     public void onOrderCancelled(Order order) {
+        InstallmentOrder plan = installmentOrderRepository.findByOrderId(order.getId()).orElse(null);
+        boolean partnerPaid = plan != null && plan.getStatus() == InstallmentStatus.SETTLED;
         paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId()).ifPresent(payment -> {
             if (payment.getStatus() == PaymentStatus.PENDING) {
                 payment.setStatus(PaymentStatus.CANCELLED);
@@ -150,16 +152,22 @@ public class OrderPaymentLifecycle {
                     expireCheckoutAfterCommit(payment.getCheckoutSessionId());
                 }
             } else if (payment.getStatus() == PaymentStatus.PAID) {
-                payment.setStatus(PaymentStatus.REFUND_PENDING);
-                log.info("Order id={} cancelled after payment id={} was paid: waiting for a refund",
-                        order.getId(), payment.getId());
+                if (payment.getPaymentMethod() == PaymentMethod.INSTALLMENT && !partnerPaid) {
+                    payment.setStatus(PaymentStatus.CANCELLED);
+                } else {
+                    payment.setStatus(PaymentStatus.REFUND_PENDING);
+                    log.info("Order id={} cancelled after payment id={} was paid: waiting for a refund",
+                            order.getId(), payment.getId());
+                }
             }
         });
-        installmentOrderRepository.findByOrderId(order.getId()).ifPresent(plan -> {
-            if (plan.getStatus() == InstallmentStatus.PENDING_APPROVAL || plan.getStatus() == InstallmentStatus.APPROVED) {
-                plan.setStatus(InstallmentStatus.CANCELLED);
+        if (plan != null && (plan.getStatus() == InstallmentStatus.PENDING_APPROVAL
+                || plan.getStatus() == InstallmentStatus.APPROVED || plan.getStatus() == InstallmentStatus.SETTLED)) {
+            plan.setStatus(InstallmentStatus.CANCELLED);
+            if (plan.getPartner() != null) {
+                providers.forPartner(plan.getPartner().getCode()).cancel(plan);
             }
-        });
+        }
     }
 
     /** Staff saw the bank transfer arrive. COD is never confirmed by hand: it is paid on delivery. */
@@ -186,59 +194,98 @@ public class OrderPaymentLifecycle {
         payment.setRefundedBy(staff);
     }
 
-    public void approveInstallment(Order order, User staff, LocalDateTime now) {
-        InstallmentOrder plan = planWaitingForApproval(order);
-        plan.setStatus(InstallmentStatus.APPROVED);
-        plan.setReviewedBy(staff);
-        plan.setReviewedAt(now);
-    }
-
-    /** Rejects the plan; the caller cancels the order. */
-    public void rejectInstallment(Order order, User staff, String reason, LocalDateTime now) {
-        InstallmentOrder plan = planWaitingForApproval(order);
-        plan.setStatus(InstallmentStatus.REJECTED);
-        plan.setRejectionReason(reason.trim());
-        plan.setReviewedBy(staff);
-        plan.setReviewedAt(now);
-    }
-
     /**
-     * Collects period {@code number} of an ACTIVE plan: it must be the earliest unpaid one, paid in full. Adds a PAID
-     * payment linked to the period; the last period completes the plan. The caller has locked the plan's order.
+     * The partner answered the application. Approved: the fee and the net amount are fixed, the order counts as paid
+     * and the customer is mailed. Rejected: the order stays pending, the customer may choose another partner or
+     * another payment method. A repeated event (same {@code eventId}) is ignored and returns false.
+     *
+     * @param staff the staff member using the partner console, null when the partner itself answered
      */
-    public void payPeriod(InstallmentOrder plan, int number, User staff, String transactionId, LocalDateTime now) {
-        if (plan.getStatus() != InstallmentStatus.ACTIVE) {
+    public boolean applyPartnerDecision(Order order, boolean approved, String reason, User staff, String eventId,
+                                        LocalDateTime now) {
+        InstallmentOrder application = application(order);
+        if (eventId != null && eventId.equals(application.getLastEventId())) {
+            return false;
+        }
+        if (application.getStatus() != InstallmentStatus.PENDING_APPROVAL || application.getPartner() == null) {
             throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
-                    "Chỉ ghi nhận kỳ trả góp khi hợp đồng đang thực hiện (hiện tại: %s)".formatted(plan.getStatus()));
+                    "Hồ sơ trả góp của đơn %s không còn chờ đối tác trả lời (hiện tại: %s)"
+                            .formatted(OrderMapper.code(order.getId()), application.getStatus()));
         }
-        List<InstallmentPayment> periods = installmentPaymentRepository.findAllByInstallmentIdOrderByPaymentNumber(plan.getId());
-        InstallmentPayment next = periods.stream()
-                .filter(period -> period.getStatus() == InstallmentPaymentStatus.PENDING)
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
-                        "Hợp đồng trả góp đã thanh toán đủ các kỳ"));
-        if (next.getPaymentNumber() != number) {
-            throw new BusinessException(ErrorCode.INSTALLMENT_PERIOD_OUT_OF_ORDER,
-                    "Kỳ tiếp theo cần ghi nhận là kỳ %d".formatted(next.getPaymentNumber()));
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
+                    "Đơn %s không còn ở trạng thái chờ xử lý".formatted(OrderMapper.code(order.getId())));
         }
-        next.setStatus(InstallmentPaymentStatus.PAID);
-        next.setPaidDate(now.toLocalDate());
+        application.setLastEventId(eventId);
+        application.setReviewedBy(staff);
+        application.setReviewedAt(now);
+        if (approved) {
+            InstallmentFeePolicy.Fee fee = feePolicy.fee(application.getPartner().getCode(), application.getNumMonths(),
+                    order.getTotalAmount());
+            application.setStatus(InstallmentStatus.APPROVED);
+            application.setFeePercent(fee.percent());
+            application.setFeeAmount(fee.amount());
+            application.setNetAmount(fee.net());
+            application.setRejectionReason(null);
+            Payment payment = mainPayment(order);
+            requirePaymentStatus(payment, order, PaymentStatus.PENDING);
+            payment.setStatus(PaymentStatus.PAID);
+            payment.setPaidAt(now);
+            payment.setConfirmedBy(staff);
+            payment.setTransactionId(application.getPartnerRef());
+            mailPublisher.paymentReceived(order);
+        } else {
+            application.setStatus(InstallmentStatus.REJECTED);
+            application.setRejectionReason(trimToNull(reason) != null ? reason.trim()
+                    : "Đối tác không chấp thuận hồ sơ trả góp");
+        }
+        return true;
+    }
 
-        Payment payment = new Payment();
-        payment.setOrder(plan.getOrder());
-        payment.setAmount(next.getAmount());
-        payment.setPaymentMethod(PaymentMethod.INSTALLMENT);
-        payment.setStatus(PaymentStatus.PAID);
-        payment.setPaidAt(now);
-        payment.setConfirmedBy(staff);
-        payment.setTransactionId(trimToNull(transactionId));
-        payment.setInstallmentPayment(next);
-        paymentRepository.save(payment);
-
-        if (next.getPaymentNumber() == periods.size()) {
-            plan.setStatus(InstallmentStatus.COMPLETED);
-            log.info("Installment plan id={} completed", plan.getId());
+    /** The customer sends a rejected application to another partner (or the same one with other terms). */
+    public void resubmit(Order order, InstallmentRequest request) {
+        InstallmentOrder application = application(order);
+        if (application.getStatus() != InstallmentStatus.REJECTED || order.getStatus() != OrderStatus.PENDING) {
+            throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
+                    "Chỉ gửi lại được hồ sơ trả góp đã bị đối tác từ chối của đơn đang chờ xử lý");
         }
+        InstallmentPartner partner = partnerPolicy.resolve(request);
+        partnerPolicy.checkAmount(partner, order.getTotalAmount());
+        fill(application, partner, request, order.getTotalAmount());
+        application.setAttemptCount(application.getAttemptCount() + 1);
+        application.setRejectionReason(null);
+        application.setReviewedAt(null);
+        application.setReviewedBy(null);
+        application.setLastEventId(null);
+        autoDecider.scheduleAfterCommit(order.getId());
+    }
+
+    /** The partner paid the shop the net amount: only after the order was delivered. */
+    public void settle(Order order, User staff, LocalDateTime now) {
+        InstallmentOrder application = application(order);
+        if (application.getStatus() != InstallmentStatus.APPROVED || application.getPartner() == null) {
+            throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
+                    "Chỉ ghi nhận đối tác đã chuyển tiền cho hồ sơ đã được duyệt (hiện tại: %s)".formatted(application.getStatus()));
+        }
+        if (order.getStatus() != OrderStatus.DELIVERED) {
+            throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
+                    "Đối tác chỉ chuyển tiền sau khi đơn %s đã giao".formatted(OrderMapper.code(order.getId())));
+        }
+        application.setStatus(InstallmentStatus.SETTLED);
+        application.setSettledAt(now);
+        application.setSettledBy(staff);
+    }
+
+    /** Sets the partner, term, citizen id and card bank of an application and sends it to the partner. */
+    private void fill(InstallmentOrder application, InstallmentPartner partner, InstallmentRequest request,
+                      BigDecimal orderTotal) {
+        application.setPartner(partner);
+        application.setNumMonths(request.months());
+        application.setMonthlyPayment(InstallmentPolicy.monthlyPayment(orderTotal, request.months()));
+        application.setCitizenId(request.citizenId().trim());
+        application.setCardBank(request.cardBank());
+        application.setStatus(InstallmentStatus.PENDING_APPROVAL);
+        application.setPartnerRef(providers.forPartner(partner.getCode()).submit(application));
     }
 
     /**
@@ -265,36 +312,16 @@ public class OrderPaymentLifecycle {
         }
     }
 
-    private void startSchedule(InstallmentOrder plan, Order order, LocalDate deliveredOn) {
-        List<BigDecimal> amounts = InstallmentPolicy.periodAmounts(order.getTotalAmount(), plan.getNumMonths());
-        for (int number = 1; number <= amounts.size(); number++) {
-            InstallmentPayment period = new InstallmentPayment();
-            period.setInstallment(plan);
-            period.setPaymentNumber(number);
-            period.setAmount(amounts.get(number - 1));
-            period.setDueDate(InstallmentPolicy.dueDate(deliveredOn, number));
-            installmentPaymentRepository.save(period);
-        }
-        plan.setStatus(InstallmentStatus.ACTIVE);
-        log.info("Installment plan id={} of order id={} started: {} period(s)", plan.getId(), order.getId(), amounts.size());
-    }
-
     private Payment mainPayment(Order order) {
         return paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND,
-                        "Đơn %s không có khoản thanh toán COD / chuyển khoản".formatted(OrderMapper.code(order.getId()))));
+                        "Đơn %s không có khoản thanh toán chính".formatted(OrderMapper.code(order.getId()))));
     }
 
-    private InstallmentOrder planWaitingForApproval(Order order) {
-        InstallmentOrder plan = installmentOrderRepository.findByOrderId(order.getId())
+    private InstallmentOrder application(Order order) {
+        return installmentOrderRepository.findByOrderId(order.getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.INSTALLMENT_NOT_FOUND,
                         "Đơn %s không phải đơn trả góp".formatted(OrderMapper.code(order.getId()))));
-        if (plan.getStatus() != InstallmentStatus.PENDING_APPROVAL) {
-            throw new BusinessException(ErrorCode.INVALID_INSTALLMENT_STATUS,
-                    "Hợp đồng trả góp của đơn %s không còn chờ duyệt (hiện tại: %s)"
-                            .formatted(OrderMapper.code(order.getId()), plan.getStatus()));
-        }
-        return plan;
     }
 
     private static void requirePaymentStatus(Payment payment, Order order, PaymentStatus expected) {

@@ -57,15 +57,15 @@ public class OrderItem {
     @Column(name = "subtotal", precision = 15, scale = 2, nullable = false)
     private BigDecimal subtotal;
 
-    /** Plan v5: share of the order's voucher discount on this line (refunds pay back subtotal − this share). */
+    /** Share of the order's voucher discount on this line (refunds pay back subtotal − this share). */
     @Column(name = "voucher_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal voucherDiscount = BigDecimal.ZERO;
 
-    /** Plan v5 GĐ10: combo discount on this line (add-on units bought together with a main product). */
+    /** Combo discount on this line (add-on units bought together with a main product). */
     @Column(name = "combo_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal comboDiscount = BigDecimal.ZERO;
 
-    /** Plan v5 GĐ6: share of the order's loyalty-points discount on this line. */
+    /** Share of the order's loyalty-points discount on this line. */
     @Column(name = "points_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal pointsDiscount = BigDecimal.ZERO;
 

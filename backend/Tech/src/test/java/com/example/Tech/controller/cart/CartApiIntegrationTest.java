@@ -329,7 +329,7 @@ class CartApiIntegrationTest {
         add(black, 1);
         add(white, 1);
 
-        // plan v3 GĐ E: a variant still in stock cannot be deleted (409, not a database error)
+        // A variant still in stock cannot be deleted (409, not a database error)
         assertThatThrownBy(() -> productVariantService.delete(black.getId()))
                 .isInstanceOfSatisfying(com.example.Tech.exception.BusinessException.class,
                         ex -> assertThat(ex.getErrorCode()).isEqualTo(com.example.Tech.exception.ErrorCode.RESOURCE_IN_USE));

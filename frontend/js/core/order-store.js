@@ -1,4 +1,4 @@
-/* ================= ĐƠN HÀNG (Phase 4–5): ĐƠN TRÊN SERVER ================= */
+/* ================= ĐƠN HÀNG: ĐƠN TRÊN SERVER ================= */
 
 /*
  * Đơn hàng lưu ở backend theo tài khoản: /api/v1/orders (cần đăng nhập).
@@ -35,7 +35,7 @@ const ORDER_STATUS_LABELS = {
     CANCELLED: "Đã hủy"
 };
 
-/* Phase 7: hình thức nhận hàng */
+/* Hình thức nhận hàng */
 const DELIVERY_TYPE_LABELS = {
     HOME_DELIVERY: "Giao tận nhà",
     PICKUP: "Nhận tại cửa hàng"
@@ -44,11 +44,11 @@ const DELIVERY_TYPE_LABELS = {
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng (COD)",
     BANK_TRANSFER: "Chuyển khoản ngân hàng",
-    INSTALLMENT: "Trả góp 0% qua thẻ tín dụng",
+    INSTALLMENT: "Trả góp 0% qua đối tác",
     CARD: "Thẻ quốc tế (Visa / Mastercard)"
 };
 
-/* Phase 5: trạng thái thanh toán (COD / chuyển khoản) và hợp đồng trả góp; tone = màu huy hiệu */
+/* Trạng thái thanh toán (COD / chuyển khoản) và hợp đồng trả góp; tone = màu huy hiệu */
 const PAYMENT_STATUS_LABELS = {
     PENDING: { label: "Chờ thanh toán", tone: "pending" },
     PAID: { label: "Đã thanh toán", tone: "success" },
@@ -58,9 +58,10 @@ const PAYMENT_STATUS_LABELS = {
 };
 
 const INSTALLMENT_STATUS_LABELS = {
-    PENDING_APPROVAL: { label: "Chờ duyệt trả góp", tone: "pending" },
-    APPROVED: { label: "Đã duyệt trả góp", tone: "info" },
-    REJECTED: { label: "Từ chối trả góp", tone: "danger" },
+    PENDING_APPROVAL: { label: "Đối tác đang xét hồ sơ", tone: "pending" },
+    APPROVED: { label: "Đối tác đã duyệt", tone: "info" },
+    SETTLED: { label: "Đối tác đã duyệt", tone: "info" },
+    REJECTED: { label: "Đối tác từ chối", tone: "danger" },
     ACTIVE: { label: "Đang trả góp", tone: "info" },
     COMPLETED: { label: "Đã trả góp xong", tone: "success" },
     CANCELLED: { label: "Đã hủy trả góp", tone: "muted" }
@@ -97,7 +98,7 @@ function removeLegacyOrders() {
 /*
  * input: { recipientName, recipientPhone, deliveryType (HOME_DELIVERY | PICKUP),
  *          shippingAddress (giao tận nhà) | pickupStoreId (nhận tại cửa hàng), note, paymentMethod,
- *          installment?: { months, citizenId, cardBank } (chỉ khi INSTALLMENT) }
+ *          installment?: { partner, months, citizenId, cardBank? } (chỉ khi INSTALLMENT; cardBank chỉ với thẻ tín dụng) }
  * Không gửi sản phẩm / giá: server lấy từ giỏ hàng của tài khoản.
  */
 
@@ -119,7 +120,7 @@ async function fetchMyOrders(page, filter) {
         size: String(ORDERS_PAGE_SIZE)
     });
 
-    /* Kế hoạch v5 GĐ6: lọc theo trạng thái (lặp tham số) + từ khoá (mã đơn / tên sản phẩm) */
+    /* Lọc theo trạng thái (lặp tham số) + từ khoá (mã đơn / tên sản phẩm) */
     ((filter && filter.statuses) || []).forEach(function (status) {
         params.append("status", status);
     });
@@ -172,7 +173,7 @@ async function cancelMyOrder(id) {
 }
 
 
-/* Kế hoạch v5 GĐ6: số đơn theo tab lịch sử { all, pending, inProgress, delivered, cancelled } */
+/* Số đơn theo tab lịch sử { all, pending, inProgress, delivered, cancelled } */
 
 async function fetchOrderCounts() {
 
@@ -257,7 +258,29 @@ async function buyAgain(orderId, button) {
 }
 
 
-/* Kế hoạch v5 GĐ5: "Huỷ thanh toán" — huỷ đơn chuyển khoản / thẻ chưa trả tiền, server đưa lại đúng sản phẩm vào giỏ */
+/* Đối tác trả góp nhận đơn có giá trị này (kỳ hạn, có cần thẻ hay không, khoảng giá trị đơn) */
+
+function fetchInstallmentOptions(total) {
+
+    return apiRequest("/payments/installment-options?total=" + encodeURIComponent(total), { auth: true });
+
+}
+
+
+/* Gửi lại hồ sơ trả góp bị từ chối cho đối tác khác: { partner, months, citizenId, cardBank? } */
+
+async function resubmitInstallment(id, input) {
+
+    const order = await apiRequest("/orders/" + encodeURIComponent(id) + "/installment/resubmit", {
+        method: "POST", auth: true, body: input
+    });
+
+    return toOrderView(order);
+
+}
+
+
+/* "Huỷ thanh toán" — huỷ đơn chuyển khoản / thẻ chưa trả tiền, server đưa lại đúng sản phẩm vào giỏ */
 
 async function cancelOrderPayment(id) {
 
@@ -411,6 +434,9 @@ function toInstallmentView(installment) {
 
     return {
         status: installment.status,
+        partner: installment.partner || "",
+        partnerName: installment.partnerName || "",
+        attemptCount: installment.attemptCount || 1,
         numMonths: installment.numMonths,
         monthlyPayment: Number(installment.monthlyPayment) || 0,
         lastPayment: Number(installment.lastPayment) || 0,

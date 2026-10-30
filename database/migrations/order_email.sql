@@ -1,4 +1,4 @@
--- Kế hoạch v7 GĐ1: email đơn hàng.
+-- Email đơn hàng.
 -- - orders.contact_email: địa chỉ nhận mail của đơn (khách nhập ở popup thông tin nhận hàng; đơn cũ để trống)
 -- - orders.tracking_token: mã ngẫu nhiên trong link theo dõi đơn công khai (đơn cũ được cấp mã khi chạy file này)
 -- - email_log: mỗi mail đã gửi / thất bại (đơn, loại, người nhận, kết quả)

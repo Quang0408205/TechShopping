@@ -1,5 +1,8 @@
 package com.example.Tech.service.impl.order;
 
+import com.example.Tech.repository.payment.InstallmentOrderRepository;
+import com.example.Tech.entity.payment.InstallmentStatus;
+import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
 import com.example.Tech.entity.combo.OrderCombo;
@@ -76,6 +79,7 @@ public class OrderServiceImpl implements OrderService {
     private final ComboPricingService comboPricingService;
     private final LoyaltyService loyaltyService;
     private final PaymentRepository paymentRepository;
+    private final InstallmentOrderRepository installmentOrderRepository;
     private final BankTransferProperties bankTransfer;
     private final Clock clock;
 
@@ -133,20 +137,20 @@ public class OrderServiceImpl implements OrderService {
             order.addItem(item);
             subtotal = subtotal.add(item.getSubtotal());
         }
-        // plan v5 GĐ10: combo first (add-ons bought with their main product), then voucher, then points;
+        // Combo first (add-ons bought with their main product), then voucher, then points;
         // the free-shipping threshold uses the goods before all of them
         BigDecimal comboDiscount = applyCombos(order);
-        // plan v5: the voucher takes its % off the goods (shipping excluded)
+        // The voucher takes its % off the goods (shipping excluded)
         String voucherCode = trimToNull(request.voucherCode());
         BigDecimal voucherDiscount = voucherCode == null ? BigDecimal.ZERO
                 : voucherService.applyToOrder(order, user, voucherCode);
-        // plan v5 GĐ6: points after the voucher, at most 10% of what is left of the goods
+        // Points after the voucher, at most 10% of what is left of the goods
         BigDecimal pointsDiscount = loyaltyService.applyToOrder(order, user, request.pointsToUse());
         BigDecimal shippingFee = ShippingPolicy.feeFor(subtotal, deliveryType);
         order.setShippingCost(shippingFee);
         order.setTaxAmount(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.subtract(comboDiscount).subtract(voucherDiscount).subtract(pointsDiscount).add(shippingFee));
-        orderPaymentLifecycle.checkEligible(request.paymentMethod(), order.getTotalAmount());
+        orderPaymentLifecycle.checkEligible(request.paymentMethod(), order.getTotalAmount(), request.installment());
 
         Order saved = orderRepository.save(order);
         voucherService.recordUse(saved, user);
@@ -243,6 +247,10 @@ public class OrderServiceImpl implements OrderService {
                 && paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(orderId)
                 .map(Payment::getStatus)
                 .filter(status -> status == PaymentStatus.PENDING)
+                .isPresent()
+                || order.getPaymentMethod() == PaymentMethod.INSTALLMENT
+                && installmentOrderRepository.findByOrderId(orderId)
+                .filter(application -> application.getStatus() == InstallmentStatus.REJECTED)
                 .isPresent();
         if (!order.getStatus().canBeCancelledByCustomer() || !awaited) {
             throw new BusinessException(ErrorCode.INVALID_PAYMENT_STATUS,
@@ -253,6 +261,18 @@ public class OrderServiceImpl implements OrderService {
         log.info("User id={} cancelled the payment of order id={}; {} line(s) back in the cart", userId, orderId, restored);
         // the cart upserts cleared the persistence context: read the order again
         return orderViewLoader.toResponse(orderRepository.findById(orderId).orElseThrow());
+    }
+
+    @Override
+    @Transactional
+    public OrderResponse resubmitInstallment(Long userId, Long orderId, InstallmentRequest request) {
+        currentUserLoader.load(userId);
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .filter(found -> found.getUser().getId().equals(userId))
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, orderId));
+        orderPaymentLifecycle.resubmit(order, request);
+        log.info("User id={} sent the installment application of order id={} to another partner", userId, orderId);
+        return orderViewLoader.toResponse(order);
     }
 
     @Override

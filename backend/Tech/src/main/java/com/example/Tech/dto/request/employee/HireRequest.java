@@ -46,7 +46,7 @@ public record HireRequest(
         Integer storeId,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(description = "Ignored since plan v3: STAFF get \"Nhân viên chi nhánh\", BRANCH_MANAGER \"Quản lý chi nhánh\"; "
+        @Schema(description = "Ignored: STAFF get \"Nhân viên chi nhánh\", BRANCH_MANAGER \"Quản lý chi nhánh\"; "
                 + "sending \"Quản lý chi nhánh\" with role STAFF is refused")
         String positionAtStore,
 

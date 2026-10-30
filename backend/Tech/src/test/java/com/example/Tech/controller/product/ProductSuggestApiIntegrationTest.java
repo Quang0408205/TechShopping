@@ -23,7 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ3: GET /products/suggest — public suggestions with image, price and stock, in-stock first. */
+/** GET /products/suggest — public suggestions with image, price and stock, in-stock first. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Plan v6 B4, public: the promotions as the home page shows them. */
+/** Public: the promotions as the home page shows them. */
 @RestController
 @RequestMapping("/api/v1/promotions")
 @RequiredArgsConstructor

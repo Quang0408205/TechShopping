@@ -110,7 +110,8 @@ public class ReportServiceImpl implements ReportService {
                 delivered.orders(), queries.unitsSold(from, to, storeId),
                 delivered.orders() == 0 ? BigDecimal.ZERO
                         : delivered.revenue().divide(BigDecimal.valueOf(delivered.orders()), 0, RoundingMode.HALF_UP),
-                delivered.shipping(), refunds.count(), queries.commission(from, to, storeId));
+                delivered.shipping(), refunds.count(), queries.commission(from, to, storeId),
+                queries.installmentFees(from, to, storeId));
 
         return new SalesReportResponse(storeId, store != null ? store.getName() : null, fromDate, toDate, groupBy,
                 summary,

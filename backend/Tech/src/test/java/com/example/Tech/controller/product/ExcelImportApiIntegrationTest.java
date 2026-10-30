@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Excel imports (plan v4 steps 6 + 7) over HTTP. NOT transactional on purpose: a dry run marks the import's own
+ * Excel imports (products and stock) over HTTP. NOT transactional on purpose: a dry run marks the import's own
  * transaction rollback-only, which must be a real transaction to prove that nothing is written. Everything this test
  * creates (category, store, products, brand) is removed afterwards; the two accounts are reused between runs.
  */
@@ -188,7 +188,7 @@ class ExcelImportApiIntegrationTest {
         assertThat(data(importProducts(stolen, true)).get("errors").get(0).get("message").asString())
                 .contains("thuộc sản phẩm khác (Mã SP " + code + ")");
 
-        // ---- step 7: stock-in by Excel at a store ----
+        // ---- stock-in by Excel at a store ----
         byte[] badStock = stockWorkbook(List.of(row(code + "-8-256", "", "0", "", ""), row("KHONG-CO-SKU", "", "5", "", "")));
         JsonNode bad = data(importStock(badStock, false).andExpect(status().isOk()));
         assertThat(bad.get("applied").asBoolean()).isFalse();

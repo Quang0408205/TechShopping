@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ10: admin combo API, the public product combos, cart + checkout with combo → voucher, delete rules. */
+/** Admin combo API, the public product combos, cart + checkout with combo → voucher, delete rules. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

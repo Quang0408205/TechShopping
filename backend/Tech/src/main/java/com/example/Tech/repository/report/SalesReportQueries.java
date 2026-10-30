@@ -91,6 +91,13 @@ public class SalesReportQueries {
                 params(from, to, storeId), BigDecimal.class);
     }
 
+    /** Fees the installment partners kept on the delivered installment orders (fixed when each was approved). */
+    public BigDecimal installmentFees(LocalDateTime from, LocalDateTime to, Integer storeId) {
+        return jdbc.queryForObject("select coalesce(sum(io.fee_amount), 0) from installment_orders io "
+                + "join orders o on o.order_id = io.order_id where" + DELIVERED + store(storeId),
+                params(from, to, storeId), BigDecimal.class);
+    }
+
     /** {@code monthly} false = per day. */
     public List<PeriodRow> deliveredByPeriod(LocalDateTime from, LocalDateTime to, Integer storeId, boolean monthly) {
         return jdbc.query("select date_trunc('" + unit(monthly) + "', o.delivered_at) p, count(*) n, "
@@ -227,7 +234,7 @@ public class SalesReportQueries {
         return n == null ? 0 : n;
     }
 
-    /** Contact messages not resolved yet: one inbox for every store (kiemthu GĐ7). */
+    /** Contact messages not resolved yet: one inbox for every store. */
     public long openContactRequests() {
         Long n = jdbc.queryForObject("select count(*) from contact_requests where status <> 'RESOLVED'",
                 Map.of(), Long.class);

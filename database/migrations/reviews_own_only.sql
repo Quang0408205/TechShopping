@@ -1,4 +1,4 @@
--- Kế hoạch v4 bước 4 (2026-10-17): chỉ dùng đánh giá thật của khách trên web.
+-- chỉ dùng đánh giá thật của khách trên web.
 --   * bỏ điểm / số lượt đánh giá crawl từ Thế Giới Di Động (products.tgdd_rating, tgdd_review_count);
 --   * mỗi tài khoản được đánh giá một sản phẩm nhiều lần (bỏ unique user_id + product_id); giãn cách 1 phút
 --     giữa hai đánh giá do ứng dụng kiểm tra (app.review.min-interval-seconds).

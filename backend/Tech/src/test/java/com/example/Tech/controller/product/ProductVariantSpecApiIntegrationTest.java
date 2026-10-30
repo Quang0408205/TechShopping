@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Phase 12: images with a colour and specifications of one variant (rolled back, test database). */
+/** Images with a colour and specifications of one variant (rolled back, test database). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

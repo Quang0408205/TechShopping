@@ -8,7 +8,8 @@ import org.springframework.boot.ApplicationRunner;
 
 @Slf4j
 @Configuration
-@EnableConfigurationProperties({BankTransferProperties.class, PaymentWebhookProperties.class, StripeProperties.class})
+@EnableConfigurationProperties({BankTransferProperties.class, PaymentWebhookProperties.class, StripeProperties.class,
+        InstallmentProperties.class})
 public class PaymentConfig {
 
     /** The QR must point to the real account: say so at start-up when the demo account is still in use. */

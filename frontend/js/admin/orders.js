@@ -1,9 +1,9 @@
-/* ================= ĐƠN HÀNG (admin/orders.html) — Phase 4.5 + 5 ================= */
+/* ================= ĐƠN HÀNG (admin/orders.html) ================= */
 
 /*
  * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
  *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&storeId=&page=&size=  mới nhất trước
- *         (nhân viên: backend chỉ trả đơn của chi nhánh mình, Phase 7)
+ *         (nhân viên: backend chỉ trả đơn của chi nhánh mình)
  *   PATCH /admin/orders/{id}/status  { status, trackingNumber? }
  *   POST  /admin/orders/{id}/payment/confirm { transactionId? }   chuyển khoản đã nhận tiền
  *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
@@ -597,7 +597,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             const payment = order.payment;
 
             if (order.status === "PENDING" && plan && plan.status === "PENDING_APPROVAL") {
-                buttons.push(actionButton("approve", "DUYỆT TRẢ GÓP", "btn-dark"));
+                buttons.push(actionButton("approve", "ĐỐI TÁC DUYỆT (THỬ)", "btn-outline-dark"));
+                buttons.push(actionButton("reject", "ĐỐI TÁC TỪ CHỐI (THỬ)", "btn-outline-dark"));
             }
 
             if (order.status === "PENDING" && order.paymentMethod === "BANK_TRANSFER" && payment && payment.status === "PENDING") {
@@ -608,10 +609,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 if (status === "CANCELLED") {
 
-                    /* Trả góp đang chờ duyệt: hủy bằng nút Từ chối (bắt buộc ghi lý do) */
-                    buttons.push(plan && plan.status === "PENDING_APPROVAL"
-                        ? actionButton("reject", "TỪ CHỐI", "btn-outline-dark admin-action-danger")
-                        : actionButton("status", ORDER_STATUS_ACTION_LABELS[status], "btn-outline-dark admin-action-danger", `data-status="${status}"`));
+                    buttons.push(actionButton("status", ORDER_STATUS_ACTION_LABELS[status], "btn-outline-dark admin-action-danger", `data-status="${status}"`));
 
                     return;
 
@@ -660,8 +658,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             return "Chờ khách thanh toán thẻ";
         }
 
-        if (order.installment && order.installment.status !== "APPROVED") {
-            return "Chờ duyệt trả góp";
+        if (order.installment && order.installment.status !== "APPROVED" && order.installment.status !== "SETTLED") {
+            return "Chờ đối tác duyệt trả góp";
         }
 
         return "";
@@ -772,9 +770,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             const plan = order.installment;
 
             facts.push(["Trả góp", installmentBadgeHtml(plan)]);
+
+            if (plan.partnerName) {
+                facts.push(["Đối tác", escapeHtml(plan.partnerName + (plan.attemptCount > 1 ? " (lần gửi " + plan.attemptCount + ")" : ""))]);
+            }
+
             facts.push(["Kỳ hạn", escapeHtml(installmentTermText(plan))]);
             facts.push(["Số CCCD", escapeHtml(plan.citizenId)]);
-            facts.push(["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)]);
+
+            if (plan.cardBankName || plan.cardBank) {
+                facts.push(["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)]);
+            }
+
+            if (plan.feeAmount != null) {
+                facts.push(["Phí đối tác", escapeHtml(installmentFeeText(plan))]);
+            }
 
             if (plan.reviewedAt) {
                 facts.push([plan.status === "REJECTED" ? "Từ chối lúc" : "Duyệt lúc", escapeHtml(formatDateTimeVi(plan.reviewedAt))]);
@@ -785,16 +795,14 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
 
             if (plan.status === "ACTIVE" || plan.status === "COMPLETED") {
-
                 facts.push(["Đã thu", escapeHtml(plan.paidPeriods + "/" + plan.numMonths + " kỳ · " + formatPrice(Number(plan.paidAmount)))]);
-
-                actions.push(`<a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/installments.html?keyword=" + encodeURIComponent(order.code)))}">XEM LỊCH TRẢ GÓP</a>`);
-
             }
 
+            actions.push(`<a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/installments.html?keyword=" + encodeURIComponent(order.code)))}">XEM HỒ SƠ TRẢ GÓP</a>`);
+
             if (!isAdmin && plan.status === "PENDING_APPROVAL") {
-                actions.push(`<button type="button" class="btn btn-dark admin-action-btn" data-action="approve" data-id="${id}">DUYỆT TRẢ GÓP</button>`);
-                actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn admin-action-danger" data-action="reject" data-id="${id}">TỪ CHỐI</button>`);
+                actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn" data-action="approve" data-id="${id}">ĐỐI TÁC DUYỆT (THỬ NGHIỆM)</button>`);
+                actions.push(`<button type="button" class="btn btn-outline-dark admin-action-btn" data-action="reject" data-id="${id}">ĐỐI TÁC TỪ CHỐI (THỬ NGHIỆM)</button>`);
             }
 
         } else if (order.payment) {
@@ -929,7 +937,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             const paymentNote = order.paymentMethod === "COD"
                 ? " Tiền COD được ghi nhận là đã thu."
-                : order.installment ? " Lịch trả góp bắt đầu từ hôm nay (kỳ đầu đến hạn sau 1 tháng)." : "";
+                : order.installment ? " Sau khi giao, ghi nhận khi đối tác chuyển tiền ở trang Trả góp." : "";
 
             openConfirmModal({
                 title: "Đã giao đơn " + order.code + "?",
@@ -1020,13 +1028,13 @@ document.addEventListener("DOMContentLoaded", async function () {
     function approveInstallment(order) {
 
         openConfirmModal({
-            title: "Duyệt trả góp đơn " + order.code + "?",
-            message: "Đã xác minh khách (CCCD " + order.installment.citizenId + ", thẻ "
-                + (order.installment.cardBankName || order.installment.cardBank) + "). Sau khi duyệt, đơn mới chuyển được sang Đã xác nhận.",
+            title: "Đối tác duyệt trả góp đơn " + order.code + "? (thử nghiệm)",
+            message: "Giả lập câu trả lời của " + (order.installment.partnerName || "đối tác") + ": đơn được tính là đã thanh toán và khách nhận email. "
+                + "Chỉ dùng khi bật chế độ thử nghiệm.",
             confirmLabel: "DUYỆT",
             cancelLabel: "Quay lại",
             onConfirm: function () {
-                postAction(order, "installment/approve", undefined, "Đã duyệt trả góp đơn " + order.code + ".");
+                postAction(order, "installment/approve", undefined, "Đối tác đã duyệt trả góp đơn " + order.code + ".");
             }
         });
 
@@ -1036,8 +1044,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     function rejectInstallment(order) {
 
         openConfirmModal({
-            title: "Từ chối trả góp đơn " + order.code + "?",
-            message: "Đơn sẽ bị hủy và khách thấy lý do bên dưới. Không thể hoàn tác.",
+            title: "Đối tác từ chối trả góp đơn " + order.code + "? (thử nghiệm)",
+            message: "Giả lập câu trả lời của " + (order.installment.partnerName || "đối tác") + ". Đơn vẫn còn, khách thấy lý do bên dưới và chọn đối tác khác hoặc cách thanh toán khác.",
             confirmLabel: "TỪ CHỐI",
             cancelLabel: "Quay lại",
             input: {
@@ -1055,7 +1063,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
                 }
 
-                postAction(order, "installment/reject", { reason: reason }, "Đã từ chối trả góp, đơn " + order.code + " đã hủy.");
+                postAction(order, "installment/reject", { reason: reason }, "Đối tác đã từ chối trả góp đơn " + order.code + ".");
 
             }
         });
