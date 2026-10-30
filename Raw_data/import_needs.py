@@ -4,16 +4,13 @@ Chỉ thêm + cập nhật (không xoá nhu cầu / liên kết cũ). Sản ph�
 (URL trang sản phẩm / mã phiên bản trong crawl_v5/*.jsonl). --dry-run chạy hết rồi rollback.
 """
 import argparse
-import csv
 import json
 import os
 import sys
 from collections import Counter
-from pathlib import Path
 
 import psycopg
 
-import import_catalog as ic
 import import_variants as iv
 
 NEEDS_FILE = iv.CRAWL_DIR / "needs.json"

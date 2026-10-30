@@ -118,20 +118,6 @@ def parse_json(value, expected_type):
     return parsed
 
 
-def optional_number(value, *, integer=False):
-    if value is None or str(value).strip() == "":
-        return None
-    try:
-        number = float(value)
-    except (TypeError, ValueError):
-        return None
-    if not math.isfinite(number):
-        return None
-    if integer:
-        return int(number) if number >= 0 else None
-    return number if 0 <= number <= 5 else None
-
-
 def nonempty(value):
     text = (value or "").strip()
     return "" if text.lower() in {"nan", "none", "null"} else text

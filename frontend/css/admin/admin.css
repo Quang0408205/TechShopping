@@ -382,43 +382,6 @@ button.admin-badge {
     color: var(--color-danger);
 }
 
-.admin-status-select {
-    padding: 6px 10px;
-    border: 1px solid var(--gray-300);
-    border-radius: var(--radius-sm);
-    font-family: inherit;
-    font-size: 11px;
-    font-weight: 700;
-    background: var(--gray-100);
-    color: var(--gray-700);
-    cursor: pointer;
-}
-
-.admin-status-select[data-status="COMPLETED"],
-.admin-status-select[data-status="RESOLVED"],
-.admin-status-select[data-status="DELIVERED"] {
-    background: var(--color-success-bg);
-    color: var(--color-success);
-    border-color: transparent;
-}
-
-.admin-status-select[data-status="PROCESSING"],
-.admin-status-select[data-status="IN_PROGRESS"],
-.admin-status-select[data-status="SHIPPING"],
-.admin-status-select[data-status="CONFIRMED"] {
-    background: var(--color-warning-bg);
-    color: var(--color-warning);
-    border-color: transparent;
-}
-
-.admin-status-select[data-status="REJECTED"],
-.admin-status-select[data-status="CANCELLED"] {
-    background: var(--color-danger-bg);
-    color: var(--color-danger);
-    border-color: transparent;
-}
-
-
 /* ================= BỘ LỌC ================= */
 
 .admin-filter-bar {

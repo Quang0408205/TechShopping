@@ -865,23 +865,6 @@
     font-size: 12px !important;
 }
 
-.order-copy-btn {
-    padding: 3px 8px;
-
-    border: 1px solid var(--gray-400);
-    border-radius: var(--radius-sm);
-    background: #fff;
-
-    font-family: inherit;
-    font-size: 11px;
-
-    cursor: pointer;
-}
-
-.order-copy-btn:hover {
-    border-color: #111;
-}
-
 .order-installment {
     padding: 25px;
 

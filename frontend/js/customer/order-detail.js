@@ -609,13 +609,6 @@ function factHtml(label, valueHtml) {
 }
 
 
-function copyButtonHtml(value, label) {
-
-    return `<button type="button" class="order-copy-btn" data-copy="${escapeHtml(value)}" data-copy-label="${escapeHtml(label)}">Sao chép</button>`;
-
-}
-
-
 /* Đơn đã hủy: chỉ hiện dòng "Đã hủy lúc …" thay cho các bước xử lý */
 
 function renderTimeline(order) {
