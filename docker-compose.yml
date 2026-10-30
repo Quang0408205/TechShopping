@@ -23,6 +23,12 @@ services:
       - ./database/migrations/product_base_names.sql:/docker-entrypoint-initdb.d/04b_product_base_names.sql:ro
       # Kế hoạch v4: gộp sản phẩm chỉ khác RAM / bộ nhớ thành một sản phẩm nhiều phiên bản, bỏ phiên bản giá 0
       - ./database/migrations/merge_product_variants.sql:/docker-entrypoint-initdb.d/05_merge_product_variants.sql:ro
+      # Chi nhánh mẫu: cửa hàng mẫu của 04 thành POY Quận 1, thêm 5 chi nhánh TP.HCM / Hà Nội / Đà Nẵng (demo)
+      - ./database/docker-init/05b_sample_stores.sql:/docker-entrypoint-initdb.d/05b_sample_stores.sql:ro
+      # Nhân viên mẫu: mỗi chi nhánh 1 quản lý + 2 nhân viên (mật khẩu SampleOnly123!, demo)
+      - ./database/docker-init/05c_sample_staff.sql:/docker-entrypoint-initdb.d/05c_sample_staff.sql:ro
+      # Tồn kho mẫu: mọi phiên bản đang bán có 5–40 cái ở mỗi chi nhánh đang mở (demo)
+      - ./database/docker-init/06_sample_stock.sql:/docker-entrypoint-initdb.d/06_sample_stock.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s

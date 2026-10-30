@@ -4,7 +4,8 @@
 -- Raw_data/import_catalog.py, rồi Raw_data/crawl_v5/{Điện_Thoại,Máy_Tính_Bảng,Laptop}.jsonl (2026-10-29, ảnh theo màu
 -- bổ sung 2026-10-30) nạp bằng Raw_data/import_variants.py: 4302 sản phẩm đang bán + 190 sản phẩm cũ đã ẩn,
 -- 5750 phiên bản (dung lượng × màu, chọn ở trang chi tiết), ảnh theo màu, danh mục (có thứ tự hiển thị),
--- thương hiệu, thông số, thuộc tính. Tên sản phẩm chỉ còn tên máy (database/migrations/product_base_names.sql).
+-- thương hiệu, thông số, thuộc tính. Tên sản phẩm chỉ còn tên máy (database/migrations/product_base_names.sql),
+-- mỗi màu một bộ ảnh, không lặp theo bản dung lượng (database/migrations/dedupe_product_images.sql).
 -- products.rating / total_reviews / view_count = 0 (chỉ dùng đánh giá thật trên web, bảng reviews).
 -- KHÔNG chứa user / mật khẩu / token / đơn hàng / tồn kho. Không có dữ liệu thử nghiệm (E2E).
 --
@@ -16,12 +17,11 @@
 --  product_images, product_specifications, product_variants, variant_attribute_values),
 -- sau khi đặt products.rating / total_reviews / view_count = 0 trên một bản sao.
 -- =====================================================================
-
 --
 -- PostgreSQL database dump
 --
 
-\restrict UWxmJFwbCF8h1NzDeDbgwQ4qPILRWuT3fTVfF04T7UI9sKo4waX50ZXis5jrex0
+\restrict Rf2KLOqW1oR2uKYpOMl9pFzbsfbOTyviFVDgcf2cRUHr8sZuR7AfOWqHg5hAwGD
 
 -- Dumped from database version 16.15 (Debian 16.15-1.pgdg13+2)
 -- Dumped by pg_dump version 16.15 (Debian 16.15-1.pgdg13+2)
@@ -4882,7 +4882,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84193	13	https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16f-trang-thumb170202.jpg	OPPO Reno16F 5G 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 31	31	https://cdn.tgdd.vn/Products/Images/42/368099/oppo-reno16-5g-8gb-256gb-tim-nhat-thumb-600x600.jpg	Điện thoại OPPO Reno16 5G 8GB/256GB	0	t	2026-09-24 21:15:45.816192	\N
 32	32	https://cdn.tgdd.vn/Products/Images/42/357576/vivo-v60-lite-pink-thumbai-600x600.jpg	Điện thoại vivo V60 Lite 5G 8GB/256GB	0	t	2026-09-24 21:15:45.854507	\N
-33	33	https://cdn.tgdd.vn/Products/Images/42/364187/realme-c100-tim-thumb-600x600.jpg	Điện thoại realme C100 4G 8GB/128GB	0	t	2026-09-24 21:15:45.889669	\N
 34	34	https://cdn.tgdd.vn/Products/Images/42/358026/honor-x7d-5g-gold-thumb-600x600.jpg	Điện thoại Honor X7d 5G 8GB/256GB	0	t	2026-09-24 21:15:45.925226	\N
 35	35	https://cdn.tgdd.vn/Products/Images/42/364633/tecno-spark-go-3-xanh-thumb-600x600.jpg	Điện thoại Tecno Spark Go 3 4GB/128GB	0	t	2026-09-24 21:15:45.961197	\N
 36	36	https://cdn.tgdd.vn/Products/Images/42/362373/motorola-g57-power-5g-8gb-128gb-xanh-bac-ha-thumb-1-600x600.jpg	Điện thoại Motorola G57 Power 5G 8GB/128GB	0	t	2026-09-24 21:15:45.99839	\N
@@ -4970,11 +4969,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119	118	https://cdn.tgdd.vn/Products/Images/42/360238/oppo-reno15-5g-8gb-256gb-xanh-thumb-600x600.jpg	Điện thoại OPPO Reno15 5G 8GB/256GB	0	t	2026-09-24 21:15:48.878077	\N
 120	119	https://cdn.tgdd.vn/Products/Images/42/346265/xiaomi-redmi-15c-black-thumb-600x600.jpg	Điện thoại Xiaomi Redmi 15C 6GB/128GB	0	t	2026-09-24 21:15:48.913893	\N
 121	120	https://cdn.tgdd.vn/Products/Images/42/368053/samsung-galaxy-z-flip8-xam-thumb-600x600.jpg	Điện thoại Samsung Galaxy Z Flip8 5G 12GB/256GB	0	t	2026-09-24 21:15:48.94836	\N
-122	121	https://cdn.tgdd.vn/Products/Images/42/363470/xiaomi-poco-x8-pro-8gb-256gb-xanh-thumb-600x600.jpg	Điện thoại Xiaomi POCO X8 Pro 5G 8GB/256GB	0	t	2026-09-24 21:15:48.981764	\N
 123	122	https://cdn.tgdd.vn/Products/Images/42/341272/xiaomi-redmi-15-tim-thumbnew-600x600.jpg	Điện thoại Xiaomi Redmi 15 6GB/128GB	0	t	2026-09-24 21:15:49.016871	\N
 124	123	https://cdn.tgdd.vn/Products/Images/42/362971/honor-x7d-8gb-128gb-vang-thumb-600x600.jpg	Điện thoại Honor X7d 8GB/128GB	0	t	2026-09-24 21:15:49.050717	\N
 125	124	https://cdn.tgdd.vn/Products/Images/42/368045/samsung-galaxy-a27-xanh-thumb-600x600.jpg	Điện thoại Samsung Galaxy A27 6GB/128GB	0	t	2026-09-24 21:15:49.086288	\N
-126	125	https://cdn.tgdd.vn/Products/Images/42/365402/oppo-find-x9s-cam-thumb-1-600x600.jpg	Điện thoại OPPO Find X9s 12GB/512GB	0	t	2026-09-24 21:15:49.12091	\N
 127	126	https://cdn.tgdd.vn/Products/Images/42/344644/xiaomi-15t-12gb-256gb-vang-thumb-600x600.jpg	Điện thoại Xiaomi 15T 5G 12GB/256GB	0	t	2026-09-24 21:15:49.159104	\N
 128	127	https://cdn.tgdd.vn/Products/Images/42/288630/mobell-m539-do-thumb-600x600.jpg	Điện thoại Mobell M539	0	t	2026-09-24 21:15:49.2014	\N
 129	128	https://cdn.tgdd.vn/Products/Images/42/358669/vivo-y21d-purple-thumb-600x600.jpg	Điện thoại vivo Y21d 6GB/128GB	0	t	2026-09-24 21:15:49.237279	\N
@@ -5020,6 +5017,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 170	168	https://cdn.tgdd.vn/Products/Images/42/368231/tecno-spark-50-pro-xam-thumb-600x600.jpg	Điện thoại Tecno Spark 50 Pro 4GB/128GB	0	t	2026-09-24 21:15:50.634532	\N
 171	169	https://cdn.tgdd.vn/Products/Images/42/371029/nothing-phone-4b-blue-thumb-600x600.jpg	Điện thoại Nothing Phone (4b) 5G 8GB/128GB	0	t	2026-09-24 21:15:50.671981	\N
 172	170	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/371119/vivo-v80-lite-6gb-128gb-080926-103845-290-600x600.jpg	Điện thoại vivo V80 Lite 5G 6GB/128GB	0	t	2026-09-24 21:15:50.706073	\N
+632	720	https://cdn.tgdd.vn/Products/Images/7077/328694/huawei-watch-kids-4-pro-xanh-tn2-600x600.jpg	Đồng hồ định vị trẻ em Huawei Watch Kids 4 Pro	0	t	2026-09-24 21:16:05.945035	\N
 180	178	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/361311/hp-15-fc0023au-r5-7520u-d0bh1pa-thumb-639030592238863081-600x600.jpg	Laptop HP 15 fc0023AU - D0BH1PA (R5 7520U, 16GB, 512GB, Full HD, Win11)	0	t	2026-09-24 21:15:50.973742	\N
 181	179	https://cdn.tgdd.vn/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-xanh-duong-600x600.jpg	Laptop MacBook Neo 13 inch A18 Pro 8GB/256GB	0	t	2026-09-24 21:15:51.019164	\N
 182	180	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358132/asus-vivobook-s14-s3407va-core-5-210h-ly146w-thumb-638965583427975379-600x600.jpg	Laptop Asus Vivobook S14 S3407VA - LY146W (Core 5 210H, 16GB, 512GB, WUXGA, Win11)	0	t	2026-09-24 21:15:51.054216	\N
@@ -5072,7 +5070,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 228	231	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/339682/dell-inspiron-14-5441-x1p-64-100-5mnk1-638895760313087821-600x600.jpg	Laptop Dell Inspiron 14 5441 - 5MNK1 (X1P 64 100, 16GB, 512GB, Full HD+, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:52.583324	\N
 229	232	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341624/hp-victus-15-fb3115ax-r7-7445hs-bx9c9pa-thumb-638899046284890217-600x600.jpg	Laptop HP Gaming VICTUS 15 fb3115AX - BX9C9PA (R7 7445HS, 16GB, 512GB, RTX4050 6GB, Full HD 144Hz, Win11)	0	t	2026-09-24 21:15:52.622597	\N
 230	233	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/342524/lenovo-gaming-loq-15irx9-i5-83dv01anvn-thumb-638913705000350912-600x600.jpg	Laptop Lenovo Gaming LOQ 15IRX9 - 83DV01ANVN (i5 13450HX, 16GB, 1TB, RTX 3050 6GB, Full HD 144Hz, Win11)	0	t	2026-09-24 21:15:52.659897	\N
-626	714	https://cdn.tgdd.vn/Products/Images/7077/337834/samsung-galaxy-ring-bac-tb-600x600.jpg	Nhẫn thông minh Samsung Galaxy Ring Size 9	0	t	2026-09-24 21:16:05.746093	\N
 231	234	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341607/acer-nitro-v-15-propanel-anv15-52-72bm-i7-13620h-nh-qz9sv-004-thumb-638899014448776181-600x600.jpg	Laptop Acer Gaming Nitro ProPanel ANV15 52 72BM - NH.QZ9SV.004 (i7 13620H, 16GB, 512GB, RTX5050 8GB, Full HD 180Hz, Win11)	0	t	2026-09-24 21:15:52.696365	\N
 232	235	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360298/acer-gaming-nitro-16s-ai-propanel-an16s-61-r193-r9-ai-365-nh-qxtsv-001-thumb-3-639020844558265192-600x600.jpg	Laptop Acer Gaming Nitro ProPanel AN16S 61 R193 - NH.QXTSV.001 (R9 AI 365, 16GB, 512GB, RTX 5070 8GB, 2K+ 180Hz, Win11)	0	t	2026-09-24 21:15:52.73314	\N
 233	236	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368655/acer-aspire-lite-16-al16-71p-582q-ultra-5-125h-nx-drssv-001-thumb-639185397036068917-600x600.jpg	Laptop Acer Aspire Lite 16 AL16-71P-582Q - NX.DRSSV.001 (Ultra 5 125H, 16GB, 512GB, Full HD+ 120Hz, Win11)	0	t	2026-09-24 21:15:52.768211	\N
@@ -5101,6 +5098,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 256	280	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368654/acer-aspire-lite-15-al15-36p-30tn-core-3-n350-nx-ddasv-001-thumb-639185374358313282-600x600.jpg	Laptop Acer Aspire Lite 15 AL15-36P-30TN - NX.DDASV.001 (Core 3 N350, 8GB, 512GB, Full HD, Win11)	0	t	2026-09-24 21:15:53.531159	\N
 257	281	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367574/hp-15-fd2126tu-ultra-5-225u-d72cbpa-thumb-639155605117543692-600x600.jpg	Laptop HP 15 fd2126TU - D72CBPA (Ultra 5 225U, 16GB, 512GB, Full HD, Win11)	0	t	2026-09-24 21:15:53.573446	\N
 258	282	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/339688/asus-gaming-v16-v3607vu-core-5-rp192w-638900134315949894-600x600.jpg	Laptop Asus Gaming V16 V3607VU - RP192W (Core 5 210H, 16GB, 512GB, RTX 4050 6GB, WUXGA 144Hz, Win11)	0	t	2026-09-24 21:15:53.605521	\N
+633	721	https://cdn.tgdd.vn/Products/Images/7077/322848/garmin-forerunner-165-den-tb-600x600.jpg	Garmin Forerunner 165 43mm dây silicone	0	t	2026-09-24 21:16:05.977779	\N
 259	283	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364860/dell-15-dc15250-i7-1355u-71092480-thumb-639106635920736946-600x600.jpg	Laptop Dell 15 DC15250 - 71092480 (i7 1355U, 16GB, 512GB, Full HD 120Hz, OfficeHS24+365B, Win11)	0	t	2026-09-24 21:15:53.635361	\N
 260	284	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358080/hp-omnibook-x-flip-14-fm0088tu-ultra-5-226v-bz7q2pa-thumb-2-639029109506758395-600x600.jpg	Laptop HP OmniBook X Flip 14 fm0088TU - BZ7Q2PA (Ultra 5 226V, 16GB, 512GB, WUXGA, Cảm ứng, OfficeH24+365B, Win11)	0	t	2026-09-24 21:15:53.665263	\N
 261	285	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/357992/dell-15-dc15255-r7-7730u-x9ym41-thumb-638965540892499877-600x600.jpg	Laptop Dell 15 DC15255 - X9YM41 (R7 7730U, 16GB, 1TB, Full HD 120Hz, OfficeH24+365B, Win11)	0	t	2026-09-24 21:15:53.695766	\N
@@ -5125,7 +5123,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 280	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-thumb-638899040893897338-600x600.jpg	Laptop MSI Gaming Katana 15 HX B14WEK - 286VN (i5 14450HX, 16GB, 512GB, RTX5050 8GB, QHD 165Hz, Win11)	0	t	2026-09-24 21:15:54.288398	\N
 281	305	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360417/asus-vivobook-14-x1404va-core-5-120u-eb260w-thumb-2-639034834675227961-600x600.jpg	Laptop Asus Vivobook 14 X1404VA - EB260W (Core 5 120U, 16GB, 512GB, Full HD, Win11)	0	t	2026-09-24 21:15:54.319416	\N
 282	306	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368559/dell-14-dc14250-core-7-150u-71100515-thumb-639180752442220668-600x600.jpg	Laptop Dell 14 DC14250 - 71100515 (Core 7 150U, 16GB, 512GB, Full HD+ 120Hz, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:54.35023	\N
-98021	13148	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329913/elio-el148-03-nu-99-638622559063688428.jpg	ELIO 28 mm Nữ EL148-03	7	f	2026-10-06 15:05:29.718427	\N
 283	307	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364405/asus-zenbook-14-ux3405ca-ultra-9-285h-st648w-thumb-2-639159131503564651-600x600.jpg	Laptop Asus Zenbook 14 UX3405CA - ST648W (Ultra 9 285H, 32GB, 1TB, 3K OLED 120Hz, Win11)	0	t	2026-09-24 21:15:54.381043	\N
 284	308	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358120/hp-omnibook-5-16-ag1069au-r5-ai-340-bz7t1pa-thumb-638966581010858825-600x600.jpg	Laptop HP OmniBook 5 16 ag1069AU - BZ7T1PA (R5 AI 340, 16GB, 512GB, WUXGA, OfficeH24+365B, Win11)	0	t	2026-09-24 21:15:54.411244	\N
 285	309	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/342754/dell-15-dc15250-i5-1334u-dc15250-i5u165w11slu-thumb-638919949640513466-600x600.jpg	Laptop Dell 15 DC15250 - DC15250-i5U165W11SLU (i5 1334U, 16GB, 512GB, Full HD 120Hz, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:54.442429	\N
@@ -5152,9 +5149,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 307	331	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358079/hp-15-fc0655au-r5-7430u-c81ngpa-thumb-3-639015630581578905-600x600.jpg	Laptop HP 15 fc0655AU - C81NGPA (R5 7430U, 16GB, 512GB, Full HD, Win11)	0	t	2026-09-24 21:15:55.148624	\N
 308	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-thumb-638899038470195527-600x600.jpg	Laptop MSI Gaming Katana 15 HX B14WFK - 267VN (i7 14650HX, 32GB, 512GB, RTX 5060 8GB, QHD 165Hz, Win11)	0	t	2026-09-24 21:15:55.179029	\N
 309	333	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341613/msi-katana-15-hx-b14wek-i7-14650hx-027vn-thumb02-638897277627603509-600x600.jpg	Laptop MSI Gaming Katana 15 HX B14WEK - 027VN (i7 14650HX, 32GB, 512GB, RTX5050 8GB, QHD 165Hz, Win11)	0	t	2026-09-24 21:15:55.210334	\N
-84792	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-13-639053810525823409.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	13	f	2026-10-06 15:05:29.718427	\N
 310	334	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360421/asus-gaming-v16-v3607vj-core-5-210h-rp071w-thumb-639017543008290379-600x600.jpg	Laptop Asus Gaming V16 V3607VJ - RP071W (Core 5 210H, 16GB, 512GB, RTX 3050 6GB, WUXGA 144Hz, Win11)	0	t	2026-09-24 21:15:55.241088	\N
 311	335	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/344606/lenovo-gaming-loq-15irx9-i7-13650hx-83dv01alvn-thumb-638930572989400263-600x600.jpg	Laptop Lenovo Gaming LOQ 15IRX9 - 83DV01ALVN (i7 13650HX, 16GB, 512GB, RTX 4050 6GB, Full HD 144Hz, Win11)	0	t	2026-09-24 21:15:55.273516	\N
+98071	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-thumb-fix-600x600.jpg	ELIO 26 mm Nữ EL136-01	0	t	2026-10-06 15:05:29.718427	\N
 312	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-thumb-639023469880245139-600x600.jpg	Laptop Dell Gaming Alienware 16 Aurora AC16250 - C7H161W11II4050 (Core 7 240H, 16GB, 1TB, RTX 4050 6GB, WQXGA 120Hz, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:55.305006	\N
 313	337	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358499/dell-15-dc15250-i7-1355u-71073959-thumb-2-638975018038148792-600x600.jpg	Laptop Dell 15 DC15250 - 71073959 (i7 1355U, 16GB, 512GB, Full HD 120Hz, OfficeH24+365B, Win11)	0	t	2026-09-24 21:15:55.336881	\N
 314	348	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364399/asus-vivobook-s16-m3607ga-r7-ai-445-sh034w-thumb-2-639159132817621619-600x600.jpg	Laptop Asus Vivobook S16 M3607GA - SH034W (R7 AI 445, 16GB, 512GB, WUXGA OLED, Win11)	0	t	2026-09-24 21:15:55.369528	\N
@@ -5284,9 +5281,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 439	524	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369213/msi-gaming-cyborg-15-c13weo-417vn-i7-13620h-thumb-639192871314062724-600x600.jpg	Laptop MSI Gaming Cyborg 15 C13WEO-417VN (i7 13620H, 16GB, 512GB, RTX 5050 8GB, Full HD 144Hz, Win11)	0	t	2026-09-24 21:15:59.45538	\N
 440	525	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370349/lenovo-ideapad-slim-3-16iph11-ultra-5-322-83us0040vn-030926-104445-371-600x600.jpg	Laptop Lenovo IdeaPad Slim 3 16IPH11 - 83US0040VN (Ultra 5 322, 16GB, 512GB, WUXGA, Win11)	0	t	2026-09-24 21:15:59.488435	\N
 441	526	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370356/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015vn-030926-104545-590-600x600.jpg	Laptop Lenovo Yoga Slim 7 Ultra 14IPH11 - 83QK0015VN (Ultra 7 355, 32GB, 1TB, WQXGA+ 120Hz, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:59.519559	\N
-627	715	https://cdn.tgdd.vn/Products/Images/7077/370871/dong-ho-thong-min-gps-garmin-fenix-9-pro-solar-thumb-600x600.jpg	Garmin Fenix 9 Pro Solar Sapphire 47mm viền Titanium dây silicone	0	t	2026-09-24 21:16:05.780669	\N
 442	527	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370866/acer-aspire-go-14-ai-ag14-i71m-977m-ultra-9-185h-nx-w26sv-001-290826-093906-164-600x600.jpg	Laptop Acer Aspire Go 14 AI AG14-I71M-977M - NX.W26SV.001 (Ultra 9 185H, 16GB, 512GB, Full HD+, Win11)	0	t	2026-09-24 21:15:59.550032	\N
 443	528	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364408/asus-tuf-gaming-a14-fa401gm-r9-ai-465-rg013w-thumb-639107350281039453-600x600.jpg	Laptop Asus TUF Gaming A14 FA401GM - RG013W (R9 AI 465, 32GB, 1TB, RTX 5060 8GB, WQXGA 165Hz, Win11)	0	t	2026-09-24 21:15:59.587643	\N
+634	722	https://cdn.tgdd.vn/Products/Images/7077/367407/xiaomi-watch-s5-46mm-day-cao-su-fluoro-đen-thumb-600x600.jpg	Xiaomi Watch S5 46mm dây cao su Fluoro	0	t	2026-09-24 21:16:06.010856	\N
 444	529	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/365617/hp-elitebook-6-g1a-14-r7-ai-350-c0ce2pt-thumb-639116847125407980-600x600.jpg	Laptop HP EliteBook 6 G1a 14 - C0CE2PT (R7 AI 350, 16GB, 512GB, WUXGA, Cảm ứng, Win11)	0	t	2026-09-24 21:15:59.621475	\N
 445	530	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/361539/dell-16-plus-db16250-ultra-9-288v-x65nw9-thumb-2-639086675576918437-600x600.png	Laptop Dell 16 Plus DB16250 - X65NW9 (Ultra 9 288V, 32GB, 2TB, QHD+ 120Hz, OfficeH24+365, Win11)	0	t	2026-09-24 21:15:59.65533	\N
 446	531	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363899/lenovo-thinkpad-x1-carbon-gen-13-ultra-7-256v-21ns010fvn-thumb-639092545429611693-600x600.jpg	Laptop Lenovo ThinkPad X1 Carbon Gen 13 - 21NS010FVN (Ultra 7 256V, 16GB, 512GB, 2.8K OLED 120Hz, Win11Pro)	0	t	2026-09-24 21:15:59.690656	\N
@@ -5334,7 +5331,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 488	573	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368650/acer-gaming-nitro-propanel-anv16s-61-r0b8-ryzen-ai-5-340-nh-qxqsv-001-thumb-639185333295671068-600x600.jpg	Laptop Acer Gaming Nitro ProPanel ANV16S-61-R0B8 - NH.QXQSV.001 (Ryzen AI 5 340, 16GB, 512GB, RTX 5050 8GB, Full HD 180Hz, Win11)	0	t	2026-09-24 21:16:01.038934	\N
 489	574	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368653/acer-gaming-predator-helios-neo-16s-phn16s-i51-97t9-ultra-9-386h-thumb-639185362228558355-600x600.jpg	Laptop Acer Gaming Predator Helios Neo 16S PHN16S-I51-97T9 - NH.U3SSV.006 (Ultra 9 386H, 16GB, 512GB, RTX 5070 8GB, 2K+ 165Hz, Win11)	0	t	2026-09-24 21:16:01.069255	\N
 490	575	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368659/acer-gaming-nitro-propanel-an16s-61-r9cn-ryzen-ai-7-350-nh-qxgsv-001-thumb-639185140971644552-600x600.jpg	Laptop Acer Gaming Nitro ProPanel AN16S-61-R9CN - NH.QXGSV.001 (Ryzen AI 7 350, 16GB, 512GB, RTX 5070 8GB, 2K+ 180Hz, Win11)	0	t	2026-09-24 21:16:01.098317	\N
-100671	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-3-638762548520168313.jpg	ELIO 22 mm Nữ ES201-01	3	f	2026-10-06 15:05:29.718427	\N
 491	576	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369460/asus-zenbook-14-um3406ga-r7-ai-445-qd075w-030926-102626-500-600x600.jpg	Laptop Asus Zenbook 14 UM3406GA - QD075W (R7 AI 445, 16GB, 512GB, WUXGA OLED, Win11)	0	t	2026-09-24 21:16:01.12855	\N
 492	577	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369462/asus-expertbook-ultra-b9-b9406caa-ultra-x7-358h-x7642tw-030926-102732-335-600x600.jpg	Laptop Asus ExpertBook Ultra B9 B9406CAA - X7642TW (Ultra X7 358H, 64GB, 2TB, WQXGA+ OLED 120Hz, Win11)	0	t	2026-09-24 21:16:01.159968	\N
 493	578	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369465/asus-expertbook-ultra-p5-p5406cca-ultra-7-255h-sf0047w-030926-103110-747-600x600.jpg	Laptop Asus ExpertBook P5 P5406CCA - SF0047W (Ultra 7 255H, 16GB, 512GB, WUXGA, Win11)	0	t	2026-09-24 21:16:01.190852	\N
@@ -5361,10 +5357,10 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 514	599	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371127/hp-probook-4-g2i-16-ultra-7-355-dk2y5at-thumb-639250219428167380-600x600.jpg	Laptop HP ProBook 4 G2i 16 - DK2Y5AT (Ultra 7 355, 16GB, 512GB, WUXGA, Win11)	0	t	2026-09-24 21:16:01.843333	\N
 515	600	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371128/hp-omnibook-ultra-14-kd0039tu-ultra-7-356h-d72c7pa-thumb-639250222051766460-600x600.jpg	Laptop HP OmniBook Ultra 14 kd0039TU - D72C7PA (Ultra 7 356H, 32GB, 1TB, 3K OLED 120Hz, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:01.875507	\N
 516	601	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371129/hp-omnibook-ultra-14-kd0036tu-ultra-9-386h-d72c6pa-thumb-639250224032013655-600x600.jpg	Laptop HP OmniBook Ultra 14 kd0036TU - D72C6PA (Ultra 9 386H, 32GB, 1TB, 3K OLED 120Hz, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:01.905788	\N
-84793	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-14-639053810512906715.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	14	f	2026-10-06 15:05:29.718427	\N
 517	602	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371130/hp-omnibook-5-14-hh0075tu-ultra-5-322-d72ctpathumb-639250227082183848-600x600.jpg	Laptop HP OmniBook 5 14 hh0075TU - D72CTPA (Ultra 5 322, 16GB, 512GB, WUXGA, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:01.935991	\N
 518	603	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371132/hp-omnibook-5-14-hh0074tu-ultra-5-322-d72cspa-thumb-639250228655192328-600x600.jpg	Laptop HP OmniBook 5 14 hh0074TU - D72CSPA (Ultra 5 322, 16GB, 512GB, WUXGA, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:01.966422	\N
 519	604	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371133/hp-omnibook-5-14-hh0073tu-ultra-7-355-d72crpa-thumb-639250230536273413-600x600.jpg	Laptop HP OmniBook 5 14 hh0073TU - D72CRPA (Ultra 7 355, 16GB, 512GB, WUXGA, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:01.995889	\N
+635	723	https://cdn.tgdd.vn/Products/Images/7077/332406/mi-band-9-active-trang-thumb-600x600.jpg	Vòng đeo tay thông minh Mi Band 9 Active	0	t	2026-09-24 21:16:06.044333	\N
 520	605	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371134/hp-omnibook-5-14-hh0072tu-ultra-7-355-d72cqpa-thumb-639250232820367104-600x600.jpg	Laptop HP OmniBook 5 14 hh0072TU - D72CQPA (Ultra 7 355, 16GB, 512GB, WUXGA, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:02.025919	\N
 521	606	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371135/hp-omnibook-x-flip-14-kb0048tu-ultra-7-355-d72bypa-thumb-639250235941671920-600x600.jpg	Laptop HP OmniBook X Flip 14 kb0048TU - D72BYPA (Ultra 7 355, 32GB, 512GB, WUXGA, Cảm ứng, OfficeH24+365, Win11)	0	t	2026-09-24 21:16:02.05735	\N
 522	607	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/371137/hp-probook-4-g2i-16-ultra-5-325-dk2x9at-thumb-639250216296975811-600x600.jpg	Laptop HP ProBook 4 G2i 16 - DK2X9AT (Ultra 5 325, 16GB, 512GB, WUXGA, Win11)	0	t	2026-09-24 21:16:02.088575	\N
@@ -5375,11 +5371,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 527	613	https://cdn.tgdd.vn/Products/Images/522/359089/samsung-galaxy-tab-a11-plus-5g-6gb-128gb-xam-600x600.jpg	Máy tính bảng Samsung Galaxy Tab A11+ 5G 6GB/128GB	0	t	2026-09-24 21:16:02.252041	\N
 528	614	https://cdn.tgdd.vn/Products/Images/522/359086/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb-xam-600x600.jpg	Máy tính bảng Samsung Galaxy Tab A11+ WiFi 6GB/128GB	0	t	2026-09-24 21:16:02.282932	\N
 529	615	https://cdn.tgdd.vn/Products/Images/522/362718/xiaomi-pad-8-pro-xanh-la-thumb-600x600.jpg	Máy tính bảng Xiaomi Pad 8 Pro 8GB/128GB	0	t	2026-09-24 21:16:02.313564	\N
-530	616	https://cdn.tgdd.vn/Products/Images/522/339287/oppo-pad-se-sliver-thumb-600x600.jpg	Máy tính bảng OPPO Pad SE WiFi màn hình nhám 4GB/128GB	0	t	2026-09-24 21:16:02.343686	\N
 531	617	https://cdn.tgdd.vn/Products/Images/522/331229/ipad-mini-7-wifi-purple-thumb-600x600.jpg	Máy tính bảng iPad mini 7 WiFi 128GB	0	t	2026-09-24 21:16:02.372359	\N
 532	618	https://cdn.tgdd.vn/Products/Images/522/358082/ipad-pro-m5-wifi-11-inch-black-thumb-600x600.jpg	Máy tính bảng iPad Pro M5 11 inch WiFi 256GB	0	t	2026-09-24 21:16:02.400647	\N
 533	619	https://cdn.tgdd.vn/Products/Images/522/320992/oppo-pad-neo-grey-thumb-600x600.jpg	Máy tính bảng OPPO Pad Neo 4G 8GB/128GB	0	t	2026-09-24 21:16:02.428596	\N
-534	620	https://cdn.tgdd.vn/Products/Images/522/343061/samsung-galaxy-tab-s10-lite-5g-6gb-128gb-xam-600x600.jpg	Máy tính bảng Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	0	t	2026-09-24 21:16:02.4593	\N
 535	621	https://cdn.tgdd.vn/Products/Images/522/345548/samsung-galaxy-tab-a11-4g-4gb-64gb-xam-600x600.jpg	Máy tính bảng Samsung Galaxy Tab A11 4G 4GB/64GB	0	t	2026-09-24 21:16:02.489965	\N
 536	622	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/345544/honor-pad-x7-wifi-4gb-64gb-150925-041634-575-600x600.jpg	Máy tính bảng HONOR Pad X7 WiFi 4GB/64GB	0	t	2026-09-24 21:16:02.523064	\N
 537	623	https://cdn.tgdd.vn/Products/Images/522/344721/samsung-galaxy-tab-s11-5g-12gb-128gb-xam-600x600.jpg	Máy tính bảng Samsung Galaxy Tab S11 5G 12GB/128GB	0	t	2026-09-24 21:16:02.55623	\N
@@ -5439,6 +5433,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 593	681	https://cdn.tgdd.vn/Products/Images/7077/369498/samsung-galaxy-watch9-lte-40mm-day-silicone-thumb-trang-600x600.jpg	Samsung Galaxy Watch9 LTE 40mm dây silicone	0	t	2026-09-24 21:16:04.429318	\N
 594	682	https://cdn.tgdd.vn/Products/Images/7077/369497/samsung-galaxy-watch9-bluetooth-44mm-day-silicone-den-thumb-600x600.jpg	Samsung Galaxy Watch9 Bluetooth 44mm dây silicone	0	t	2026-09-24 21:16:04.463942	\N
 595	683	https://cdn.tgdd.vn/Products/Images/7077/369321/samsung-galaxy-watch9-lte-44mm-day-silicone-xanh-thumb-1-600x600.jpg	Samsung Galaxy Watch9 LTE 44mm dây silicone	0	t	2026-09-24 21:16:04.499972	\N
+98072	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-1.jpg	ELIO 26 mm Nữ EL136-01	1	f	2026-10-06 15:05:29.718427	\N
 596	684	https://cdn.tgdd.vn/Products/Images/7077/344764/apple-watch-ultra-3-gps-cellular-49mm-vien-titanium-day-ocean-den-600x600.jpg	Apple Watch Ultra 3 GPS + Cellular 49mm viền Titanium dây Ocean	0	t	2026-09-24 21:16:04.53799	\N
 597	685	https://cdn.tgdd.vn/Products/Images/7077/336948/huawei-watch-5-42mm-hong-tb-600x600.jpg	Huawei Watch 5 42mm viền thép dây composite Vàng Hồng	0	t	2026-09-24 21:16:04.577445	\N
 598	686	https://cdn.tgdd.vn/Products/Images/7077/364292/amazfit-t-rex-ultra-2-51mm-day-silicone-thumb-2-600x600.jpg	Amazfit T-Rex Ultra 2 51mm dây silicone	0	t	2026-09-24 21:16:04.615764	\N
@@ -5470,14 +5465,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 623	711	https://cdn.tgdd.vn/Products/Images/7077/344754/apple-watch-series-11-gps-cellular-42mm-vien-titanium-day-milan-xam-600x600.jpg	Apple Watch Series 11 GPS + Cellular 42mm viền Titanium dây Milan	0	t	2026-09-24 21:16:05.639307	\N
 624	712	https://cdn.tgdd.vn/Products/Images/7077/358006/huawei-watch-ultimate-2-47-8mm-day-cao-su-thumb-600x600.jpg	Huawei Watch Ultimate 2 47.8mm dây cao su	0	t	2026-09-24 21:16:05.676427	\N
 625	713	https://cdn.tgdd.vn/Products/Images/7077/358005/huawei-watch-ultimate-2-48-5mm-day-cao-su-thumb-600x600.jpg	Huawei Watch Ultimate 2 48.5mm dây cao su	0	t	2026-09-24 21:16:05.712779	\N
+626	714	https://cdn.tgdd.vn/Products/Images/7077/337834/samsung-galaxy-ring-bac-tb-600x600.jpg	Nhẫn thông minh Samsung Galaxy Ring Size 9	0	t	2026-09-24 21:16:05.746093	\N
+627	715	https://cdn.tgdd.vn/Products/Images/7077/370871/dong-ho-thong-min-gps-garmin-fenix-9-pro-solar-thumb-600x600.jpg	Garmin Fenix 9 Pro Solar Sapphire 47mm viền Titanium dây silicone	0	t	2026-09-24 21:16:05.780669	\N
 628	716	https://cdn.tgdd.vn/Products/Images/7077/370934/garmin-fenix-9-pro-sapphire-47mm-vien-titanium-carbon-day-silicone-thumb-600x600.jpg	Garmin Fenix 9 Pro Sapphire 47mm viền Titanium Carbon dây silicone	0	t	2026-09-24 21:16:05.814811	\N
 629	717	https://cdn.tgdd.vn/Products/Images/7077/370869/garmin-fenix-9-sapphire-43mm-vien-titanium-day-silicone-thumb-600x600.jpg	Garmin Fenix 9 Sapphire 43mm viền Titanium dây silicone	0	t	2026-09-24 21:16:05.847278	\N
 630	718	https://cdn.tgdd.vn/Products/Images/7077/370930/garmin-fenix-9-sapphire-47mm-vien-titanium-carbon-day-silicone-thumb-600x600.jpg	Garmin Fenix 9 Sapphire 47mm viền Titanium Carbon dây silicone	0	t	2026-09-24 21:16:05.879489	\N
 631	719	https://cdn.tgdd.vn/Products/Images/7077/370870/dong-ho-thong-min-gps-garmin-fenix-9-pro-amoled-thumb-600x600.jpg	Garmin Fenix 9 Pro Sapphire 43mm viền Titanium dây silicone	0	t	2026-09-24 21:16:05.911336	\N
-632	720	https://cdn.tgdd.vn/Products/Images/7077/328694/huawei-watch-kids-4-pro-xanh-tn2-600x600.jpg	Đồng hồ định vị trẻ em Huawei Watch Kids 4 Pro	0	t	2026-09-24 21:16:05.945035	\N
-633	721	https://cdn.tgdd.vn/Products/Images/7077/322848/garmin-forerunner-165-den-tb-600x600.jpg	Garmin Forerunner 165 43mm dây silicone	0	t	2026-09-24 21:16:05.977779	\N
-634	722	https://cdn.tgdd.vn/Products/Images/7077/367407/xiaomi-watch-s5-46mm-day-cao-su-fluoro-đen-thumb-600x600.jpg	Xiaomi Watch S5 46mm dây cao su Fluoro	0	t	2026-09-24 21:16:06.010856	\N
-635	723	https://cdn.tgdd.vn/Products/Images/7077/332406/mi-band-9-active-trang-thumb-600x600.jpg	Vòng đeo tay thông minh Mi Band 9 Active	0	t	2026-09-24 21:16:06.044333	\N
 636	724	https://cdn.tgdd.vn/Products/Images/7077/335762/huawei-band-10-den-tb-600x600.jpg	Vòng đeo tay thông minh Huawei Band 10 viền nhựa	0	t	2026-09-24 21:16:06.080973	\N
 637	725	https://cdn.tgdd.vn/Products/Images/7077/331078/huawei-watch-d2-day-cao-su-600x600.jpg	Huawei Watch D2 48mm dây cao su	0	t	2026-09-24 21:16:06.117328	\N
 638	726	https://cdn.tgdd.vn/Products/Images/7077/244296/garmin-forerunner-55-day-silicone-den-tn-1-2-600x600.jpg	Garmin Forerunner 55 42mm dây silicone	0	t	2026-09-24 21:16:06.153279	\N
@@ -5555,6 +5548,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 711	799	https://cdn.tgdd.vn/Products/Images/7077/322839/garmin-lily-2-tim-tb-600x600.jpg	Garmin Lily 2 34mm dây silicone	0	t	2026-09-24 21:16:08.762842	\N
 712	800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/366928/oppo-watch-x3-47-4mm-day-cao-su-thumb-639143692533934845-600x600.jpg	OPPO Watch X3 47.4mm dây cao su	0	t	2026-09-24 21:16:08.794382	\N
 713	801	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/369504/dong-ho-dinh-vi-tre-em-zobo-s8-thumb-639198240874233418-600x600.jpg	Đồng hồ định vị trẻ em Zobo S8	0	t	2026-09-24 21:16:08.830573	\N
+98073	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-2.jpg	ELIO 26 mm Nữ EL136-01	2	f	2026-10-06 15:05:29.718427	\N
 714	802	https://cdn.tgdd.vn/Products/Images/7077/308291/garmin-golf-approach-s70-day-silicone-tb-1-600x600.jpg	Garmin Golf Approach S70 47mm dây silicone	0	t	2026-09-24 21:16:08.863966	\N
 715	803	https://cdn.tgdd.vn/Products/Images/7077/310710/garmin-forerunner-265s-den-day-silicone-tb-600x600.jpg	Garmin Forerunner 265S 41.7mm dây silicone	0	t	2026-09-24 21:16:08.897442	\N
 716	804	https://cdn.tgdd.vn/Products/Images/7077/322375/amazfit-balance-day-vai-tn2-600x600.jpg	Amazfit Balance 46mm dây nylon	0	t	2026-09-24 21:16:08.931874	\N
@@ -5608,9 +5602,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84195	130	https://cdn.tgdd.vn/Products/Images/42/368234/motorola-g37-xanh-thumb-1.jpg	Motorola Moto G37 5G 4GB/64GB	1	f	2026-10-06 15:05:29.718427	\N
 84196	24	https://cdn.tgdd.vn/Products/Images/42/367427/realme-c100x-vang-thumb-1.jpg	realme C100x 4GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 84197	5	https://cdn.tgdd.vn/Products/Images/42/342679/iphone-17-pro-max-bac-thumb.jpg	iPhone 17 Pro Max 256GB	1	f	2026-10-06 15:05:29.718427	\N
-84198	11710	https://cdn.tgdd.vn/Products/Images/42/363396/samsung-galaxy-a57-xam-thumb.jpg	Samsung Galaxy A57 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84199	78	https://cdn.tgdd.vn/Products/Images/42/361951/samsung-galaxy-s26-ultra-12gb-256gb-xanh-thumb.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
-84200	11711	https://cdn.tgdd.vn/Products/Images/42/367002/xiaomi-17t-5g-tim-thumb.jpg	Xiaomi 17T 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84201	40	https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno16-pro-den-thumb170257.jpg	OPPO Reno16 Pro 5G 12GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
 84202	6	https://cdn.tgdd.vn/Products/Images/42/367499/realme-16t-den-thumb.jpg	realme 16T 5G 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 84203	14	https://cdn.tgdd.vn/Products/Images/42/342676/iphone-17-pro-xanh-duong-thumb.jpg	iPhone 17 Pro 256GB	1	f	2026-10-06 15:05:29.718427	\N
@@ -5628,10 +5620,8 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84215	29	https://cdn.tgdd.vn/Products/Images/42/342670/iphone-air-trang-thumb.jpg	iPhone Air 256GB	1	f	2026-10-06 15:05:29.718427	\N
 84216	11714	https://cdnv2.tgdd.vn/pim/cdn/images/202610/oppo-reno15f-5g-xanh-duong-nhat-thumbn163122.jpg	OPPO Reno15 F 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84217	11715	https://cdn.tgdd.vn/Products/Images/42/357576/vivo-v60-lite-pink-thumbai.jpg	vivo V60 Lite 5G 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
-84218	33	https://cdn.tgdd.vn/Products/Images/42/364187/realme-c100-nau-thumb.jpg	realme C100 4G 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 84219	34	https://cdn.tgdd.vn/Products/Images/42/358026/honor-x7d-5g-bac-thumb.jpg	Honor X7d 5G 8GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
 84220	114	https://cdn.tgdd.vn/Products/Images/42/367811/nubia-v80-max-6gb-128gb-den-thumb.jpg	Nubia V80 Max 6GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
-84221	11716	https://cdn.tgdd.vn/Products/Images/42/364632/tecno-spark-go-3-den-thumb.jpg	Tecno Spark Go 3 4GB/64GB	0	t	2026-10-06 15:05:29.718427	\N
 84222	36	https://cdn.tgdd.vn/Products/Images/42/362373/motorola-g57-power-5g-8gb-128gb-xanh-dam-thumb.jpg	Motorola G57 Power 5G 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 84223	45	https://cdn.tgdd.vn/Products/Images/42/329135/iphone-16-black.png	iPhone 16 128GB	1	f	2026-10-06 15:05:29.718427	\N
 84224	37	https://cdn.tgdd.vn/Products/Images/42/342692/iphone-17e-256gb-den-thumb.jpg	iPhone 17e 256GB	1	f	2026-10-06 15:05:29.718427	\N
@@ -5645,10 +5635,8 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84232	11718	https://cdn.tgdd.vn/Products/Images/42/339180/vivo-y39-5g-xanh-thumb.jpg	vivo Y39 5G 8GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
 84233	11719	https://cdn.tgdd.vn/Products/Images/42/360344/realme-c85-8gb-128gb-den-thumb.jpg	realme C85 8GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
 84234	11720	https://cdn.tgdd.vn/Products/Images/42/362375/motorola-signature-12gb-256gb-ghi-thumb-1.jpg	Motorola Signature 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
-84235	11721	https://cdn.tgdd.vn/Products/Images/42/341690/galaxy-a17-5g-gray-thumbai.jpg	Samsung Galaxy A17 5G 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84236	53	https://cdn.tgdd.vn/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-8gb-256gb-den-thumb.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
 84238	11723	https://cdn.tgdd.vn/Products/Images/42/358048/motorola-moto-g35-5g-4gb-128gb-den-thumb-1.jpg	Motorola G35 5G 4GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
-84239	11724	https://cdn.tgdd.vn/Products/Images/42/342565/samsung-galaxy-s25-fe-white-thumbai.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84240	11725	https://cdn.tgdd.vn/Products/Images/42/360307/xiaomi-redmi-note-15-pro-8gb-256gb-xanh-thumb.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84241	66	https://cdnv2.tgdd.vn/pim/cdn/images/202609/realme-15-pro-bac-thumb144031.jpg	realme 15 Pro 5G 12GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
 84242	66	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343067/realme-15-pro-bac-1-638947522640043773.jpg	realme 15 Pro 5G 12GB/256GB	2	f	2026-10-06 15:05:29.718427	\N
@@ -5672,7 +5660,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84260	76	https://cdn.tgdd.vn/Products/Images/42/361191/oppo-a6t-tim-thumb.jpg	OPPO A6t 4GB/64GB	1	f	2026-10-06 15:05:29.718427	\N
 84261	11726	https://cdn.tgdd.vn/Products/Images/42/341625/vivo-v60-5g-tim-thumb.jpg	vivo V60 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84262	69	https://cdn.tgdd.vn/Products/Images/42/358224/motorola-edge-60-fusion-8gb-256gb-xam-thumb-1-2.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
-84263	11727	https://cdn.tgdd.vn/Products/Images/42/344649/oppo-a6-pro-5g-pink-thumbai.jpg	OPPO A6 Pro 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84264	11728	https://cdnv2.tgdd.vn/pim/cdn/images/202609/samsung-galaxy-a07s-den-thumbn111231.jpg	Samsung Galaxy A07s 4GB/64GB Đen	0	t	2026-10-06 15:05:29.718427	\N
 84265	169	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4b-den-thumbkm065750.jpg	Nothing Phone (4b) 5G 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 84266	170	https://cdn.tgdd.vn/Products/Images/42/371119/vivo-v80-lite-pink-thumbn.jpg	vivo V80 Lite 5G 6GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
@@ -5687,7 +5674,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84279	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-den-thumbkm064811.jpg	Nothing Phone 4(a) 8GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
 84280	99	https://cdn.tgdd.vn/Products/Images/42/368232/xiaomi-redmi-a7-3gb-64gb-den-thumb.jpg	Xiaomi Redmi A7 3GB/64GB	1	f	2026-10-06 15:05:29.718427	\N
 84281	11736	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-pro-hong-thumbkm065119.jpg	Nothing Phone 4(a) Pro 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
-84282	11737	https://cdn.tgdd.vn/Products/Images/42/368233/vivo-31d-den-thumb.jpg	vivo Y31d 4GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
 84289	11738	https://cdn.tgdd.vn/Products/Images/42/367004/xiaomi-17t-pro-5g-den-thumb.jpg	Xiaomi 17T Pro 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 84290	94	https://cdn.tgdd.vn/Products/Images/42/367596/oppo-a6c-tim-thumb-1.jpg	OPPO A6c 4GB/64GB	1	f	2026-10-06 15:05:29.718427	\N
 84291	101	https://cdn.tgdd.vn/Products/Images/42/361709/samsung-galaxy-a07-5g-xanh-thumb.jpg	Samsung Galaxy A07 5G 4GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
@@ -5775,7 +5761,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84373	180	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358132/asus-vivobook-s14-s3407va-core-5-210h-ly146w-17-639134880013004440.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	17	f	2026-10-06 15:05:29.718427	\N
 84374	180	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358132/asus-vivobook-s14-s3407va-core-5-210h-ly146w-99-638965583522283493.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	18	f	2026-10-06 15:05:29.718427	\N
 84375	180	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358132/Kit/asus-vivobook-s14-s3407va-core-5-210h-ly146w-bbh-639134881738198159.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	19	f	2026-10-06 15:05:29.718427	\N
-84376	11756	https://cdn.tgdd.vn/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-bac.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	0	t	2026-10-06 15:05:29.718427	\N
 84377	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-1-639198088782591621.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	1	f	2026-10-06 15:05:29.718427	\N
 84378	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-2-639198088825131258.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	2	f	2026-10-06 15:05:29.718427	\N
 84379	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-3-639198088831041554.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	3	f	2026-10-06 15:05:29.718427	\N
@@ -5785,7 +5770,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84383	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-7-639198088858550289.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	7	f	2026-10-06 15:05:29.718427	\N
 84384	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-8-639198088895161759.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	8	f	2026-10-06 15:05:29.718427	\N
 84385	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-9-639198088902673183.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	9	f	2026-10-06 15:05:29.718427	\N
-84794	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-99-639051208786712106.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	15	f	2026-10-06 15:05:29.718427	\N
 84386	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-10-639198088909295930.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	10	f	2026-10-06 15:05:29.718427	\N
 84387	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-11-639198088948431044.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	11	f	2026-10-06 15:05:29.718427	\N
 84388	186	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369212/msi-modern-15-f1mg-1264vn-core-5-120u-16gb-512gb-full-hd-win11-99-639198088988443432.jpg	MSI Modern 15 F1MG-1264VN Core 5 120U	12	f	2026-10-06 15:05:29.718427	\N
@@ -5817,7 +5801,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84414	243	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366992/acer-aspire-lite-15-al15-48p-r86q-r7-5825u-nx-ds1sv-002-5-639143743821108510.jpg	Acer Aspire Lite 15 AL15-48P-R86Q R7 5825U (NX.DS1SV.002)	5	f	2026-10-06 15:05:29.718427	\N
 84415	243	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366992/acer-aspire-lite-15-al15-48p-r86q-r7-5825u-nx-ds1sv-002-6-639143743863949036.jpg	Acer Aspire Lite 15 AL15-48P-R86Q R7 5825U (NX.DS1SV.002)	6	f	2026-10-06 15:05:29.718427	\N
 84416	243	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366992/acer-aspire-lite-15-al15-48p-r86q-r7-5825u-nx-ds1sv-002-7-639143743934006007.jpg	Acer Aspire Lite 15 AL15-48P-R86Q R7 5825U (NX.DS1SV.002)	7	f	2026-10-06 15:05:29.718427	\N
-86095	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-2-638903512137057732.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	2	f	2026-10-06 15:05:29.718427	\N
 84417	243	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366992/acer-aspire-lite-15-al15-48p-r86q-r7-5825u-nx-ds1sv-002-8-639143743968539418.jpg	Acer Aspire Lite 15 AL15-48P-R86Q R7 5825U (NX.DS1SV.002)	8	f	2026-10-06 15:05:29.718427	\N
 84418	204	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366090/acer-aspire-go-15-ag15-52p-52wt-ultra-5-115u-nx-jwksv-001-1-639126432984141557.jpg	Acer Aspire Go 15 AG15-52P-52WT Ultra 5 115U (NX.JWKSV.001)	1	f	2026-10-06 15:05:29.718427	\N
 84419	204	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366090/acer-aspire-go-15-ag15-52p-52wt-ultra-5-115u-nx-jwksv-001-2-639126432991668470.jpg	Acer Aspire Go 15 AG15-52P-52WT Ultra 5 115U (NX.JWKSV.001)	2	f	2026-10-06 15:05:29.718427	\N
@@ -5904,9 +5887,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84499	11757	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368189/singpc-m16-i382-i3-1215u-10-639219526453677403.jpg	SingPC M16-i382 i3 1215U	13	f	2026-10-06 15:05:29.718427	\N
 84500	11757	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368189/singpc-m16-i382-i3-1215u-8gb-256gb-wuxga-win11-pro-99-639201620745537896.jpg	SingPC M16-i382 i3 1215U	14	f	2026-10-06 15:05:29.718427	\N
 84501	194	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367376/acer-aspire-lite-15-al15-49p-r6xx-r5-7430u-nx-drzsv-002-1-639167111563441608.jpg	Acer Aspire Lite 15 AL15-49P-R6XX R5 7430U (NX.DRZSV.002)	1	f	2026-10-06 15:05:29.718427	\N
-84502	11758	https://cdn.tgdd.vn/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-xanh-da-troi-1.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	0	t	2026-10-06 15:05:29.718427	\N
 84536	190	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364859/dell-15-dc15250-i5-1334u-71092479-99-639106627117316265.png	Dell 15 DC15250 i5 1334U (71092479)	15	f	2026-10-06 15:05:29.718427	\N
 84503	193	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366746/lenovo-ideapad-slim-3-15arp10-r5-7535hs-83k700yuvn-1-639136806731437495.jpg	Lenovo IdeaPad Slim 3 15ARP10 R5 7535HS (83K700YUVN)	1	f	2026-10-06 15:05:29.718427	\N
+98074	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-3.jpg	ELIO 26 mm Nữ EL136-01	3	f	2026-10-06 15:05:29.718427	\N
 84504	193	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/366746/lenovo-ideapad-slim-3-15arp10-r5-7535hs-83k700yuvn-01-639241610276254545.jpg	Lenovo IdeaPad Slim 3 15ARP10 R5 7535HS (83K700YUVN)	2	f	2026-10-06 15:05:29.718427	\N
 84505	193	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366746/lenovo-ideapad-slim-3-15arp10-r5-7535hs-83k700yuvn-2-639136806737968406.jpg	Lenovo IdeaPad Slim 3 15ARP10 R5 7535HS (83K700YUVN)	3	f	2026-10-06 15:05:29.718427	\N
 84506	193	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/366746/lenovo-ideapad-slim-3-15arp10-r5-7535hs-83k700yuvn-02-639241610284769142.jpg	Lenovo IdeaPad Slim 3 15ARP10 R5 7535HS (83K700YUVN)	4	f	2026-10-06 15:05:29.718427	\N
@@ -5940,6 +5923,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84534	190	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364859/dell-15-dc15250-i5-1334u-71092479-13-639107218190160069.jpg	Dell 15 DC15250 i5 1334U (71092479)	13	f	2026-10-06 15:05:29.718427	\N
 84535	190	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364859/dell-15-dc15250-i5-1334u-71092479-14-639107218196423095.jpg	Dell 15 DC15250 i5 1334U (71092479)	14	f	2026-10-06 15:05:29.718427	\N
 91203	12237	https://cdn.tgdd.vn/Products/Images/7264/292836/elio-el131-03-nu-13.jpg	ELIO Xmas 36 mm Nữ EL131-03	13	f	2026-10-06 15:05:29.718427	\N
+84806	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-2-639153001285783800.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	2	f	2026-10-06 15:05:29.718427	\N
 84537	192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363263/acer-aspire-go-15-ag15-72p-500w-core-5-120u-nx-jrrsv-007-thumb-639088209315732092-600x600.jpg	Acer Aspire Go 15 AG15-72P-500W Core 5 120U (NX.JRRSV.007)	0	t	2026-10-06 15:05:29.718427	\N
 84538	192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363263/acer-aspire-go-15-ag15-72p-500w-core-5-120u-nx-jrrsv-007-1-639088231116679333.jpg	Acer Aspire Go 15 AG15-72P-500W Core 5 120U (NX.JRRSV.007)	1	f	2026-10-06 15:05:29.718427	\N
 84539	192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363263/acer-aspire-go-15-ag15-72p-500w-core-5-120u-nx-jrrsv-007-2-639088231109540815.jpg	Acer Aspire Go 15 AG15-72P-500W Core 5 120U (NX.JRRSV.007)	2	f	2026-10-06 15:05:29.718427	\N
@@ -6057,7 +6041,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84650	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-14-639013949779878163.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	14	f	2026-10-06 15:05:29.718427	\N
 84651	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-15-639013949812857751.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	15	f	2026-10-06 15:05:29.718427	\N
 84652	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-16-639013949819382915.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	16	f	2026-10-06 15:05:29.718427	\N
-100672	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-4-638762548528361698.jpg	ELIO 22 mm Nữ ES201-01	4	f	2026-10-06 15:05:29.718427	\N
 84653	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-17-639013949825679911.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	17	f	2026-10-06 15:05:29.718427	\N
 84654	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-18-639013949831917516.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	18	f	2026-10-06 15:05:29.718427	\N
 84655	198	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358078/hp-omnibook-5-flip-14-fp0057tu-core-5-120u-bz7q6pa-19-639013949840070974.jpg	HP OmniBook 5 Flip 14 fp0057TU Core 5 120U (BZ7Q6PA)	19	f	2026-10-06 15:05:29.718427	\N
@@ -6196,6 +6179,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84789	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-10-639053810550600242.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	10	f	2026-10-06 15:05:29.718427	\N
 84790	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-11-639053810542680568.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	11	f	2026-10-06 15:05:29.718427	\N
 84791	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-12-639053810533637117.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	12	f	2026-10-06 15:05:29.718427	\N
+84792	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-13-639053810525823409.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	13	f	2026-10-06 15:05:29.718427	\N
+84793	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-14-639053810512906715.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	14	f	2026-10-06 15:05:29.718427	\N
+84794	210	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362398/hp-15-fd1486tu-ultra-5-125h-d0bh3pa-99-639051208786712106.jpg	HP 15 fd1486TU Ultra 5 125H (D0BH3PA)	15	f	2026-10-06 15:05:29.718427	\N
 84795	216	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360295/acer-gaming-predator-helios-neo-16-ai-phn16-73-757w-nh-qvqsv-001-1-639012164030780113.jpg	Acer Gaming Predator Helios Neo 16 AI PHN16 73 757W Ultra 7 255HX (NH.QVQSV.001)	1	f	2026-10-06 15:05:29.718427	\N
 84796	216	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360295/acer-gaming-predator-helios-neo-16-ai-phn16-73-757w-nh-qvqsv-001-2-639012164037025418.jpg	Acer Gaming Predator Helios Neo 16 AI PHN16 73 757W Ultra 7 255HX (NH.QVQSV.001)	2	f	2026-10-06 15:05:29.718427	\N
 84797	216	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360295/acer-gaming-predator-helios-neo-16-ai-phn16-73-757w-nh-qvqsv-001-3-639012164014622493.jpg	Acer Gaming Predator Helios Neo 16 AI PHN16 73 757W Ultra 7 255HX (NH.QVQSV.001)	3	f	2026-10-06 15:05:29.718427	\N
@@ -6208,7 +6194,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84804	216	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360295/acer-gaming-predator-helios-neo-16-ai-phn16-73-757w-nh-qvqsv-001-99-639011341623978774.jpg	Acer Gaming Predator Helios Neo 16 AI PHN16 73 757W Ultra 7 255HX (NH.QVQSV.001)	10	f	2026-10-06 15:05:29.718427	\N
 84805	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-1-639153001277740061.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	1	f	2026-10-06 15:05:29.718427	\N
 85561	425	https://cdn.tgdd.vn/Products/Images/44/326049/hp-245-g10-r5-a20tdpt-8.jpg	HP 245 G10 R5 7530U (A20TDPT)	8	f	2026-10-06 15:05:29.718427	\N
-84806	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-2-639153001285783800.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	2	f	2026-10-06 15:05:29.718427	\N
 84807	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-3-639153001293618430.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	3	f	2026-10-06 15:05:29.718427	\N
 84808	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-4-639153001300903520.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	4	f	2026-10-06 15:05:29.718427	\N
 84809	206	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341267/hp-omnibook-5-ai-16-af1048tu-ultra-5-225u-bz7q9pa-5-639153001307761204.jpg	HP OmniBook 5 AI 16 af1048TU Ultra 5 225U (BZ7Q9PA)	5	f	2026-10-06 15:05:29.718427	\N
@@ -6276,6 +6261,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84872	226	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366823/acer-gaming-nitro-propanel-anv16-72-71t9-core-7-240h-nh-qunsv-001-5-639142689787513436.jpg	Acer Gaming Nitro ProPanel ANV16-72-71T9 Core 7 240H (NH.QUNSV.001)	5	f	2026-10-06 15:05:29.718427	\N
 84873	226	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366823/acer-gaming-nitro-propanel-anv16-72-71t9-core-7-240h-nh-qunsv-001-6-639142689794534263.jpg	Acer Gaming Nitro ProPanel ANV16-72-71T9 Core 7 240H (NH.QUNSV.001)	6	f	2026-10-06 15:05:29.718427	\N
 84874	226	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366823/acer-gaming-nitro-propanel-anv16-72-71t9-core-7-240h-nh-qunsv-001-7-639142689800483632.jpg	Acer Gaming Nitro ProPanel ANV16-72-71T9 Core 7 240H (NH.QUNSV.001)	7	f	2026-10-06 15:05:29.718427	\N
+98075	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-4.jpg	ELIO 26 mm Nữ EL136-01	4	f	2026-10-06 15:05:29.718427	\N
 84875	226	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366823/acer-gaming-nitro-propanel-anv16-72-71t9-core-7-240h-nh-qunsv-001-8-639142689806680316.jpg	Acer Gaming Nitro ProPanel ANV16-72-71T9 Core 7 240H (NH.QUNSV.001)	8	f	2026-10-06 15:05:29.718427	\N
 84876	226	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366823/acer-gaming-nitro-propanel-anv16-72-71t9-core-7-240h-nh-qunsv-001-99-639138544496932023.jpg	Acer Gaming Nitro ProPanel ANV16-72-71T9 Core 7 240H (NH.QUNSV.001)	9	f	2026-10-06 15:05:29.718427	\N
 84877	218	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362410/asus-vivobook-14-x1407ca-ultra-5-225h-ly008w-1-639134877663797055.jpg	Asus Vivobook 14 X1407CA Ultra 5 225H (LY008W)	1	f	2026-10-06 15:05:29.718427	\N
@@ -6754,7 +6740,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 85341	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-glr-12-639104603877144419.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	12	f	2026-10-06 15:05:29.718427	\N
 85342	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-glr-13-639104603884504762.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	13	f	2026-10-06 15:05:29.718427	\N
 85343	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-glr-14-639104603891520670.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	14	f	2026-10-06 15:05:29.718427	\N
-90408	12076	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370369/smile-kid-sl317-05-tre-em-99-639221449066462005.jpg	Smile Kid SL317-05 - Trẻ em	6	f	2026-10-06 15:05:29.718427	\N
 85344	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-glr-15-639104603899127649.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	15	f	2026-10-06 15:05:29.718427	\N
 85345	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-99-639086610014085774.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	16	f	2026-10-06 15:05:29.718427	\N
 85346	253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363690/Kit/msi-gaming-cyborg-15-a13uc-i5-13420h-2088vn-bbh-639104604521075459.jpg	MSI Gaming Cyborg 15 A13UC i5 13420H (2088VN)	17	f	2026-10-06 15:05:29.718427	\N
@@ -7135,7 +7120,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 85724	290	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337843/gigabyte-a16-ga6h-i5-gaminga16cmhh2vn893sh-new-16-638854055825084455.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	16	f	2026-10-06 15:05:29.718427	\N
 85725	290	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337843/cmhh2vn893sh-638853346775314674.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	17	f	2026-10-06 15:05:29.718427	\N
 85726	290	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337843/Kit/gigabyte-a16-ga6h-i5-gaminga16cmhh2vn893sh-bbh-638854056483010158.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	18	f	2026-10-06 15:05:29.718427	\N
-85727	11764	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/332398/acer-swift-ai-sf14-51-75vp-ultra-7-nxj2ksv001-638765990237555523-600x600.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	0	t	2026-10-06 15:05:29.718427	\N
 85728	297	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364401/asus-zenbook-14-ux3405ca-ultra-5-225h-st628w-thumb-2-639103219915313293-600x600.jpg	Asus ZenBook 14 UX3405CA Ultra 5 225H (ST628W)	1	f	2026-10-06 15:05:29.718427	\N
 85729	297	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364401/asus-zenbook-14-ux3405ca-ultra-5-225h-st628w-1-639098069993901688.jpg	Asus ZenBook 14 UX3405CA Ultra 5 225H (ST628W)	2	f	2026-10-06 15:05:29.718427	\N
 85730	297	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/364401/asus-zenbook-14-ux3405ca-ultra-5-225h-st628w-01-639244785422192734.jpg	Asus ZenBook 14 UX3405CA Ultra 5 225H (ST628W)	3	f	2026-10-06 15:05:29.718427	\N
@@ -7169,6 +7153,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 85758	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-6-638996864070521898.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	6	f	2026-10-06 15:05:29.718427	\N
 85759	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-7-638996864063521819.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	7	f	2026-10-06 15:05:29.718427	\N
 85760	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-8-638996863990702167.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	8	f	2026-10-06 15:05:29.718427	\N
+98076	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-5.jpg	ELIO 26 mm Nữ EL136-01	5	f	2026-10-06 15:05:29.718427	\N
 85761	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-9-638996863984139278.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	9	f	2026-10-06 15:05:29.718427	\N
 85762	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-10-638996863970579850.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	10	f	2026-10-06 15:05:29.718427	\N
 85763	304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341611/msi-katana-15-hx-b14wek-i5-14450hx-286vn-11-638996864055387575.jpg	MSI Gaming Katana 15 HX B14WEK i5 14450HX (286VN)	11	f	2026-10-06 15:05:29.718427	\N
@@ -7233,6 +7218,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 85822	311	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366702/hp-probook-4-g1ah-16-r5-220-c40jpat-5-639136729775958692.jpg	HP Probook 4 G1ah 16 R5 220 (C40JPAT)	5	f	2026-10-06 15:05:29.718427	\N
 85823	311	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366702/hp-probook-4-g1ah-16-r5-220-c40jpat-99-639135978413509952.jpg	HP Probook 4 G1ah 16 R5 220 (C40JPAT)	6	f	2026-10-06 15:05:29.718427	\N
 85824	312	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/365535/lenovo-thinkpad-e14-gen-7-ultra-5-135h-21sx00bnvn-1-639115109611960524.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 135H (21SX00BNVN)	1	f	2026-10-06 15:05:29.718427	\N
+86119	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-2.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	2	f	2026-10-06 15:05:29.718427	\N
 85825	312	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/365535/lenovo-thinkpad-e14-gen-7-ultra-5-135h-21sx00bnvn-01-639244662861155906.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 135H (21SX00BNVN)	2	f	2026-10-06 15:05:29.718427	\N
 85826	312	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/365535/lenovo-thinkpad-e14-gen-7-ultra-5-135h-21sx00bnvn-2-639115109620311728.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 135H (21SX00BNVN)	3	f	2026-10-06 15:05:29.718427	\N
 85827	312	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/365535/lenovo-thinkpad-e14-gen-7-ultra-5-135h-21sx00bnvn-02-639244662845621066.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 135H (21SX00BNVN)	4	f	2026-10-06 15:05:29.718427	\N
@@ -7503,6 +7489,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86092	326	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362399/hp-15-fd1490tu-ultra-7-155h-d0bh5pa-14-639053811928437342.jpg	HP 15 fd1490TU Ultra 7 155H (D0BH5PA)	14	f	2026-10-06 15:05:29.718427	\N
 86093	326	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362399/hp-15-fd1490tu-ultra-7-155h-d0bh5pa-99-639051224059012771.jpg	HP 15 fd1490TU Ultra 7 155H (D0BH5PA)	15	f	2026-10-06 15:05:29.718427	\N
 86094	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-1-638903512125095235.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	1	f	2026-10-06 15:05:29.718427	\N
+86095	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-2-638903512137057732.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	2	f	2026-10-06 15:05:29.718427	\N
 86096	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-3-638903512113628198.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	3	f	2026-10-06 15:05:29.718427	\N
 86097	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-4-638903512118859817.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	4	f	2026-10-06 15:05:29.718427	\N
 86098	332	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/341609/msi-katana-15-hx-b14wfk-i7-14650hx-267vn-5-638903512131576986.jpg	MSI Gaming Katana 15 HX B14WFK i7 14650HX (267VN)	5	f	2026-10-06 15:05:29.718427	\N
@@ -7526,7 +7513,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86116	434	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340559/dell-inspiron-15-3530-i7-n3530-i7u161w11slu-11-638881904189575471.jpg	Dell Inspiron 15 3530 i7 1355U (N3530-i7U161W11SLU)	11	f	2026-10-06 15:05:29.718427	\N
 86117	434	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340559/dell-inspiron-15-3530-i7-n3530-i7u161w11slu-12-638881904195755012.jpg	Dell Inspiron 15 3530 i7 1355U (N3530-i7U161W11SLU)	12	f	2026-10-06 15:05:29.718427	\N
 86118	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-1.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	1	f	2026-10-06 15:05:29.718427	\N
-86119	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-2.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	2	f	2026-10-06 15:05:29.718427	\N
+98077	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-7.jpeg	ELIO 26 mm Nữ EL136-01	6	f	2026-10-06 15:05:29.718427	\N
 86120	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-3.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	3	f	2026-10-06 15:05:29.718427	\N
 86121	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-4.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	4	f	2026-10-06 15:05:29.718427	\N
 86122	370	https://cdn.tgdd.vn/Products/Images/44/325244/dell-inspiron-14-5440-core-7-n4i7204w1-glr-5.jpg	Dell Inspiron 14 5440 Core 7 150U (N4I7204W1)	5	f	2026-10-06 15:05:29.718427	\N
@@ -7560,6 +7547,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86150	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-6-639026196526158312.jpg	Dell Gaming Alienware 16 Aurora AC16250 Core 7 240H (AC16250-C7H161W11II4050)	6	f	2026-10-06 15:05:29.718427	\N
 86151	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-7-639026196517540801.jpg	Dell Gaming Alienware 16 Aurora AC16250 Core 7 240H (AC16250-C7H161W11II4050)	7	f	2026-10-06 15:05:29.718427	\N
 88127	542	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/368216/lenovo-yoga-7-2in1-14iph11-ultra-7-355-83tc002mvn-9-639178069281858564.jpg	Lenovo Yoga 7 2in1 14IPH11 Ultra 7 355 (83TC002MVN)	9	f	2026-10-06 15:05:29.718427	\N
+98078	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-8.jpg	ELIO 26 mm Nữ EL136-01	7	f	2026-10-06 15:05:29.718427	\N
 86152	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-8-639026196511086908.jpg	Dell Gaming Alienware 16 Aurora AC16250 Core 7 240H (AC16250-C7H161W11II4050)	8	f	2026-10-06 15:05:29.718427	\N
 86153	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-9-639026196504275740.jpg	Dell Gaming Alienware 16 Aurora AC16250 Core 7 240H (AC16250-C7H161W11II4050)	9	f	2026-10-06 15:05:29.718427	\N
 86154	336	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/360693/dell-gaming-alienware-16-aurora-ac16250-core-7-240h-c7h161w11ii4050-10-639026196496091719.jpg	Dell Gaming Alienware 16 Aurora AC16250 Core 7 240H (AC16250-C7H161W11II4050)	10	f	2026-10-06 15:05:29.718427	\N
@@ -7726,7 +7714,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86312	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-7-638881898265533288.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	7	f	2026-10-06 15:05:29.718427	\N
 86313	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-8-638881898259086764.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	8	f	2026-10-06 15:05:29.718427	\N
 86314	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-9-638881898252975443.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	9	f	2026-10-06 15:05:29.718427	\N
-90409	12077	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220d-7avdf-thumb161345.jpg	Casio MTP-B220D-7AVDF - Nam	0	t	2026-10-06 15:05:29.718427	\N
 86315	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-10-638881898246057339.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	10	f	2026-10-06 15:05:29.718427	\N
 86316	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-11-638881898239915478.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	11	f	2026-10-06 15:05:29.718427	\N
 86317	344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/340558/dell-inspiron-15-3530-i5-n3530-i5u165w11slu-hs24-12-638881898233915693.jpg	Dell Inspiron 15 3530 i5 1334U (N3530-i5U165W11SLU-HS24)	12	f	2026-10-06 15:05:29.718427	\N
@@ -7894,7 +7881,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86480	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-2-639116004015839886.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	2	f	2026-10-06 15:05:29.718427	\N
 86481	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-3-639116004026917402.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	3	f	2026-10-06 15:05:29.718427	\N
 86482	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-4-639116004034002141.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	4	f	2026-10-06 15:05:29.718427	\N
-90410	12077	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370458/dong-ho-casio-38-mm-nam-mtp-b220d-7avdf-1-639223207180540100.jpg	Casio MTP-B220D-7AVDF - Nam	1	f	2026-10-06 15:05:29.718427	\N
 86483	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-5-639116004040377281.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	5	f	2026-10-06 15:05:29.718427	\N
 86484	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-6-639116004046451041.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	6	f	2026-10-06 15:05:29.718427	\N
 86485	376	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/364979/acer-gaming-aspire-7-a715-59g-79xf-core-7-240h-nh-qx6sv-008-7-639116004053738308.jpg	Acer Gaming Aspire 7 A715-59G-79XF Core 7 240H (NH.QX6SV.008)	7	f	2026-10-06 15:05:29.718427	\N
@@ -7928,7 +7914,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86513	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/dell-inspiron-15-3530-i7-71053721-12-639017504182764974.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	12	f	2026-10-06 15:05:29.718427	\N
 86514	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/dell-inspiron-15-3530-i7-71053721-13-639017504176397251.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	13	f	2026-10-06 15:05:29.718427	\N
 86515	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/dell-inspiron-15-3530-i7-71053721-14-639017504169657727.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	14	f	2026-10-06 15:05:29.718427	\N
-100673	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-5-638762548535230082.jpg	ELIO 22 mm Nữ ES201-01	5	f	2026-10-06 15:05:29.718427	\N
 86516	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/dell-inspiron-15-3530-i7-71053721-15-639017504162886829.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	15	f	2026-10-06 15:05:29.718427	\N
 86517	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/dell-inspiron-15-3530-i7-71053721-16-639017504156275990.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	16	f	2026-10-06 15:05:29.718427	\N
 86518	380	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/337472/Kit/dell-inspiron-15-3530-i7-71053721-bbh-639017504713395416.jpg	Dell Inspiron 15 3530 i7 1355U (71053721)	17	f	2026-10-06 15:05:29.718427	\N
@@ -8092,7 +8077,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86674	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-1-639083151883511129.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	1	f	2026-10-06 15:05:29.718427	\N
 86675	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-2-639083151890042697.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	2	f	2026-10-06 15:05:29.718427	\N
 86676	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-3-639083151877224121.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	3	f	2026-10-06 15:05:29.718427	\N
-100674	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-6-638762548541357968.jpg	ELIO 22 mm Nữ ES201-01	6	f	2026-10-06 15:05:29.718427	\N
 86677	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-4-639083151902648244.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	4	f	2026-10-06 15:05:29.718427	\N
 86678	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-5-639083151860918336.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	5	f	2026-10-06 15:05:29.718427	\N
 86679	11765	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/362407/asus-zenbook-s-16-um5606ga-r9-ai-465-ss384ws-6-639083151896122793.jpg	Asus Zenbook S 16 UM5606GA R9 AI 465 (SS384WS)	6	f	2026-10-06 15:05:29.718427	\N
@@ -8159,7 +8143,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86743	399	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/334800/asus-zenbook-a14-ux3407qa-x1-26-100-qd299ws-8-638760913204389049.jpg	Asus Zenbook A14 UX3407QA X1 26 100 (QD299WS)	8	f	2026-10-06 15:05:29.718427	\N
 86744	399	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/334800/asus-zenbook-a14-ux3407qa-x1-26-100-qd299ws-9-638760913209564569.jpg	Asus Zenbook A14 UX3407QA X1 26 100 (QD299WS)	9	f	2026-10-06 15:05:29.718427	\N
 86745	399	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/334800/asus-zenbook-a14-ux3407qa-x1-26-100-qd299ws-30-638780031026415174.jpg	Asus Zenbook A14 UX3407QA X1 26 100 (QD299WS)	10	f	2026-10-06 15:05:29.718427	\N
-90411	12077	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370458/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-99-639223207172755520.jpg	Casio MTP-B220D-7AVDF - Nam	2	f	2026-10-06 15:05:29.718427	\N
 86746	401	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/366167/lenovo-gaming-loq-15irx9-i7-13645hx-83dv01h3vn-thumb-639127729084399293-450x300.jpg	Lenovo Gaming LOQ 15IRX9 i7 13645HX (83DV01H3VN)	0	t	2026-10-06 15:05:29.718427	\N
 86747	401	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366167/lenovo-gaming-loq-15irx9-i7-13645hx-83dv01h3vn-1-639126447758680209.jpg	Lenovo Gaming LOQ 15IRX9 i7 13645HX (83DV01H3VN)	1	f	2026-10-06 15:05:29.718427	\N
 86748	401	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366167/lenovo-gaming-loq-15irx9-i7-13645hx-83dv01h3vn-2-639126447780766895.jpg	Lenovo Gaming LOQ 15IRX9 i7 13645HX (83DV01H3VN)	2	f	2026-10-06 15:05:29.718427	\N
@@ -8291,7 +8274,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 86873	409	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363898/lenovo-thinkpad-e14-gen-7-ultra-5-228v-21u2003svn-4-639093396458095148.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 228V (21U2003SVN)	4	f	2026-10-06 15:05:29.718427	\N
 86874	409	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363898/lenovo-thinkpad-e14-gen-7-ultra-5-228v-21u2003svn-5-639093396467245655.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 228V (21U2003SVN)	5	f	2026-10-06 15:05:29.718427	\N
 86875	409	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363898/lenovo-thinkpad-e14-gen-7-ultra-5-228v-21u2003svn-6-639093396473341614.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 228V (21U2003SVN)	6	f	2026-10-06 15:05:29.718427	\N
-90412	12078	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-thumb155427.jpg	Casio MTP-B220D-1AVDF - Nam	0	t	2026-10-06 15:05:29.718427	\N
 86876	409	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363898/lenovo-thinkpad-e14-gen-7-ultra-5-228v-21u2003svn-7-639093396481185163.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 228V (21U2003SVN)	7	f	2026-10-06 15:05:29.718427	\N
 86877	409	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363898/lenovo-thinkpad-e14-gen-7-ultra-5-228v-21u2003svn-99-639092739360082848.jpg	Lenovo ThinkPad E14 Gen 7 Ultra 5 228V (21U2003SVN)	8	f	2026-10-06 15:05:29.718427	\N
 86878	412	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/359299/msi-gaming-katana-15-hx-b14wfk-i9-14900hx-294vn-thumb-638992320496080119-600x600.jpg	MSI Gaming Katana 15 HX B14WFK i9 14900HX (294VN)	0	t	2026-10-06 15:05:29.718427	\N
@@ -8644,7 +8626,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 87220	464	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370357/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015v-14-639222577933102727.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK006GVN)	5	f	2026-10-06 15:05:29.718427	\N
 96945	12991	https://cdn.tgdd.vn/Products/Images/7264/228826/q-q-a212j005y-nu-2-org.jpg	Q&Q 38 mm Nữ A212J005Y	1	f	2026-10-06 15:05:29.718427	\N
 87221	464	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370357/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015v-15-639222577952260898.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK006GVN)	6	f	2026-10-06 15:05:29.718427	\N
-90413	12078	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370457/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-1-639223195450142713.jpg	Casio MTP-B220D-1AVDF - Nam	1	f	2026-10-06 15:05:29.718427	\N
 87222	464	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370357/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015v-16-639222577892594525.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK006GVN)	7	f	2026-10-06 15:05:29.718427	\N
 87223	464	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370357/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015v-17-639222577900159188.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK006GVN)	8	f	2026-10-06 15:05:29.718427	\N
 87224	464	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/370357/lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015v-18-639222577906393783.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK006GVN)	9	f	2026-10-06 15:05:29.718427	\N
@@ -8752,7 +8733,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 87327	11776	https://cdnv2.tgdd.vn/pim/cdn/images/202609/asus-zenbook-s-14-ux5406aa-ultra-9-386h-su348w-5-639251104617750868150136.jpg	Asus Zenbook S 14 UX5406AA Ultra 9 386H (SU348W)	5	f	2026-10-06 15:05:29.718427	\N
 87328	11776	https://cdnv2.tgdd.vn/pim/cdn/images/202609/asus-zenbook-s-14-ux5406aa-ultra-9-386h-su348w-6-639251104630047259150136.jpg	Asus Zenbook S 14 UX5406AA Ultra 9 386H (SU348W)	6	f	2026-10-06 15:05:29.718427	\N
 96948	12991	https://cdn.tgdd.vn/Products/Images/7264/228826/q-q-a212j005y-nu-5-org.jpg	Q&Q 38 mm Nữ A212J005Y	4	f	2026-10-06 15:05:29.718427	\N
-90414	12078	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370457/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-99-639223195457216541.jpg	Casio MTP-B220D-1AVDF - Nam	2	f	2026-10-06 15:05:29.718427	\N
 87329	11776	https://cdnv2.tgdd.vn/pim/cdn/images/202609/asus-zenbook-s-14-ux5406aa-ultra-9-386h-su348w-7-639251104640271752150136.jpg	Asus Zenbook S 14 UX5406AA Ultra 9 386H (SU348W)	7	f	2026-10-06 15:05:29.718427	\N
 87330	11776	https://cdnv2.tgdd.vn/pim/cdn/images/202609/asus-zenbook-s-14-ux5406aa-ultra-9-386h-su348w-8-639251104652584731150136.jpg	Asus Zenbook S 14 UX5406AA Ultra 9 386H (SU348W)	8	f	2026-10-06 15:05:29.718427	\N
 87331	11776	https://cdnv2.tgdd.vn/pim/cdn/images/202609/asus-zenbook-s-14-ux5406aa-ultra-9-386h-su348w-9-639251104663569950150136.jpg	Asus Zenbook S 14 UX5406AA Ultra 9 386H (SU348W)	9	f	2026-10-06 15:05:29.718427	\N
@@ -9405,7 +9385,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 87977	544	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369461/asus-expertbook-ultra-b9-b9406caa-x7321tw-ultra-x7-358h-32gb-1tb-wqxga-oled-120hz-win11-9-639198101147344210.jpg	Asus ExpertBook Ultra B9 B9406CAA Ultra X7 358H (X7321TW)	10	f	2026-10-06 15:05:29.718427	\N
 87978	544	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369461/asus-expertbook-ultra-b9-b9406caa-x7321tw-ultra-x7-358h-32gb-1tb-wqxga-oled-120hz-win11-10-639198101153043199.jpg	Asus ExpertBook Ultra B9 B9406CAA Ultra X7 358H (X7321TW)	11	f	2026-10-06 15:05:29.718427	\N
 88037	524	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369213/msi-gaming-cyborg-15-c13weo-417vn-i7-13620h-16gb-512gb-rtx-5050-8gb-full-hd-144hz-win11-6-639198186673673939.jpg	MSI Gaming Cyborg 15 C13WEO-417VN i7 13620H	6	f	2026-10-06 15:05:29.718427	\N
-90415	12079	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-thumb133552.jpg	CASIO MTP-B220BL-7AVDF	0	t	2026-10-06 15:05:29.718427	\N
+98079	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-99.jpeg	ELIO 26 mm Nữ EL136-01	8	f	2026-10-06 15:05:29.718427	\N
 87979	544	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369461/asus-expertbook-ultra-b9-b9406caa-x7321tw-ultra-x7-358h-32gb-1tb-wqxga-oled-120hz-win11-99-639198101240888360.jpg	Asus ExpertBook Ultra B9 B9406CAA Ultra X7 358H (X7321TW)	12	f	2026-10-06 15:05:29.718427	\N
 87980	576	https://cdnv2.tgdd.vn/pim/cdn/images/202607/asus-zenbook-14-um3406ga-r7-ai-445-qd075w-thumb124947.jpg	Asus Zenbook 14 UM3406GA R7 AI 445 (QD075W)	1	f	2026-10-06 15:05:29.718427	\N
 87981	576	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/369460/asus-zenbook-14-um3406ga-qd075w-r7-ai-445-16gb-512gb-wuxga-oled-win11-1-639198072005633268.jpg	Asus Zenbook 14 UM3406GA R7 AI 445 (QD075W)	2	f	2026-10-06 15:05:29.718427	\N
@@ -9739,12 +9719,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88306	506	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367899/asus-vivobook-15-x1504ma-core-7-350-bq633w-99-639167104534607813.jpg	Asus Vivobook 15 X1504MA Core 7 350 (BQ633W)	2	f	2026-10-06 15:05:29.718427	\N
 88307	179	https://cdn.tgdd.vn/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-vang.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	1	f	2026-10-06 15:05:29.718427	\N
 88308	493	https://cdn.tgdd.vn/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-bac-1.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	1	f	2026-10-06 15:05:29.718427	\N
-88312	343	https://cdn.tgdd.vn/Products/Images/44/358088/macbook-pro-14-inch-m5-16gb-1tb-den.jpg	MacBook Pro 14 inch M5 16GB/1TB	0	t	2026-10-06 15:05:29.718427	\N
 88313	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-thumb-639148705059412958-600x600.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	0	t	2026-10-06 15:05:29.718427	\N
 88922	11823	https://cdn.tgdd.vn/Products/Images/7077/370346/huawei-watch-gt-7-thumb.jpg	Huawei Watch GT 7 Pro 46mm dây Fluor	0	t	2026-10-06 15:05:29.718427	\N
 88314	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-1-639153177662132114.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	1	f	2026-10-06 15:05:29.718427	\N
 88315	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-2-639153177668379598.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	2	f	2026-10-06 15:05:29.718427	\N
 88316	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-3-639153177676150422.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	3	f	2026-10-06 15:05:29.718427	\N
+90448	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-1-639220575185742091.jpg	SL272-01	1	f	2026-10-06 15:05:29.718427	\N
 88317	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-4-639153177684720294.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	4	f	2026-10-06 15:05:29.718427	\N
 88318	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-5-639153177691129031.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	5	f	2026-10-06 15:05:29.718427	\N
 88319	467	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367374/acer-aspire-lite-14-al14-45p-r7z3-r3-5400u-nx-dpesv-002-6-639153177698105244.jpg	Acer Aspire Lite 14 AL14-45P-R7Z3 R3 5400U (NX.DPESV.002)	6	f	2026-10-06 15:05:29.718427	\N
@@ -9834,7 +9814,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88434	529	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/365617/hp-elitebook-6-g1a-14-r7-ai-350-c0ce2pt-1-639117649149894156.jpg	HP EliteBook 6 G1a 14 R7 AI 350 (C0CE2PT)	1	f	2026-10-06 15:05:29.718427	\N
 90399	12075	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370370/smilekid-sl317-08-tre-em-2-639221440756677829.jpg	Smile Kid SL317-08 - Trẻ em	4	f	2026-10-06 15:05:29.718427	\N
 88403	560	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366091/acer-gaming-predator-helios-neo-16-phn16-i31-50h7-i5-14450hx-nh-u4ssv-001-2-639126439319422767.jpg	Acer Gaming Predator Helios Neo 16 PHN16-I31-50H7 i5 14450HX (NH.U4SSV.001)	2	f	2026-10-06 15:05:29.718427	\N
-90416	12079	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370456/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-1-639223112394578120.jpg	CASIO MTP-B220BL-7AVDF	1	f	2026-10-06 15:05:29.718427	\N
+90449	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-2-639220575194591771.jpg	SL272-01	2	f	2026-10-06 15:05:29.718427	\N
 88404	560	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366091/acer-gaming-predator-helios-neo-16-phn16-i31-50h7-i5-14450hx-nh-u4ssv-001-3-639126439327403795.jpg	Acer Gaming Predator Helios Neo 16 PHN16-I31-50H7 i5 14450HX (NH.U4SSV.001)	3	f	2026-10-06 15:05:29.718427	\N
 88405	560	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366091/acer-gaming-predator-helios-neo-16-phn16-i31-50h7-i5-14450hx-nh-u4ssv-001-4-639126439334008133.jpg	Acer Gaming Predator Helios Neo 16 PHN16-I31-50H7 i5 14450HX (NH.U4SSV.001)	4	f	2026-10-06 15:05:29.718427	\N
 88406	560	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/366091/acer-gaming-predator-helios-neo-16-phn16-i31-50h7-i5-14450hx-nh-u4ssv-001-5-639126439340582819.jpg	Acer Gaming Predator Helios Neo 16 PHN16-I31-50H7 i5 14450HX (NH.U4SSV.001)	5	f	2026-10-06 15:05:29.718427	\N
@@ -10180,15 +10160,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88744	610	https://cdn.tgdd.vn/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-128gb-xanh-thumb.jpg	iPad Air M4 11 inch WiFi 128GB	1	f	2026-10-06 15:05:29.718427	\N
 88745	609	https://cdn.tgdd.vn/Products/Images/522/335308/ipad-11-wifi-pink-thumb.jpg	iPad A16 WiFi 128GB	1	f	2026-10-06 15:05:29.718427	\N
 88746	11798	https://cdn.tgdd.vn/Products/Images/522/361231/oppo-pad-5-8gb-256gb-hong-thumb.jpg	OPPO Pad 5 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
-88747	11799	https://cdn.tgdd.vn/Products/Images/522/359090/samsung-galaxy-tab-a11-plus-5g-8gb-256gb-bac.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88748	614	https://cdn.tgdd.vn/Products/Images/522/359086/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb-bac-thumb.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
 88749	11800	https://cdn.tgdd.vn/Products/Images/522/362717/xiaomi-pad-8-xanh-thumb.jpg	Xiaomi Pad 8 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88750	618	https://cdn.tgdd.vn/Products/Images/522/358082/ipad-pro-m5-wifi-11-inch-sliver-thumb.jpg	iPad Pro M5 11 inch WiFi 256GB	1	f	2026-10-06 15:05:29.718427	\N
 88751	617	https://cdn.tgdd.vn/Products/Images/522/331229/ipad-mini-7-wifi-grey-thumb.jpg	iPad mini 7 WiFi 128GB	1	f	2026-10-06 15:05:29.718427	\N
-88752	11801	https://cdn.tgdd.vn/Products/Images/522/345549/samsung-galaxy-tab-a11-4g-8gb-128gb-trang.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
-88753	11802	https://cdn.tgdd.vn/Products/Images/522/344722/samsung-galaxy-tab-s11-5g-12gb-256gb-xam-thumb.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88754	11803	https://cdn.tgdd.vn/Products/Images/522/362719/xiaomi-pad-8-pro-xanh-la-thumb.jpg	Xiaomi Pad 8 Pro 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
-88755	11804	https://cdn.tgdd.vn/Products/Images/522/342547/lenovo-idea-tab-wifi-blue-thumb.jpg	Lenovo Idea Tab WiFi 8GB/128GB	0	t	2026-10-06 15:05:29.718427	\N
 88756	11805	https://cdn.tgdd.vn/Products/Images/522/339206/xiaomi-redmi-pad-2-tim-thumb.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88757	626	https://cdn.tgdd.vn/Products/Images/522/335311/ipad-11-5g-yellow-thumb.jpg	iPad A16 5G 128GB	1	f	2026-10-06 15:05:29.718427	\N
 88758	627	https://cdn.tgdd.vn/Products/Images/522/356854/xiaomi-redmi-pad-2-pro-grey-thumb.jpg	Xiaomi Redmi Pad 2 Pro WiFi 6GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
@@ -10200,7 +10176,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88764	628	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/333917/oppo-pad-3-bac-6-638752291569283169.jpg	OPPO Pad 3 8GB/256GB	6	f	2026-10-06 15:05:29.718427	\N
 88765	628	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/333917/oppo-pad-3-bac-7-638752291575569233.jpg	OPPO Pad 3 8GB/256GB	7	f	2026-10-06 15:05:29.718427	\N
 88773	629	https://cdn.tgdd.vn/Products/Images/522/336740/samsung-galaxy-tab-s10-fe-plus-silver-thumb.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	1	f	2026-10-06 15:05:29.718427	\N
-88774	11806	https://cdn.tgdd.vn/Products/Images/522/322131/samsung-galaxy-tab-s10-plus-sliver-thumb.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88775	11807	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-tab-s12-ultra-thumb131949.jpeg	Samsung Galaxy Tab S12 Ultra WiFi 12GB/256GB	0	t	2026-10-06 15:05:29.718427	\N
 88776	11808	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-tab-s12-plus-gray-thumb115600.jpg	Samsung Galaxy Tab S12+ WiFi 12GB/256GB Xám	0	t	2026-10-06 15:05:29.718427	\N
 88777	11809	https://cdn.tgdd.vn/Products/Images/522/295452/ipad-10-wifi-cellular-pink-thumb.jpeg	iPad 10 5G 256GB	0	t	2026-10-06 15:05:29.718427	\N
@@ -10240,7 +10215,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88817	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-2-639165331490777895.jpg	Amazfit Bip Max 49.5mm dây silicone	2	f	2026-10-06 15:05:29.718427	\N
 88818	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-3-639165331496751406.jpg	Amazfit Bip Max 49.5mm dây silicone	3	f	2026-10-06 15:05:29.718427	\N
 88819	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-4-639165331504788945.jpg	Amazfit Bip Max 49.5mm dây silicone	4	f	2026-10-06 15:05:29.718427	\N
-90417	12079	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370456/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-99-639223112403186966.jpg	CASIO MTP-B220BL-7AVDF	2	f	2026-10-06 15:05:29.718427	\N
 88820	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-5-639165331510782643.jpg	Amazfit Bip Max 49.5mm dây silicone	5	f	2026-10-06 15:05:29.718427	\N
 88821	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-6-639165331518330019.jpg	Amazfit Bip Max 49.5mm dây silicone	6	f	2026-10-06 15:05:29.718427	\N
 88822	665	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/367947/amazfit-bip-max-49-5mm-day-silicone-hc-7-639165331524546020.jpg	Amazfit Bip Max 49.5mm dây silicone	7	f	2026-10-06 15:05:29.718427	\N
@@ -10347,11 +10321,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88924	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-1-639235945872649672.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	1	f	2026-10-06 15:05:29.718427	\N
 88925	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-2-639235945879387192.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	2	f	2026-10-06 15:05:29.718427	\N
 88926	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-4-639235945991609545.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	3	f	2026-10-06 15:05:29.718427	\N
-90418	12080	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220bl-1avdf-thumb132156.jpg	CASIO MTP-B220BL-1AVDF	0	t	2026-10-06 15:05:29.718427	\N
 88927	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-5-639235946002215282.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	4	f	2026-10-06 15:05:29.718427	\N
 88928	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-6-639235946014564332.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	5	f	2026-10-06 15:05:29.718427	\N
 88929	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-7-639235946023633431.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	6	f	2026-10-06 15:05:29.718427	\N
 88930	11824	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370931/garmin-fenix-9-sapphire-51mm-vien-titanium-carbon-day-silicone-8-639235946087286042.jpg	Garmin Fenix 9 Sapphire 51mm viền Titanium Carbon dây silicone	7	f	2026-10-06 15:05:29.718427	\N
+90450	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-3-639220575201994455.jpg	SL272-01	3	f	2026-10-06 15:05:29.718427	\N
 88931	718	https://cdnv2.tgdd.vn/pim/cdn/images/202609/garmin-fenix-9-sapphire-47mm-vien-titanium-carbon-day-silicone-thumb2-600x600060453.jpg	Garmin Fenix 9 Sapphire 47mm viền Titanium Carbon dây silicone	1	f	2026-10-06 15:05:29.718427	\N
 88932	718	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370930/garmin-fenix-9-sapphire-47mm-vien-titanium-carbon-day-silicone-1-639235933383718199.jpg	Garmin Fenix 9 Sapphire 47mm viền Titanium Carbon dây silicone	2	f	2026-10-06 15:05:29.718427	\N
 88933	718	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/370930/garmin-fenix-9-sapphire-47mm-vien-titanium-carbon-day-silicone-2-639235933393217618.jpg	Garmin Fenix 9 Sapphire 47mm viền Titanium Carbon dây silicone	3	f	2026-10-06 15:05:29.718427	\N
@@ -10379,7 +10353,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 88954	794	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/369675/amazfit-bip-balance-3-51-4mm-day-silicone-8-639209297563243639.jpg	Amazfit Balance 3 51.4mm dây silicone	9	f	2026-10-06 15:05:29.718427	\N
 88955	794	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/369675/amazfit-bip-balance-3-51-4mm-day-silicone-9-639209297553199991.jpg	Amazfit Balance 3 51.4mm dây silicone	10	f	2026-10-06 15:05:29.718427	\N
 88956	794	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/369675/amazfit-bip-balance-3-51-4mm-day-silicone-99-639209298292038090.jpg	Amazfit Balance 3 51.4mm dây silicone	11	f	2026-10-06 15:05:29.718427	\N
-100675	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-99-638762548620649060.jpg	ELIO 22 mm Nữ ES201-01	7	f	2026-10-06 15:05:29.718427	\N
 88957	11826	https://cdnv2.tgdd.vn/pim/cdn/images/202607/dong-ho-dinh-vi-tre-em-zobo-k2-thumb-639198203753458889-600x600152424.jpg	Zobo K2 44mm dây silicone	0	t	2026-10-06 15:05:29.718427	\N
 88958	683	https://cdn.tgdd.vn/Products/Images/7077/369321/samsung-galaxy-watch9-lte-44mm-day-silicone-den-thumb.jpg	Samsung Galaxy Watch9 LTE 44mm dây silicone	1	f	2026-10-06 15:05:29.718427	\N
 88959	11827	https://cdnv2.tgdd.vn/pim/cdn/images/202607/dong-ho-dinh-vi-tre-em-zobo-s8-den-thumb163649.jpg	Zobo S8 45mm dây silicone	0	t	2026-10-06 15:05:29.718427	\N
@@ -10500,6 +10473,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89080	701	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361516/huawei-watch-gt-6-pro-honma-46mm-vien-titanium-day-cao-su1-639027902869132092.jpg	Huawei Watch GT 6 Pro Honma 46mm viền Titanium dây Fuor	1	f	2026-10-06 15:05:29.718427	\N
 89081	701	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361516/huawei-watch-gt-6-pro-honma-46mm-vien-titanium-day-cao-su2-639027902875664491.jpg	Huawei Watch GT 6 Pro Honma 46mm viền Titanium dây Fuor	2	f	2026-10-06 15:05:29.718427	\N
 89082	701	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361516/huawei-watch-gt-6-pro-honma-46mm-vien-titanium-day-cao-su3-639027902882378501.jpg	Huawei Watch GT 6 Pro Honma 46mm viền Titanium dây Fuor	3	f	2026-10-06 15:05:29.718427	\N
+90451	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-4-639220575213119504.jpg	SL272-01	4	f	2026-10-06 15:05:29.718427	\N
 89083	701	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361516/huawei-watch-gt-6-pro-honma-46mm-vien-titanium-day-cao-su4-639027902891086706.jpg	Huawei Watch GT 6 Pro Honma 46mm viền Titanium dây Fuor	4	f	2026-10-06 15:05:29.718427	\N
 89084	701	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361516/huawei-watch-gt-6-pro-honma-46mm-vien-titanium-day-fluor-639032224665131650.jpg	Huawei Watch GT 6 Pro Honma 46mm viền Titanium dây Fuor	5	f	2026-10-06 15:05:29.718427	\N
 89085	695	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/361467/oppo-watch-s-46mm-day-nylon-1-639033065281369473.jpg	OPPO Watch S 46mm dây nylon	1	f	2026-10-06 15:05:29.718427	\N
@@ -10563,7 +10537,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89143	697	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354258/huawei-watch-gt-6-pro-46mm-vien-titanium-day-titanium-3-638938974578312873.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Titanium	3	f	2026-10-06 15:05:29.718427	\N
 89144	697	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354258/huawei-watch-gt-6-pro-46mm-vien-titanium-day-titanium-4-638938974588285247.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Titanium	4	f	2026-10-06 15:05:29.718427	\N
 89145	697	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354258/huawei-watch-gt-6-pro-46mm-vien-titanium-day-titanium-5-638938974594170581.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Titanium	5	f	2026-10-06 15:05:29.718427	\N
-111295	15201	https://cdn.tgdd.vn/Products/Images/7264/199324/casio-ltp-1128g-9ardf-vang-16.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-9ARDF	7	f	2026-10-06 15:05:29.718427	\N
 89146	697	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354258/huawei-watch-gt-6-pro-46mm-vien-titanium-day-titanium-99-638950094373194783.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Titanium	6	f	2026-10-06 15:05:29.718427	\N
 89147	693	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354257/huawei-watch-gt-6-pro-46mm-hc-1-638950122270273135.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Woven	1	f	2026-10-06 15:05:29.718427	\N
 89148	693	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/354257/huawei-watch-gt-6-pro-46mm-hc-2-638950122277374378.jpg	Huawei Watch GT 6 Pro 46mm viền Titanium dây Woven	2	f	2026-10-06 15:05:29.718427	\N
@@ -10641,6 +10614,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89219	756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/329479/garmin-fenix-e-47mm-40-638617481023744692.jpg	Garmin Fenix E 47mm viền thép dây silicone	4	f	2026-10-06 15:05:29.718427	\N
 89220	11888	https://cdn.tgdd.vn/Products/Images/7077/329476/garmin-fenix-8-solar-51mm-tb-600x600.jpg	Garmin Fenix 8 Sapphire Solar 51mm viền Titanium dây silicone	0	t	2026-10-06 15:05:29.718427	\N
 89221	11889	https://cdn.tgdd.vn/Products/Images/7077/329472/garmin-fenix-8-47mm-tb-600x600.jpg	Garmin Fenix 8 47mm viền thép dây silicone	0	t	2026-10-06 15:05:29.718427	\N
+98080	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-thumb-fix-600x600.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	0	t	2026-10-06 15:05:29.718427	\N
 89222	11889	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/329472/garmin-fenix-8-47mm-hc-1-638628705719847806.jpg	Garmin Fenix 8 47mm viền thép dây silicone	1	f	2026-10-06 15:05:29.718427	\N
 89223	11889	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/329472/garmin-fenix-8-47mm-hc-2-638628705728662385.jpg	Garmin Fenix 8 47mm viền thép dây silicone	2	f	2026-10-06 15:05:29.718427	\N
 89224	11889	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7077/329472/garmin-fenix-8-47mm-hc-3-638628705736759228.jpg	Garmin Fenix 8 47mm viền thép dây silicone	3	f	2026-10-06 15:05:29.718427	\N
@@ -10751,7 +10725,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89330	842	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331125/orient-ra-tx0306s10b-nam-6-638654690379144105.jpg	ORIENT Contemporary 40 mm Nam RA-TX0306S10B	4	f	2026-10-06 15:05:29.718427	\N
 89331	842	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331125/orient-ra-tx0306s10b-nam-99-638654690385309903.jpg	ORIENT Contemporary 40 mm Nam RA-TX0306S10B	5	f	2026-10-06 15:05:29.718427	\N
 89332	841	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/330392/orient-ra-as0010s30b-nam-1-638642637114509907.jpg	ORIENT Sun & Moon 42 mm Nam RA-AS0010S30B	1	f	2026-10-06 15:05:29.718427	\N
-111296	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-thumb-600x600.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	0	t	2026-10-06 15:05:29.718427	\N
 89333	841	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/330392/orient-ra-as0010s30b-nam-2-638642637121339882.jpg	ORIENT Sun & Moon 42 mm Nam RA-AS0010S30B	2	f	2026-10-06 15:05:29.718427	\N
 89334	841	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/330392/orient-ra-as0010s30b-nam-3-638642637128865432.jpg	ORIENT Sun & Moon 42 mm Nam RA-AS0010S30B	3	f	2026-10-06 15:05:29.718427	\N
 89335	841	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/330392/orient-ra-as0010s30b-nam-4-638642637135023575.jpg	ORIENT Sun & Moon 42 mm Nam RA-AS0010S30B	4	f	2026-10-06 15:05:29.718427	\N
@@ -10946,7 +10919,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89523	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-1-639026169559117356.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	1	f	2026-10-06 15:05:29.718427	\N
 89524	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-2-639026169568212668.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	2	f	2026-10-06 15:05:29.718427	\N
 89525	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-3-639026169575608051.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	3	f	2026-10-06 15:05:29.718427	\N
-111297	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-5-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	1	f	2026-10-06 15:05:29.718427	\N
 89526	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-5-639026169582359981.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	4	f	2026-10-06 15:05:29.718427	\N
 89527	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-6-639026169588797851.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	5	f	2026-10-06 15:05:29.718427	\N
 89528	11918	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/360568/orient-ra-ar0003l30b-nam-99-639020169902787387.jpg	ORIENT Contemporary 42 mm Nam RA-AR0003L30B	6	f	2026-10-06 15:05:29.718427	\N
@@ -11142,6 +11114,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89717	11960	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371371/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0001s30b-5-639255155409944507.webp	Orient RA-AG0001S30B - Nam	5	f	2026-10-06 15:05:29.718427	\N
 89718	11961	https://cdnv2.tgdd.vn/pim/cdn/images/202609/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0002s30b-thumb152454135734.jpg	Orient RA-AG0002S30B - Nam	0	t	2026-10-06 15:05:29.718427	\N
 89719	11961	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371370/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0002s30b-1-639255141304211789.webp	Orient RA-AG0002S30B - Nam	1	f	2026-10-06 15:05:29.718427	\N
+98081	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-1.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	1	f	2026-10-06 15:05:29.718427	\N
 89720	11961	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371370/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0002s30b-2-639255141319503368.webp	Orient RA-AG0002S30B - Nam	2	f	2026-10-06 15:05:29.718427	\N
 89721	11961	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371370/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0002s30b-3-639255141332404826.webp	Orient RA-AG0002S30B - Nam	3	f	2026-10-06 15:05:29.718427	\N
 89722	11961	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371370/dong-ho-orient-bambino-open-heart-40-5-mm-nam-ra-ag0002s30b-4-639255141384735884.webp	Orient RA-AG0002S30B - Nam	4	f	2026-10-06 15:05:29.718427	\N
@@ -11282,6 +11255,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89858	11984	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371037/dong-ho-elio-elegant-lady-26-mm-nu-es313-02-060926-111100-717-600x600.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-02	0	t	2026-10-06 15:05:29.718427	\N
 89859	11984	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371037/es313-02-1-639243330567568500.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-02	1	f	2026-10-06 15:05:29.718427	\N
 89860	11984	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371037/es313-02-2-639243330578371571.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-02	2	f	2026-10-06 15:05:29.718427	\N
+98082	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-2.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	2	f	2026-10-06 15:05:29.718427	\N
 89861	11984	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371037/es313-02-3-639243330585834670.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-02	3	f	2026-10-06 15:05:29.718427	\N
 89862	11985	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371036/dong-ho-elio-elegant-lady-26-mm-nu-es313-01-060926-111025-478-600x600.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-01	0	t	2026-10-06 15:05:29.718427	\N
 89863	11985	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371036/es313-01-1-639243330217746089.jpg	Đồng hồ Elio Elegant Lady 26 mm Nữ ES313-01	1	f	2026-10-06 15:05:29.718427	\N
@@ -11383,9 +11357,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89957	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-4-639236027316284430.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	4	f	2026-10-06 15:05:29.718427	\N
 89958	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-5-639236027310030161.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	5	f	2026-10-06 15:05:29.718427	\N
 89959	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-6-639236027295893433.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	6	f	2026-10-06 15:05:29.718427	\N
-111298	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-6-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	2	f	2026-10-06 15:05:29.718427	\N
 89960	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-7-639236027355891233.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	7	f	2026-10-06 15:05:29.718427	\N
 89961	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-8-639236027302911090.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	8	f	2026-10-06 15:05:29.718427	\N
+98083	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-3.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	3	f	2026-10-06 15:05:29.718427	\N
 89962	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-9-639236027288796200.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	9	f	2026-10-06 15:05:29.718427	\N
 89963	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-10-639236027282752290.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	10	f	2026-10-06 15:05:29.718427	\N
 89964	12002	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370727/dong-ho-g-shock-44-2-mm-nam-gst-b1000d-1adr-11-639236027276215265.jpg	Đồng hồ G-Shock 44.2 mm Nam GST-B1000D-1ADR	11	f	2026-10-06 15:05:29.718427	\N
@@ -11419,6 +11393,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 89991	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-3-639241373912500758.jpg	Elio 32 mm ES327-02 - Nữ	1	f	2026-10-06 15:05:29.718427	\N
 89992	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-7-639241373920738362.jpg	Elio 32 mm ES327-02 - Nữ	2	f	2026-10-06 15:05:29.718427	\N
 89993	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-9-639241373927290279.jpg	Elio 32 mm ES327-02 - Nữ	3	f	2026-10-06 15:05:29.718427	\N
+98084	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-4.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	4	f	2026-10-06 15:05:29.718427	\N
 89994	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-10-639241373934343544.jpg	Elio 32 mm ES327-02 - Nữ	4	f	2026-10-06 15:05:29.718427	\N
 89995	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-11-639241373942615597.jpg	Elio 32 mm ES327-02 - Nữ	5	f	2026-10-06 15:05:29.718427	\N
 89996	12005	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/371007/dong-ho-elio-color-pop-32-mm-nu-es327-02-99-639241374134337809.jpg	Elio 32 mm ES327-02 - Nữ	6	f	2026-10-06 15:05:29.718427	\N
@@ -11833,6 +11808,17 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 90405	12076	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370369/smilekid-sl317-05-tre-em-2-639221440190666049.jpg	Smile Kid SL317-05 - Trẻ em	3	f	2026-10-06 15:05:29.718427	\N
 90406	12076	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370369/smilekid-sl317-05-tre-em-3-639221440197507086.jpg	Smile Kid SL317-05 - Trẻ em	4	f	2026-10-06 15:05:29.718427	\N
 90407	12076	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370369/smilekid-sl317-05-tre-em-4-639221440204703250.jpg	Smile Kid SL317-05 - Trẻ em	5	f	2026-10-06 15:05:29.718427	\N
+90408	12076	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370369/smile-kid-sl317-05-tre-em-99-639221449066462005.jpg	Smile Kid SL317-05 - Trẻ em	6	f	2026-10-06 15:05:29.718427	\N
+90409	12077	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220d-7avdf-thumb161345.jpg	Casio MTP-B220D-7AVDF - Nam	0	t	2026-10-06 15:05:29.718427	\N
+90410	12077	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370458/dong-ho-casio-38-mm-nam-mtp-b220d-7avdf-1-639223207180540100.jpg	Casio MTP-B220D-7AVDF - Nam	1	f	2026-10-06 15:05:29.718427	\N
+90411	12077	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370458/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-99-639223207172755520.jpg	Casio MTP-B220D-7AVDF - Nam	2	f	2026-10-06 15:05:29.718427	\N
+90412	12078	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-thumb155427.jpg	Casio MTP-B220D-1AVDF - Nam	0	t	2026-10-06 15:05:29.718427	\N
+90413	12078	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370457/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-1-639223195450142713.jpg	Casio MTP-B220D-1AVDF - Nam	1	f	2026-10-06 15:05:29.718427	\N
+90414	12078	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370457/dong-ho-casio-38-mm-nam-mtp-b220d-1avdf-99-639223195457216541.jpg	Casio MTP-B220D-1AVDF - Nam	2	f	2026-10-06 15:05:29.718427	\N
+90415	12079	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-thumb133552.jpg	CASIO MTP-B220BL-7AVDF	0	t	2026-10-06 15:05:29.718427	\N
+90416	12079	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370456/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-1-639223112394578120.jpg	CASIO MTP-B220BL-7AVDF	1	f	2026-10-06 15:05:29.718427	\N
+90417	12079	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370456/dong-ho-casio-38-mm-nam-mtp-b220bl-7avdf-99-639223112403186966.jpg	CASIO MTP-B220BL-7AVDF	2	f	2026-10-06 15:05:29.718427	\N
+90418	12080	https://cdnv2.tgdd.vn/pim/cdn/images/202608/dong-ho-casio-38-mm-nam-mtp-b220bl-1avdf-thumb132156.jpg	CASIO MTP-B220BL-1AVDF	0	t	2026-10-06 15:05:29.718427	\N
 90419	12080	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370455/dong-ho-casio-38-mm-nam-mtp-b220bl-1avdf-1-639223104008861465.jpg	CASIO MTP-B220BL-1AVDF	1	f	2026-10-06 15:05:29.718427	\N
 90420	12080	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370455/dong-ho-casio-38-mm-nam-mtp-b220bl-1avdf-99-639223104020262624.jpg	CASIO MTP-B220BL-1AVDF	2	f	2026-10-06 15:05:29.718427	\N
 90421	12081	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370213/dong-ho-smile-kid-day-nhua-smile-kid-sl311-02-thumb-639220674999621472-600x600.jpg	SL311-02	0	t	2026-10-06 15:05:29.718427	\N
@@ -11862,15 +11848,10 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 90445	12084	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370216/dong-ho-smile-kid-41-6-mm-tre-em-sl305-02-4-639220651309281858.jpg	SL305-02	4	f	2026-10-06 15:05:29.718427	\N
 90446	12084	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370216/dong-ho-smile-kid-dien-tu-tre-em-day-nhua-sl305-02-99-639220651494108942.jpg	SL305-02	5	f	2026-10-06 15:05:29.718427	\N
 90447	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-dien-tu-smile-kid-tre-em-day-nhua-smile-kid-sl272-01-thumb-639220575778563786-600x600.jpg	SL272-01	0	t	2026-10-06 15:05:29.718427	\N
-90448	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-1-639220575185742091.jpg	SL272-01	1	f	2026-10-06 15:05:29.718427	\N
-90449	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-2-639220575194591771.jpg	SL272-01	2	f	2026-10-06 15:05:29.718427	\N
-90450	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-3-639220575201994455.jpg	SL272-01	3	f	2026-10-06 15:05:29.718427	\N
-90451	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-4-639220575213119504.jpg	SL272-01	4	f	2026-10-06 15:05:29.718427	\N
 90452	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-smile-kid-46-mm-tre-em-sl272-01-5-639220575268014128.jpg	SL272-01	5	f	2026-10-06 15:05:29.718427	\N
 90453	12085	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370217/dong-ho-dien-tu-smile-kid-tre-em-day-nhua-smile-kid-sl272-01-99-639220639393319328.jpg	SL272-01	6	f	2026-10-06 15:05:29.718427	\N
 90454	12086	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370221/dong-ho-kim-tre-em-day-nhua-smile-kid-sl253-05-tim-thumb-639219112396213152-600x600.jpg	Đồng Hồ Smile Kid 38 mm Trẻ Em SL253-05	0	t	2026-10-06 15:05:29.718427	\N
 90455	12086	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370221/dong-ho-kim-tre-em-day-nhua-smile-kid-sl253-05-tim-1-639219112564641365.jpg	Đồng Hồ Smile Kid 38 mm Trẻ Em SL253-05	1	f	2026-10-06 15:05:29.718427	\N
-111299	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-7-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	3	f	2026-10-06 15:05:29.718427	\N
 90456	12086	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370221/dong-ho-kim-tre-em-day-nhua-smile-kid-sl253-05-tim-2-639219112571365171.jpg	Đồng Hồ Smile Kid 38 mm Trẻ Em SL253-05	2	f	2026-10-06 15:05:29.718427	\N
 90457	12086	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370221/dong-ho-kim-tre-em-day-nhua-smile-kid-sl253-05-tim-3-639219112576816374.jpg	Đồng Hồ Smile Kid 38 mm Trẻ Em SL253-05	3	f	2026-10-06 15:05:29.718427	\N
 90458	12086	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/370221/dong-ho-kim-tre-em-day-nhua-smile-kid-sl253-05-tim-4-639219112584304839.jpg	Đồng Hồ Smile Kid 38 mm Trẻ Em SL253-05	4	f	2026-10-06 15:05:29.718427	\N
@@ -12077,6 +12058,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 90658	12132	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369255/casio-bms-500d-7adf-nam-thumb-639193048672263580-600x600.jpg	Casio 43.6 mm Nam BMS-500D-7ADF	0	t	2026-10-06 15:05:29.718427	\N
 90659	12132	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369255/dong-ho-casio-43-6-mm-nam-bms-500d-7adf-1-639198784571407641.jpg	Casio 43.6 mm Nam BMS-500D-7ADF	1	f	2026-10-06 15:05:29.718427	\N
 90660	12132	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369255/dong-ho-casio-43-6-mm-nam-bms-500d-7adf-99-639198784579871940.jpg	Casio 43.6 mm Nam BMS-500D-7ADF	2	f	2026-10-06 15:05:29.718427	\N
+98085	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-5.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	5	f	2026-10-06 15:05:29.718427	\N
 90661	12133	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369254/casio-bms-500d-1adf-nam-thumb-639193044981766909-600x600.jpg	Casio 43.6 mm Nam BMS-500D-1ADF	0	t	2026-10-06 15:05:29.718427	\N
 90662	12133	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369254/dong-ho-casio-43-6-mm-nam-bms-500d-1adf-1-639198783848828993.jpg	Casio 43.6 mm Nam BMS-500D-1ADF	1	f	2026-10-06 15:05:29.718427	\N
 90663	12133	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/369254/dong-ho-casio-43-6-mm-nam-bms-500d-1adf-99-639198783857870930.jpg	Casio 43.6 mm Nam BMS-500D-1ADF	2	f	2026-10-06 15:05:29.718427	\N
@@ -12299,6 +12281,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 90880	12163	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367460/smile-kid-sl307-01-tre-em-4-639153079410655102.jpg	SMILE KID 35.4 mm Trẻ em SL307-01	4	f	2026-10-06 15:05:29.718427	\N
 90881	12163	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367460/smile-kid-sl307-01-tre-em-5-639153079416988812.jpg	SMILE KID 35.4 mm Trẻ em SL307-01	5	f	2026-10-06 15:05:29.718427	\N
 90882	12163	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367460/smile-kid-sl307-01-tre-em-8-639153079423097609.jpg	SMILE KID 35.4 mm Trẻ em SL307-01	6	f	2026-10-06 15:05:29.718427	\N
+98086	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-7.jpeg	ELIO Ngày có em 32 mm Nữ EL125-01	6	f	2026-10-06 15:05:29.718427	\N
 90883	12163	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367460/smile-kid-sl307-01-tre-em-99-639153369489008426.jpg	SMILE KID 35.4 mm Trẻ em SL307-01	7	f	2026-10-06 15:05:29.718427	\N
 90884	12164	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367459/smile-kid-sl307-02-tre-em-thumb-639153078868168545-600x600.jpg	Smile Kid 35.4 mm Trẻ em SL307-02	0	t	2026-10-06 15:05:29.718427	\N
 90885	12164	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367459/smile-kid-sl307-02-tre-em-1-639153078976380782.jpg	Smile Kid 35.4 mm Trẻ em SL307-02	1	f	2026-10-06 15:05:29.718427	\N
@@ -12416,6 +12399,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 90997	12183	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367438/elio-es293-03-nu-3-639148971740795947.jpg	Elio 28 mm Nữ ES293-03	2	f	2026-10-06 15:05:29.718427	\N
 90998	12183	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367438/elio-es293-03-nu-4-639148971747065215.jpg	Elio 28 mm Nữ ES293-03	3	f	2026-10-06 15:05:29.718427	\N
 90999	12183	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367438/elio-es293-03-nu-99-639149713345702911.jpg	Elio 28 mm Nữ ES293-03	4	f	2026-10-06 15:05:29.718427	\N
+98087	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-8.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	7	f	2026-10-06 15:05:29.718427	\N
 91000	12184	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367437/elio-es301-02-nu-thumb-639149705216593157-600x600.jpg	Elio 28 mm Nữ ES301-02	0	t	2026-10-06 15:05:29.718427	\N
 91001	12184	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367437/elio-es301-02-nu-1-639148971313421150.jpg	Elio 28 mm Nữ ES301-02	1	f	2026-10-06 15:05:29.718427	\N
 91002	12184	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367437/elio-es301-02-nu-2-639148971320880419.jpg	Elio 28 mm Nữ ES301-02	2	f	2026-10-06 15:05:29.718427	\N
@@ -12456,6 +12440,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 91037	12191	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367424/elio-es290-01-nu-3-639148961852083727.jpg	Elio 30 mm Nữ ES290-01	2	f	2026-10-06 15:05:29.718427	\N
 91038	12191	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367424/elio-es290-01-nu-4-639148961859083041.jpg	Elio 30 mm Nữ ES290-01	3	f	2026-10-06 15:05:29.718427	\N
 91039	12191	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367424/elio-es290-01-nu-99-639148894985731645.jpg	Elio 30 mm Nữ ES290-01	4	f	2026-10-06 15:05:29.718427	\N
+98088	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-99.jpeg	ELIO Ngày có em 32 mm Nữ EL125-01	8	f	2026-10-06 15:05:29.718427	\N
 91040	12192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367423/elio-es289-02-nu-thumb-639148886412811067-600x600.jpg	Elio 26 mm Nữ ES289-02	0	t	2026-10-06 15:05:29.718427	\N
 91041	12192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367423/elio-es289-02-nu-1-639148961533362106.jpg	Elio 26 mm Nữ ES289-02	1	f	2026-10-06 15:05:29.718427	\N
 91042	12192	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367423/elio-es289-02-nu-2-639148961543425429.jpg	Elio 26 mm Nữ ES289-02	2	f	2026-10-06 15:05:29.718427	\N
@@ -12713,7 +12698,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 91301	12262	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367844/casio-utp-1302pd-1avdf-unisex-3-639160047547624905.jpg	Casio 35 mm Unisex UTP-1302PD-1AVDF	2	f	2026-10-06 15:05:29.718427	\N
 91302	12262	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367844/casio-utp-1302pd-1avdf-unisex-4-639160047553951215.jpg	Casio 35 mm Unisex UTP-1302PD-1AVDF	3	f	2026-10-06 15:05:29.718427	\N
 91303	12262	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367844/casio-utp-1302pd-1avdf-unisex-99-639159309825117949.jpg	Casio 35 mm Unisex UTP-1302PD-1AVDF	4	f	2026-10-06 15:05:29.718427	\N
-92910	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-6-639078065460820550.jpg	SMILE KID 34 mm Trẻ em SL276-02	5	f	2026-10-06 15:05:29.718427	\N
 91304	12263	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367845/casio-utp-1302pd-2a1vdf-unisex-thumb-639159315493019272-600x600.jpg	CASIO 35 mm Unisex UTP-1302PD-2A1VDF	0	t	2026-10-06 15:05:29.718427	\N
 91305	12263	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367845/casio-utp-1302pd-2a1vdf-unisex-1-639160047682082159.jpg	CASIO 35 mm Unisex UTP-1302PD-2A1VDF	1	f	2026-10-06 15:05:29.718427	\N
 91306	12263	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367845/casio-utp-1302pd-2a1vdf-unisex-3-639160047690387426.jpg	CASIO 35 mm Unisex UTP-1302PD-2A1VDF	2	f	2026-10-06 15:05:29.718427	\N
@@ -12742,6 +12726,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 91329	12268	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367850/casio-lw-204-9adf-unisex-1-639162636305991307.jpg	CASIO 35 mm Unisex LW-204-9ADF	1	f	2026-10-06 15:05:29.718427	\N
 91330	12268	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367850/casio-lw-204-9adf-unisex-99-639162636295939949.jpg	CASIO 35 mm Unisex LW-204-9ADF	2	f	2026-10-06 15:05:29.718427	\N
 91331	12269	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367851/casio-a140we-2adf-unisex-thumb-639162626213623477-600x600.jpg	CASIO 36.8 mm Unisex A140WE-2ADF	0	t	2026-10-06 15:05:29.718427	\N
+98089	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-thumb-fix-600x600.jpg	ELIO 29 mm Nữ EC023-02	0	t	2026-10-06 15:05:29.718427	\N
 91332	12269	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367851/casio-a140we-2adf-unisex-1-639160048549180988.jpg	CASIO 36.8 mm Unisex A140WE-2ADF	1	f	2026-10-06 15:05:29.718427	\N
 91333	12269	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367851/casio-a140we-2adf-unisex-3-639160048555020457.jpg	CASIO 36.8 mm Unisex A140WE-2ADF	2	f	2026-10-06 15:05:29.718427	\N
 91334	12269	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/367851/casio-a140we-2adf-unisex-5-639160048561544403.jpg	CASIO 36.8 mm Unisex A140WE-2ADF	3	f	2026-10-06 15:05:29.718427	\N
@@ -12857,6 +12842,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 91445	12303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363372/casio-a158wea-9df-unisex-4-639087594610159793.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-9DF	3	f	2026-10-06 15:05:29.718427	\N
 91446	12303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363372/casio-a158wea-9df-unisex-5-639087594618045706.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-9DF	4	f	2026-10-06 15:05:29.718427	\N
 91447	12303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363372/casio-a158wea-9df-unisex-6-639087594628058550.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-9DF	5	f	2026-10-06 15:05:29.718427	\N
+98090	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-1.jpg	ELIO 29 mm Nữ EC023-02	1	f	2026-10-06 15:05:29.718427	\N
 91448	12303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363372/casio-a158wea-9df-unisex-bac-99-639080599030416297.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-9DF	6	f	2026-10-06 15:05:29.718427	\N
 91449	12304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363371/casio-a158wea-7df-unisex-bac-thumb-639086023992275958-600x600.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-7DF	0	t	2026-10-06 15:05:29.718427	\N
 91450	12304	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363371/casio-a158wea-7df-unisex-bac-1-639086023729590816.jpg	CASIO Vintage 33.2 mm Unisex A158WEA-7DF	1	f	2026-10-06 15:05:29.718427	\N
@@ -12964,6 +12950,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 91551	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-4-638799885517594866.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	4	f	2026-10-06 15:05:29.718427	\N
 91552	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-5-638799885523498449.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	5	f	2026-10-06 15:05:29.718427	\N
 91553	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-6-638799885529994383.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	6	f	2026-10-06 15:05:29.718427	\N
+98091	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-2.jpg	ELIO 29 mm Nữ EC023-02	2	f	2026-10-06 15:05:29.718427	\N
 91554	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-9-638799885536238382.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	7	f	2026-10-06 15:05:29.718427	\N
 91555	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-10-638799885542930409.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	8	f	2026-10-06 15:05:29.718427	\N
 91556	12318	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/336484/citizen-nj0200-50x-unisex-99-638799885549170881.jpg	CITIZEN Tsuyosa 37 mm Unisex NJ0200-50X	9	f	2026-10-06 15:05:29.718427	\N
@@ -13575,7 +13562,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92160	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-thumb-639063377508122350-600x600.jpg	SMILE KID 39 mm Trẻ em SL269-01	0	t	2026-10-06 15:05:29.718427	\N
 92161	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-2-639063377622426182.jpg	SMILE KID 39 mm Trẻ em SL269-01	1	f	2026-10-06 15:05:29.718427	\N
 92162	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-3-639063377630215544.jpg	SMILE KID 39 mm Trẻ em SL269-01	2	f	2026-10-06 15:05:29.718427	\N
-111300	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-8-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	4	f	2026-10-06 15:05:29.718427	\N
 92163	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-4-639063377637488502.jpg	SMILE KID 39 mm Trẻ em SL269-01	3	f	2026-10-06 15:05:29.718427	\N
 92164	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-5-639063377645427129.jpg	SMILE KID 39 mm Trẻ em SL269-01	4	f	2026-10-06 15:05:29.718427	\N
 92165	12404	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362304/smile-kid-sl269-01-tre-em-6-639063377652518341.jpg	SMILE KID 39 mm Trẻ em SL269-01	5	f	2026-10-06 15:05:29.718427	\N
@@ -13605,6 +13591,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92189	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-2-639063377420957577.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	2	f	2026-10-06 15:05:29.718427	\N
 92190	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-3-639063377435757437.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	3	f	2026-10-06 15:05:29.718427	\N
 92191	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-4-639063377443893808.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	4	f	2026-10-06 15:05:29.718427	\N
+98092	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-3.jpg	ELIO 29 mm Nữ EC023-02	3	f	2026-10-06 15:05:29.718427	\N
 92192	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-5-639063377451465257.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	5	f	2026-10-06 15:05:29.718427	\N
 92193	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-6-639063377459834084.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	6	f	2026-10-06 15:05:29.718427	\N
 92194	12407	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362328/smile-kid-sl287-03-tre-em-7-639063377467110958.jpg	SMILE KID 55.5 mm Trẻ em SL287-03	7	f	2026-10-06 15:05:29.718427	\N
@@ -13679,6 +13666,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92263	12415	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363145/smile-kid-sl295-02-tre-em-5-639080661409395165.jpg	SMILE KID 32 mm Trẻ em SL295-02	5	f	2026-10-06 15:05:29.718427	\N
 92264	12415	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363145/smile-kid-sl295-02-tre-em-7-639080661416675628.jpg	SMILE KID 32 mm Trẻ em SL295-02	6	f	2026-10-06 15:05:29.718427	\N
 92265	12415	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363145/smile-kid-sl295-02-tre-em-99-639099615962474561.jpg	SMILE KID 32 mm Trẻ em SL295-02	7	f	2026-10-06 15:05:29.718427	\N
+98093	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-4.jpg	ELIO 29 mm Nữ EC023-02	4	f	2026-10-06 15:05:29.718427	\N
 92266	12416	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363144/smile-kid-sl295-01-tre-em-thumb-639080659349669924-600x600.jpg	SMILE KID 32 mm Trẻ em SL295-01	0	t	2026-10-06 15:05:29.718427	\N
 92267	12416	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363144/smile-kid-sl295-01-tre-em-1-639080660260926850.jpg	SMILE KID 32 mm Trẻ em SL295-01	1	f	2026-10-06 15:05:29.718427	\N
 92268	12416	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363144/smile-kid-sl295-01-tre-em-2-639080660270874297.jpg	SMILE KID 32 mm Trẻ em SL295-01	2	f	2026-10-06 15:05:29.718427	\N
@@ -14167,6 +14155,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92750	12471	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362313/smile-kid-sl126-05-tre-em-5-639063328864807367.jpg	SMILE KID 38.5 mm Trẻ em SL126-05	5	f	2026-10-06 15:05:29.718427	\N
 92751	12471	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362313/smile-kid-sl126-05-tre-em-6-639063328871547525.jpg	SMILE KID 38.5 mm Trẻ em SL126-05	6	f	2026-10-06 15:05:29.718427	\N
 92752	12471	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362313/smile-kid-sl126-05-tre-em-7-639063328880923408.jpg	SMILE KID 38.5 mm Trẻ em SL126-05	7	f	2026-10-06 15:05:29.718427	\N
+98094	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-5.jpg	ELIO 29 mm Nữ EC023-02	5	f	2026-10-06 15:05:29.718427	\N
 92753	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-thumb-638975074484234462-600x600.jpg	SMILE KID 39 mm Trẻ em SL126-04	0	t	2026-10-06 15:05:29.718427	\N
 92754	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-2-638975074573581949.jpg	SMILE KID 39 mm Trẻ em SL126-04	1	f	2026-10-06 15:05:29.718427	\N
 92755	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-3-638975074580090173.jpg	SMILE KID 39 mm Trẻ em SL126-04	2	f	2026-10-06 15:05:29.718427	\N
@@ -14176,7 +14165,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92759	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-7-638975074607935906.jpg	SMILE KID 39 mm Trẻ em SL126-04	6	f	2026-10-06 15:05:29.718427	\N
 92760	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-8-638975074615639821.jpg	SMILE KID 39 mm Trẻ em SL126-04	7	f	2026-10-06 15:05:29.718427	\N
 92761	12472	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358334/smile-kid-sl126-04-tre-em-99-638981965731011168.jpg	SMILE KID 39 mm Trẻ em SL126-04	8	f	2026-10-06 15:05:29.718427	\N
-111301	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-9-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	5	f	2026-10-06 15:05:29.718427	\N
 92762	12473	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358331/smile-kid-sl276-05-tre-em-thumb-638971743537005243-600x600.jpg	SMILE KID 34 mm Trẻ em SL276-05	0	t	2026-10-06 15:05:29.718427	\N
 92763	12473	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358331/smile-kid-sl276-05-tre-em-2-638971743859685332.jpg	SMILE KID 34 mm Trẻ em SL276-05	1	f	2026-10-06 15:05:29.718427	\N
 92764	12473	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/358331/smile-kid-sl276-05-tre-em-3-638971743940509811.jpg	SMILE KID 34 mm Trẻ em SL276-05	2	f	2026-10-06 15:05:29.718427	\N
@@ -14325,6 +14313,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92907	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-3-639078065439482264.jpg	SMILE KID 34 mm Trẻ em SL276-02	2	f	2026-10-06 15:05:29.718427	\N
 92908	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-4-639078065447399570.jpg	SMILE KID 34 mm Trẻ em SL276-02	3	f	2026-10-06 15:05:29.718427	\N
 92909	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-5-639078065454040944.jpg	SMILE KID 34 mm Trẻ em SL276-02	4	f	2026-10-06 15:05:29.718427	\N
+92910	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-6-639078065460820550.jpg	SMILE KID 34 mm Trẻ em SL276-02	5	f	2026-10-06 15:05:29.718427	\N
 92911	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-7-639078065468105577.jpg	SMILE KID 34 mm Trẻ em SL276-02	6	f	2026-10-06 15:05:29.718427	\N
 92912	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-8-639078065476041185.jpg	SMILE KID 34 mm Trẻ em SL276-02	7	f	2026-10-06 15:05:29.718427	\N
 92913	12489	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363122/smile-kid-sl276-02-tre-em-99-639072845653714045.jpg	SMILE KID 34 mm Trẻ em SL276-02	8	f	2026-10-06 15:05:29.718427	\N
@@ -14391,6 +14380,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 92974	12496	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340735/smile-kid-sl267-01-tre-em-7-638889718845619488.jpg	SMILE KID 52.4 mm Trẻ em SL267-01	7	f	2026-10-06 15:05:29.718427	\N
 92975	12496	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340735/smile-kid-sl267-01-tre-em-99-638889718719196082.jpg	SMILE KID 52.4 mm Trẻ em SL267-01	8	f	2026-10-06 15:05:29.718427	\N
 92976	12497	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340734/smile-kid-sl266-01-tre-em-thumb-638889717925526624-600x600.jpg	SMILE KID 47.5 mm Trẻ em SL266-01	0	t	2026-10-06 15:05:29.718427	\N
+98095	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-7.jpeg	ELIO 29 mm Nữ EC023-02	6	f	2026-10-06 15:05:29.718427	\N
 92977	12497	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340734/smile-kid-sl266-01-tre-em-1-638889718136868185.jpg	SMILE KID 47.5 mm Trẻ em SL266-01	1	f	2026-10-06 15:05:29.718427	\N
 92978	12497	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340734/smile-kid-sl266-01-tre-em-2-638889718143902730.jpg	SMILE KID 47.5 mm Trẻ em SL266-01	2	f	2026-10-06 15:05:29.718427	\N
 92979	12497	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340734/smile-kid-sl266-01-tre-em-3-638889718151362903.jpg	SMILE KID 47.5 mm Trẻ em SL266-01	3	f	2026-10-06 15:05:29.718427	\N
@@ -14437,7 +14427,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93020	12501	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340731/smile-kid-sl264-01-tre-em-99-638889692517544911.jpg	SMILE KID 46 mm Trẻ em SL264-01	8	f	2026-10-06 15:05:29.718427	\N
 93021	12502	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340730/smile-kid-sl263-03-tre-em-thumb-638889686084010433-600x600.jpg	SMILE KID 43 mm Trẻ em SL263-03	0	t	2026-10-06 15:05:29.718427	\N
 93022	12502	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340730/smile-kid-sl263-03-tre-em-1-638889683745310051.jpg	SMILE KID 43 mm Trẻ em SL263-03	1	f	2026-10-06 15:05:29.718427	\N
-111302	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-10-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	6	f	2026-10-06 15:05:29.718427	\N
 93023	12502	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340730/smile-kid-sl263-03-tre-em-2-638889683755390516.jpg	SMILE KID 43 mm Trẻ em SL263-03	2	f	2026-10-06 15:05:29.718427	\N
 93024	12502	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340730/smile-kid-sl263-03-tre-em-3-638889683763478425.jpg	SMILE KID 43 mm Trẻ em SL263-03	3	f	2026-10-06 15:05:29.718427	\N
 93025	12502	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340730/smile-kid-sl263-03-tre-em-4-638889683769578086.jpg	SMILE KID 43 mm Trẻ em SL263-03	4	f	2026-10-06 15:05:29.718427	\N
@@ -14541,6 +14530,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93123	12517	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338237/tommy-hilfiger-1720047-tre-em-1-638833481945915983.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720047	1	f	2026-10-06 15:05:29.718427	\N
 93124	12517	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338237/tommy-hilfiger-1720047-tre-em-2-638833481952324037.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720047	2	f	2026-10-06 15:05:29.718427	\N
 93125	12517	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338237/tommy-hilfiger-1720047-tre-em-3-638833481957948143.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720047	3	f	2026-10-06 15:05:29.718427	\N
+98096	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-8.jpg	ELIO 29 mm Nữ EC023-02	7	f	2026-10-06 15:05:29.718427	\N
 93126	12517	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338237/tommy-hilfiger-1720047-tre-em-99-638833481964701231.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720047	4	f	2026-10-06 15:05:29.718427	\N
 93127	12518	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338236/tommy-hilfiger-1720046-tre-em-thumb-638833481545473419-600x600.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720046	0	t	2026-10-06 15:05:29.718427	\N
 93128	12518	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338236/tommy-hilfiger-1720046-tre-em-1-638833481674838857.jpg	TOMMY HILFIGER 36 mm Trẻ em 1720046	1	f	2026-10-06 15:05:29.718427	\N
@@ -14738,7 +14728,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93320	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-thumb-638876714867976320-600x600.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	0	t	2026-10-06 15:05:29.718427	\N
 93321	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-1-638876716284373353.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	1	f	2026-10-06 15:05:29.718427	\N
 93322	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-2-638876716291125376.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	2	f	2026-10-06 15:05:29.718427	\N
-111303	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-11.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	7	f	2026-10-06 15:05:29.718427	\N
 93323	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-3-638876716298138925.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	3	f	2026-10-06 15:05:29.718427	\N
 93324	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-4-638876716304798787.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	4	f	2026-10-06 15:05:29.718427	\N
 93325	12541	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340201/smile-kid-sl238-01-tre-em-5-638876716311096718.jpg	SMILE KID 44.5 mm Trẻ em SL238-01	5	f	2026-10-06 15:05:29.718427	\N
@@ -14966,7 +14955,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93547	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-4-638878403931665324.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	3	f	2026-10-06 15:05:29.718427	\N
 93548	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-5-638878403938027316.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	4	f	2026-10-06 15:05:29.718427	\N
 93549	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-6-638878403945598688.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	5	f	2026-10-06 15:05:29.718427	\N
-111304	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-thumb-600x600.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	0	t	2026-10-06 15:05:29.718427	\N
 93550	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-7-638878403951557534.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	6	f	2026-10-06 15:05:29.718427	\N
 93551	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-8-638878403958225953.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	7	f	2026-10-06 15:05:29.718427	\N
 93552	12566	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/340181/smile-kid-sl249-02-tre-em-99-638878404413874236.jpg	SMILE KID 51.1 mm Trẻ em SL249-02	8	f	2026-10-06 15:05:29.718427	\N
@@ -15003,7 +14991,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93583	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-3-638839580140975545.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	3	f	2026-10-06 15:05:29.718427	\N
 93584	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-4-638839580146826995.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	4	f	2026-10-06 15:05:29.718427	\N
 93585	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-5-638839580155024087.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	5	f	2026-10-06 15:05:29.718427	\N
-111305	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-1-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	1	f	2026-10-06 15:05:29.718427	\N
 93586	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-6-638839580161674113.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	6	f	2026-10-06 15:05:29.718427	\N
 93587	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-9-638839580168845455.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	7	f	2026-10-06 15:05:29.718427	\N
 93588	12570	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338488/smile-kid-sl246-03-tre-em-99-638839580228860129.jpg	SMILE KID 34.8 mm Trẻ em SL246-03	8	f	2026-10-06 15:05:29.718427	\N
@@ -15153,7 +15140,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93731	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-thumb-638839577594682277-600x600.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	0	t	2026-10-06 15:05:29.718427	\N
 93732	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-1-638839577705788218.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	1	f	2026-10-06 15:05:29.718427	\N
 93733	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-2-638839577713030191.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	2	f	2026-10-06 15:05:29.718427	\N
-111306	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-2-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	2	f	2026-10-06 15:05:29.718427	\N
 93734	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-3-638839577719422331.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	3	f	2026-10-06 15:05:29.718427	\N
 93735	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-4-638839577726047584.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	4	f	2026-10-06 15:05:29.718427	\N
 93736	12587	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338472/smile-kid-sl217-04-tre-em-5-638839577732188668.jpg	SMILE KID 37.4 mm Trẻ em SL217-04	5	f	2026-10-06 15:05:29.718427	\N
@@ -15221,6 +15207,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 93797	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-3-638840394568280506.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	3	f	2026-10-06 15:05:29.718427	\N
 93798	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-4-638840394575546002.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	4	f	2026-10-06 15:05:29.718427	\N
 93799	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-5-638840394582681064.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	5	f	2026-10-06 15:05:29.718427	\N
+98097	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-99.jpeg	ELIO 29 mm Nữ EC023-02	8	f	2026-10-06 15:05:29.718427	\N
 93800	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-6-638840394588707021.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	6	f	2026-10-06 15:05:29.718427	\N
 93801	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-8-638840394595296931.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	7	f	2026-10-06 15:05:29.718427	\N
 93802	12594	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338467/smile-kid-sl212-05-tre-em-99-638840394644862816.jpg	SMILE KID 36.4 mm Trẻ em SL212-05	8	f	2026-10-06 15:05:29.718427	\N
@@ -15711,6 +15698,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 94321	12653	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334840/smile-kid-sl186-01-tre-em-5-638769613564403321.jpg	SMILE KID 41.3 mm Trẻ em SL186-01	5	f	2026-10-06 15:05:29.718427	\N
 94322	12653	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334840/smile-kid-sl186-01-tre-em-6-638769613570195768.jpg	SMILE KID 41.3 mm Trẻ em SL186-01	6	f	2026-10-06 15:05:29.718427	\N
 94323	12653	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334840/smile-kid-sl186-01-tre-em-7-638769613576759897.jpg	SMILE KID 41.3 mm Trẻ em SL186-01	7	f	2026-10-06 15:05:29.718427	\N
+98098	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-1-1-600x600.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	0	t	2026-10-06 15:05:29.718427	\N
 94324	12653	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334840/smile-kid-sl186-01-tre-em-99-638769613659318268.jpg	SMILE KID 41.3 mm Trẻ em SL186-01	8	f	2026-10-06 15:05:29.718427	\N
 94325	12654	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334837/smile-kid-sl184-02-tre-em-thumb-638769610509006167-600x600.jpg	SMILE KID 41 mm Trẻ em SL184-02	0	t	2026-10-06 15:05:29.718427	\N
 94326	12654	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334837/smile-kid-sl184-02-tre-em-1-638769610637144939.jpg	SMILE KID 41 mm Trẻ em SL184-02	1	f	2026-10-06 15:05:29.718427	\N
@@ -17529,7 +17517,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 96144	12874	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362254/g-shock-gma-p2100ba-2adr-nu-4-639053919370590064.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-2ADR	3	f	2026-10-06 15:05:29.718427	\N
 96145	12874	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362254/g-shock-gma-p2100ba-2adr-nu-5-639053919380290950.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-2ADR	4	f	2026-10-06 15:05:29.718427	\N
 96146	12874	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362254/g-shock-gma-p2100ba-2adr-nu-99-639057305692225020.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-2ADR	5	f	2026-10-06 15:05:29.718427	\N
-111307	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-3-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	3	f	2026-10-06 15:05:29.718427	\N
 96147	12875	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362253/g-shock-gma-p2100ba-1adr-nu-thumb-639057303909447822-600x600.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-1ADR	0	t	2026-10-06 15:05:29.718427	\N
 96148	12875	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362253/g-shock-gma-p2100ba-1adr-nu-1-639053919162864560.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-1ADR	1	f	2026-10-06 15:05:29.718427	\N
 96149	12875	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362253/g-shock-gma-p2100ba-1adr-nu-3-639053919169266708.jpg	G-SHOCK 40.2 mm Nữ GMA-P2100BA-1ADR	2	f	2026-10-06 15:05:29.718427	\N
@@ -17598,13 +17585,13 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 96212	12886	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342169/g-shock-gma-p2100pc-7adr-nu-thumb-638906748193975732-600x600.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-7ADR	0	t	2026-10-06 15:05:29.718427	\N
 96213	12886	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342169/g-shock-gma-p2100pc-7adr-nu-1-638906798068847996.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-7ADR	1	f	2026-10-06 15:05:29.718427	\N
 96214	12886	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342169/g-shock-gma-p2100pc-7adr-nu-3-638906827420493325.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-7ADR	2	f	2026-10-06 15:05:29.718427	\N
+98099	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-2-1.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	1	f	2026-10-06 15:05:29.718427	\N
 96215	12886	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342169/g-shock-gma-p2100pc-7adr-nu-4-638906827429489820.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-7ADR	3	f	2026-10-06 15:05:29.718427	\N
 96216	12886	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342169/g-shock-gma-p2100pc-7adr-nu-99-638906798075172599.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-7ADR	4	f	2026-10-06 15:05:29.718427	\N
 96217	12887	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342168/g-shock-gma-p2100pc-4adr-nu-thumb-638906745286324229-600x600.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-4ADR	0	t	2026-10-06 15:05:29.718427	\N
 96218	12887	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342168/g-shock-gma-p2100pc-4adr-nu-1-638906796819731785.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-4ADR	1	f	2026-10-06 15:05:29.718427	\N
 96219	12887	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342168/g-shock-gma-p2100pc-4adr-nu-3-638906826974617903.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-4ADR	2	f	2026-10-06 15:05:29.718427	\N
 96220	12887	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342168/g-shock-gma-p2100pc-4adr-nu-4-638906826981972501.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-4ADR	3	f	2026-10-06 15:05:29.718427	\N
-111308	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-4-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	4	f	2026-10-06 15:05:29.718427	\N
 96221	12887	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342168/g-shock-gma-p2100pc-4adr-nu-99-638906796826862751.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-4ADR	4	f	2026-10-06 15:05:29.718427	\N
 96222	12888	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342167/g-shock-gma-p2100pc-1adr-nu-thumb-638906741191769704-600x600.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-1ADR	0	t	2026-10-06 15:05:29.718427	\N
 96223	12888	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/342167/g-shock-gma-p2100pc-1adr-nu-1-638906794450236159.jpg	G-SHOCK 2100 40.2 mm Nữ GMA-P2100PC-1ADR	1	f	2026-10-06 15:05:29.718427	\N
@@ -18110,7 +18097,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 96723	12963	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333132/baby-g-ba-130-7a1dr-nu-thumb-638926851699672476-600x600.jpg	BABY-G 43.3 mm Nữ BA-130-7A1DR	0	t	2026-10-06 15:05:29.718427	\N
 96724	12963	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333132/baby-g-ba-130-7a1dr-nu-3-638926851804264110.jpg	BABY-G 43.3 mm Nữ BA-130-7A1DR	1	f	2026-10-06 15:05:29.718427	\N
 96725	12963	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333132/baby-g-ba-130-7a1dr-nu-4-638926851811094524.jpg	BABY-G 43.3 mm Nữ BA-130-7A1DR	2	f	2026-10-06 15:05:29.718427	\N
-111309	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-5-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	5	f	2026-10-06 15:05:29.718427	\N
 96726	12963	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333132/baby-g-ba-130-7a1dr-nu-5-638926851817050816.jpg	BABY-G 43.3 mm Nữ BA-130-7A1DR	3	f	2026-10-06 15:05:29.718427	\N
 96727	12963	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333132/baby-g-ba-130-7a1dr-nu-99-638926851823216900.jpg	BABY-G 43.3 mm Nữ BA-130-7A1DR	4	f	2026-10-06 15:05:29.718427	\N
 96728	12964	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/337562/baby-g-ba-110xcp-4adr-nu-thumb-638912010091057779-600x600.jpg	BABY-G 43.4 mm Nữ BA-110XCP-4ADR	0	t	2026-10-06 15:05:29.718427	\N
@@ -18361,7 +18347,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 96987	12998	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366292/ernest-borel-n0117l0c-qr4l-nu-2-639123800895795292.jpg	ERNEST BOREL Galaxy 30 mm Nữ N0117L0C-QR4L	2	f	2026-10-06 15:05:29.718427	\N
 96988	12998	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366292/ernest-borel-n0117l0c-qr4l-nu-3-639123800905466654.jpg	ERNEST BOREL Galaxy 30 mm Nữ N0117L0C-QR4L	3	f	2026-10-06 15:05:29.718427	\N
 96989	12998	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366292/ernest-borel-n0117l0c-qr4l-nu-4-639123800912126069.jpg	ERNEST BOREL Galaxy 30 mm Nữ N0117L0C-QR4L	4	f	2026-10-06 15:05:29.718427	\N
-111310	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-10-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	6	f	2026-10-06 15:05:29.718427	\N
 96990	12998	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366292/ernest-borel-n0117l0c-qr4l-nu-99-639141683571652304.jpg	ERNEST BOREL Galaxy 30 mm Nữ N0117L0C-QR4L	5	f	2026-10-06 15:05:29.718427	\N
 96991	12999	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366293/ernest-borel-n0118l0c-qr4l-nu-thumb-639144547935453275-600x600.jpg	ERNEST BOREL Galaxy 27 mm Nữ N0118L0C-QR4L	0	t	2026-10-06 15:05:29.718427	\N
 96992	12999	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366293/ernest-borel-n0118l0c-qr4l-nu-1-639124723019712227.jpg	ERNEST BOREL Galaxy 27 mm Nữ N0118L0C-QR4L	1	f	2026-10-06 15:05:29.718427	\N
@@ -18479,7 +18464,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 97104	13018	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362337/elio-el188-02-nu-2-639047753189950933.jpg	ELIO 24 mm Nữ EL188-02	2	f	2026-10-06 15:05:29.718427	\N
 97105	13018	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362337/elio-el188-02-nu-3-639047753198241666.jpg	ELIO 24 mm Nữ EL188-02	3	f	2026-10-06 15:05:29.718427	\N
 97106	13018	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362337/elio-el188-02-nu-99-639053856212701027.jpg	ELIO 24 mm Nữ EL188-02	4	f	2026-10-06 15:05:29.718427	\N
-111311	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-11-1.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	7	f	2026-10-06 15:05:29.718427	\N
 97107	13019	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362336/elio-el188-01-nu-thumb-639053855242835501-600x600.jpg	ELIO 24 mm Nữ EL188-01	0	t	2026-10-06 15:05:29.718427	\N
 97108	13019	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362336/elio-el188-01-nu-1-639047752979808168.jpg	ELIO 24 mm Nữ EL188-01	1	f	2026-10-06 15:05:29.718427	\N
 97109	13019	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/362336/elio-el188-01-nu-2-639047752986683687.jpg	ELIO 24 mm Nữ EL188-01	2	f	2026-10-06 15:05:29.718427	\N
@@ -18559,7 +18543,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 97183	13032	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338890/lacoste-2001424-nu-2-638862037481453517.jpg	LACOSTE Orba 30 mm Nữ 2001424	2	f	2026-10-06 15:05:29.718427	\N
 97184	13032	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338890/lacoste-2001424-nu-3-638862037487601281.jpg	LACOSTE Orba 30 mm Nữ 2001424	3	f	2026-10-06 15:05:29.718427	\N
 97185	13032	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338890/lacoste-2001424-nu-99-638862037493734508.jpg	LACOSTE Orba 30 mm Nữ 2001424	4	f	2026-10-06 15:05:29.718427	\N
-111312	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-thumb-600x600.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	0	t	2026-10-06 15:05:29.718427	\N
 97186	13033	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338888/lacoste-2001392-nu-thumb-638861440369329262-600x600.jpg	LACOSTE Elyse 30 mm Nữ 2001392	0	t	2026-10-06 15:05:29.718427	\N
 97187	13033	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338888/lacoste-2001392-nu-1-638861440445847417.jpg	LACOSTE Elyse 30 mm Nữ 2001392	1	f	2026-10-06 15:05:29.718427	\N
 97188	13033	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/338888/lacoste-2001392-nu-2-638861440452029037.jpg	LACOSTE Elyse 30 mm Nữ 2001392	2	f	2026-10-06 15:05:29.718427	\N
@@ -19386,6 +19369,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 98018	13148	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329913/elio-el148-03-nu-4-638622559041972257.jpg	ELIO 28 mm Nữ EL148-03	4	f	2026-10-06 15:05:29.718427	\N
 98019	13148	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329913/elio-el148-03-nu-5-638622559048537409.jpg	ELIO 28 mm Nữ EL148-03	5	f	2026-10-06 15:05:29.718427	\N
 98020	13148	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329913/elio-el148-03-nu-6-638622559057153728.jpg	ELIO 28 mm Nữ EL148-03	6	f	2026-10-06 15:05:29.718427	\N
+98021	13148	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329913/elio-el148-03-nu-99-638622559063688428.jpg	ELIO 28 mm Nữ EL148-03	7	f	2026-10-06 15:05:29.718427	\N
 98022	13149	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329911/elio-el148-01-nu-thumb-638622558369758464-600x600.jpg	ELIO 28 mm Nữ EL148-01	0	t	2026-10-06 15:05:29.718427	\N
 98023	13149	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329911/elio-el148-01-nu-1-638622558442475637.jpg	ELIO 28 mm Nữ EL148-01	1	f	2026-10-06 15:05:29.718427	\N
 98024	13149	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329911/elio-el148-01-nu-2-638622558453265854.jpg	ELIO 28 mm Nữ EL148-01	2	f	2026-10-06 15:05:29.718427	\N
@@ -19427,35 +19411,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 98060	13153	https://cdn.tgdd.vn/Products/Images/7264/292903/elio-el140-01-nu-7.jpeg	ELIO 32 mm Nữ EL140-01	6	f	2026-10-06 15:05:29.718427	\N
 98061	13153	https://cdn.tgdd.vn/Products/Images/7264/292903/elio-el140-01-nu-6.jpg	ELIO 32 mm Nữ EL140-01	7	f	2026-10-06 15:05:29.718427	\N
 98062	13154	https://cdn.tgdd.vn/Products/Images/7264/292884/elio-el136-02-nu-thumb-fix-600x600.jpg	ELIO 26 mm Nữ EL136-02	0	t	2026-10-06 15:05:29.718427	\N
-98071	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-thumb-fix-600x600.jpg	ELIO 26 mm Nữ EL136-01	0	t	2026-10-06 15:05:29.718427	\N
-98072	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-1.jpg	ELIO 26 mm Nữ EL136-01	1	f	2026-10-06 15:05:29.718427	\N
-98073	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-2.jpg	ELIO 26 mm Nữ EL136-01	2	f	2026-10-06 15:05:29.718427	\N
-98074	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-3.jpg	ELIO 26 mm Nữ EL136-01	3	f	2026-10-06 15:05:29.718427	\N
-98075	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-4.jpg	ELIO 26 mm Nữ EL136-01	4	f	2026-10-06 15:05:29.718427	\N
-98076	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-5.jpg	ELIO 26 mm Nữ EL136-01	5	f	2026-10-06 15:05:29.718427	\N
-98077	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-7.jpeg	ELIO 26 mm Nữ EL136-01	6	f	2026-10-06 15:05:29.718427	\N
-98078	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-8.jpg	ELIO 26 mm Nữ EL136-01	7	f	2026-10-06 15:05:29.718427	\N
-98079	13155	https://cdn.tgdd.vn/Products/Images/7264/292883/elio-el136-01-nu-99.jpeg	ELIO 26 mm Nữ EL136-01	8	f	2026-10-06 15:05:29.718427	\N
-98080	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-thumb-fix-600x600.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	0	t	2026-10-06 15:05:29.718427	\N
-98081	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-1.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	1	f	2026-10-06 15:05:29.718427	\N
-98082	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-2.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	2	f	2026-10-06 15:05:29.718427	\N
-98083	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-3.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	3	f	2026-10-06 15:05:29.718427	\N
-98084	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-4.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	4	f	2026-10-06 15:05:29.718427	\N
-98085	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-5.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	5	f	2026-10-06 15:05:29.718427	\N
-98086	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-7.jpeg	ELIO Ngày có em 32 mm Nữ EL125-01	6	f	2026-10-06 15:05:29.718427	\N
-98087	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-8.jpg	ELIO Ngày có em 32 mm Nữ EL125-01	7	f	2026-10-06 15:05:29.718427	\N
-98088	13156	https://cdn.tgdd.vn/Products/Images/7264/292817/elio-el125-01-nu-99.jpeg	ELIO Ngày có em 32 mm Nữ EL125-01	8	f	2026-10-06 15:05:29.718427	\N
-98089	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-thumb-fix-600x600.jpg	ELIO 29 mm Nữ EC023-02	0	t	2026-10-06 15:05:29.718427	\N
-98090	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-1.jpg	ELIO 29 mm Nữ EC023-02	1	f	2026-10-06 15:05:29.718427	\N
-98091	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-2.jpg	ELIO 29 mm Nữ EC023-02	2	f	2026-10-06 15:05:29.718427	\N
-98092	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-3.jpg	ELIO 29 mm Nữ EC023-02	3	f	2026-10-06 15:05:29.718427	\N
-98093	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-4.jpg	ELIO 29 mm Nữ EC023-02	4	f	2026-10-06 15:05:29.718427	\N
-98094	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-5.jpg	ELIO 29 mm Nữ EC023-02	5	f	2026-10-06 15:05:29.718427	\N
-98095	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-7.jpeg	ELIO 29 mm Nữ EC023-02	6	f	2026-10-06 15:05:29.718427	\N
-98096	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-8.jpg	ELIO 29 mm Nữ EC023-02	7	f	2026-10-06 15:05:29.718427	\N
-98097	13157	https://cdn.tgdd.vn/Products/Images/7264/292861/elio-ec023-02-nu-99.jpeg	ELIO 29 mm Nữ EC023-02	8	f	2026-10-06 15:05:29.718427	\N
-98098	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-1-1-600x600.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	0	t	2026-10-06 15:05:29.718427	\N
-98099	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-2-1.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	1	f	2026-10-06 15:05:29.718427	\N
 98100	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-3.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	2	f	2026-10-06 15:05:29.718427	\N
 98101	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-4.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	3	f	2026-10-06 15:05:29.718427	\N
 98102	13158	https://cdn.tgdd.vn/Products/Images/7264/286424/casio-ltp-v007l-1budf-nu-5.jpg	CASIO Timeless 22 mm Nữ LTP-V007L-1BUDF	4	f	2026-10-06 15:05:29.718427	\N
@@ -22034,6 +21989,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 100668	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-thumb-638762548416186546-600x600.jpg	ELIO 22 mm Nữ ES201-01	0	t	2026-10-06 15:05:29.718427	\N
 100669	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-1-638762548498442687.jpg	ELIO 22 mm Nữ ES201-01	1	f	2026-10-06 15:05:29.718427	\N
 100670	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-2-638762548509959122.jpg	ELIO 22 mm Nữ ES201-01	2	f	2026-10-06 15:05:29.718427	\N
+100671	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-3-638762548520168313.jpg	ELIO 22 mm Nữ ES201-01	3	f	2026-10-06 15:05:29.718427	\N
+100672	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-4-638762548528361698.jpg	ELIO 22 mm Nữ ES201-01	4	f	2026-10-06 15:05:29.718427	\N
+100673	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-5-638762548535230082.jpg	ELIO 22 mm Nữ ES201-01	5	f	2026-10-06 15:05:29.718427	\N
+100674	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-6-638762548541357968.jpg	ELIO 22 mm Nữ ES201-01	6	f	2026-10-06 15:05:29.718427	\N
+100675	13550	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334818/elio-es201-01-nu-99-638762548620649060.jpg	ELIO 22 mm Nữ ES201-01	7	f	2026-10-06 15:05:29.718427	\N
 100676	13551	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334817/elio-es200-01-nu-thumb-638762546897225298-600x600.jpg	ELIO 22 mm Nữ ES200-01	0	t	2026-10-06 15:05:29.718427	\N
 100677	13551	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334817/elio-es200-01-nu-1-638762547026502877.jpg	ELIO 22 mm Nữ ES200-01	1	f	2026-10-06 15:05:29.718427	\N
 100678	13551	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/334817/elio-es200-01-nu-2-638762547033744230.jpg	ELIO 22 mm Nữ ES200-01	2	f	2026-10-06 15:05:29.718427	\N
@@ -23023,7 +22983,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 101672	13706	https://cdn.tgdd.vn/Products/Images/7264/325848/q-q-c56a-003py-nu-6.jpg	Q&Q 24.5 mm Nữ C56A-003PY	6	f	2026-10-06 15:05:29.718427	\N
 101673	13706	https://cdn.tgdd.vn/Products/Images/7264/325848/q-q-c56a-003py-nu-7.jpg	Q&Q 24.5 mm Nữ C56A-003PY	7	f	2026-10-06 15:05:29.718427	\N
 101674	13707	https://cdn.tgdd.vn/Products/Images/7264/325858/q-q-a30a-001py-nu-thumb-1-600x600.jpg	Q&Q 23.5 mm Nữ A30A-001PY	0	t	2026-10-06 15:05:29.718427	\N
-111313	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-1-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	1	f	2026-10-06 15:05:29.718427	\N
 101675	13707	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/325858/q-q-a30a-001py-nu-2-638617512129471273.jpg	Q&Q 23.5 mm Nữ A30A-001PY	1	f	2026-10-06 15:05:29.718427	\N
 101676	13707	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/325858/q-q-a30a-001py-nu-3-638617512136690190.jpg	Q&Q 23.5 mm Nữ A30A-001PY	2	f	2026-10-06 15:05:29.718427	\N
 101677	13707	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/325858/q-q-a30a-001py-nu-4-638617512145191623.jpg	Q&Q 23.5 mm Nữ A30A-001PY	3	f	2026-10-06 15:05:29.718427	\N
@@ -23228,7 +23187,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 101875	13736	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329904/elio-es167-02-nu-6-638622534095101327.jpg	ELIO Sunshine 23 mm Nữ ES167-02	6	f	2026-10-06 15:05:29.718427	\N
 101876	13736	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329904/elio-es167-02-nu-99-638622534101750330.jpg	ELIO Sunshine 23 mm Nữ ES167-02	7	f	2026-10-06 15:05:29.718427	\N
 101877	13737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329903/elio-es167-01-nu-thumb-638622531680301480-600x600.jpg	ELIO Sunshine 23 mm Nữ ES167-01	0	t	2026-10-06 15:05:29.718427	\N
-111314	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-2-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	2	f	2026-10-06 15:05:29.718427	\N
 101878	13737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329903/elio-es167-01-nu-2-638622532926799279.jpg	ELIO Sunshine 23 mm Nữ ES167-01	1	f	2026-10-06 15:05:29.718427	\N
 101879	13737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329903/elio-es167-01-nu-3-638622532933339135.jpg	ELIO Sunshine 23 mm Nữ ES167-01	2	f	2026-10-06 15:05:29.718427	\N
 101880	13737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329903/elio-es167-01-nu-4-638622532942828880.jpg	ELIO Sunshine 23 mm Nữ ES167-01	3	f	2026-10-06 15:05:29.718427	\N
@@ -23279,6 +23237,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 101924	13742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329433/elio-es164-01-nu-99-638605434093628349.jpg	ELIO Elegant Lady 28 mm Nữ ES164-01	7	f	2026-10-06 15:05:29.718427	\N
 101925	13743	https://cdn.tgdd.vn/Products/Images/7264/329432/elio-es163-02-nu-thumb-600x600.jpg	ELIO Elegant Lady 26 mm Nữ ES163-02	0	t	2026-10-06 15:05:29.718427	\N
 101926	13743	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329432/elio-es163-02-nu-1-638605433640055957.jpg	ELIO Elegant Lady 26 mm Nữ ES163-02	1	f	2026-10-06 15:05:29.718427	\N
+111337	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-1-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	1	f	2026-10-06 15:05:29.718427	\N
 101927	13743	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329432/elio-es163-02-nu-2-638605433647345837.jpg	ELIO Elegant Lady 26 mm Nữ ES163-02	2	f	2026-10-06 15:05:29.718427	\N
 101928	13743	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329432/elio-es163-02-nu-3-638605433658202674.jpg	ELIO Elegant Lady 26 mm Nữ ES163-02	3	f	2026-10-06 15:05:29.718427	\N
 101929	13743	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/329432/elio-es163-02-nu-4-638605433664648861.jpg	ELIO Elegant Lady 26 mm Nữ ES163-02	4	f	2026-10-06 15:05:29.718427	\N
@@ -23320,6 +23279,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 101966	13748	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332289/elio-es188-01-nu-3-638684008475579063.jpg	ELIO 30 mm Nữ ES188-01	3	f	2026-10-06 15:05:29.718427	\N
 101967	13748	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332289/elio-es188-01-nu-99-638684008482151368.jpg	ELIO 30 mm Nữ ES188-01	4	f	2026-10-06 15:05:29.718427	\N
 101968	13749	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332287/elio-es186-01-nu-thumb-638684006237801584-600x600.jpg	ELIO Starlight 30 mm Nữ ES186-01	0	t	2026-10-06 15:05:29.718427	\N
+111338	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-2-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	2	f	2026-10-06 15:05:29.718427	\N
 101969	13749	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332287/elio-es186-01-nu-1-638684006319562712.jpg	ELIO Starlight 30 mm Nữ ES186-01	1	f	2026-10-06 15:05:29.718427	\N
 101970	13749	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332287/elio-es186-01-nu-2-638684006325523493.jpg	ELIO Starlight 30 mm Nữ ES186-01	2	f	2026-10-06 15:05:29.718427	\N
 101971	13749	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/332287/elio-es186-01-nu-3-638684006331270526.jpg	ELIO Starlight 30 mm Nữ ES186-01	3	f	2026-10-06 15:05:29.718427	\N
@@ -24849,6 +24809,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 103489	13977	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333708/g-shock-ga-b2100luu-8adr-nam-6-638727970087683792.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-8ADR	6	f	2026-10-06 15:05:29.718427	\N
 103490	13977	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333708/g-shock-ga-b2100luu-8adr-nam-99-638731643662872062.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-8ADR	7	f	2026-10-06 15:05:29.718427	\N
 103491	13978	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333707/g-shock-ga-b2100luu-5adr-nam-thumb-638727970619127673-600x600.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-5ADR	0	t	2026-10-06 15:05:29.718427	\N
+111339	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-3-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	3	f	2026-10-06 15:05:29.718427	\N
 103492	13978	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333707/g-shock-ga-b2100luu-5adr-nam-1-638727971008159445.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-5ADR	1	f	2026-10-06 15:05:29.718427	\N
 103493	13978	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333707/g-shock-ga-b2100luu-5adr-nam-2-638727971017623018.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-5ADR	2	f	2026-10-06 15:05:29.718427	\N
 103494	13978	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333707/g-shock-ga-b2100luu-5adr-nam-3-638727971027343055.jpg	G-SHOCK 2100 45.4 mm Nam GA-B2100LUU-5ADR	3	f	2026-10-06 15:05:29.718427	\N
@@ -24922,6 +24883,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 103562	13988	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/337363/g-shock-gbm-2100-1adr-nam-99-638815170227747515.jpg	G-SHOCK 44.4 mm Nam GBM-2100-1ADR	7	f	2026-10-06 15:05:29.718427	\N
 103563	13989	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333142/casio-ws-1700h-8avdf-nam-thumb-638928004747785221-600x600.jpg	CASIO Timeless 48.6 mm Nam WS-1700H-8AVDF	0	t	2026-10-06 15:05:29.718427	\N
 103564	13989	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333142/casio-ws-1700h-8avdf-nam-1-638761663916932105.jpg	CASIO Timeless 48.6 mm Nam WS-1700H-8AVDF	1	f	2026-10-06 15:05:29.718427	\N
+111340	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-4-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	4	f	2026-10-06 15:05:29.718427	\N
 103565	13989	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333142/casio-ws-1700h-8avdf-nam-4-638761663930001815.jpg	CASIO Timeless 48.6 mm Nam WS-1700H-8AVDF	2	f	2026-10-06 15:05:29.718427	\N
 103566	13989	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333142/casio-ws-1700h-8avdf-nam-3-638928005664369008.jpg	CASIO Timeless 48.6 mm Nam WS-1700H-8AVDF	3	f	2026-10-06 15:05:29.718427	\N
 103567	13989	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333142/casio-ws-1700h-8avdf-nam-2-638928005658530707.jpg	CASIO Timeless 48.6 mm Nam WS-1700H-8AVDF	4	f	2026-10-06 15:05:29.718427	\N
@@ -24958,6 +24920,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 103598	13994	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333129/edifice-casio-ecb-40mp-1adf-nam-1-638926849457345457.jpg	EDIFICE CASIO 48 mm Nam ECB-40MP-1ADF	1	f	2026-10-06 15:05:29.718427	\N
 103599	13994	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333129/edifice-casio-ecb-40mp-1adf-nam-4-638926849464057445.jpg	EDIFICE CASIO 48 mm Nam ECB-40MP-1ADF	2	f	2026-10-06 15:05:29.718427	\N
 103600	13994	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333129/edifice-casio-ecb-40mp-1adf-nam-5-638926849471068945.jpg	EDIFICE CASIO 48 mm Nam ECB-40MP-1ADF	3	f	2026-10-06 15:05:29.718427	\N
+111341	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-5-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	5	f	2026-10-06 15:05:29.718427	\N
 103601	13994	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333129/edifice-casio-ecb-40mp-1adf-nam-99-638926849477612363.jpg	EDIFICE CASIO 48 mm Nam ECB-40MP-1ADF	4	f	2026-10-06 15:05:29.718427	\N
 103602	13995	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333131/edifice-casio-ecb-10tp-1adf-nam-thumb-638809153315194731-600x600.jpg	EDIFICE CASIO 48.5 mm Nam ECB-10TP-1ADF	0	t	2026-10-06 15:05:29.718427	\N
 103603	13995	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333131/edifice-casio-ecb-10tp-1adf-nam-1-638809153427455027.jpg	EDIFICE CASIO 48.5 mm Nam ECB-10TP-1ADF	1	f	2026-10-06 15:05:29.718427	\N
@@ -26633,6 +26596,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 105280	14253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333474/mvw-mla095-02-nam-5-638719523657335930.jpg	MVW Star Automatic 43 mm Nam MLA095-02	4	f	2026-10-06 15:05:29.718427	\N
 105281	14253	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333474/mvw-mla095-02-nam-99-638719523665082078.jpg	MVW Star Automatic 43 mm Nam MLA095-02	5	f	2026-10-06 15:05:29.718427	\N
 105282	14254	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333473/mvw-mla095-01-nam-thumb-638719523697654880-600x600.jpg	MVW Star Automatic 43 mm Nam MLA095-01	0	t	2026-10-06 15:05:29.718427	\N
+111342	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-13-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	6	f	2026-10-06 15:05:29.718427	\N
 105283	14254	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333473/mvw-mla095-01-nam-1-638719523787638102.jpg	MVW Star Automatic 43 mm Nam MLA095-01	1	f	2026-10-06 15:05:29.718427	\N
 105284	14254	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333473/mvw-mla095-01-nam-3-638719523796165703.jpg	MVW Star Automatic 43 mm Nam MLA095-01	2	f	2026-10-06 15:05:29.718427	\N
 105285	14254	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/333473/mvw-mla095-01-nam-4-638719523803620999.jpg	MVW Star Automatic 43 mm Nam MLA095-01	3	f	2026-10-06 15:05:29.718427	\N
@@ -27327,6 +27291,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 105974	14344	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366860/citizen-nj0232-53x-nam-99-639135936517945574.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0232-53X	7	f	2026-10-06 15:05:29.718427	\N
 105975	14345	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366859/citizen-nj0231-56l-nam-thumb-639135930280961479-600x600.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0231-56L	0	t	2026-10-06 15:05:29.718427	\N
 105976	14345	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366859/citizen-nj0231-56l-nam-1-639135930358601878.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0231-56L	1	f	2026-10-06 15:05:29.718427	\N
+111343	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-14.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	7	f	2026-10-06 15:05:29.718427	\N
 105977	14345	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366859/citizen-nj0231-56l-nam-2-639136011030936599.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0231-56L	2	f	2026-10-06 15:05:29.718427	\N
 105978	14345	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366859/citizen-nj0231-56l-nam-3-639136011039830465.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0231-56L	3	f	2026-10-06 15:05:29.718427	\N
 105979	14345	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/366859/citizen-nj0231-56l-nam-4-639136011046555364.jpg	CITIZEN Mechanical Tsuyosa 40 mm Nam NJ0231-56L	4	f	2026-10-06 15:05:29.718427	\N
@@ -27774,6 +27739,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 106420	14420	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363361/edifice-casio-efr-575d-4adf-nam-1-639082163470596354.jpg	EDIFICE CASIO 40.5 mm Nam EFR-575D-4ADF	1	f	2026-10-06 15:05:29.718427	\N
 106644	14464	https://cdn.tgdd.vn/Products/Images/7264/311235/citizen-an8218-54e-nam-3.jpg	CITIZEN 42 mm Nam AN8218-54E	3	f	2026-10-06 15:05:29.718427	\N
 106421	14420	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363361/edifice-casio-efr-575d-4adf-nam-4-639149788183677057.jpg	EDIFICE CASIO 40.5 mm Nam EFR-575D-4ADF	2	f	2026-10-06 15:05:29.718427	\N
+111344	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-thumb-600x600.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	0	t	2026-10-06 15:05:29.718427	\N
 106422	14420	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363361/edifice-casio-efr-575d-4adf-nam-5-639149788192026028.jpg	EDIFICE CASIO 40.5 mm Nam EFR-575D-4ADF	3	f	2026-10-06 15:05:29.718427	\N
 106423	14420	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363361/edifice-casio-efr-575d-4adf-nam-99-639082163477550318.jpg	EDIFICE CASIO 40.5 mm Nam EFR-575D-4ADF	4	f	2026-10-06 15:05:29.718427	\N
 106424	14421	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/363360/edifice-casio-efr-574de-7avudf-nam-thumb-639082119780487594-600x600.jpg	EDIFICE CASIO 42.3 mm Nam EFR-574DE-7AVUDF	0	t	2026-10-06 15:05:29.718427	\N
@@ -30081,6 +30047,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 108721	14818	https://cdn.tgdd.vn/Products/Images/7264/306421/orient-star-re-at0201g00b-nu-99.jpg	ORIENT Star 40.4 mm Nam RE-AT0201G00B	5	f	2026-10-06 15:05:29.718427	\N
 108722	14819	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/306420/orient-star-re-at0015l00b-nu-thumb-600x600.jpg	ORIENT Star 39.3 mm Nam RE-AT0015L00B	0	t	2026-10-06 15:05:29.718427	\N
 108723	14820	https://cdn.tgdd.vn/Products/Images/7264/306243/orient-star-re-at0007n00b-nam-thumb-600x600.jpg	ORIENT Star 39.3 mm Nam RE-AT0007N00B	0	t	2026-10-06 15:05:29.718427	\N
+111345	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-up-1-org.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	1	f	2026-10-06 15:05:29.718427	\N
 108724	14821	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/325964/edox-80126-brn-buidr-nam-thumb-fix-638854205927408530-600x600.jpg	EDOX Skydiver 42 mm Nam 80126-BRN-BUIDR	0	t	2026-10-06 15:05:29.718427	\N
 108725	14821	https://cdn.tgdd.vn/Products/Images/7264/325964/edox-80126-brn-buidr-nam-1-fix.jpg	EDOX Skydiver 42 mm Nam 80126-BRN-BUIDR	1	f	2026-10-06 15:05:29.718427	\N
 108726	14821	https://cdn.tgdd.vn/Products/Images/7264/325964/edox-80126-brn-buidr-nam-5.jpg	EDOX Skydiver 42 mm Nam 80126-BRN-BUIDR	2	f	2026-10-06 15:05:29.718427	\N
@@ -32644,6 +32611,26 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111292	15201	https://cdn.tgdd.vn/Products/Images/7264/199324/casio-ltp-1128g-9ardf-vang-4-1-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-9ARDF	4	f	2026-10-06 15:05:29.718427	\N
 111293	15201	https://cdn.tgdd.vn/Products/Images/7264/199324/casio-ltp-1128g-9ardf-vang-5-1-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-9ARDF	5	f	2026-10-06 15:05:29.718427	\N
 111294	15201	https://cdn.tgdd.vn/Products/Images/7264/199324/casio-ltp-1128g-9ardf-vang-15-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-9ARDF	6	f	2026-10-06 15:05:29.718427	\N
+111295	15201	https://cdn.tgdd.vn/Products/Images/7264/199324/casio-ltp-1128g-9ardf-vang-16.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-9ARDF	7	f	2026-10-06 15:05:29.718427	\N
+111296	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-thumb-600x600.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	0	t	2026-10-06 15:05:29.718427	\N
+111297	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-5-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	1	f	2026-10-06 15:05:29.718427	\N
+111298	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-6-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	2	f	2026-10-06 15:05:29.718427	\N
+111299	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-7-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	3	f	2026-10-06 15:05:29.718427	\N
+111300	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-8-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	4	f	2026-10-06 15:05:29.718427	\N
+111301	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-9-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	5	f	2026-10-06 15:05:29.718427	\N
+111302	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-10-org.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	6	f	2026-10-06 15:05:29.718427	\N
+111303	15202	https://cdn.tgdd.vn/Products/Images/7264/199323/casio-ltp-1128g-7brdf-vang-11.jpg	CASIO Timeless 27 mm Nữ LTP-1128G-7BRDF	7	f	2026-10-06 15:05:29.718427	\N
+111304	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-thumb-600x600.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	0	t	2026-10-06 15:05:29.718427	\N
+111305	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-1-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	1	f	2026-10-06 15:05:29.718427	\N
+111306	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-2-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	2	f	2026-10-06 15:05:29.718427	\N
+111307	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-3-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	3	f	2026-10-06 15:05:29.718427	\N
+111308	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-4-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	4	f	2026-10-06 15:05:29.718427	\N
+111309	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-5-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	5	f	2026-10-06 15:05:29.718427	\N
+111310	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-10-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	6	f	2026-10-06 15:05:29.718427	\N
+111311	15203	https://cdn.tgdd.vn/Products/Images/7264/199292/casio-ltp-1094q-7b6rdf-nau-11-1.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B6RDF	7	f	2026-10-06 15:05:29.718427	\N
+111312	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-thumb-600x600.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	0	t	2026-10-06 15:05:29.718427	\N
+111313	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-1-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	1	f	2026-10-06 15:05:29.718427	\N
+111314	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-2-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	2	f	2026-10-06 15:05:29.718427	\N
 111315	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-3-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	3	f	2026-10-06 15:05:29.718427	\N
 111316	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-4-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	4	f	2026-10-06 15:05:29.718427	\N
 111317	15204	https://cdn.tgdd.vn/Products/Images/7264/199291/casio-ltp-1094q-7b4rdf-nau-5-2-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-7B4RDF	5	f	2026-10-06 15:05:29.718427	\N
@@ -32666,15 +32653,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111334	15206	https://cdn.tgdd.vn/Products/Images/7264/199289/casio-ltp-1094q-1ardf-den-13-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-1ARDF	6	f	2026-10-06 15:05:29.718427	\N
 111335	15206	https://cdn.tgdd.vn/Products/Images/7264/199289/casio-ltp-1094q-1ardf-den-14.jpg	CASIO Timeless 23 mm Nữ LTP-1094Q-1ARDF	7	f	2026-10-06 15:05:29.718427	\N
 111336	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-thumb-600x600.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	0	t	2026-10-06 15:05:29.718427	\N
-111337	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-1-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	1	f	2026-10-06 15:05:29.718427	\N
-111338	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-2-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	2	f	2026-10-06 15:05:29.718427	\N
-111339	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-3-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	3	f	2026-10-06 15:05:29.718427	\N
-111340	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-4-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	4	f	2026-10-06 15:05:29.718427	\N
-111341	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-5-1-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	5	f	2026-10-06 15:05:29.718427	\N
-111342	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-13-org.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	6	f	2026-10-06 15:05:29.718427	\N
-111343	15207	https://cdn.tgdd.vn/Products/Images/7264/199288/casio-ltp-1094e-7brdf-den-14.jpg	CASIO Timeless 23 mm Nữ LTP-1094E-7BRDF	7	f	2026-10-06 15:05:29.718427	\N
-111344	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-thumb-600x600.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	0	t	2026-10-06 15:05:29.718427	\N
-111345	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-up-1-org.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	1	f	2026-10-06 15:05:29.718427	\N
 111346	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-up-2-org.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	2	f	2026-10-06 15:05:29.718427	\N
 111347	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-up-3-org.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	3	f	2026-10-06 15:05:29.718427	\N
 111348	15208	https://cdn.tgdd.vn/Products/Images/7264/199467/casio-lrw-200h-4bvdf-trang-up-4-org.jpg	CASIO Timeless 32.6 mm Nữ LRW-200H-4BVDF	4	f	2026-10-06 15:05:29.718427	\N
@@ -33008,7 +32986,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111676	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-1-638890490488875161.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	1	f	2026-10-06 15:05:29.718427	\N
 111677	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-2-638890490495464000.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	2	f	2026-10-06 15:05:29.718427	\N
 111678	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-3-638890490502448998.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	3	f	2026-10-06 15:05:29.718427	\N
-118643	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362410841442.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	Xám
 111679	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-4-638890490509878163.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	4	f	2026-10-06 15:05:29.718427	\N
 111680	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-5-638890490517779095.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	5	f	2026-10-06 15:05:29.718427	\N
 111681	15252	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/4727/341414/repeater-mo-rong-song-wifi-xiaomi-wifi-range-extender-n300-tem-99-638905031288413761.jpg	Repeater mở rộng sóng Wifi Xiaomi Wifi Range Extender N300	6	f	2026-10-06 15:05:29.718427	\N
@@ -33087,13 +33064,13 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111753	15272	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344640/pin-sac-du-phong-polymer-20000mah-type-c-65w-xmobile-ds2294b-kem-cap-type-c-2-638935344767580021.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD 65W Xmobile DS2294B kèm Cáp Type C	2	f	2026-10-06 15:05:29.718427	\N
 111754	15272	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344640/pin-sac-du-phong-polymer-20000mah-type-c-65w-xmobile-ds2294b-kem-cap-type-c-3-638935344774030459.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD 65W Xmobile DS2294B kèm Cáp Type C	3	f	2026-10-06 15:05:29.718427	\N
 111755	15272	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344640/pin-sac-du-phong-polymer-20000mah-type-c-65w-xmobile-ds2294b-kem-cap-type-c-4-638935344784464173.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD 65W Xmobile DS2294B kèm Cáp Type C	4	f	2026-10-06 15:05:29.718427	\N
+119020	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-2-639233483479705388.jpg	Nothing Phone (4a) 8GB/128GB Đen	49	f	2026-10-30 02:24:35.242364	Hồng
 111756	15272	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344640/pin-sac-du-phong-polymer-20000mah-type-c-65w-xmobile-ds2294b-kem-cap-type-c-6-638935344790848469.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD 65W Xmobile DS2294B kèm Cáp Type C	5	f	2026-10-06 15:05:29.718427	\N
 111757	15272	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344640/pin-sac-du-phong-polymer-20000mah-type-c-65w-xmobile-ds2294b-kem-cap-type-c-99-638931960763068677.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD 65W Xmobile DS2294B kèm Cáp Type C	6	f	2026-10-06 15:05:29.718427	\N
 111758	15273	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/344492/sac-du-phong-polymer-20000mah-type-c-pd-qc-3-0-22-5w-xmobile-h32-thumb-638926655668795650-600x600.jpg	Pin sạc dự phòng Polymer 20000mAh Type C PD QC 3.0 22.5W Xmobile H32 kèm Cáp Lightning và Type C	0	t	2026-10-06 15:05:29.718427	\N
 111759	15274	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/356837/pin-sac-du-phong-10000mah-khong-day-magnetic-type-c-pd-30w-xmobile-jp387-thumb-638947631626854652-600x600.jpg	Pin sạc dự phòng 10000mAh Không dây Magnetic Qi2 Type C PD 30W Xmobile JP387	0	t	2026-10-06 15:05:29.718427	\N
 111760	15275	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/357564/pin-sac-du-phong-10000mah-pdqc-3-0-45w-xmobile-jp368-kem-cap-day-rut-type-c-thumb-638953695695903327-600x600.jpg	Pin sạc dự phòng 10000mAh Type C PD QC 3.0 45W Xmobile JP368 kèm Cáp Dây Rút Type C	0	t	2026-10-06 15:05:29.718427	\N
 111761	15275	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/357564/pin-sac-du-phong-10000mah-pdqc-3-0-45w-xmobile-jp368-kem-cap-day-rut-type-c-1-639120455133880600.jpg	Pin sạc dự phòng 10000mAh Type C PD QC 3.0 45W Xmobile JP368 kèm Cáp Dây Rút Type C	1	f	2026-10-06 15:05:29.718427	\N
-118644	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362416631357.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	Xám
 111762	15275	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/357564/pin-sac-du-phong-10000mah-pdqc-3-0-45w-xmobile-jp368-kem-cap-day-rut-type-c-2-639120455127827059.jpg	Pin sạc dự phòng 10000mAh Type C PD QC 3.0 45W Xmobile JP368 kèm Cáp Dây Rút Type C	2	f	2026-10-06 15:05:29.718427	\N
 111763	15275	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/357564/pin-sac-du-phong-10000mah-pdqc-3-0-45w-xmobile-jp368-kem-cap-day-rut-type-c-3-639120455122300572.jpg	Pin sạc dự phòng 10000mAh Type C PD QC 3.0 45W Xmobile JP368 kèm Cáp Dây Rút Type C	3	f	2026-10-06 15:05:29.718427	\N
 111764	15275	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/57/357564/pin-sac-du-phong-10000mah-pdqc-3-0-45w-xmobile-jp368-kem-cap-day-rut-type-c-4-639095134028079188.jpg	Pin sạc dự phòng 10000mAh Type C PD QC 3.0 45W Xmobile JP368 kèm Cáp Dây Rút Type C	4	f	2026-10-06 15:05:29.718427	\N
@@ -33171,7 +33148,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111837	15284	https://cdn.tgdd.vn/Products/Images/58/318197/cap-sac-apple-watch-magnetic-type-c-1m-apple-mt0h3-trang-4.jpg	Cáp sạc nhanh Type-C - Magnetic 1m Apple	4	f	2026-10-06 15:05:29.718427	\N
 111838	15285	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/60/329780/op-lung-magsafe-iphone-16-nhua-trong-apple-thumb2-639179109907554210-600x600.jpg	Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple	0	t	2026-10-06 15:05:29.718427	\N
 111876	15293	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/2162/359264/loa-bluetooth-rezo-play-pro-2-12-639045036573575449.jpg	Loa Bluetooth Rezo Play Pro 2	12	f	2026-10-06 15:05:29.718427	\N
-112002	126	https://cdn.tgdd.vn/Products/Images/42/344645/xiaomi-15t-12gb-512gb-xam-thumb-600x600.jpg	Điện thoại Xiaomi 15T 5G 12GB/512GB	1	f	2026-10-29 03:49:35.358562	\N
 111839	15285	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/60/329780/op-lung-magsafe-iphone-16-nhua-trong-apple-1-638620981128576308.jpg	Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple	1	f	2026-10-06 15:05:29.718427	\N
 111840	15285	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/60/329780/op-lung-magsafe-iphone-16-nhua-trong-apple-2-638620981137708230.jpg	Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple	2	f	2026-10-06 15:05:29.718427	\N
 111841	15285	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/60/329780/op-lung-magsafe-iphone-16-nhua-trong-apple-3-638620981145076412.jpg	Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple	3	f	2026-10-06 15:05:29.718427	\N
@@ -33252,6 +33228,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111917	15301	https://cdn.tgdd.vn/Products/Images/58/321381/cap-type-c-lightning-1m-ava-l2206-7.jpg	Cáp sạc nhanh và truyền dữ liệu Type-C - Lightning 27W 1m AVA+ L2206	8	f	2026-10-06 15:05:29.718427	\N
 111918	15301	https://cdn.tgdd.vn/Products/Images/58/321381/cap-type-c-lightning-1m-ava-l2206-8.jpg	Cáp sạc nhanh và truyền dữ liệu Type-C - Lightning 27W 1m AVA+ L2206	9	f	2026-10-06 15:05:29.718427	\N
 111919	15302	https://cdn.tgdd.vn/Products/Images/58/310598/cap-type-c-type-c-1m-baseus-glimmer-cb000025-thumb-600x600.jpg	Cáp sạc nhanh và truyền dữ liệu Type-C - Type-C 100W 1m Baseus Glimmer CB000025	0	t	2026-10-06 15:05:29.718427	\N
+119021	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-3-639233483490992324.jpg	Nothing Phone (4a) 8GB/128GB Đen	50	f	2026-10-30 02:24:35.242364	Hồng
 111920	15303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/9499/331890/adapter-sac-2-cong-type-c-pd-qc-3-0-30w-baseus-palm-cczc30us-thumb-638669567586288196-600x600.jpg	Sạc nhanh 2 cổng USB Type-C QC3.0 PD 30W Baseus Palm CCZC30US	0	t	2026-10-06 15:05:29.718427	\N
 111921	15303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/9499/331890/adapter-sac-2-cong-type-c-pd-qc-3-0-30w-baseus-palm-cczc30us-1-638669553383294621.jpg	Sạc nhanh 2 cổng USB Type-C QC3.0 PD 30W Baseus Palm CCZC30US	1	f	2026-10-06 15:05:29.718427	\N
 111922	15303	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/9499/331890/adapter-sac-2-cong-type-c-pd-qc-3-0-30w-baseus-palm-cczc30us-2-638669553372968626.jpg	Sạc nhanh 2 cổng USB Type-C QC3.0 PD 30W Baseus Palm CCZC30US	2	f	2026-10-06 15:05:29.718427	\N
@@ -33334,9 +33311,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 111999	15319	https://cdn.tgdd.vn/Products/Images/86/279454/chuot-khong-day-gaming-asus-tuf-m4-wl-10.jpg	Chuột Bluetooth Gaming Asus TUF M4 WL	10	f	2026-10-06 15:05:29.718427	\N
 112000	15319	https://cdn.tgdd.vn/Products/Images/86/279454/chuot-khong-day-gaming-asus-tuf-m4-wl-11.jpg	Chuột Bluetooth Gaming Asus TUF M4 WL	11	f	2026-10-06 15:05:29.718427	\N
 112001	15319	https://cdn.tgdd.vn/Products/Images/86/279454/chuot-khong-day-gaming-asus-tuf-m4-wl-12.jpg	Chuột Bluetooth Gaming Asus TUF M4 WL	12	f	2026-10-06 15:05:29.718427	\N
-112003	343	https://cdn.tgdd.vn/Products/Images/44/358089/macbook-pro-14-inch-m5-24gb-1tb-den-600x600.jpg	Laptop MacBook Pro 14 inch M5 24GB/1TB	1	f	2026-10-29 03:49:35.358562	\N
 112004	343	https://cdn.tgdd.vn/Products/Images/44/358089/macbook-pro-14-inch-m5-24gb-1tb-bac.jpg	MacBook Pro 14 inch M5 24GB/1TB	2	f	2026-10-29 03:49:35.358562	\N
-112005	11804	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368579/lenovo-idea-tab-wifi-8gb-256gb-thumb-639178129612110739-600x600.jpg	Máy tính bảng Lenovo Idea Tab WiFi 8GB/256GB	1	f	2026-10-29 03:49:35.358562	\N
 112006	11804	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368579/lenovo-idea-tab-wifi-xam-1-639192777632932681.jpg	Lenovo Idea Tab WiFi 8GB/256GB	2	f	2026-10-29 03:49:35.358562	\N
 112007	11804	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368579/lenovo-idea-tab-wifi-xam-2-639192777695523820.jpg	Lenovo Idea Tab WiFi 8GB/256GB	3	f	2026-10-29 03:49:35.358562	\N
 112008	11804	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368579/lenovo-idea-tab-wifi-xam-3-639192777702430570.jpg	Lenovo Idea Tab WiFi 8GB/256GB	4	f	2026-10-29 03:49:35.358562	\N
@@ -33346,58 +33321,10 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 112012	11839	https://cdn.tgdd.vn/Products/Images/7077/283652/garmin-instinct-2s-40mm-tim-tn4.jpg	Garmin Instinct 2S 40mm dây silicone	1	f	2026-10-29 03:49:35.358562	\N
 112013	11839	https://cdn.tgdd.vn/Products/Images/7077/283652/garmin-instinct-2s-40mm-xam-tn2.jpg	Garmin Instinct 2S 40mm dây silicone	2	f	2026-10-29 03:49:35.358562	\N
 112014	11879	https://cdnv2-tmdt.tgdd.vn/webmwg/production-fe/tmdt-tgdd/public/static/images/no_image.svg	Kidcare S6 41.5mm dây silicone	1	f	2026-10-29 03:49:35.358562	\N
-112015	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-thumb-638908707910666994-600x600.jpg	SMILE KID 39 mm Trẻ em	9	f	2026-10-29 03:49:35.358562	\N
-112016	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-2-638908708416500723.jpg	SMILE KID 39 mm Trẻ em	10	f	2026-10-29 03:49:35.358562	\N
-112017	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-3-638908708423075761.jpg	SMILE KID 39 mm Trẻ em	11	f	2026-10-29 03:49:35.358562	\N
-112018	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-4-638908708431518986.jpg	SMILE KID 39 mm Trẻ em	12	f	2026-10-29 03:49:35.358562	\N
-112019	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-5-638908708437644559.jpg	SMILE KID 39 mm Trẻ em	13	f	2026-10-29 03:49:35.358562	\N
-112020	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-6-638908708444124743.jpg	SMILE KID 39 mm Trẻ em	14	f	2026-10-29 03:49:35.358562	\N
-112021	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-7-638908708450455904.jpg	SMILE KID 39 mm Trẻ em	15	f	2026-10-29 03:49:35.358562	\N
-112022	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-8-638908708457162316.jpg	SMILE KID 39 mm Trẻ em	16	f	2026-10-29 03:49:35.358562	\N
-112023	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341995/smile-kid-sl172-05-tre-em-99-638908708334055240.jpg	SMILE KID 39 mm Trẻ em	17	f	2026-10-29 03:49:35.358562	\N
-112024	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-thumb-638908709604398659-600x600.jpg	SMILE KID 39 mm Trẻ em	18	f	2026-10-29 03:49:35.358562	\N
-112025	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-1-638908709308470609.jpg	SMILE KID 39 mm Trẻ em	19	f	2026-10-29 03:49:35.358562	\N
-112026	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-2-638908709316057225.jpg	SMILE KID 39 mm Trẻ em	20	f	2026-10-29 03:49:35.358562	\N
-112027	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-3-638908709324696275.jpg	SMILE KID 39 mm Trẻ em	21	f	2026-10-29 03:49:35.358562	\N
-112028	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-4-638908709330748455.jpg	SMILE KID 39 mm Trẻ em	22	f	2026-10-29 03:49:35.358562	\N
-112029	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-5-638908709337051422.jpg	SMILE KID 39 mm Trẻ em	23	f	2026-10-29 03:49:35.358562	\N
-112030	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-6-638908709344037194.jpg	SMILE KID 39 mm Trẻ em	24	f	2026-10-29 03:49:35.358562	\N
-112031	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-7-638908709351695716.jpg	SMILE KID 39 mm Trẻ em	25	f	2026-10-29 03:49:35.358562	\N
-112032	12623	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341994/smile-kid-sl172-04-tre-em-99-638908709232840749.jpg	SMILE KID 39 mm Trẻ em	26	f	2026-10-29 03:49:35.358562	\N
-112033	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-thumb-638932919845142987-600x600.jpg	SMILE KID 35 mm Trẻ em	9	f	2026-10-29 03:49:35.358562	\N
-112034	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-1-638932919938426471.jpg	SMILE KID 35 mm Trẻ em	10	f	2026-10-29 03:49:35.358562	\N
-112035	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-2-638932919945041789.jpg	SMILE KID 35 mm Trẻ em	11	f	2026-10-29 03:49:35.358562	\N
-112036	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-3-638932919951189799.jpg	SMILE KID 35 mm Trẻ em	12	f	2026-10-29 03:49:35.358562	\N
-112037	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-4-638932919957910110.jpg	SMILE KID 35 mm Trẻ em	13	f	2026-10-29 03:49:35.358562	\N
-112038	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-5-638932919963767038.jpg	SMILE KID 35 mm Trẻ em	14	f	2026-10-29 03:49:35.358562	\N
-112039	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-6-638932919971728089.jpg	SMILE KID 35 mm Trẻ em	15	f	2026-10-29 03:49:35.358562	\N
-112040	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-7-638932919978373453.jpg	SMILE KID 35 mm Trẻ em	16	f	2026-10-29 03:49:35.358562	\N
-112041	12667	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/331164/smile-kid-sl171-01-tre-em-99-638933666000792061.jpg	SMILE KID 35 mm Trẻ em	17	f	2026-10-29 03:49:35.358562	\N
-112042	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-thumb-638908703877094956-600x600.jpg	SMILE KID 45 mm Trẻ em	9	f	2026-10-29 03:49:35.358562	\N
-112043	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-2-638908704139236550.jpg	SMILE KID 45 mm Trẻ em	10	f	2026-10-29 03:49:35.358562	\N
-112044	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-3-638908704147386961.jpg	SMILE KID 45 mm Trẻ em	11	f	2026-10-29 03:49:35.358562	\N
-112045	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-4-638908704155612186.jpg	SMILE KID 45 mm Trẻ em	12	f	2026-10-29 03:49:35.358562	\N
-112046	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-5-638908704162660975.jpg	SMILE KID 45 mm Trẻ em	13	f	2026-10-29 03:49:35.358562	\N
-112047	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-6-638908704169958191.jpg	SMILE KID 45 mm Trẻ em	14	f	2026-10-29 03:49:35.358562	\N
-112048	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-7-638908704176796024.jpg	SMILE KID 45 mm Trẻ em	15	f	2026-10-29 03:49:35.358562	\N
-112049	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-8-638908704183865447.jpg	SMILE KID 45 mm Trẻ em	16	f	2026-10-29 03:49:35.358562	\N
-112050	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341999/smile-kid-sl189-02-tre-em-99-638908704002098506.jpg	SMILE KID 45 mm Trẻ em	17	f	2026-10-29 03:49:35.358562	\N
-112051	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-thumb-638908706945980828-600x600.jpg	SMILE KID 45 mm Trẻ em	18	f	2026-10-29 03:49:35.358562	\N
-112052	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-1-638908706490707938.jpg	SMILE KID 45 mm Trẻ em	19	f	2026-10-29 03:49:35.358562	\N
-112053	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-2-638908706501275786.jpg	SMILE KID 45 mm Trẻ em	20	f	2026-10-29 03:49:35.358562	\N
-112054	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-3-638908706507568739.jpg	SMILE KID 45 mm Trẻ em	21	f	2026-10-29 03:49:35.358562	\N
-112055	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-4-638908706514919750.jpg	SMILE KID 45 mm Trẻ em	22	f	2026-10-29 03:49:35.358562	\N
-112056	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-5-638908706521695143.jpg	SMILE KID 45 mm Trẻ em	23	f	2026-10-29 03:49:35.358562	\N
-112057	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-6-638908706528272572.jpg	SMILE KID 45 mm Trẻ em	24	f	2026-10-29 03:49:35.358562	\N
-112058	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-7-638908706537127969.jpg	SMILE KID 45 mm Trẻ em	25	f	2026-10-29 03:49:35.358562	\N
-112059	12783	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/7264/341998/smile-kid-sl189-01-tre-em-99-638908706435559189.jpg	SMILE KID 45 mm Trẻ em	26	f	2026-10-29 03:49:35.358562	\N
 112060	15320	http://localhost:8080/uploads/products/3aa9abf7-8bcf-40d3-aec7-b0eacc5786cd.jpg	\N	0	t	2026-10-29 11:28:43.729592	\N
 112061	15320	http://localhost:8080/uploads/products/6f2a8113-0334-499d-8a2f-cae45b4773b5.png	\N	1	f	2026-10-29 11:28:43.731124	\N
-112062	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363503/macbook-air-13-inch-m5-24gb-512gb-thumb-2-639086552878395354-600x600.jpg	Laptop Macbook Air 13 inch M5 24GB/512GB 35W	1	f	2026-10-30 02:18:47.272468	\N
-112063	11756	https://cdn.tgdd.vn/Products/Images/44/363504/macbook-air-13-inch-m5-24gb-512gb-70w-xanh-thumb.png	Macbook Air 13 inch M5 24GB/512GB 70W	2	f	2026-10-30 02:18:47.272468	\N
-112064	11758	https://cdn.tgdd.vn/Products/Images/44/363511/macbook-air-15-inch-m5-24gb-512gb-70w-xanh-da-troi-1-600x600.jpg	Laptop MacBook Air 15 inch M5 24GB/512GB 70W	1	f	2026-10-30 02:18:47.272468	\N
 112065	11758	https://cdn.tgdd.vn/Products/Images/44/363511/macbook-air-15-inch-m5-24gb-512gb-70w-bac-1.jpg	MacBook Air 15 inch M5 24GB/512GB 70W	2	f	2026-10-30 02:18:47.272468	\N
-112066	11758	https://cdn.tgdd.vn/Products/Images/44/363509/macbook-air-15-inch-m5-24gb-512gb-xanh-da-troi-1.jpg	MacBook Air 15 inch M5 24GB/512GB	3	f	2026-10-30 02:18:47.272468	\N
+112064	11758	https://cdn.tgdd.vn/Products/Images/44/363511/macbook-air-15-inch-m5-24gb-512gb-70w-xanh-da-troi-1-600x600.jpg	Laptop MacBook Air 15 inch M5 24GB/512GB 70W	1	t	2026-10-30 02:18:47.272468	\N
 122696	24	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367427/realme-c100x-vang-1-639220574176186934.jpg	realme C100x 4GB/128GB Vàng	9	f	2026-10-30 02:39:50.663943	Vàng
 122697	24	https://cdnv2.tgdd.vn/pim/cdn/images/202609/realme-c100x-xanh-1145258.jpg	realme C100x 4GB/128GB Vàng	10	f	2026-10-30 02:39:50.663943	Xanh
 122698	5	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342679/iphone-17-pro-max-xanh-1-639174797980650086.jpg	iPhone 17 Pro Max	3	f	2026-10-30 02:39:50.663943	Xanh Đậm
@@ -33409,8 +33336,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122704	11710	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/363396/samsung-galaxy-a57-5g-xanh-den-1-639104654376598745.jpg	Samsung Galaxy A57 5G 12GB/256GB	44	f	2026-10-30 02:39:50.663943	Xanh đen
 122705	78	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361951/samsung-galaxy-s26-ultra-blue-1-639088370570898166.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	29	f	2026-10-30 02:39:50.663943	Xanh Dương
 122706	78	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361951/samsung-galaxy-s26-ultra-white-1-639077238122939671.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	30	f	2026-10-30 02:39:50.663943	Trắng
-122707	78	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361951/samsung-galaxy-s26-ultra-purple-1-639077237804750607.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	31	f	2026-10-30 02:39:50.663943	Tím
-122708	78	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361951/samsung-galaxy-s26-ultra-black-1-639077237590341810.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	32	f	2026-10-30 02:39:50.663943	Đen
 122709	11711	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367002/xiaomi-17t-den-1-639153854447376721.jpg	Xiaomi 17T 5G 12GB/256GB	29	f	2026-10-30 02:39:50.663943	Đen
 122710	11711	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367002/xiaomi-17t-tim-1-639154006577197140.jpg	Xiaomi 17T 5G 12GB/256GB	30	f	2026-10-30 02:39:50.663943	Tím
 122711	11711	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367002/xiaomi-17t-trang-1-639154006907214228.jpg	Xiaomi 17T 5G 12GB/256GB	31	f	2026-10-30 02:39:50.663943	Trắng
@@ -33429,8 +33354,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122724	20	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/363401/samsung-galaxy-a37-lavender-1-639095994458611483.jpg	Samsung Galaxy A37 5G 6GB/128GB	26	f	2026-10-30 02:39:50.663943	Tím
 122725	159	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/364791/oppo-find-x9-ultra-cam-1-639125519690724800.jpg	OPPO Find X9 Ultra 12GB/512GB	9	f	2026-10-30 02:39:50.663943	Cam
 122726	159	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/364791/oppo-find-x9-ultra-nau-1-639125520002020993.jpg	OPPO Find X9 Ultra 12GB/512GB	10	f	2026-10-30 02:39:50.663943	Nâu nhạt
-122727	25	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/358683/honor-x9d-den-1-639017380334617852.jpg	HONOR X9d 5G 12GB/256GB	23	f	2026-10-30 02:39:50.663943	Đen
-122728	25	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/358683/honor-x9d-vang-1-639017404785269729.jpg	HONOR X9d 5G 12GB/256GB	24	f	2026-10-30 02:39:50.663943	Vàng
 122729	25	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/358683/honor-x9d-do-1-639017389740255464.jpg	HONOR X9d 5G 12GB/256GB	25	f	2026-10-30 02:39:50.663943	Đỏ
 122730	28	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/281570/iphone-15-den-1-639175423301557723.jpg	iPhone 15	4	f	2026-10-30 02:39:50.663943	Đen
 122731	28	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/281570/iphone-15-xanh-duong-1-639175422917135521.jpg	iPhone 15	5	f	2026-10-30 02:39:50.663943	Xanh dương nhạt
@@ -33465,9 +33388,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122760	37	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342692/iphone-17e-pink-1-639174867480097712.jpg	iPhone 17e	6	f	2026-10-30 02:39:50.663943	Hồng nhạt
 122761	37	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342692/iphone-17e-black-1-639174867639882570.jpg	iPhone 17e	7	f	2026-10-30 02:39:50.663943	Đen
 122762	37	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342692/iphone-17e-white-1-639174867826681940.jpg	iPhone 17e	8	f	2026-10-30 02:39:50.663943	Trắng
-122763	11717	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360244/oppo-a6x-xanh-1-639038243091752558.jpg	OPPO A6x 4GB/64GB	29	f	2026-10-30 02:39:50.663943	Xanh
 122764	11717	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360244/oppo-a6x-tim-1-639038232326716859.jpg	OPPO A6x 4GB/64GB	30	f	2026-10-30 02:39:50.663943	Tím
-122765	11717	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360244/oppo-a6x-titan-tim-1-639038231713906114.jpg	OPPO A6x 4GB/64GB	31	f	2026-10-30 02:39:50.663943	Titan Tím
 122766	41	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/357862/vivo-x300-pro-den-1-639002717214240055.jpg	vivo X300 Pro 5G 16GB/512GB	8	f	2026-10-30 02:39:50.663943	Đen
 122767	41	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/357862/vivo-x300-pro-nau-1-639002805532637786.jpg	vivo X300 Pro 5G 16GB/512GB	9	f	2026-10-30 02:39:50.663943	Nâu nhạt
 122768	61	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/363438/realme-p4-power-5g-cam-1-639104591742893047.jpg	realme P4 Power 5G 12GB/256GB Bạc	9	f	2026-10-30 02:39:50.663943	Cam
@@ -33506,7 +33427,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122801	68	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/358225/motorola-moto-g86-5g-xanh-den-1-638980353462215819.jpg	Motorola G86 POWER 5G 8GB/128GB Xanh đen	10	f	2026-10-30 02:39:50.663943	Xanh đen
 122802	71	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338738/samsung-galaxy-z-fold7-xanh-1-638889670947386953.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	16	f	2026-10-30 02:39:50.663943	Xanh Navy
 122803	71	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338738/samsung-galaxy-z-fold7-black-1-638889670464205544.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	17	f	2026-10-30 02:39:50.663943	Đen
-122804	71	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338738/samsung-galaxy-z-fold7-xam-1-638889680880126366.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	18	f	2026-10-30 02:39:50.663943	Xám
 122805	76	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361191/oppo-a6t-tim-1-639038103146205249.jpg	OPPO A6t 4GB/64GB	23	f	2026-10-30 02:39:50.663943	Tím
 122806	76	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361191/oppo-a6t-xanh-1-639038114410100509.jpg	OPPO A6t 4GB/64GB	24	f	2026-10-30 02:39:50.663943	Xanh
 122807	11726	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/341625/vivo-v60-tim-1-638925165583281105.jpg	vivo V60 5G 12GB/256GB	15	f	2026-10-30 02:39:50.663943	Tím
@@ -33582,7 +33502,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122859	11748	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/341797/samsung-galaxy-a17-blue-1-638939634280567907.jpg	Samsung Galaxy A17 4GB/128GB	22	f	2026-10-30 02:39:50.663943	Xanh nhạt
 122860	11748	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/341797/samsung-galaxy-a17-grey-1-638939737593366949.jpg	Samsung Galaxy A17 4GB/128GB	23	f	2026-10-30 02:39:50.663943	Xám
 122861	11748	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/341797/samsung-galaxy-a17-black-1-638939752889608772.jpg	Samsung Galaxy A17 4GB/128GB	24	f	2026-10-30 02:39:50.663943	Đen
-122862	11750	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338741/samsung-galaxy-z-flip7-fe-den-1-638990577856682795.jpg	Samsung Galaxy Z Flip7 FE 5G 8GB/128GB	15	f	2026-10-30 02:39:50.663943	Đen
 122863	11750	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338741/samsung-galaxy-z-flip7-fe-trang-1-638990577260188884.jpg	Samsung Galaxy Z Flip7 FE 5G 8GB/128GB	16	f	2026-10-30 02:39:50.663943	Trắng
 122864	167	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338736/samsung-galaxy-z-flip7-den-1-638889686583718464.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	15	f	2026-10-30 02:39:50.663943	Đen
 122865	167	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/338736/samsung-galaxy-z-flip7-do-1-638889695868366654.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	16	f	2026-10-30 02:39:50.663943	Đỏ
@@ -33649,10 +33568,8 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122926	11799	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/359090/samsung-galaxy-tab-a11-plus-5g-xam-1-639027061634527969.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	16	f	2026-10-30 02:39:50.663943	Xám
 122927	614	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/359086/samsung-galaxy-tab-a11-plus-bac-1-639027093955219047.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	16	f	2026-10-30 02:39:50.663943	Bạc
 122928	614	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/359086/samsung-galaxy-tab-a11-plus-xam-1-639027089204342537.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	17	f	2026-10-30 02:39:50.663943	Xám
-122929	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339287/oppo-pad-se-nham-bac-1-638889655186313001.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	27	f	2026-10-30 02:39:50.663943	Bạc
 122930	11801	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/345549/samsung-galaxy-tab-a11-4g-xam-1-639027101217320652.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	15	f	2026-10-30 02:39:50.663943	Xám
 122931	11801	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/345549/samsung-galaxy-tab-a11-bac-1-638977800253066689.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	16	f	2026-10-30 02:39:50.663943	Bạc
-122932	620	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/343061/samsung-galaxy-tab-s10-lite-xam-1-638977814630846255.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	8	f	2026-10-30 02:39:50.663943	Xám
 122933	620	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/343061/samsung-galaxy-tab-s10-lite-bac-1-638977814807761070.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	9	f	2026-10-30 02:39:50.663943	Bạc
 122934	11802	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344722/samsung-galaxy-tab-s11-gray-1-638949146761872674.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	15	f	2026-10-30 02:39:50.663943	Xám
 122935	11802	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344722/samsung-galaxy-tab-s11-sliver-1-638949155308692653.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	16	f	2026-10-30 02:39:50.663943	Bạc
@@ -33667,7 +33584,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122944	635	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/345546/samsung-galaxy-tab-a11-xam-1-638977798971725625.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	16	f	2026-10-30 02:39:50.663943	Xám
 122945	635	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/345546/samsung-galaxy-tab-a11-bac-1-638977800049040360.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	17	f	2026-10-30 02:39:50.663943	Bạc
 122946	640	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344725/samsung-galaxy-tab-s11-ultra-sliver-1-638949162924197890.jpg	Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB	15	f	2026-10-30 02:39:50.663943	Bạc
-122947	640	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344725/samsung-galaxy-tab-s11-ultra-gray-1-638949165701731361.jpg	Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB	16	f	2026-10-30 02:39:50.663943	Xám
 122948	639	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344723/samsung-galaxy-tab-s11-sliver-1-638949157289985606.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	15	f	2026-10-30 02:39:50.663943	Bạc
 122949	639	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/344723/samsung-galaxy-tab-s11-gray-1-638949157153373159.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	16	f	2026-10-30 02:39:50.663943	Xám
 122950	631	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/336738/samsung-galaxy-tab-s10-fe-xam-1-638833473644619476.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	16	f	2026-10-30 02:39:50.663943	Xám
@@ -33678,7 +33594,24 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122955	877	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/336737/samsung-galaxy-tab-s10-fe-sliver-1-638844715383644029.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	18	f	2026-10-30 02:39:50.663943	Bạc
 122956	11813	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/365596/samsung-galaxy-tab-s10-lite-xam-1-639129858048511396.jpg	Samsung Galaxy Tab S10 Lite Wifi 8GB/256GB	8	f	2026-10-30 02:39:50.663943	Xám
 122957	11813	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/365596/samsung-galaxy-tab-s10-lite-bac--639129858206531876.jpg	Samsung Galaxy Tab S10 Lite Wifi 8GB/256GB	9	f	2026-10-30 02:39:50.663943	Bạc
-122388	11756	https://cdn.tgdd.vn/Products/Images/44/363505/Slider/vi-vn-macbook-air-13-inch-m5-32gb-512gb-thumbvideo.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	81	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
+120471	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-xanh-1-638889640017027283.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	1	t	2026-10-30 02:24:35.242364	\N
+117588	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871437714423.jpg	Samsung Galaxy A57 5G 12GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+118061	125	https://cdn.tgdd.vn/Products/Images/42/364792/Slider/vi-vn-oppo-find-x9s-1.jpg	OPPO Find X9s 12GB/512GB	1	t	2026-10-30 02:24:35.242364	\N
+120682	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-sliver-1-638640920456430545.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+120408	11799	https://cdn.tgdd.vn/Products/Images/522/359089/Slider/samsung-galaxy-tab-a11-plus-5g-6gb-128gb639035482461379637.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+118455	11721	https://cdn.tgdd.vn/Products/Images/42/341688/Slider/samsung-galaxy-a17-5g-8gb-128gb639153928287215464.jpg	Samsung Galaxy A17 5G 8GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+117655	11711	https://cdn.tgdd.vn/Products/Images/42/367003/Slider/xiaomi-17t-5g-12gb-512gb639213136254343329.jpg	Xiaomi 17T 5G 12GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+120497	11801	https://cdn.tgdd.vn/Products/Images/522/345548/Slider/samsung-galaxy-tab-a11-4g-4gb-64gb639035542844750835.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	1	t	2026-10-30 02:24:35.242364	\N
+120518	11802	https://cdn.tgdd.vn/Products/Images/522/344721/Slider/samsung-galaxy-tab-s11-5g-12gb-128gb639044661161981058.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+119061	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586050444498.jpg	vivo Y31d	1	t	2026-10-30 02:24:35.242364	\N
+121378	11764	https://cdn.tgdd.vn/Products/Images/44/332397/Slider/vi-vn-acer-swift-ai-sf14-51-53p9-ultra-5-nxj2ksv002-thumbvideo.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	1	t	2026-10-30 02:24:35.242364	\N
+118236	11716	https://cdn.tgdd.vn/Products/Images/42/364633/Slider/tecno-spark-go-3-4gb-128gb639164222790397365.jpg	Tecno Spark Go 3 4GB/64GB	1	t	2026-10-30 02:24:35.242364	\N
+118547	11724	https://cdn.tgdd.vn/Products/Images/42/342560/Slider/samsung-galaxy-s25-fe-5g-8gb-128gb638949099674066081.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
+120511	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596558428962.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	1	t	2026-10-30 02:24:35.242364	\N
+112003	343	https://cdn.tgdd.vn/Products/Images/44/358089/macbook-pro-14-inch-m5-24gb-1tb-den-600x600.jpg	Laptop MacBook Pro 14 inch M5 24GB/1TB	1	t	2026-10-29 03:49:35.358562	\N
+119298	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082131500175.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	10	t	2026-10-30 02:24:35.242364	\N
+112005	11804	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368579/lenovo-idea-tab-wifi-8gb-256gb-thumb-639178129612110739-600x600.jpg	Máy tính bảng Lenovo Idea Tab WiFi 8GB/256GB	1	t	2026-10-29 03:49:35.358562	\N
+118125	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236831575589.jpg	realme C100 4G 8GB/128GB Nâu	2	t	2026-10-30 02:24:35.242364	\N
 117472	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-hong-3001141.jpg	Samsung Galaxy A27 8GB/128GB Hồng	4	f	2026-10-30 02:24:35.242364	Hồng
 117473	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-hong-4001141.JPG	Samsung Galaxy A27 8GB/128GB Hồng	5	f	2026-10-30 02:24:35.242364	Hồng
 117474	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-hong-5001141.JPG	Samsung Galaxy A27 8GB/128GB Hồng	6	f	2026-10-30 02:24:35.242364	Hồng
@@ -33725,16 +33658,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117268	13	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368250/oppo-reno16-f-tim-nhat-13-639201385422767217.jpg	OPPO Reno16F 5G 8GB/128GB	41	f	2026-10-30 02:24:35.242364	Tím nhạt
 117269	13	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368250/oppo-reno16-f-tim-nhat-14-639201385474630952.jpg	OPPO Reno16F 5G 8GB/128GB	42	f	2026-10-30 02:24:35.242364	Tím nhạt
 117270	1	https://cdnv2.tgdd.vn/pim/cdn/images/202610/iphone-18-pro-thumbvideo104443.png	iPhone 18 Pro Max	1	f	2026-10-30 02:24:35.242364	Băng Thanh
-117271	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-1-639246085176046454.jpg	iPhone 18 Pro Max	2	f	2026-10-30 02:24:35.242364	Băng Thanh
-117272	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-3-639246085304052590.jpg	iPhone 18 Pro Max	3	f	2026-10-30 02:24:35.242364	Băng Thanh
-117273	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-4-639246085318570758.jpg	iPhone 18 Pro Max	4	f	2026-10-30 02:24:35.242364	Băng Thanh
-117274	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-5-639246085331962370.jpg	iPhone 18 Pro Max	5	f	2026-10-30 02:24:35.242364	Băng Thanh
-117275	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-6-639246085345654582.jpg	iPhone 18 Pro Max	6	f	2026-10-30 02:24:35.242364	Băng Thanh
-117276	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-7-639246085360890413.jpg	iPhone 18 Pro Max	7	f	2026-10-30 02:24:35.242364	Băng Thanh
-117277	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-8-639246085374363411.jpg	iPhone 18 Pro Max	8	f	2026-10-30 02:24:35.242364	Băng Thanh
-117278	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-9-639246085387386192.jpg	iPhone 18 Pro Max	9	f	2026-10-30 02:24:35.242364	Băng Thanh
-117279	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-10-639246085400854104.jpg	iPhone 18 Pro Max	10	f	2026-10-30 02:24:35.242364	Băng Thanh
-117280	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bang-thanh-11-639246085413453435.jpg	iPhone 18 Pro Max	11	f	2026-10-30 02:24:35.242364	Băng Thanh
 117281	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-1-639246105580661559.jpg	iPhone 18 Pro Max	12	f	2026-10-30 02:24:35.242364	Băng Thanh
 117282	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-2-639246105595835985.jpg	iPhone 18 Pro Max	13	f	2026-10-30 02:24:35.242364	Băng Thanh
 117283	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-3-639246105609184203.jpg	iPhone 18 Pro Max	14	f	2026-10-30 02:24:35.242364	Băng Thanh
@@ -33746,17 +33669,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117289	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-9-639246105849134021.jpg	iPhone 18 Pro Max	20	f	2026-10-30 02:24:35.242364	Băng Thanh
 117290	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-10-639246105863138859.jpg	iPhone 18 Pro Max	21	f	2026-10-30 02:24:35.242364	Băng Thanh
 117291	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bang-thanh-11-639246105926466497.jpg	iPhone 18 Pro Max	22	f	2026-10-30 02:24:35.242364	Băng Thanh
-117292	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-1-639246120218096251.jpg	iPhone 18 Pro Max	23	f	2026-10-30 02:24:35.242364	Băng Thanh
-117293	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-2-639246120231045895.jpg	iPhone 18 Pro Max	24	f	2026-10-30 02:24:35.242364	Băng Thanh
-117294	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-3-639246120245136664.jpg	iPhone 18 Pro Max	25	f	2026-10-30 02:24:35.242364	Băng Thanh
-117295	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-4-639246120321483600.jpg	iPhone 18 Pro Max	26	f	2026-10-30 02:24:35.242364	Băng Thanh
-117296	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-5-639246120334232910.jpg	iPhone 18 Pro Max	27	f	2026-10-30 02:24:35.242364	Băng Thanh
-117297	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-6-639246120429943675.jpg	iPhone 18 Pro Max	28	f	2026-10-30 02:24:35.242364	Băng Thanh
-117298	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-7-639246120442436273.jpg	iPhone 18 Pro Max	29	f	2026-10-30 02:24:35.242364	Băng Thanh
-117299	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-8-639246120460066053.jpg	iPhone 18 Pro Max	30	f	2026-10-30 02:24:35.242364	Băng Thanh
-117300	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-9-639246120472713472.jpg	iPhone 18 Pro Max	31	f	2026-10-30 02:24:35.242364	Băng Thanh
-117301	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-10-639246120485863221.jpg	iPhone 18 Pro Max	32	f	2026-10-30 02:24:35.242364	Băng Thanh
-117302	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bang-thanh-11-639246120498448570.jpg	iPhone 18 Pro Max	33	f	2026-10-30 02:24:35.242364	Băng Thanh
 117303	1	https://cdnv2.tgdd.vn/pim/cdn/images/202610/iphone-18-pro-thumbvideo104443.png	iPhone 18 Pro Max	34	f	2026-10-30 02:24:35.242364	Đen
 117304	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-den-1-639246083306814021.jpg	iPhone 18 Pro Max	35	f	2026-10-30 02:24:35.242364	Đen
 117305	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-den-2-639246083325767882.jpg	iPhone 18 Pro Max	36	f	2026-10-30 02:24:35.242364	Đen
@@ -33769,28 +33681,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117312	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-den-9-639246083429578336.jpg	iPhone 18 Pro Max	43	f	2026-10-30 02:24:35.242364	Đen
 117313	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-den-10-639246083443691732.jpg	iPhone 18 Pro Max	44	f	2026-10-30 02:24:35.242364	Đen
 117314	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-den-11-639246083455038448.jpg	iPhone 18 Pro Max	45	f	2026-10-30 02:24:35.242364	Đen
-117315	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-1-639246112588683128.jpg	iPhone 18 Pro Max	46	f	2026-10-30 02:24:35.242364	Đen
-117316	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-2-639246112644623634.jpg	iPhone 18 Pro Max	47	f	2026-10-30 02:24:35.242364	Đen
-117317	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-3-639246112658359993.jpg	iPhone 18 Pro Max	48	f	2026-10-30 02:24:35.242364	Đen
-117318	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-4-639246112684194801.jpg	iPhone 18 Pro Max	49	f	2026-10-30 02:24:35.242364	Đen
-117319	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-5-639246112736962211.jpg	iPhone 18 Pro Max	50	f	2026-10-30 02:24:35.242364	Đen
-117320	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-6-639246112795134482.jpg	iPhone 18 Pro Max	51	f	2026-10-30 02:24:35.242364	Đen
-117321	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-7-639246112806995596.jpg	iPhone 18 Pro Max	52	f	2026-10-30 02:24:35.242364	Đen
-117322	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-8-639246112820102362.jpg	iPhone 18 Pro Max	53	f	2026-10-30 02:24:35.242364	Đen
-117323	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-9-639246112832358576.jpg	iPhone 18 Pro Max	54	f	2026-10-30 02:24:35.242364	Đen
-117324	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-10-639246112843672190.jpg	iPhone 18 Pro Max	55	f	2026-10-30 02:24:35.242364	Đen
-117325	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-den-11-639246112855857824.jpg	iPhone 18 Pro Max	56	f	2026-10-30 02:24:35.242364	Đen
-117326	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-1-639246117499662108.jpg	iPhone 18 Pro Max	57	f	2026-10-30 02:24:35.242364	Đen
-117327	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-2-639246117512793518.jpg	iPhone 18 Pro Max	58	f	2026-10-30 02:24:35.242364	Đen
-117328	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-3-639246117568368956.jpg	iPhone 18 Pro Max	59	f	2026-10-30 02:24:35.242364	Đen
-117329	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-4-639246117582883936.jpg	iPhone 18 Pro Max	60	f	2026-10-30 02:24:35.242364	Đen
-117330	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-5-639246117604476228.jpg	iPhone 18 Pro Max	61	f	2026-10-30 02:24:35.242364	Đen
-117331	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-6-639246117617996102.jpg	iPhone 18 Pro Max	62	f	2026-10-30 02:24:35.242364	Đen
-117332	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-7-639246117633090845.jpg	iPhone 18 Pro Max	63	f	2026-10-30 02:24:35.242364	Đen
-117333	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-8-639246117648030201.jpg	iPhone 18 Pro Max	64	f	2026-10-30 02:24:35.242364	Đen
-117334	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-9-639246117661302945.jpg	iPhone 18 Pro Max	65	f	2026-10-30 02:24:35.242364	Đen
-117335	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-10-639246117674771441.jpg	iPhone 18 Pro Max	66	f	2026-10-30 02:24:35.242364	Đen
-117336	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-den-11-639246117687518875.jpg	iPhone 18 Pro Max	67	f	2026-10-30 02:24:35.242364	Đen
 117337	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-1-639246101317555898.jpg	iPhone 18 Pro Max	68	f	2026-10-30 02:24:35.242364	Bạc
 117338	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-2-639246101332160015.jpg	iPhone 18 Pro Max	69	f	2026-10-30 02:24:35.242364	Bạc
 117339	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-3-639246101376536810.jpg	iPhone 18 Pro Max	70	f	2026-10-30 02:24:35.242364	Bạc
@@ -33802,39 +33692,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117345	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-9-639246101497984524.jpg	iPhone 18 Pro Max	76	f	2026-10-30 02:24:35.242364	Bạc
 117346	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-10-639246101513179010.jpg	iPhone 18 Pro Max	77	f	2026-10-30 02:24:35.242364	Bạc
 117347	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-bac-11-639246101586515998.jpg	iPhone 18 Pro Max	78	f	2026-10-30 02:24:35.242364	Bạc
-117348	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-1-639246094731816482.jpg	iPhone 18 Pro Max	79	f	2026-10-30 02:24:35.242364	Bạc
-117349	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-2-639246094745123533.jpg	iPhone 18 Pro Max	80	f	2026-10-30 02:24:35.242364	Bạc
-117350	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-3-639246094759186316.jpg	iPhone 18 Pro Max	81	f	2026-10-30 02:24:35.242364	Bạc
-117351	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-4-639246094772372872.jpg	iPhone 18 Pro Max	82	f	2026-10-30 02:24:35.242364	Bạc
-117352	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-5-639246094784866366.jpg	iPhone 18 Pro Max	83	f	2026-10-30 02:24:35.242364	Bạc
-117353	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-6-639246094797685146.jpg	iPhone 18 Pro Max	84	f	2026-10-30 02:24:35.242364	Bạc
-117354	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-7-639246094810006686.jpg	iPhone 18 Pro Max	85	f	2026-10-30 02:24:35.242364	Bạc
-117355	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-8-639246094825233804.jpg	iPhone 18 Pro Max	86	f	2026-10-30 02:24:35.242364	Bạc
-117356	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-9-639246094838818197.jpg	iPhone 18 Pro Max	87	f	2026-10-30 02:24:35.242364	Bạc
-117357	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-10-639246094853116713.jpg	iPhone 18 Pro Max	88	f	2026-10-30 02:24:35.242364	Bạc
-117358	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-bac-11-639246094866584456.jpg	iPhone 18 Pro Max	89	f	2026-10-30 02:24:35.242364	Bạc
-117359	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-1-639246104225645053.jpg	iPhone 18 Pro Max	90	f	2026-10-30 02:24:35.242364	Bạc
-117360	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-2-639246104242083811.jpg	iPhone 18 Pro Max	91	f	2026-10-30 02:24:35.242364	Bạc
-117361	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-3-639246104256480331.jpg	iPhone 18 Pro Max	92	f	2026-10-30 02:24:35.242364	Bạc
-117362	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-4-639246104303792572.jpg	iPhone 18 Pro Max	93	f	2026-10-30 02:24:35.242364	Bạc
-117363	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-5-639246104314882389.jpg	iPhone 18 Pro Max	94	f	2026-10-30 02:24:35.242364	Bạc
-117364	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-6-639246104330046970.jpg	iPhone 18 Pro Max	95	f	2026-10-30 02:24:35.242364	Bạc
-117365	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-7-639246104342595440.jpg	iPhone 18 Pro Max	96	f	2026-10-30 02:24:35.242364	Bạc
-117366	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-8-639246104354492040.jpg	iPhone 18 Pro Max	97	f	2026-10-30 02:24:35.242364	Bạc
-117367	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-9-639246104367268765.jpg	iPhone 18 Pro Max	98	f	2026-10-30 02:24:35.242364	Bạc
-117368	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-10-639246104421502993.jpg	iPhone 18 Pro Max	99	f	2026-10-30 02:24:35.242364	Bạc
-117369	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-bac-11-639246104434084011.jpg	iPhone 18 Pro Max	100	f	2026-10-30 02:24:35.242364	Bạc
-117370	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-1-639246121672270176.jpg	iPhone 18 Pro Max	101	f	2026-10-30 02:24:35.242364	Bạc
-117371	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-2-639246121684680340.jpg	iPhone 18 Pro Max	102	f	2026-10-30 02:24:35.242364	Bạc
-117372	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-3-639246121697678793.jpg	iPhone 18 Pro Max	103	f	2026-10-30 02:24:35.242364	Bạc
-117373	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-4-639246121712225238.jpg	iPhone 18 Pro Max	104	f	2026-10-30 02:24:35.242364	Bạc
-117374	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-5-639246121724893210.jpg	iPhone 18 Pro Max	105	f	2026-10-30 02:24:35.242364	Bạc
-117375	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-6-639246121737559113.jpg	iPhone 18 Pro Max	106	f	2026-10-30 02:24:35.242364	Bạc
-117376	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-7-639246121750517942.jpg	iPhone 18 Pro Max	107	f	2026-10-30 02:24:35.242364	Bạc
-117377	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-8-639246121764291452.jpg	iPhone 18 Pro Max	108	f	2026-10-30 02:24:35.242364	Bạc
-117378	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-9-639246121776381898.jpg	iPhone 18 Pro Max	109	f	2026-10-30 02:24:35.242364	Bạc
-117379	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-10-639246121789688558.jpg	iPhone 18 Pro Max	110	f	2026-10-30 02:24:35.242364	Bạc
-117380	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-bac-11-639246121801170061.jpg	iPhone 18 Pro Max	111	f	2026-10-30 02:24:35.242364	Bạc
 117381	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-1-639246098159595347.jpg	iPhone 18 Pro Max	112	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117382	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-2-639246098233201137.jpg	iPhone 18 Pro Max	113	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117383	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-3-639246098247587193.jpg	iPhone 18 Pro Max	114	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
@@ -33846,40 +33703,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117389	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-9-639246098325945670.jpg	iPhone 18 Pro Max	120	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117390	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-10-639246098338859245.jpg	iPhone 18 Pro Max	121	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117391	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370982/iphone-18-pro-max-do-burgundy-11-639246098352239812.jpg	iPhone 18 Pro Max	122	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117392	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-1-639246088096956607.jpg	iPhone 18 Pro Max	123	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117393	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-2-639246088251242414.jpg	iPhone 18 Pro Max	124	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117476	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-hong-7001141.JPG	Samsung Galaxy A27 8GB/128GB Hồng	8	f	2026-10-30 02:24:35.242364	Hồng
-117394	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-3-639246088269741212.jpg	iPhone 18 Pro Max	125	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117395	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-4-639246088283100786.jpg	iPhone 18 Pro Max	126	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117396	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-5-639246088294814977.jpg	iPhone 18 Pro Max	127	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117397	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-6-639246088407002026.jpg	iPhone 18 Pro Max	128	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117398	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-7-639246088422123457.jpg	iPhone 18 Pro Max	129	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117399	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-8-639246088435313095.jpg	iPhone 18 Pro Max	130	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117400	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-9-639246088447554120.jpg	iPhone 18 Pro Max	131	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117401	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-10-639246088459804032.jpg	iPhone 18 Pro Max	132	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117402	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370983/iphone-18-pro-max-512gb-do-burgundy-11-639246088471368900.jpg	iPhone 18 Pro Max	133	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117403	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-1-639246110786834760.jpg	iPhone 18 Pro Max	134	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117404	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-2-639246110846184561.jpg	iPhone 18 Pro Max	135	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117405	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-3-639246110860066938.jpg	iPhone 18 Pro Max	136	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117406	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-4-639246110874212893.jpg	iPhone 18 Pro Max	137	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117407	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-5-639246110888063049.jpg	iPhone 18 Pro Max	138	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117408	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-6-639246110901281086.jpg	iPhone 18 Pro Max	139	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117409	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-7-639246110962185794.jpg	iPhone 18 Pro Max	140	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117410	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-8-639246110975032322.jpg	iPhone 18 Pro Max	141	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117411	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-9-639246110986978697.jpg	iPhone 18 Pro Max	142	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117412	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-10-639246110999139033.jpg	iPhone 18 Pro Max	143	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117413	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370984/iphone-18-pro-max-1tb-do-burgundy-11-639246111014638074.jpg	iPhone 18 Pro Max	144	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117414	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-1-639246119060843068.jpg	iPhone 18 Pro Max	145	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117415	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-2-639246119080596385.jpg	iPhone 18 Pro Max	146	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117416	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-3-639246119092623136.jpg	iPhone 18 Pro Max	147	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117417	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-4-639246119104262329.jpg	iPhone 18 Pro Max	148	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117418	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-5-639246119148605033.jpg	iPhone 18 Pro Max	149	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117419	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-6-639246119159674725.jpg	iPhone 18 Pro Max	150	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117420	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-7-639246119172403514.jpg	iPhone 18 Pro Max	151	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117421	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-8-639246119184055189.jpg	iPhone 18 Pro Max	152	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117422	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-9-639246119196006964.jpg	iPhone 18 Pro Max	153	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117423	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-10-639246119207861769.jpg	iPhone 18 Pro Max	154	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
-117424	1	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370985/iphone-18-pro-max-2tb-do-burgundy-11-639246119220316183.jpg	iPhone 18 Pro Max	155	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117425	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-glacier-2-639246090149425098.jpg	iPhone 18 Pro	1	f	2026-10-30 02:24:35.242364	Băng Thanh
 117426	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-glacier-1-639246090116724324.jpg	iPhone 18 Pro	2	f	2026-10-30 02:24:35.242364	Băng Thanh
 117427	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-glacier-4-639246090175378614.jpg	iPhone 18 Pro	3	f	2026-10-30 02:24:35.242364	Băng Thanh
@@ -33913,7 +33737,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117455	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-silver-9-639246097619349871.jpg	iPhone 18 Pro	31	f	2026-10-30 02:24:35.242364	Bạc
 117456	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-silver-10-639246097671713272.jpg	iPhone 18 Pro	32	f	2026-10-30 02:24:35.242364	Bạc
 117457	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-silver-11-639246097689193755.jpg	iPhone 18 Pro	33	f	2026-10-30 02:24:35.242364	Bạc
-117458	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370978/iphone-18-pro-silver-8-639246109606335531.jpg	iPhone 18 Pro	34	f	2026-10-30 02:24:35.242364	Bạc
 117459	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-burgundy-1-639246094666590023.jpg	iPhone 18 Pro	35	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117460	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-burgundy-2-639246094688517036.jpg	iPhone 18 Pro	36	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
 117461	2	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370977/iphone-18-pro-burgundy-3-639246094701761200.jpg	iPhone 18 Pro	37	f	2026-10-30 02:24:35.242364	Đỏ Burgundy
@@ -33998,11 +33821,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117545	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-den-11001459.JPG	Samsung Galaxy A27 8GB/128GB Hồng	77	f	2026-10-30 02:24:35.242364	Đen
 117546	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-den-12001459.JPG	Samsung Galaxy A27 8GB/128GB Hồng	78	f	2026-10-30 02:24:35.242364	Đen
 117547	124	https://cdnv2.tgdd.vn/pim/cdn/images/202610/samsung-galaxy-a27-bbh001506.jpg	Samsung Galaxy A27 8GB/128GB Hồng	79	f	2026-10-30 02:24:35.242364	Đen
-117548	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-hong-1-639185842823620059.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	2	f	2026-10-30 02:24:35.242364	Hồng
-117549	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-hong-2-639185842842895281.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	3	f	2026-10-30 02:24:35.242364	Hồng
-117550	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-hong-3-639185842851177877.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	4	f	2026-10-30 02:24:35.242364	Hồng
-117551	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-hong-4-639185842859222043.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	5	f	2026-10-30 02:24:35.242364	Hồng
-117552	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-hong-5-639185842865974326.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	6	f	2026-10-30 02:24:35.242364	Hồng
 117553	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-01.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	7	f	2026-10-30 02:24:35.242364	Hồng
 117554	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-02.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	8	f	2026-10-30 02:24:35.242364	Hồng
 117555	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-03.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	9	f	2026-10-30 02:24:35.242364	Hồng
@@ -34019,11 +33837,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117566	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-3-639185841945263327.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	20	f	2026-10-30 02:24:35.242364	Xám
 117567	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-4-639185841954214250.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	21	f	2026-10-30 02:24:35.242364	Xám
 117568	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-5-639185841960949545.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	22	f	2026-10-30 02:24:35.242364	Xám
-117569	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-1-639185841905355110.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	23	f	2026-10-30 02:24:35.242364	Xanh Dương
-117570	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-2-639185841938742447.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	24	f	2026-10-30 02:24:35.242364	Xanh Dương
-117571	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-3-639185841945263327.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	25	f	2026-10-30 02:24:35.242364	Xanh Dương
-117572	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-4-639185841954214250.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	26	f	2026-10-30 02:24:35.242364	Xanh Dương
-117573	130	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368235/motorola-g37-xanh-5-639185841960949545.jpg	Motorola Moto G37 5G 4GB/64GB Xanh dương	27	f	2026-10-30 02:24:35.242364	Xanh Dương
 117574	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-01.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	28	f	2026-10-30 02:24:35.242364	Xanh Dương
 117575	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-02.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	29	f	2026-10-30 02:24:35.242364	Xanh Dương
 117576	130	https://cdn.tgdd.vn/Products/Images/42/368234/Slider/vi-vn-motorola-g37-4gb-64gb-03.jpeg	Motorola Moto G37 5G 4GB/64GB Xanh dương	30	f	2026-10-30 02:24:35.242364	Xanh Dương
@@ -34033,12 +33846,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117580	24	https://cdn.tgdd.vn/Products/Images/42/367427/Slider/realme-c100x-4gb-128gb-04-1020x680.jpg	realme C100x 4GB/128GB Vàng	2	f	2026-10-30 02:24:35.242364	\N
 117581	24	https://cdn.tgdd.vn/Products/Images/42/367427/Slider/realme-c100x-4gb-128gb-05-1020x680.jpg	realme C100x 4GB/128GB Vàng	3	f	2026-10-30 02:24:35.242364	\N
 117582	24	https://cdn.tgdd.vn/Products/Images/42/367427/Slider/realme-c100x-4gb-128gb-06-1020x680-2.jpg	realme C100x 4GB/128GB Vàng	4	f	2026-10-30 02:24:35.242364	\N
-117583	24	https://cdn.tgdd.vn/Products/Images/42/367430/Slider/realme-c100x-6gb-128gb-01-1020x680.jpg	realme C100x 4GB/128GB Vàng	5	f	2026-10-30 02:24:35.242364	\N
-117584	24	https://cdn.tgdd.vn/Products/Images/42/367430/Slider/realme-c100x-6gb-128gb-02-1020x680.jpg	realme C100x 4GB/128GB Vàng	6	f	2026-10-30 02:24:35.242364	\N
-117585	24	https://cdn.tgdd.vn/Products/Images/42/367430/Slider/realme-c100x-6gb-128gb-03-1020x680.jpg	realme C100x 4GB/128GB Vàng	7	f	2026-10-30 02:24:35.242364	\N
-117586	24	https://cdn.tgdd.vn/Products/Images/42/367430/Slider/realme-c100x-6gb-128gb-04-1020x680.jpg	realme C100x 4GB/128GB Vàng	8	f	2026-10-30 02:24:35.242364	\N
 117587	5	https://cdn.tgdd.vn/Products/Images/42/342679/Slider/iphone-17-pro-thumbnail-1280x720.jpeg	iPhone 17 Pro Max	2	f	2026-10-30 02:24:35.242364	\N
-117588	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871437714423.jpg	Samsung Galaxy A57 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 117589	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871420813931.jpg	Samsung Galaxy A57 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 117590	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871425363039.jpg	Samsung Galaxy A57 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 117591	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871439144449.jpg	Samsung Galaxy A57 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -34046,14 +33854,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117593	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871434194340.jpg	Samsung Galaxy A57 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 117594	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871435294372.jpg	Samsung Galaxy A57 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
 117595	11710	https://cdn.tgdd.vn/Products/Images/42/363398/Slider/samsung-galaxy-a57-8gb-128gb639134871436934288.jpg	Samsung Galaxy A57 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-117596	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871306326359.jpg	Samsung Galaxy A57 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-117597	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871315096439.jpg	Samsung Galaxy A57 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-117598	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871314186462.jpg	Samsung Galaxy A57 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-117599	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871308766349.jpg	Samsung Galaxy A57 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-117600	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871302596390.jpg	Samsung Galaxy A57 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-117601	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871307806365.jpg	Samsung Galaxy A57 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
-117602	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871309766521.jpg	Samsung Galaxy A57 5G 12GB/256GB	15	f	2026-10-30 02:24:35.242364	\N
-117603	11710	https://cdn.tgdd.vn/Products/Images/42/363397/Slider/samsung-galaxy-a57-8gb-256gb639134871310776438.jpg	Samsung Galaxy A57 5G 12GB/256GB	16	f	2026-10-30 02:24:35.242364	\N
 117604	11710	https://cdn.tgdd.vn/Products/Images/42/363396/Slider/samsung-galaxy-a57-12gb-256gb639134871199028260.jpg	Samsung Galaxy A57 5G 12GB/256GB	17	f	2026-10-30 02:24:35.242364	Xanh dương nhạt
 117605	11710	https://cdn.tgdd.vn/Products/Images/42/363396/Slider/samsung-galaxy-a57-12gb-256gb639134871191388156.jpg	Samsung Galaxy A57 5G 12GB/256GB	18	f	2026-10-30 02:24:35.242364	Xanh dương nhạt
 117606	11710	https://cdn.tgdd.vn/Products/Images/42/363396/Slider/samsung-galaxy-a57-12gb-256gb639134871206828262.jpg	Samsung Galaxy A57 5G 12GB/256GB	19	f	2026-10-30 02:24:35.242364	Xanh dương nhạt
@@ -34086,26 +33886,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117633	78	https://cdn.tgdd.vn/Products/Images/42/361951/Slider/samsung-galaxy-s26-ultra-12gb-256gb639134878361836200.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
 117634	78	https://cdn.tgdd.vn/Products/Images/42/361951/Slider/samsung-galaxy-s26-ultra-12gb-256gb639134878362666075.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
 117635	78	https://cdn.tgdd.vn/Products/Images/42/361951/Slider/samsung-galaxy-s26-ultra-12gb-256gb639134878363676567.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-117636	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878254170553.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-117637	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878232330334.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-117638	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878242470415.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-117639	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878227510318.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-117640	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878234540333.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
-117641	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878249550511.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	15	f	2026-10-30 02:24:35.242364	\N
-117642	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878247480663.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	16	f	2026-10-30 02:24:35.242364	\N
-117643	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-12gb-512gb639134878248500488.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	17	f	2026-10-30 02:24:35.242364	\N
-117644	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878133874122.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	18	f	2026-10-30 02:24:35.242364	\N
-117645	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878138174173.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	19	f	2026-10-30 02:24:35.242364	\N
-117646	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878139063971.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	20	f	2026-10-30 02:24:35.242364	\N
-117647	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878149724154.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	21	f	2026-10-30 02:24:35.242364	\N
-117648	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878150734263.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	22	f	2026-10-30 02:24:35.242364	\N
-117649	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878158704181.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	23	f	2026-10-30 02:24:35.242364	\N
-117650	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878144444084.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	24	f	2026-10-30 02:24:35.242364	\N
-117651	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-16gb-1tb639134878157584259.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	25	f	2026-10-30 02:24:35.242364	\N
 117652	78	https://cdn.tgdd.vn/Products/Images/42/361951/Slider/samsung-galaxy-s26-ultra-thumbvd-1920x1080.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	26	f	2026-10-30 02:24:35.242364	Xanh Dương
 117653	78	https://cdn.tgdd.vn/Products/Images/42/361952/Slider/samsung-galaxy-s26-ultra-thumbvd-1920x1080.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	27	f	2026-10-30 02:24:35.242364	Tím
 117654	78	https://cdn.tgdd.vn/Products/Images/42/361953/Slider/samsung-galaxy-s26-ultra-thumbvd-1920x1080.jpg	Samsung Galaxy S26 Ultra 5G 12GB/256GB	28	f	2026-10-30 02:24:35.242364	Đen
-117655	11711	https://cdn.tgdd.vn/Products/Images/42/367003/Slider/xiaomi-17t-5g-12gb-512gb639213136254343329.jpg	Xiaomi 17T 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 117656	11711	https://cdn.tgdd.vn/Products/Images/42/367003/Slider/xiaomi-17t-5g-12gb-512gb639213136256053330.jpg	Xiaomi 17T 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 117657	11711	https://cdn.tgdd.vn/Products/Images/42/367003/Slider/xiaomi-17t-5g-12gb-512gb639213136257493359.jpg	Xiaomi 17T 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 117658	11711	https://cdn.tgdd.vn/Products/Images/42/367003/Slider/xiaomi-17t-5g-12gb-512gb639213136258973300.jpg	Xiaomi 17T 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -34217,20 +34000,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117764	20	https://cdn.tgdd.vn/Products/Images/42/363401/Slider/samsung-galaxy-a37-6gb-128gb639134859392447477.jpg	Samsung Galaxy A37 5G 6GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 117765	20	https://cdn.tgdd.vn/Products/Images/42/363401/Slider/samsung-galaxy-a37-6gb-128gb639134859380227308.jpg	Samsung Galaxy A37 5G 6GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 117766	20	https://cdn.tgdd.vn/Products/Images/42/363401/Slider/samsung-galaxy-a37-6gb-128gb639134859382047312.jpg	Samsung Galaxy A37 5G 6GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-117767	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859951020066.jpg	Samsung Galaxy A37 5G 6GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-117768	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859956950085.jpg	Samsung Galaxy A37 5G 6GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-117769	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859957940005.jpg	Samsung Galaxy A37 5G 6GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-117770	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859969487264.jpg	Samsung Galaxy A37 5G 6GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-117771	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859962750121.jpg	Samsung Galaxy A37 5G 6GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-117772	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859963610191.jpg	Samsung Galaxy A37 5G 6GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-117773	20	https://cdn.tgdd.vn/Products/Images/42/363400/Slider/samsung-galaxy-a37-8gb-128gb639134859964490048.jpg	Samsung Galaxy A37 5G 6GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
-117774	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860036950550.jpg	Samsung Galaxy A37 5G 6GB/128GB	16	f	2026-10-30 02:24:35.242364	\N
-117775	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860039500633.jpg	Samsung Galaxy A37 5G 6GB/128GB	17	f	2026-10-30 02:24:35.242364	\N
-117776	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860044520530.jpg	Samsung Galaxy A37 5G 6GB/128GB	18	f	2026-10-30 02:24:35.242364	\N
-117777	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860032300619.jpg	Samsung Galaxy A37 5G 6GB/128GB	19	f	2026-10-30 02:24:35.242364	\N
-117778	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860045520580.jpg	Samsung Galaxy A37 5G 6GB/128GB	20	f	2026-10-30 02:24:35.242364	\N
-117779	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860046450705.jpg	Samsung Galaxy A37 5G 6GB/128GB	21	f	2026-10-30 02:24:35.242364	\N
-117780	20	https://cdn.tgdd.vn/Products/Images/42/363399/Slider/samsung-galaxy-a37-8gb-256gb639134860050770781.jpg	Samsung Galaxy A37 5G 6GB/128GB	22	f	2026-10-30 02:24:35.242364	\N
 117781	136	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361269/xiaomi-17-5g-tem-99-639088213817123751.jpg	Xiaomi 17 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 117782	136	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361269/xiaomi-17-den-1-639088219685898384.jpg	Xiaomi 17 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	Đen
 117783	136	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361269/xiaomi-17-den-2-639088219692746013.jpg	Xiaomi 17 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	Đen
@@ -34306,15 +34075,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117853	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111399858093.jpg	Vivo V70 FE 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 117854	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111400658463.jpg	Vivo V70 FE 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
 117855	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111401468090.jpg	Vivo V70 FE 5G 8GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
-117856	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111396618092.jpg	Vivo V70 FE 5G 8GB/256GB	6	f	2026-10-30 02:24:35.242364	Tím
-117857	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111397478227.jpg	Vivo V70 FE 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	Tím
 117858	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113257282484.jpg	Vivo V70 FE 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	Tím
 117859	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113258842616.jpg	Vivo V70 FE 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	Tím
 117860	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113261582573.jpg	Vivo V70 FE 5G 8GB/256GB	10	f	2026-10-30 02:24:35.242364	Tím
 117861	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113262452624.jpg	Vivo V70 FE 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Tím
 117862	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113263302635.jpg	Vivo V70 FE 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Tím
 117863	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113264152635.jpg	Vivo V70 FE 5G 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Tím
-117864	11712	https://cdn.tgdd.vn/Products/Images/42/363466/Slider/vivo-v70-fe-8gb-256gb639147111398518112.jpg	Vivo V70 FE 5G 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Bạc
 117865	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113257282484.jpg	Vivo V70 FE 5G 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Bạc
 117866	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113258842616.jpg	Vivo V70 FE 5G 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Bạc
 117867	11712	https://cdn.tgdd.vn/Products/Images/42/363467/Slider/vivo-v70-fe-12gb-256gb639147113259692588.jpg	Vivo V70 FE 5G 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Bạc
@@ -34331,14 +34097,8 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117878	11713	https://cdn.tgdd.vn/Products/Images/42/366829/Slider/realme-c100i-4gb-64gb639164218771020536.jpg	realme C100i 4GB/64GB Xám	3	f	2026-10-30 02:24:35.242364	\N
 117879	11713	https://cdn.tgdd.vn/Products/Images/42/366829/Slider/realme-c100i-4gb-64gb639164218771939345.jpg	realme C100i 4GB/64GB Xám	4	f	2026-10-30 02:24:35.242364	\N
 117880	11713	https://cdn.tgdd.vn/Products/Images/42/366829/Slider/realme-c100i-4gb-64gb639164218772824700.jpg	realme C100i 4GB/64GB Xám	5	f	2026-10-30 02:24:35.242364	\N
-117881	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218818247401.jpg	realme C100i 4GB/64GB Xám	6	f	2026-10-30 02:24:35.242364	\N
-117882	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218820417709.jpg	realme C100i 4GB/64GB Xám	7	f	2026-10-30 02:24:35.242364	\N
-117883	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218822555444.jpg	realme C100i 4GB/64GB Xám	8	f	2026-10-30 02:24:35.242364	\N
-117884	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218823485466.jpg	realme C100i 4GB/64GB Xám	9	f	2026-10-30 02:24:35.242364	\N
-117885	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218824555413.jpg	realme C100i 4GB/64GB Xám	10	f	2026-10-30 02:24:35.242364	\N
 117886	11713	https://cdn.tgdd.vn/Products/Images/42/366829/Slider/realme-c100i-4gb-64gb639164218770008337.jpg	realme C100i 4GB/64GB Xám	11	f	2026-10-30 02:24:35.242364	Tím
 117887	11713	https://cdn.tgdd.vn/Products/Images/42/366829/Slider/realme-c100i-4gb-64gb639164218773664842.jpg	realme C100i 4GB/64GB Xám	12	f	2026-10-30 02:24:35.242364	Tím
-117888	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218819097409.jpg	realme C100i 4GB/64GB Xám	13	f	2026-10-30 02:24:35.242364	Tím
 117889	11713	https://cdn.tgdd.vn/Products/Images/42/366830/Slider/realme-c100i-4gb-128gb639164218821415486.jpg	realme C100i 4GB/64GB Xám	14	f	2026-10-30 02:24:35.242364	Xám
 117890	25	https://cdn.tgdd.vn/Products/Images/42/358683/Slider/honor-x9d-5g-12gb-256gb639074578314163044.jpg	HONOR X9d 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 117891	25	https://cdn.tgdd.vn/Products/Images/42/358683/Slider/honor-x9d-5g-12gb-256gb639074578377819624.jpg	HONOR X9d 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -34442,7 +34202,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 117988	27	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367975/motorola-edge-70-fusion-xanh-lam-khoi-8-639162734753416112.jpg	Motorola Edge 70 Fusion 8GB/128GB Xanh bạc hà	27	f	2026-10-30 02:24:35.242364	Xanh lam
 117989	27	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367975/motorola-edge-70-fusion-xanh-lam-khoi-9-639162734760883371.jpg	Motorola Edge 70 Fusion 8GB/128GB Xanh bạc hà	28	f	2026-10-30 02:24:35.242364	Xanh lam
 117990	28	https://cdn.tgdd.vn/Products/Images/42/281570/Slider/vi-vn-iphone-15-thumbvideo.jpg	iPhone 15	2	f	2026-10-30 02:24:35.242364	\N
-117991	28	https://cdn.tgdd.vn/Products/Images/42/303716/Slider/vi-vn-iphone-15-256gb-thumbvideo.jpg	iPhone 15	3	f	2026-10-30 02:24:35.242364	\N
 117992	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-1-639175327779784494.jpg	iPhone Air	2	f	2026-10-30 02:24:35.242364	Vàng nhạt
 117994	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-3-639175327795716924.jpg	iPhone Air	4	f	2026-10-30 02:24:35.242364	Vàng nhạt
 117995	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-4-639175327802122180.jpg	iPhone Air	5	f	2026-10-30 02:24:35.242364	Vàng nhạt
@@ -34464,17 +34223,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118011	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-9-639175327835764743.jpg	iPhone Air	21	f	2026-10-30 02:24:35.242364	Đen Không Gian
 118012	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-10-639175327843279822.jpg	iPhone Air	22	f	2026-10-30 02:24:35.242364	Đen Không Gian
 118013	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-vang-11-639175327851627133.jpg	iPhone Air	23	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118014	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-1-639175325053195763.jpg	iPhone Air	24	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118015	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-2-639175325060449031.jpg	iPhone Air	25	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118016	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-3-639175325066727727.jpg	iPhone Air	26	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118017	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-4-639175325072573518.jpg	iPhone Air	27	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118018	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-5-639175325078226670.jpg	iPhone Air	28	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118019	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-6-639175325083627695.jpg	iPhone Air	29	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118020	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-7-639175325089257706.jpg	iPhone Air	30	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118021	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-8-639175325094494361.jpg	iPhone Air	31	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118022	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-9-639175325100206517.jpg	iPhone Air	32	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118023	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-10-639175325105531736.jpg	iPhone Air	33	f	2026-10-30 02:24:35.242364	Đen Không Gian
-118024	29	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/342671/iphone-air-den-11-639175325110922551.jpg	iPhone Air	34	f	2026-10-30 02:24:35.242364	Đen Không Gian
 118025	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-xanh-1-639175328099726265.jpg	iPhone Air	35	f	2026-10-30 02:24:35.242364	Xanh Da Trời
 118026	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-xanh-2-639175328107207986.jpg	iPhone Air	36	f	2026-10-30 02:24:35.242364	Xanh Da Trời
 118027	29	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/42/342670/iphone-air-xanh-3-639175328116676255.jpg	iPhone Air	37	f	2026-10-30 02:24:35.242364	Xanh Da Trời
@@ -34504,14 +34252,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118051	30	https://cdn.tgdd.vn/Products/Images/42/361947/Slider/samsung-galaxy-s26-12gb-256gb639134863342222891.jpg	Samsung Galaxy S26 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 118052	30	https://cdn.tgdd.vn/Products/Images/42/361947/Slider/samsung-galaxy-s26-12gb-256gb639134863368853627.jpg	Samsung Galaxy S26 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 118053	30	https://cdn.tgdd.vn/Products/Images/42/361947/Slider/samsung-galaxy-s26-12gb-256gb639134863369906281.jpg	Samsung Galaxy S26 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-118054	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863379746391.jpg	Samsung Galaxy S26 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-118055	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863378646502.jpg	Samsung Galaxy S26 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-118056	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863382636444.jpg	Samsung Galaxy S26 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-118057	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863387376922.jpg	Samsung Galaxy S26 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-118058	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863380736485.jpg	Samsung Galaxy S26 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-118059	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863381696477.jpg	Samsung Galaxy S26 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-118060	30	https://cdn.tgdd.vn/Products/Images/42/361948/Slider/samsung-galaxy-s26-12gb-512gb639134863391936560.jpg	Samsung Galaxy S26 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
-118061	125	https://cdn.tgdd.vn/Products/Images/42/364792/Slider/vi-vn-oppo-find-x9s-1.jpg	OPPO Find X9s 12GB/512GB	1	f	2026-10-30 02:24:35.242364	\N
 118062	125	https://cdn.tgdd.vn/Products/Images/42/364792/Slider/vi-vn-oppo-find-x9s-2.jpg	OPPO Find X9s 12GB/512GB	2	f	2026-10-30 02:24:35.242364	\N
 118063	125	https://cdn.tgdd.vn/Products/Images/42/364792/Slider/vi-vn-oppo-find-x9s-3.jpg	OPPO Find X9s 12GB/512GB	3	f	2026-10-30 02:24:35.242364	\N
 118064	125	https://cdn.tgdd.vn/Products/Images/42/364792/Slider/vi-vn-oppo-find-x9s-4.jpg	OPPO Find X9s 12GB/512GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -34569,26 +34309,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118116	11715	https://cdn.tgdd.vn/Products/Images/42/357576/Slider/vivo-v60-lite-8gb-256gb639051090719416013.jpg	vivo V60 Lite 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
 118117	11715	https://cdn.tgdd.vn/Products/Images/42/357576/Slider/vivo-v60-lite-8gb-256gb639051090730458325.jpg	vivo V60 Lite 5G 8GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 118118	11715	https://cdn.tgdd.vn/Products/Images/42/357576/Slider/vivo-v60-lite-8gb-256gb639051090742568243.jpg	vivo V60 Lite 5G 8GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
-118119	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051090976743792.jpg	vivo V60 Lite 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-118120	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051091014203475.jpg	vivo V60 Lite 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-118121	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051090962703829.jpg	vivo V60 Lite 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-118122	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051091041383051.jpg	vivo V60 Lite 5G 8GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-118123	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051090988454851.jpg	vivo V60 Lite 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-118124	11715	https://cdn.tgdd.vn/Products/Images/42/357577/Slider/vivo-v60-lite-12gb-512gb639051090997713666.jpg	vivo V60 Lite 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-118125	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236831575589.jpg	realme C100 4G 8GB/128GB Nâu	2	f	2026-10-30 02:24:35.242364	\N
 118126	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236839745839.jpg	realme C100 4G 8GB/128GB Nâu	3	f	2026-10-30 02:24:35.242364	\N
 118127	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236837005787.jpg	realme C100 4G 8GB/128GB Nâu	4	f	2026-10-30 02:24:35.242364	\N
 118128	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236841095621.jpg	realme C100 4G 8GB/128GB Nâu	5	f	2026-10-30 02:24:35.242364	\N
 118129	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236834215776.jpg	realme C100 4G 8GB/128GB Nâu	6	f	2026-10-30 02:24:35.242364	\N
 118130	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236835575700.jpg	realme C100 4G 8GB/128GB Nâu	7	f	2026-10-30 02:24:35.242364	\N
 118131	33	https://cdn.tgdd.vn/Products/Images/42/364186/Slider/realme-c100-4g-6gb-128gb639164236838335659.jpg	realme C100 4G 8GB/128GB Nâu	8	f	2026-10-30 02:24:35.242364	\N
-118132	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237295469790.jpg	realme C100 4G 8GB/128GB Nâu	9	f	2026-10-30 02:24:35.242364	\N
-118133	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237290529664.jpg	realme C100 4G 8GB/128GB Nâu	10	f	2026-10-30 02:24:35.242364	\N
-118134	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237296679812.jpg	realme C100 4G 8GB/128GB Nâu	11	f	2026-10-30 02:24:35.242364	\N
-118135	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237291819866.jpg	realme C100 4G 8GB/128GB Nâu	12	f	2026-10-30 02:24:35.242364	\N
-118136	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237293109801.jpg	realme C100 4G 8GB/128GB Nâu	13	f	2026-10-30 02:24:35.242364	\N
-118137	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237294279725.jpg	realme C100 4G 8GB/128GB Nâu	14	f	2026-10-30 02:24:35.242364	\N
-118138	33	https://cdn.tgdd.vn/Products/Images/42/364188/Slider/realme-c100-4g-8gb-256gb639164237297929709.jpg	realme C100 4G 8GB/128GB Nâu	15	f	2026-10-30 02:24:35.242364	\N
 118139	33	https://cdn.tgdd.vn/Products/Images/42/364187/Slider/realme-c100-4g-8gb-128gb639164237141947434.jpg	realme C100 4G 8GB/128GB Nâu	16	f	2026-10-30 02:24:35.242364	Tím
 118140	33	https://cdn.tgdd.vn/Products/Images/42/364187/Slider/realme-c100-4g-8gb-128gb639164237143427552.jpg	realme C100 4G 8GB/128GB Nâu	17	f	2026-10-30 02:24:35.242364	Tím
 118141	33	https://cdn.tgdd.vn/Products/Images/42/364187/Slider/realme-c100-4g-8gb-128gb639164237145857472.jpg	realme C100 4G 8GB/128GB Nâu	18	f	2026-10-30 02:24:35.242364	Tím
@@ -34611,7 +34337,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118158	34	https://cdn.tgdd.vn/Products/Images/42/358026/Slider/honor-x7d-5g-8gb-256gb639141044504572844.jpg	Honor X7d 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
 118159	34	https://cdn.tgdd.vn/Products/Images/42/358026/Slider/honor-x7d-5g-8gb-256gb639141044506212658.jpg	Honor X7d 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
 118160	34	https://cdn.tgdd.vn/Products/Images/42/358026/Slider/honor-x7d-5g-8gb-256gb639141044507182596.jpg	Honor X7d 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-118161	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-tem-99-639160084642187960.jpg	Nubia V80 Max 6GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 118162	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-vang-1-639138312157152400.jpg	Nubia V80 Max 6GB/128GB	3	f	2026-10-30 02:24:35.242364	Vàng nhạt
 118163	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-vang-2-639138312164136997.jpg	Nubia V80 Max 6GB/128GB	4	f	2026-10-30 02:24:35.242364	Vàng nhạt
 118164	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-vang-3-639138312171521089.jpg	Nubia V80 Max 6GB/128GB	5	f	2026-10-30 02:24:35.242364	Vàng nhạt
@@ -34660,19 +34385,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118207	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-bac-11-639160071256859773.jpg	Nubia V80 Max 6GB/128GB	48	f	2026-10-30 02:24:35.242364	Bạc
 118208	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-bac-12-639160071263865895.jpg	Nubia V80 Max 6GB/128GB	49	f	2026-10-30 02:24:35.242364	Bạc
 118209	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-bac-13-639160071270102805.jpg	Nubia V80 Max 6GB/128GB	50	f	2026-10-30 02:24:35.242364	Bạc
-118210	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-1-639160090654386427.jpg	Nubia V80 Max 6GB/128GB	51	f	2026-10-30 02:24:35.242364	Bạc
-118211	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-2-639160090662915593.jpg	Nubia V80 Max 6GB/128GB	52	f	2026-10-30 02:24:35.242364	Bạc
-118212	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-3-639160090669768996.jpg	Nubia V80 Max 6GB/128GB	53	f	2026-10-30 02:24:35.242364	Bạc
-118213	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-4-639160090677809607.jpg	Nubia V80 Max 6GB/128GB	54	f	2026-10-30 02:24:35.242364	Bạc
-118214	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-5-639160090684006942.jpg	Nubia V80 Max 6GB/128GB	55	f	2026-10-30 02:24:35.242364	Bạc
-118215	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-6-639160090689828938.jpg	Nubia V80 Max 6GB/128GB	56	f	2026-10-30 02:24:35.242364	Bạc
-118216	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-7-639160090695935216.jpg	Nubia V80 Max 6GB/128GB	57	f	2026-10-30 02:24:35.242364	Bạc
-118217	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-8-639160090702472993.jpg	Nubia V80 Max 6GB/128GB	58	f	2026-10-30 02:24:35.242364	Bạc
-118218	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-9-639160090708304568.jpg	Nubia V80 Max 6GB/128GB	59	f	2026-10-30 02:24:35.242364	Bạc
-118219	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-10-639160090714307259.jpg	Nubia V80 Max 6GB/128GB	60	f	2026-10-30 02:24:35.242364	Bạc
-118220	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-11-639160090721274993.jpg	Nubia V80 Max 6GB/128GB	61	f	2026-10-30 02:24:35.242364	Bạc
-118221	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-12-639160090726811286.jpg	Nubia V80 Max 6GB/128GB	62	f	2026-10-30 02:24:35.242364	Bạc
-118222	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367811/nubia-v80-max-8gb-bac-13-639160090733054841.jpg	Nubia V80 Max 6GB/128GB	63	f	2026-10-30 02:24:35.242364	Bạc
 118223	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-1-639160070563476776.jpg	Nubia V80 Max 6GB/128GB	64	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
 118224	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-2-639160070572098111.jpg	Nubia V80 Max 6GB/128GB	65	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
 118225	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-3-639160070578356384.jpg	Nubia V80 Max 6GB/128GB	66	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
@@ -34686,7 +34398,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118233	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-11-639160070632275951.jpg	Nubia V80 Max 6GB/128GB	74	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
 118234	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-12-639160070639177713.jpg	Nubia V80 Max 6GB/128GB	75	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
 118235	114	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366922/nubia-v80-max-xanh-13-639160070645674012.jpg	Nubia V80 Max 6GB/128GB	76	f	2026-10-30 02:24:35.242364	Xanh Thiên Thanh
-118236	11716	https://cdn.tgdd.vn/Products/Images/42/364633/Slider/tecno-spark-go-3-4gb-128gb639164222790397365.jpg	Tecno Spark Go 3 4GB/64GB	1	f	2026-10-30 02:24:35.242364	\N
 118237	11716	https://cdn.tgdd.vn/Products/Images/42/364633/Slider/tecno-spark-go-3-4gb-128gb639164222791337356.jpg	Tecno Spark Go 3 4GB/64GB	2	f	2026-10-30 02:24:35.242364	\N
 118238	11716	https://cdn.tgdd.vn/Products/Images/42/364633/Slider/tecno-spark-go-3-4gb-128gb639164222787007283.jpg	Tecno Spark Go 3 4GB/64GB	3	f	2026-10-30 02:24:35.242364	\N
 118239	11716	https://cdn.tgdd.vn/Products/Images/42/364633/Slider/tecno-spark-go-3-4gb-128gb639164222788207394.jpg	Tecno Spark Go 3 4GB/64GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -34726,13 +34437,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118273	11717	https://cdn.tgdd.vn/Products/Images/42/360244/Slider/oppo-a6x-4gb-64gb639074553622611222.jpg	OPPO A6x 4GB/64GB	5	f	2026-10-30 02:24:35.242364	\N
 118274	11717	https://cdn.tgdd.vn/Products/Images/42/360244/Slider/oppo-a6x-4gb-64gb639074553660451714.jpg	OPPO A6x 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 118275	11717	https://cdn.tgdd.vn/Products/Images/42/360244/Slider/oppo-a6x-4gb-64gb639074553701341874.jpg	OPPO A6x 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
-118276	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553804061327.jpg	OPPO A6x 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-118277	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553726479967.jpg	OPPO A6x 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-118278	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553823009490.jpg	OPPO A6x 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-118279	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553753494061.jpg	OPPO A6x 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-118280	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553769931450.jpg	OPPO A6x 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-118281	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553786011053.jpg	OPPO A6x 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-118282	11717	https://cdn.tgdd.vn/Products/Images/42/360246/Slider/oppo-a6x-4gb-128gb639074553851339770.jpg	OPPO A6x 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
 118283	11717	https://cdn.tgdd.vn/Products/Images/42/360247/Slider/oppo-a6x-6gb-256gb639074540223719212.jpg	OPPO A6x 4GB/64GB	15	f	2026-10-30 02:24:35.242364	Xanh
 118284	11717	https://cdn.tgdd.vn/Products/Images/42/360247/Slider/oppo-a6x-6gb-256gb639074540227603040.jpg	OPPO A6x 4GB/64GB	16	f	2026-10-30 02:24:35.242364	Xanh
 118285	11717	https://cdn.tgdd.vn/Products/Images/42/360247/Slider/oppo-a6x-6gb-256gb639074540213262132.jpg	OPPO A6x 4GB/64GB	17	f	2026-10-30 02:24:35.242364	Xanh
@@ -34832,7 +34536,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118379	44	https://cdn.tgdd.vn/Products/Images/42/362374/Slider/motorola-edge-70-8gb-256gb639124464320129888.jpg	Motorola Edge 70 8GB/256GB Xanh bộ đội	7	f	2026-10-30 02:24:35.242364	\N
 118380	44	https://cdn.tgdd.vn/Products/Images/42/362374/Slider/motorola-edge-70-8gb-256gb639124464321020189.jpg	Motorola Edge 70 8GB/256GB Xanh bộ đội	8	f	2026-10-30 02:24:35.242364	\N
 118381	46	https://cdn.tgdd.vn/Products/Images/42/334864/Slider/iphone-16e-thumb-1920x1080.png	iPhone 16e	2	f	2026-10-30 02:24:35.242364	\N
-118382	46	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/334866/iphone-16e-9-639225820714414740.jpg	iPhone 16e	3	f	2026-10-30 02:24:35.242364	\N
 118383	46	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/334866/iphone-16e-black-1-639174846399728230.jpg	iPhone 16e	4	f	2026-10-30 02:24:35.242364	Đen
 118384	46	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/334866/iphone-16e-black-2-639174846409129684.jpg	iPhone 16e	5	f	2026-10-30 02:24:35.242364	Đen
 118385	46	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/334866/iphone-16e-black-3-639174846417289713.jpg	iPhone 16e	6	f	2026-10-30 02:24:35.242364	Đen
@@ -34863,19 +34566,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118410	11718	https://cdn.tgdd.vn/Products/Images/42/339180/Slider/vivo-y39-5g638901629842062232.jpg	vivo Y39 5G 8GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
 118411	11718	https://cdn.tgdd.vn/Products/Images/42/339180/Slider/vivo-y39-5g638901629843172303.jpg	vivo Y39 5G 8GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
 118412	11718	https://cdn.tgdd.vn/Products/Images/42/339180/Slider/vivo-y39-5g638901629845324092.jpg	vivo Y39 5G 8GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
-118413	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629881024213.jpg	vivo Y39 5G 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
-118414	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629883384215.jpg	vivo Y39 5G 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-118415	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629877914144.jpg	vivo Y39 5G 8GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-118416	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629879874177.jpg	vivo Y39 5G 8GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-118417	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629882324247.jpg	vivo Y39 5G 8GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-118418	11718	https://cdn.tgdd.vn/Products/Images/42/339179/Slider/vivo-y39-5g-256gb638901629876794115.jpg	vivo Y39 5G 8GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-118419	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982690710548.jpg	realme C85 8GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
-118420	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982702200636.jpg	realme C85 8GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
-118421	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982684450543.jpg	realme C85 8GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
-118422	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982781365866.jpg	realme C85 8GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
-118423	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982796266032.jpg	realme C85 8GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
-118424	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982730205593.jpg	realme C85 8GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
-118425	11719	https://cdn.tgdd.vn/Products/Images/42/360343/Slider/realme-c85-6gb-128gb639044982764196515.jpg	realme C85 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 118426	11719	https://cdn.tgdd.vn/Products/Images/42/360344/Slider/realme-c85-8gb-128gb639044983083495825.jpg	realme C85 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
 118427	11719	https://cdn.tgdd.vn/Products/Images/42/360344/Slider/realme-c85-8gb-128gb639044983092845812.jpg	realme C85 8GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
 118428	11719	https://cdn.tgdd.vn/Products/Images/42/360344/Slider/realme-c85-8gb-128gb639044983036845593.jpg	realme C85 8GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
@@ -34890,13 +34580,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118437	56	https://cdn.tgdd.vn/Products/Images/42/339638/Slider/honor-400-5g-12gb-256gb-den638911076237896830.jpg	HONOR 400 5G 12GB/256GB Đen	5	f	2026-10-30 02:24:35.242364	\N
 118438	56	https://cdn.tgdd.vn/Products/Images/42/339638/Slider/honor-400-5g-12gb-256gb-den638911076248799165.jpg	HONOR 400 5G 12GB/256GB Đen	6	f	2026-10-30 02:24:35.242364	\N
 118439	56	https://cdn.tgdd.vn/Products/Images/42/339638/Slider/honor-400-5g-12gb-256gb-den638911076250454066.jpg	HONOR 400 5G 12GB/256GB Đen	7	f	2026-10-30 02:24:35.242364	\N
-118440	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-1.jpg	HONOR 400 5G 12GB/256GB Đen	8	f	2026-10-30 02:24:35.242364	\N
-118441	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-2.jpg	HONOR 400 5G 12GB/256GB Đen	9	f	2026-10-30 02:24:35.242364	\N
-118442	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-3.jpg	HONOR 400 5G 12GB/256GB Đen	10	f	2026-10-30 02:24:35.242364	\N
-118443	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-4.jpg	HONOR 400 5G 12GB/256GB Đen	11	f	2026-10-30 02:24:35.242364	\N
-118444	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-5.jpg	HONOR 400 5G 12GB/256GB Đen	12	f	2026-10-30 02:24:35.242364	\N
-118445	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-6.jpg	HONOR 400 5G 12GB/256GB Đen	13	f	2026-10-30 02:24:35.242364	\N
-118446	56	https://cdn.tgdd.vn/Products/Images/42/339243/Slider/vi-vn-honor-400-vang-7.jpg	HONOR 400 5G 12GB/256GB Đen	14	f	2026-10-30 02:24:35.242364	\N
 118447	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760818087801.jpg	Motorola Signature 12GB/256GB Ghi đen	1	f	2026-10-30 02:24:35.242364	\N
 118448	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760820906296.jpg	Motorola Signature 12GB/256GB Ghi đen	2	f	2026-10-30 02:24:35.242364	\N
 118449	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760823143481.jpg	Motorola Signature 12GB/256GB Ghi đen	3	f	2026-10-30 02:24:35.242364	\N
@@ -34905,7 +34588,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118452	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760822116345.jpg	Motorola Signature 12GB/256GB Ghi đen	6	f	2026-10-30 02:24:35.242364	\N
 118453	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760828124576.jpg	Motorola Signature 12GB/256GB Ghi đen	7	f	2026-10-30 02:24:35.242364	\N
 118454	11720	https://cdn.tgdd.vn/Products/Images/42/362375/Slider/motorola-signature-12gb-256gb639124760826604594.jpg	Motorola Signature 12GB/256GB Ghi đen	8	f	2026-10-30 02:24:35.242364	\N
-118455	11721	https://cdn.tgdd.vn/Products/Images/42/341688/Slider/samsung-galaxy-a17-5g-8gb-128gb639153928287215464.jpg	Samsung Galaxy A17 5G 8GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 118456	11721	https://cdn.tgdd.vn/Products/Images/42/341688/Slider/samsung-galaxy-a17-5g-8gb-128gb639153928288225451.jpg	Samsung Galaxy A17 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 118457	11721	https://cdn.tgdd.vn/Products/Images/42/341688/Slider/samsung-galaxy-a17-5g-8gb-128gb639153928292405446.jpg	Samsung Galaxy A17 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 118458	11721	https://cdn.tgdd.vn/Products/Images/42/341688/Slider/samsung-galaxy-a17-5g-8gb-128gb639153928293485474.jpg	Samsung Galaxy A17 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -34932,13 +34614,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118479	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-titan-3-639032541009775085.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	5	f	2026-10-30 02:24:35.242364	Titan xám
 118480	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-titan-4-639032541015591816.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	6	f	2026-10-30 02:24:35.242364	Titan xám
 118481	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-titan-5-639032541021370932.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	Titan xám
-118482	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362551/xiaomi-redmi-note-15-pro-5g-titan-6-639053639684482730.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	Titan xám
 118483	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-tim-1-639032541387337532.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	Tím
 118484	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-tim-2-639032541394431923.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	10	f	2026-10-30 02:24:35.242364	Tím
 118485	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-tim-3-639032541400798924.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Tím
 118486	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-tim-4-639032541406441214.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Tím
 118487	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-tim-5-639032541411942356.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Tím
-118488	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362551/xiaomi-redmi-note-15-pro-5g-tim-6-639053639906923647.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Tím
 118489	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-1-639032540766787237.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Đen
 118490	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-2-639032540773087370.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Đen
 118491	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-3-639032540778585350.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Đen
@@ -34951,19 +34631,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118498	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-10-639032540820061980.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	24	f	2026-10-30 02:24:35.242364	Đen
 118499	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-11-639032540825661926.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	25	f	2026-10-30 02:24:35.242364	Đen
 118500	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360312/xiaomi-redmi-note-15-pro-5g-den-12-639032540831541072.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	26	f	2026-10-30 02:24:35.242364	Đen
-118501	53	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362551/xiaomi-redmi-note-15-pro-5g-den-13-639053639438115622.jpg	Xiaomi Redmi Note 15 Pro 5G 8GB/256GB	27	f	2026-10-30 02:24:35.242364	Đen
 118502	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112868955317.jpg	realme C85 Pro 8GB/128GB	1	f	2026-10-30 02:24:35.242364	Tím
 118503	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112865305097.jpg	realme C85 Pro 8GB/128GB	2	f	2026-10-30 02:24:35.242364	Tím
 118504	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112878045698.jpg	realme C85 Pro 8GB/128GB	3	f	2026-10-30 02:24:35.242364	Tím
 118505	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112858224896.jpg	realme C85 Pro 8GB/128GB	4	f	2026-10-30 02:24:35.242364	Tím
 118506	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112873255520.jpg	realme C85 Pro 8GB/128GB	5	f	2026-10-30 02:24:35.242364	Tím
 118507	55	https://cdn.tgdd.vn/Products/Images/42/357832/Slider/realme-c85-pro-8gb-128gb639027112861374956.jpg	realme C85 Pro 8GB/128GB	6	f	2026-10-30 02:24:35.242364	Tím
-118508	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113114070615.jpg	realme C85 Pro 8GB/128GB	7	f	2026-10-30 02:24:35.242364	Tím
-118509	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113093689792.jpg	realme C85 Pro 8GB/128GB	8	f	2026-10-30 02:24:35.242364	Tím
-118510	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113086559562.jpg	realme C85 Pro 8GB/128GB	9	f	2026-10-30 02:24:35.242364	Tím
-118511	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113079929382.jpg	realme C85 Pro 8GB/128GB	10	f	2026-10-30 02:24:35.242364	Tím
-118512	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113089329633.jpg	realme C85 Pro 8GB/128GB	11	f	2026-10-30 02:24:35.242364	Tím
-118513	55	https://cdn.tgdd.vn/Products/Images/42/357833/Slider/realme-c85-pro-8gb-256gb639027113082489374.jpg	realme C85 Pro 8GB/128GB	12	f	2026-10-30 02:24:35.242364	Tím
 118514	106	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366662/nubia-a56-den-1-639138344664042079.jpg	Nubia A56 4GB/128GB	1	f	2026-10-30 02:24:35.242364	Đen
 118515	106	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366662/nubia-a56-den-2-639138344671083863.jpg	Nubia A56 4GB/128GB	2	f	2026-10-30 02:24:35.242364	Đen
 118516	106	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/366662/nubia-a56-den-3-639138344676544670.jpg	Nubia A56 4GB/128GB	3	f	2026-10-30 02:24:35.242364	Đen
@@ -34997,7 +34670,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118544	11723	https://cdn.tgdd.vn/Products/Images/42/358048/Slider/motorola-moto-g35-5g-4gb-128gb639054725614517872.jpg	Motorola G35 5G 4GB/128GB Đen	5	f	2026-10-30 02:24:35.242364	\N
 118545	11723	https://cdn.tgdd.vn/Products/Images/42/358048/Slider/motorola-moto-g35-5g-4gb-128gb639054725515360948.jpg	Motorola G35 5G 4GB/128GB Đen	6	f	2026-10-30 02:24:35.242364	\N
 118546	11723	https://cdn.tgdd.vn/Products/Images/42/358048/Slider/motorola-moto-g35-5g-4gb-128gb639054725547153974.jpg	Motorola G35 5G 4GB/128GB Đen	7	f	2026-10-30 02:24:35.242364	\N
-118547	11724	https://cdn.tgdd.vn/Products/Images/42/342560/Slider/samsung-galaxy-s25-fe-5g-8gb-128gb638949099674066081.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 118548	11724	https://cdn.tgdd.vn/Products/Images/42/342560/Slider/samsung-galaxy-s25-fe-5g-8gb-128gb638949099676825952.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 118549	11724	https://cdn.tgdd.vn/Products/Images/42/342560/Slider/samsung-galaxy-s25-fe-5g-8gb-128gb638949099687766144.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 118550	11724	https://cdn.tgdd.vn/Products/Images/42/342560/Slider/samsung-galaxy-s25-fe-5g-8gb-128gb638949099679395955.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -35011,13 +34683,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118558	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100182251593.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Đen
 118559	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100184884291.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Đen
 118560	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100177736911.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Đen
-118561	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131392187318.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Đen
-118562	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131399248062.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Đen
-118563	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131397124667.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Đen
-118564	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131407336203.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	18	f	2026-10-30 02:24:35.242364	Đen
-118565	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131402309090.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	19	f	2026-10-30 02:24:35.242364	Đen
-118566	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131394437315.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	20	f	2026-10-30 02:24:35.242364	Đen
-118567	11724	https://cdn.tgdd.vn/Products/Images/42/342564/Slider/samsung-galaxy-s25-fe-5g-8gb-512gb638949131404798149.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	21	f	2026-10-30 02:24:35.242364	Đen
 118568	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100180175553.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	22	f	2026-10-30 02:24:35.242364	Xanh Navy
 118569	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100174040753.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	23	f	2026-10-30 02:24:35.242364	Xanh Navy
 118570	11724	https://cdn.tgdd.vn/Products/Images/42/342565/Slider/samsung-galaxy-s25-fe-5g-8gb-256gb638949100182251593.jpg	Samsung Galaxy S25 FE 5G 8GB/256GB	24	f	2026-10-30 02:24:35.242364	Xanh Navy
@@ -35064,11 +34729,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118611	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360307/xiaomi-redmi-note-15-pro-titan-11-639032474447290794.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	30	f	2026-10-30 02:24:35.242364	Đen
 118612	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360307/xiaomi-redmi-note-15-pro-titan-12-639032474453374147.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	31	f	2026-10-30 02:24:35.242364	Đen
 118613	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360307/xiaomi-redmi-note-15-pro-titan-13-639032474459520639.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	32	f	2026-10-30 02:24:35.242364	Đen
-118614	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360308/xiaomi-redmi-note-15-pro-den-1-639032524975821584.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	33	f	2026-10-30 02:24:35.242364	Đen
-118615	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360308/xiaomi-redmi-note-15-pro-den-2-639032524981530688.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	34	f	2026-10-30 02:24:35.242364	Đen
-118616	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360308/xiaomi-redmi-note-15-pro-den-3-639032524989508270.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	35	f	2026-10-30 02:24:35.242364	Đen
-118617	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360308/xiaomi-redmi-note-15-pro-den-4-639032524995190358.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	36	f	2026-10-30 02:24:35.242364	Đen
-118618	11725	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360308/xiaomi-redmi-note-15-pro-den-5-639032525001509021.jpg	Xiaomi Redmi Note 15 Pro 8GB/256GB	37	f	2026-10-30 02:24:35.242364	Đen
 118619	107	https://cdn.tgdd.vn/Products/Images/42/361630/Slider/nubia-a36-4gb-64gb639124469408784278.jpg	Nubia A36 4GB/64GB	1	f	2026-10-30 02:24:35.242364	\N
 118620	107	https://cdn.tgdd.vn/Products/Images/42/361630/Slider/nubia-a36-4gb-64gb639124469412124289.jpg	Nubia A36 4GB/64GB	2	f	2026-10-30 02:24:35.242364	\N
 118621	107	https://cdn.tgdd.vn/Products/Images/42/361630/Slider/nubia-a36-4gb-64gb639124469407428288.jpg	Nubia A36 4GB/64GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -35093,6 +34753,8 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118640	71	https://cdn.tgdd.vn/Products/Images/42/338738/Slider/vi-vn-samsung-galaxy-z-fold7-7.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
 118641	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362409295139.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	Xám
 118642	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362415031339.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	Xám
+118643	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362410841442.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	Xám
+118644	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362416631357.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	Xám
 118645	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362412121366.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	Xám
 118646	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362407655049.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	Xám
 118647	71	https://cdn.tgdd.vn/Products/Images/42/338739/Slider/samsung-galaxy-z-fold7-512gb638890362413551331.jpg	Samsung Galaxy Z Fold7 5G 12GB/256GB	15	f	2026-10-30 02:24:35.242364	Xám
@@ -35126,20 +34788,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118675	76	https://cdn.tgdd.vn/Products/Images/42/361191/Slider/oppo-a6t-4gb-64gb639134833934299254.png	OPPO A6t 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 118676	76	https://cdn.tgdd.vn/Products/Images/42/361191/Slider/oppo-a6t-4gb-64gb639134833935979355.jpg	OPPO A6t 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
 118677	76	https://cdn.tgdd.vn/Products/Images/42/361191/Slider/oppo-a6t-4gb-64gb639134833940969271.jpg	OPPO A6t 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-118678	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834755490694.jpg	OPPO A6t 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-118679	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834764190764.png	OPPO A6t 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-118680	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834759620699.png	OPPO A6t 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-118681	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834773117779.jpg	OPPO A6t 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-118682	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834768207830.png	OPPO A6t 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-118683	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834770517782.png	OPPO A6t 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
-118684	76	https://cdn.tgdd.vn/Products/Images/42/361192/Slider/oppo-a6t-4gb-128gb639134834772117776.jpg	OPPO A6t 4GB/64GB	15	f	2026-10-30 02:24:35.242364	\N
-118685	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834943862131.png	OPPO A6t 4GB/64GB	16	f	2026-10-30 02:24:35.242364	\N
-118686	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834948542266.png	OPPO A6t 4GB/64GB	17	f	2026-10-30 02:24:35.242364	\N
-118687	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834950052333.png	OPPO A6t 4GB/64GB	18	f	2026-10-30 02:24:35.242364	\N
-118688	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834955302531.png	OPPO A6t 4GB/64GB	19	f	2026-10-30 02:24:35.242364	\N
-118689	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834939322108.jpg	OPPO A6t 4GB/64GB	20	f	2026-10-30 02:24:35.242364	\N
-118690	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834957012608.jpg	OPPO A6t 4GB/64GB	21	f	2026-10-30 02:24:35.242364	\N
-118691	76	https://cdn.tgdd.vn/Products/Images/42/361193/Slider/oppo-a6t-6gb-256gb639134834957952534.jpg	OPPO A6t 4GB/64GB	22	f	2026-10-30 02:24:35.242364	\N
 118692	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083091865220.jpg	vivo V60 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 118693	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083096675388.jpg	vivo V60 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 118694	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083102885235.jpg	vivo V60 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -35147,13 +34795,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118696	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083089075312.jpg	vivo V60 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 118697	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083094505268.jpg	vivo V60 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 118698	11726	https://cdn.tgdd.vn/Products/Images/42/341625/Slider/vivo-v60-12gb-256gb638965083098575404.jpg	vivo V60 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-118699	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083127949019.jpg	vivo V60 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-118700	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083136349083.jpg	vivo V60 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-118701	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083142449123.jpg	vivo V60 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-118702	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083131469234.jpg	vivo V60 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-118703	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083134049040.jpg	vivo V60 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-118704	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083138279117.jpg	vivo V60 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-118705	11726	https://cdn.tgdd.vn/Products/Images/42/341628/Slider/vivo-v60-12gb-512gb638965083140389069.jpg	vivo V60 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
 118706	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110609475795.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	2	f	2026-10-30 02:24:35.242364	\N
 118707	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110628314594.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	3	f	2026-10-30 02:24:35.242364	\N
 118708	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110647324650.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	4	f	2026-10-30 02:24:35.242364	\N
@@ -35161,7 +34802,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118710	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110662935031.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	6	f	2026-10-30 02:24:35.242364	\N
 118711	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110678244995.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	7	f	2026-10-30 02:24:35.242364	\N
 118712	69	https://cdn.tgdd.vn/Products/Images/42/358224/Slider/motorola-edge-60-fusion-8gb-256gb639058110616216676.jpg	Motorola Edge 60 Fusion 5G 8GB/256GB Xám	8	f	2026-10-30 02:24:35.242364	Xanh Nước Biển
-118713	11727	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343124/oppo-a6-pro-pink-1-638947499655974538.jpg	OPPO A6 Pro 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 118714	11727	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343124/oppo-a6-pro-pink-2-638947499624740336.jpg	OPPO A6 Pro 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 118715	11727	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343124/oppo-a6-pro-pink-3-638947499617414960.jpg	OPPO A6 Pro 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 118716	11727	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343124/oppo-a6-pro-pink-4-638947499608395151.jpg	OPPO A6 Pro 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -35198,16 +34838,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118745	15358	https://cdnv2.tgdd.vn/pim/cdn/images/202610/realme-c01-bac-thumb174923.jpg	realme C01 4GB/64GB Đen	0	t	2026-10-30 02:24:35.242364	Bạc
 118748	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069811809080.jpg	HONOR Play 10	1	f	2026-10-30 02:24:35.242364	\N
 118749	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069855809265.jpg	HONOR Play 10	2	f	2026-10-30 02:24:35.242364	\N
+118713	11727	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/343124/oppo-a6-pro-pink-1-638947499655974538.jpg	OPPO A6 Pro 5G 12GB/256GB	1	t	2026-10-30 02:24:35.242364	\N
 118750	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069877194909.jpg	HONOR Play 10	3	f	2026-10-30 02:24:35.242364	\N
 118751	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069898273818.jpg	HONOR Play 10	4	f	2026-10-30 02:24:35.242364	\N
 118752	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069924487436.jpg	HONOR Play 10	5	f	2026-10-30 02:24:35.242364	\N
 118753	103	https://cdn.tgdd.vn/Products/Images/42/358698/Slider/honor-play-10-3gb-64gb639051069949507494.jpg	HONOR Play 10	6	f	2026-10-30 02:24:35.242364	\N
-118754	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051070092519328.jpg	HONOR Play 10	7	f	2026-10-30 02:24:35.242364	\N
-118755	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051069985727613.jpg	HONOR Play 10	8	f	2026-10-30 02:24:35.242364	\N
-118756	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051070019697732.jpg	HONOR Play 10	9	f	2026-10-30 02:24:35.242364	\N
-118757	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051070161713141.jpg	HONOR Play 10	10	f	2026-10-30 02:24:35.242364	\N
-118758	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051070147508857.jpg	HONOR Play 10	11	f	2026-10-30 02:24:35.242364	\N
-118759	103	https://cdn.tgdd.vn/Products/Images/42/358702/Slider/honor-play-10-4gb-128gb639051070175163398.jpg	HONOR Play 10	12	f	2026-10-30 02:24:35.242364	\N
 118760	169	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/371029/nothing-phone-4b-blue-1-639250620733148845.jpg	Nothing Phone (4b) 5G 8GB/128GB Trắng	2	f	2026-10-30 02:24:35.242364	Xanh Dương
 118761	169	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/371029/nothing-phone-4b-blue-2-639250620803371827.jpg	Nothing Phone (4b) 5G 8GB/128GB Trắng	3	f	2026-10-30 02:24:35.242364	Xanh Dương
 118762	169	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/371029/nothing-phone-4b-blue-3-639250620809152535.jpg	Nothing Phone (4b) 5G 8GB/128GB Trắng	4	f	2026-10-30 02:24:35.242364	Xanh Dương
@@ -35276,7 +34911,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118825	92	https://cdn.tgdd.vn/Products/Images/42/370758/Slider/vi-vn-masstel-izi-10s-02.jpeg	Masstel IZI 10S Đen Đỏ	2	f	2026-10-30 02:24:35.242364	\N
 118826	92	https://cdn.tgdd.vn/Products/Images/42/370758/Slider/vi-vn-masstel-izi-10s-03.jpeg	Masstel IZI 10S Đen Đỏ	3	f	2026-10-30 02:24:35.242364	\N
 118827	12	https://cdn.tgdd.vn/Products/Images/42/370544/Slider/samsung-galaxy-s26-fe-8gb-128gb639252378059992048.jpg	Samsung Galaxy S26 FE 5G 8GB/128GB Xám	2	f	2026-10-30 02:24:35.242364	\N
-118828	12	https://cdn.tgdd.vn/Products/Images/42/370545/Slider/samsung-galaxy-s26-fe-8gb-256gb639252378212129328.jpg	Samsung Galaxy S26 FE 5G 8GB/128GB Xám	3	f	2026-10-30 02:24:35.242364	\N
 118829	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-1-639229182165653997.jpg	OPPO A6 6GB/128GB	2	f	2026-10-30 02:24:35.242364	Hồng
 118830	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-2-639229182180898343.jpg	OPPO A6 6GB/128GB	3	f	2026-10-30 02:24:35.242364	Hồng
 118831	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-3-639229182194810357.jpg	OPPO A6 6GB/128GB	4	f	2026-10-30 02:24:35.242364	Hồng
@@ -35284,8 +34918,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118833	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-5-639229182271053910.jpg	OPPO A6 6GB/128GB	6	f	2026-10-30 02:24:35.242364	Hồng
 118834	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-6-639229182281342180.jpg	OPPO A6 6GB/128GB	7	f	2026-10-30 02:24:35.242364	Hồng
 118835	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-hong-7-639229182287804421.jpg	OPPO A6 6GB/128GB	8	f	2026-10-30 02:24:35.242364	Hồng
-118836	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/363217/oppo-a6-hong-8-639217096303491559.jpg	OPPO A6 6GB/128GB	9	f	2026-10-30 02:24:35.242364	Hồng
-118837	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/363217/oppo-a6-hong-9-639217096310269810.jpg	OPPO A6 6GB/128GB	10	f	2026-10-30 02:24:35.242364	Hồng
 118838	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-green-1-639229181835477764.jpg	OPPO A6 6GB/128GB	11	f	2026-10-30 02:24:35.242364	Xanh Đậm
 118839	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-green-2-639229181842366929.jpg	OPPO A6 6GB/128GB	12	f	2026-10-30 02:24:35.242364	Xanh Đậm
 118840	22	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/370752/oppo-a6-green-3-639229181852540735.jpg	OPPO A6 6GB/128GB	13	f	2026-10-30 02:24:35.242364	Xanh Đậm
@@ -35307,7 +34939,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 84270	11730	https://cdn.tgdd.vn/Products/Images/42/370492/vivo-y05e-den-thumb.jpg	vivo Y05e 4GB/64GB Đen	0	t	2026-10-06 15:05:29.718427	Đen
 118856	11730	https://cdn.tgdd.vn/Products/Images/42/370492/vivo-y05e-xanh-thumb.jpg	vivo Y05e 4GB/64GB Xanh	1	f	2026-10-30 02:24:35.242364	Xanh
 118857	120	https://cdn.tgdd.vn/Products/Images/42/368053/Slider/samsung-galaxy-z-flip8-12gb-256gb639247441663255060.jpg	Samsung Galaxy Z Flip8 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
-118858	120	https://cdn.tgdd.vn/Products/Images/42/368063/Slider/samsung-galaxy-z-flip8-12gb-512gb639247441795030923.jpg	Samsung Galaxy Z Flip8 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 118859	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-07.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 118860	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-01.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 118861	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-02.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -35315,13 +34946,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118863	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-04.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 118864	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-05.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
 118865	16	https://cdn.tgdd.vn/Products/Images/42/368050/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-256gb-06.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-118866	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-07.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-118867	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-01.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-118868	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-02.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-118869	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-03.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-118870	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-04.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-118871	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-05.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
-118872	16	https://cdn.tgdd.vn/Products/Images/42/368058/Slider/vi-vn-samsung-galaxy-z-fold8-ultra-12gb-512gb-06.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	15	f	2026-10-30 02:24:35.242364	\N
 118873	16	https://cdn.tgdd.vn/Products/Images/42/368062/Slider/samsung-galaxy-z-fold8-ultra-16gb-1tb-01-2500x2500.jpg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	16	f	2026-10-30 02:24:35.242364	Đen
 118874	16	https://cdn.tgdd.vn/Products/Images/42/368062/Slider/samsung-galaxy-z-fold8-ultra-16gb-1tb-07-2500x2500.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	17	f	2026-10-30 02:24:35.242364	Đen
 118875	16	https://cdn.tgdd.vn/Products/Images/42/368062/Slider/samsung-galaxy-z-fold8-ultra-16gb-1tb-03-2500x2500.jpeg	Samsung Galaxy Z Fold8 Ultra 12GB/256GB	18	f	2026-10-30 02:24:35.242364	Đen
@@ -35364,7 +34988,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118911	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-green-7-639241280347215148.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	6	f	2026-10-30 02:24:35.242364	Xanh lá
 118912	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-green-8-639241280354420831.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	7	f	2026-10-30 02:24:35.242364	Xanh lá
 118913	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-green-9-639241280362608060.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	8	f	2026-10-30 02:24:35.242364	Xanh lá
-118914	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369631/xiaomi-redmi-17-green-5-639241280776456108.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	9	f	2026-10-30 02:24:35.242364	Xanh lá
 118915	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-4g-black-1-639211924902215194.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	10	f	2026-10-30 02:24:35.242364	Đen
 118916	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-4g-black-2-639211924908341874.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	11	f	2026-10-30 02:24:35.242364	Đen
 118917	11731	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/369630/xiaomi-redmi-17-4g-black-3-639211924915741807.jpg	Điện thoại Xiaomi Redmi 17 4G 4GB/128GB	12	f	2026-10-30 02:24:35.242364	Đen
@@ -35412,10 +35035,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118954	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-04-man-hinh-lon-luot-noi-dung-muot-ma-thao-tac-de-dang-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	2	f	2026-10-30 02:24:35.242364	Nâu
 118955	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-03-dung-muot-cac-tac-vu-co-ban-bo-nho-u-dung-va-co-the-mo-rong-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	3	f	2026-10-30 02:24:35.242364	Nâu
 118956	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-05-camera-u-dung-cho-chup-anh-va-quay-video-co-ban-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	4	f	2026-10-30 02:24:35.242364	Nâu
-118957	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-02-phu-hop-cho-lien-lac-hoc-tap-va-giai-tri-nhe-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	5	f	2026-10-30 02:24:35.242364	Xanh Dương
-118958	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-04-man-hinh-lon-luot-noi-dung-muot-ma-thao-tac-de-dang-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	6	f	2026-10-30 02:24:35.242364	Xanh Dương
-118959	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-03-dung-muot-cac-tac-vu-co-ban-bo-nho-u-dung-va-co-the-mo-rong-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	7	f	2026-10-30 02:24:35.242364	Xanh Dương
-118960	11734	https://cdn.tgdd.vn/Products/Images/42/369546/Slider/imotorola-moto-g06-power-4gb-64gb-05-camera-u-dung-cho-chup-anh-va-quay-video-co-ban-1020x680.jpg	Motorola G06 POWER 4GB/64GB Nâu	8	f	2026-10-30 02:24:35.242364	Xanh Dương
 118961	11734	https://cdn.tgdd.vn/Products/Images/42/358226/Slider/motorola-moto-g06-power-4gb-128gb639125581939974680.jpg	Motorola G06 POWER 4GB/64GB Nâu	9	f	2026-10-30 02:24:35.242364	Xanh Dương
 118962	11734	https://cdn.tgdd.vn/Products/Images/42/358226/Slider/motorola-moto-g06-power-4gb-128gb639125581941184735.jpg	Motorola G06 POWER 4GB/64GB Nâu	10	f	2026-10-30 02:24:35.242364	Xanh Dương
 118963	11734	https://cdn.tgdd.vn/Products/Images/42/358226/Slider/motorola-moto-g06-power-4gb-128gb639125581945114787.jpg	Motorola G06 POWER 4GB/64GB Nâu	11	f	2026-10-30 02:24:35.242364	Xanh Dương
@@ -35432,7 +35051,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 118974	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368872/nothing-phone-4a-den-3-639233482515210253.jpg	Nothing Phone (4a) 8GB/128GB Đen	3	f	2026-10-30 02:24:35.242364	Đen
 118975	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368872/nothing-phone-4a-den-5-639233482643403178.jpg	Nothing Phone (4a) 8GB/128GB Đen	4	f	2026-10-30 02:24:35.242364	Đen
 118976	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-tem-99231109.JPG	Nothing Phone (4a) 8GB/128GB Đen	5	f	2026-10-30 02:24:35.242364	Đen
-118977	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368873/nothing-phone-4a-den-4-639233482972401782.jpg	Nothing Phone (4a) 8GB/128GB Đen	6	f	2026-10-30 02:24:35.242364	Đen
 118978	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-tem-99231057.JPG	Nothing Phone (4a) 8GB/128GB Đen	7	f	2026-10-30 02:24:35.242364	Đen
 118979	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-tem-99231121.JPG	Nothing Phone (4a) 8GB/128GB Đen	8	f	2026-10-30 02:24:35.242364	Đen
 118980	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-trang-2231018.jpg	Nothing Phone (4a) 8GB/128GB Đen	9	f	2026-10-30 02:24:35.242364	Trắng
@@ -35474,8 +35092,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119017	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-trang-13230941.JPG	Nothing Phone (4a) 8GB/128GB Đen	46	f	2026-10-30 02:24:35.242364	Trắng
 119018	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-tem-99230940.JPG	Nothing Phone (4a) 8GB/128GB Đen	47	f	2026-10-30 02:24:35.242364	Trắng
 119019	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-1-639233483466900831.jpg	Nothing Phone (4a) 8GB/128GB Đen	48	f	2026-10-30 02:24:35.242364	Hồng
-119020	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-2-639233483479705388.jpg	Nothing Phone (4a) 8GB/128GB Đen	49	f	2026-10-30 02:24:35.242364	Hồng
-119021	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-3-639233483490992324.jpg	Nothing Phone (4a) 8GB/128GB Đen	50	f	2026-10-30 02:24:35.242364	Hồng
 119022	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-4-639233483499868162.jpg	Nothing Phone (4a) 8GB/128GB Đen	51	f	2026-10-30 02:24:35.242364	Hồng
 119023	11735	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368863/nothing-phone-4a-hong-5-639233483507287084.jpg	Nothing Phone (4a) 8GB/128GB Đen	52	f	2026-10-30 02:24:35.242364	Hồng
 119024	11735	https://cdnv2.tgdd.vn/pim/cdn/images/202610/nothing-phone-4a-tem-99231143.JPG	Nothing Phone (4a) 8GB/128GB Đen	53	f	2026-10-30 02:24:35.242364	Hồng
@@ -35515,18 +35131,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119058	11736	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368875/nothing-phone-4a-pro-den-3-639233445036879302.jpg	Nothing Phone (4a) Pro 12GB/256GB Hồng	13	f	2026-10-30 02:24:35.242364	Đen
 119059	11736	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368875/nothing-phone-4a-pro-den-4-639233445043713995.jpg	Nothing Phone (4a) Pro 12GB/256GB Hồng	14	f	2026-10-30 02:24:35.242364	Đen
 119060	11736	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368875/nothing-phone-4a-pro-den-5-639233445052252779.jpg	Nothing Phone (4a) Pro 12GB/256GB Hồng	15	f	2026-10-30 02:24:35.242364	Đen
-119061	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586050444498.jpg	vivo Y31d	1	f	2026-10-30 02:24:35.242364	\N
 119062	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586123995000.jpg	vivo Y31d	2	f	2026-10-30 02:24:35.242364	\N
 119063	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586080334769.jpg	vivo Y31d	3	f	2026-10-30 02:24:35.242364	\N
 119064	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586100124797.jpg	vivo Y31d	4	f	2026-10-30 02:24:35.242364	\N
 119065	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586153595165.jpg	vivo Y31d	5	f	2026-10-30 02:24:35.242364	\N
 119066	11737	https://cdn.tgdd.vn/Products/Images/42/360671/Slider/vivo-y31d-6gb-128gb639114586063384620.jpg	vivo Y31d	6	f	2026-10-30 02:24:35.242364	\N
-119067	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585799645807.jpg	vivo Y31d	7	f	2026-10-30 02:24:35.242364	\N
-119068	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585787575747.jpg	vivo Y31d	8	f	2026-10-30 02:24:35.242364	\N
-119069	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585805205785.jpg	vivo Y31d	9	f	2026-10-30 02:24:35.242364	\N
-119070	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585810885975.jpg	vivo Y31d	10	f	2026-10-30 02:24:35.242364	\N
-119071	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585820744956.jpg	vivo Y31d	11	f	2026-10-30 02:24:35.242364	\N
-119072	11737	https://cdn.tgdd.vn/Products/Images/42/358680/Slider/vivo-y31d-8gb-128gb639114585831235099.jpg	vivo Y31d	12	f	2026-10-30 02:24:35.242364	\N
 119073	11737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368233/vivo-y31d-den-1-639185004489987785.jpg	vivo Y31d	13	f	2026-10-30 02:24:35.242364	Đen
 119074	11737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368233/vivo-y31d-den-2-639185004541083425.jpg	vivo Y31d	14	f	2026-10-30 02:24:35.242364	Đen
 119075	11737	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/368233/vivo-y31d-den-3-639185004610178109.jpg	vivo Y31d	15	f	2026-10-30 02:24:35.242364	Đen
@@ -35571,20 +35180,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119108	11738	https://cdn.tgdd.vn/Products/Images/42/367004/Slider/xiaomi-17t-pro-5g-12gb-256gb639213141739413006.jpg	Xiaomi 17T Pro 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 119109	11738	https://cdn.tgdd.vn/Products/Images/42/367004/Slider/xiaomi-17t-pro-5g-12gb-256gb639213141741552967.jpg	Xiaomi 17T Pro 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 119110	11738	https://cdn.tgdd.vn/Products/Images/42/367004/Slider/xiaomi-17t-pro-5g-12gb-256gb639213141743553106.jpg	Xiaomi 17T Pro 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-119111	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141763523292.jpg	Xiaomi 17T Pro 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-119112	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141766006015.jpg	Xiaomi 17T Pro 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-119113	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141768110681.jpg	Xiaomi 17T Pro 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-119114	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141770119494.jpg	Xiaomi 17T Pro 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-119115	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141772749462.jpg	Xiaomi 17T Pro 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-119116	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141774799476.jpg	Xiaomi 17T Pro 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-119117	11738	https://cdn.tgdd.vn/Products/Images/42/367005/Slider/xiaomi-17t-pro-5g-12gb-512gb639213141776909493.jpg	Xiaomi 17T Pro 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
-119118	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141798569679.jpg	Xiaomi 17T Pro 5G 12GB/256GB	15	f	2026-10-30 02:24:35.242364	\N
-119119	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141800739689.jpg	Xiaomi 17T Pro 5G 12GB/256GB	16	f	2026-10-30 02:24:35.242364	\N
-119120	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141802859672.jpg	Xiaomi 17T Pro 5G 12GB/256GB	17	f	2026-10-30 02:24:35.242364	\N
-119121	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141804839739.jpg	Xiaomi 17T Pro 5G 12GB/256GB	18	f	2026-10-30 02:24:35.242364	\N
-119122	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141806889742.jpg	Xiaomi 17T Pro 5G 12GB/256GB	19	f	2026-10-30 02:24:35.242364	\N
-119123	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141809219768.jpg	Xiaomi 17T Pro 5G 12GB/256GB	20	f	2026-10-30 02:24:35.242364	\N
-119124	11738	https://cdn.tgdd.vn/Products/Images/42/367006/Slider/xiaomi-17t-pro-5g-12gb-1tb639213141811219783.jpg	Xiaomi 17T Pro 5G 12GB/256GB	21	f	2026-10-30 02:24:35.242364	\N
 119125	94	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367596/oppo-a6c-nau-1-639159885774874026.jpg	OPPO A6c 4GB/64GB	2	f	2026-10-30 02:24:35.242364	Nâu
 119126	94	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367596/oppo-a6c-nau-2-639159885781676440.jpg	OPPO A6c 4GB/64GB	3	f	2026-10-30 02:24:35.242364	Nâu
 119127	94	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/367596/oppo-a6c-nau-3-639159885788190581.jpg	OPPO A6c 4GB/64GB	4	f	2026-10-30 02:24:35.242364	Nâu
@@ -35699,14 +35294,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119236	101	https://cdn.tgdd.vn/Products/Images/42/361709/Slider/samsung-galaxy-a07-5g-4gb-128gb639122797881582185.jpg	Samsung Galaxy A07 5G 4GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 119237	101	https://cdn.tgdd.vn/Products/Images/42/361709/Slider/samsung-galaxy-a07-5g-4gb-128gb639122797884712614.jpg	Samsung Galaxy A07 5G 4GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
 119238	101	https://cdn.tgdd.vn/Products/Images/42/361709/Slider/samsung-galaxy-a07-5g-4gb-128gb639122797885732254.jpg	Samsung Galaxy A07 5G 4GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-119239	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892010755241.jpg	Samsung Galaxy A07 5G 4GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-119240	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892007055231.jpg	Samsung Galaxy A07 5G 4GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-119241	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892008075345.jpg	Samsung Galaxy A07 5G 4GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-119242	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892011565303.jpg	Samsung Galaxy A07 5G 4GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-119243	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892008935307.jpg	Samsung Galaxy A07 5G 4GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-119244	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892012485206.jpg	Samsung Galaxy A07 5G 4GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
-119245	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892009875313.jpg	Samsung Galaxy A07 5G 4GB/128GB	16	f	2026-10-30 02:24:35.242364	\N
-119246	101	https://cdn.tgdd.vn/Products/Images/42/366983/Slider/samsung-galaxy-a07-5g-6gb-128g639154892013265238.jpg	Samsung Galaxy A07 5G 4GB/128GB	17	f	2026-10-30 02:24:35.242364	\N
 119247	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047318557358.jpg	Vivo Y11d 4GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 119248	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047315240074.jpg	Vivo Y11d 4GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 119249	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047316613145.jpg	Vivo Y11d 4GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -35714,13 +35301,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119251	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047321563608.jpg	Vivo Y11d 4GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
 119252	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047319613164.jpg	Vivo Y11d 4GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 119253	98	https://cdn.tgdd.vn/Products/Images/42/365878/Slider/vivo-y11d-4gb-128gb639154047323066284.jpg	Vivo Y11d 4GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
-119254	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046947557173.jpg	Vivo Y11d 4GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-119255	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046950477190.jpg	Vivo Y11d 4GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-119256	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046951327198.jpg	Vivo Y11d 4GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-119257	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046948627197.jpg	Vivo Y11d 4GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-119258	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046952127242.jpg	Vivo Y11d 4GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-119259	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046949617309.jpg	Vivo Y11d 4GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-119260	98	https://cdn.tgdd.vn/Products/Images/42/365879/Slider/vivo-y11d-6gb-128gb639154046952917231.jpg	Vivo Y11d 4GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
 119261	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115405791522.jpg	vivo Y05 4GB/64GB	1	f	2026-10-30 02:24:35.242364	\N
 119262	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115406761462.jpg	vivo Y05 4GB/64GB	2	f	2026-10-30 02:24:35.242364	\N
 119263	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115409141603.jpg	vivo Y05 4GB/64GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -35728,13 +35308,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119265	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115407781449.jpg	vivo Y05 4GB/64GB	5	f	2026-10-30 02:24:35.242364	\N
 119266	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115412111531.jpg	vivo Y05 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 119267	11739	https://cdn.tgdd.vn/Products/Images/42/365875/Slider/vivo-y05-4gb-64gb639147115412961540.jpg	vivo Y05 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
-119268	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115461361714.jpg	vivo Y05 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-119269	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115462441734.jpg	vivo Y05 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-119270	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115464671678.jpg	vivo Y05 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-119271	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115465591749.jpg	vivo Y05 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-119272	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115467381898.jpg	vivo Y05 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-119273	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115463371829.jpg	vivo Y05 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-119274	11739	https://cdn.tgdd.vn/Products/Images/42/365877/Slider/vivo-y05-4gb-128gb639147115466511856.jpg	vivo Y05 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
 119275	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-1.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	2	f	2026-10-30 02:24:35.242364	\N
 119276	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-5.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	3	f	2026-10-30 02:24:35.242364	\N
 119277	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-2.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -35742,35 +35315,15 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119279	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-3.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 119280	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-7.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
 119281	93	https://cdn.tgdd.vn/Products/Images/42/364793/Slider/vi-vn-xiaomi-redmi-a7-pro-4.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-119282	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817942666492.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-119283	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817945326565.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-119284	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817947556599.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-119285	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817943676635.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-119286	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817944506536.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-119287	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817946546558.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
-119288	93	https://cdn.tgdd.vn/Products/Images/42/364968/Slider/xiaomi-redmi-a7-pro-4gb-128gb639149817948436526.jpg	Xiaomi Redmi A7 Pro 4GB/64GB	15	f	2026-10-30 02:24:35.242364	\N
-119289	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082773404107.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
-119290	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082779214257.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
-119291	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082771704159.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
-119292	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082774384126.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
-119293	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082776904278.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
-119294	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082844758726.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
-119295	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082838918619.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-119296	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082841118654.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-119297	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082843158648.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-119298	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082131500175.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
 119299	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082132680127.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
 119300	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082133740284.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
 119301	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082134620229.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
 119302	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082135540243.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
 119303	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082136560206.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	15	f	2026-10-30 02:24:35.242364	\N
 119304	121	https://cdn.tgdd.vn/Products/Images/42/363472/Slider/xiaomi-poco-x8-pro-12gb-512gb639154082137590218.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	16	f	2026-10-30 02:24:35.242364	\N
-119305	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082770414145.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Trắng
 119306	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082837718589.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	18	f	2026-10-30 02:24:35.242364	Trắng
 119307	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082842128627.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	19	f	2026-10-30 02:24:35.242364	Trắng
 119308	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082770414145.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	20	f	2026-10-30 02:24:35.242364	Xanh lá
-119309	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082840158648.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	21	f	2026-10-30 02:24:35.242364	Xanh lá
-119310	121	https://cdn.tgdd.vn/Products/Images/42/363470/Slider/xiaomi-poco-x8-pro-8gb-256gb639154082775764339.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	22	f	2026-10-30 02:24:35.242364	Đen
 119311	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082837718589.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	23	f	2026-10-30 02:24:35.242364	Đen
 119312	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082840158648.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	24	f	2026-10-30 02:24:35.242364	Đen
 119313	121	https://cdn.tgdd.vn/Products/Images/42/363471/Slider/xiaomi-poco-x8-pro-8gb-512gb639154082842128627.jpg	Xiaomi POCO X8 Pro 5G 8GB/256GB	25	f	2026-10-30 02:24:35.242364	Đen
@@ -35789,7 +35342,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119326	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056723917677.jpg	Xiaomi POCO M8 5G 8GB/512GB	14	f	2026-10-30 02:24:35.242364	Đen
 119327	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056724917622.jpg	Xiaomi POCO M8 5G 8GB/512GB	15	f	2026-10-30 02:24:35.242364	Đen
 119328	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056725967684.jpg	Xiaomi POCO M8 5G 8GB/512GB	16	f	2026-10-30 02:24:35.242364	Đen
-119329	142	https://cdn.tgdd.vn/Products/Images/42/363468/Slider/xiaomi-poco-m8-8gb-256gb639154056674853197.jpg	Xiaomi POCO M8 5G 8GB/512GB	17	f	2026-10-30 02:24:35.242364	Bạc
 119330	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056718113423.jpg	Xiaomi POCO M8 5G 8GB/512GB	18	f	2026-10-30 02:24:35.242364	Bạc
 119331	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056721373957.jpg	Xiaomi POCO M8 5G 8GB/512GB	19	f	2026-10-30 02:24:35.242364	Bạc
 119332	142	https://cdn.tgdd.vn/Products/Images/42/363469/Slider/xiaomi-poco-m8-8gb-512gb639154056719183355.jpg	Xiaomi POCO M8 5G 8GB/512GB	20	f	2026-10-30 02:24:35.242364	Bạc
@@ -35803,8 +35355,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119340	11740	https://cdn.tgdd.vn/Products/Images/42/363464/Slider/vivo-v70-8gb-256gb639147121140451671.jpg	Vivo V70 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
 119341	11740	https://cdn.tgdd.vn/Products/Images/42/363464/Slider/vivo-v70-8gb-256gb639147121141680509.jpg	Vivo V70 5G 8GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 119342	11740	https://cdn.tgdd.vn/Products/Images/42/363464/Slider/vivo-v70-8gb-256gb639147121142580547.jpg	Vivo V70 5G 8GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
-119343	11740	https://cdn.tgdd.vn/Products/Images/42/363464/Slider/vivo-v70-8gb-256gb639147121136410500.jpg	Vivo V70 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	Xám
-119344	11740	https://cdn.tgdd.vn/Products/Images/42/363464/Slider/vivo-v70-8gb-256gb639147121137320470.jpg	Vivo V70 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	Xám
 119345	11740	https://cdn.tgdd.vn/Products/Images/42/363465/Slider/vivo-v70-12gb-256gb639147123910028760.jpg	Vivo V70 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	Xám
 119346	11740	https://cdn.tgdd.vn/Products/Images/42/363465/Slider/vivo-v70-12gb-256gb639147123912128648.jpg	Vivo V70 5G 8GB/256GB	10	f	2026-10-30 02:24:35.242364	Xám
 119347	11740	https://cdn.tgdd.vn/Products/Images/42/363465/Slider/vivo-v70-12gb-256gb639147123913019047.jpg	Vivo V70 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Xám
@@ -35851,13 +35401,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119388	875	https://cdn.tgdd.vn/Products/Images/42/361949/Slider/samsung-galaxy-s26-plus-12gb-256gb639134849105633597.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 119389	875	https://cdn.tgdd.vn/Products/Images/42/361949/Slider/samsung-galaxy-s26-plus-12gb-256gb639134849110214918.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 119390	875	https://cdn.tgdd.vn/Products/Images/42/361949/Slider/samsung-galaxy-s26-plus-12gb-256gb639134849114763773.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-119391	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849341594615.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-119392	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849319894589.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-119393	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849324964532.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-119394	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849329424583.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-119395	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849330424497.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-119396	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849335404484.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-119397	875	https://cdn.tgdd.vn/Products/Images/42/361950/Slider/samsung-galaxy-s26-plus-12gb-512gb639134849340624602.jpg	Samsung Galaxy S26+ 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
 119398	134	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361270/xiaomi-17-ultra-black-1-639088343322428022.jpg	Xiaomi 17 Ultra 5G 16GB/512GB	1	f	2026-10-30 02:24:35.242364	Đen
 119399	134	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361270/xiaomi-17-ultra-black-2-639088343329577669.jpg	Xiaomi 17 Ultra 5G 16GB/512GB	2	f	2026-10-30 02:24:35.242364	Đen
 119400	134	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/361270/xiaomi-17-ultra-black-3-639088343335124647.jpg	Xiaomi 17 Ultra 5G 16GB/512GB	3	f	2026-10-30 02:24:35.242364	Đen
@@ -35888,7 +35431,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119449	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-trang-11-639034669355640251.jpg	OPPO Reno15 5G 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Trắng
 119450	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-trang-12-639034669364667684.jpg	OPPO Reno15 5G 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Trắng
 119451	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-trang-13-639034669372926458.jpg	OPPO Reno15 5G 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Trắng
-119492	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546702443609.jpg	HONOR X5c Plus 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
 119452	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-xanh-1-639034669524258472.jpg	OPPO Reno15 5G 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Xanh Dương
 119453	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-xanh-2-639034669531866633.jpg	OPPO Reno15 5G 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Xanh Dương
 119454	11742	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360238/oppo-reno15-xanh-3-639034669538597558.jpg	OPPO Reno15 5G 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Xanh Dương
@@ -35929,12 +35471,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119489	115	https://cdn.tgdd.vn/Products/Images/42/358691/Slider/honor-x5c-plus-4gb-64gb639074546784361741.jpg	HONOR X5c Plus 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 119490	115	https://cdn.tgdd.vn/Products/Images/42/358691/Slider/honor-x5c-plus-4gb-64gb639074546789261690.jpg	HONOR X5c Plus 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
 119491	115	https://cdn.tgdd.vn/Products/Images/42/358691/Slider/honor-x5c-plus-4gb-64gb639074546776221665.jpg	HONOR X5c Plus 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-119493	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546707023636.jpg	HONOR X5c Plus 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-119494	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546710063671.jpg	HONOR X5c Plus 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-119495	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546712943692.jpg	HONOR X5c Plus 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-119496	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546722475482.jpg	HONOR X5c Plus 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-119497	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546715790325.jpg	HONOR X5c Plus 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
-119498	115	https://cdn.tgdd.vn/Products/Images/42/358689/Slider/honor-x5c-plus-4gb-128gb639074546719115857.jpg	HONOR X5c Plus 4GB/64GB	15	f	2026-10-30 02:24:35.242364	\N
 119500	15360	https://cdn.tgdd.vn/Products/Images/42/358668/Slider/vivo-y21d-6gb-256gb639051048433870425.jpg	vivo Y21d 6GB/256GB	1	f	2026-10-30 02:24:35.242364	Đen
 119501	15360	https://cdn.tgdd.vn/Products/Images/42/358668/Slider/vivo-y21d-6gb-256gb639051048499909401.jpg	vivo Y21d 6GB/256GB	2	f	2026-10-30 02:24:35.242364	Đen
 119502	15360	https://cdn.tgdd.vn/Products/Images/42/358668/Slider/vivo-y21d-6gb-256gb639051048442500288.jpg	vivo Y21d 6GB/256GB	3	f	2026-10-30 02:24:35.242364	Đen
@@ -35955,12 +35491,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119516	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834991504077.jpg	realme C85 5G 8GB/128GB	4	f	2026-10-30 02:24:35.242364	Tím
 119517	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834927033311.jpg	realme C85 5G 8GB/128GB	5	f	2026-10-30 02:24:35.242364	Tím
 119518	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834967273138.jpg	realme C85 5G 8GB/128GB	6	f	2026-10-30 02:24:35.242364	Tím
-119519	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600082440686.jpg	realme C85 5G 8GB/128GB	7	f	2026-10-30 02:24:35.242364	Tím
-119520	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600198726270.jpg	realme C85 5G 8GB/128GB	8	f	2026-10-30 02:24:35.242364	Tím
-119521	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600047159124.jpg	realme C85 5G 8GB/128GB	9	f	2026-10-30 02:24:35.242364	Tím
-119522	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600164459295.jpg	realme C85 5G 8GB/128GB	10	f	2026-10-30 02:24:35.242364	Tím
-119523	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600117986296.jpg	realme C85 5G 8GB/128GB	11	f	2026-10-30 02:24:35.242364	Tím
-119524	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600018648433.jpg	realme C85 5G 8GB/128GB	12	f	2026-10-30 02:24:35.242364	Tím
 119525	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834927033311.jpg	realme C85 5G 8GB/128GB	13	f	2026-10-30 02:24:35.242364	Xanh
 119526	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834919616952.jpg	realme C85 5G 8GB/128GB	14	f	2026-10-30 02:24:35.242364	Xanh
 119527	11744	https://cdn.tgdd.vn/Products/Images/42/362760/Slider/realme-c85-5g-8gb-128gb639058834967273138.jpg	realme C85 5G 8GB/128GB	15	f	2026-10-30 02:24:35.242364	Xanh
@@ -35973,7 +35503,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119534	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600018648433.jpg	realme C85 5G 8GB/128GB	22	f	2026-10-30 02:24:35.242364	Xanh lá
 119535	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600082440686.jpg	realme C85 5G 8GB/128GB	23	f	2026-10-30 02:24:35.242364	Xanh lá
 119536	11744	https://cdn.tgdd.vn/Products/Images/42/357831/Slider/realme-c85-5g-8gb-256gb639023600047159124.jpg	realme C85 5G 8GB/128GB	24	f	2026-10-30 02:24:35.242364	Xanh lá
-119537	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362918/xiaomi-redmi-15c-tem-99-639062479350634146.jpg	Xiaomi Redmi 15C 4GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 119538	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-1-638978533386246746.jpg	Xiaomi Redmi 15C 4GB/128GB	2	f	2026-10-30 02:24:35.242364	Đen
 119539	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-2-638978533349912585.jpg	Xiaomi Redmi 15C 4GB/128GB	3	f	2026-10-30 02:24:35.242364	Đen
 119540	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-3-638978533341243396.jpg	Xiaomi Redmi 15C 4GB/128GB	4	f	2026-10-30 02:24:35.242364	Đen
@@ -35987,8 +35516,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119548	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-13-638978533364178556.jpg	Xiaomi Redmi 15C 4GB/128GB	12	f	2026-10-30 02:24:35.242364	Đen
 119549	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-15-638978533378154852.jpg	Xiaomi Redmi 15C 4GB/128GB	13	f	2026-10-30 02:24:35.242364	Đen
 119550	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-den-16-638978533357097222.jpg	Xiaomi Redmi 15C 4GB/128GB	14	f	2026-10-30 02:24:35.242364	Đen
-119551	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362918/xiaomi-redmi-15c-den-4-639062479280879699.jpg	Xiaomi Redmi 15C 4GB/128GB	15	f	2026-10-30 02:24:35.242364	Đen
-119552	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/362918/xiaomi-redmi-15c-den-5-639062479289582948.jpg	Xiaomi Redmi 15C 4GB/128GB	16	f	2026-10-30 02:24:35.242364	Đen
 119553	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-cam-1-638978534313209950.jpg	Xiaomi Redmi 15C 4GB/128GB	17	f	2026-10-30 02:24:35.242364	Cam
 119554	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-cam-2-638978534285265447.jpg	Xiaomi Redmi 15C 4GB/128GB	18	f	2026-10-30 02:24:35.242364	Cam
 119555	11745	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/346264/xiaomi-redmi-15c-cam-3-638978534279208001.jpg	Xiaomi Redmi 15C 4GB/128GB	19	f	2026-10-30 02:24:35.242364	Cam
@@ -36073,20 +35600,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119634	80	https://cdn.tgdd.vn/Products/Images/42/341802/Slider/samsung-galaxy-a07-4gb-64gb638966390620136985.jpg	Samsung Galaxy A07 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 119635	80	https://cdn.tgdd.vn/Products/Images/42/341802/Slider/samsung-galaxy-a07-4gb-64gb638966390621866985.jpg	Samsung Galaxy A07 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
 119636	80	https://cdn.tgdd.vn/Products/Images/42/341802/Slider/samsung-galaxy-a07-4gb-64gb638966390625187612.jpg	Samsung Galaxy A07 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-119637	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390676588953.jpg	Samsung Galaxy A07 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-119638	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390675280952.jpg	Samsung Galaxy A07 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-119639	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390670570621.jpg	Samsung Galaxy A07 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-119640	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390673744271.jpg	Samsung Galaxy A07 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-119641	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390672280593.jpg	Samsung Galaxy A07 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-119642	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390669024358.jpg	Samsung Galaxy A07 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
-119643	80	https://cdn.tgdd.vn/Products/Images/42/341803/Slider/samsung-galaxy-a07-4gb-128gb638966390667364086.jpg	Samsung Galaxy A07 4GB/64GB	15	f	2026-10-30 02:24:35.242364	\N
-119644	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390842745923.jpg	Samsung Galaxy A07 4GB/64GB	16	f	2026-10-30 02:24:35.242364	\N
-119645	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390844065832.jpg	Samsung Galaxy A07 4GB/64GB	17	f	2026-10-30 02:24:35.242364	\N
-119646	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390841145918.jpg	Samsung Galaxy A07 4GB/64GB	18	f	2026-10-30 02:24:35.242364	\N
-119647	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390836445809.jpg	Samsung Galaxy A07 4GB/64GB	19	f	2026-10-30 02:24:35.242364	\N
-119648	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390838025835.jpg	Samsung Galaxy A07 4GB/64GB	20	f	2026-10-30 02:24:35.242364	\N
-119649	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390839915850.jpg	Samsung Galaxy A07 4GB/64GB	21	f	2026-10-30 02:24:35.242364	\N
-119650	80	https://cdn.tgdd.vn/Products/Images/42/341804/Slider/samsung-galaxy-a07-6gb-128gb638966390834875888.jpg	Samsung Galaxy A07 4GB/64GB	22	f	2026-10-30 02:24:35.242364	\N
 119651	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403655149980.jpg	Samsung Galaxy A17 4GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 119652	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403658619948.jpg	Samsung Galaxy A17 4GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 119653	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403662419927.jpg	Samsung Galaxy A17 4GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -36094,20 +35607,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119655	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403665770000.jpg	Samsung Galaxy A17 4GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
 119656	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403660050025.jpg	Samsung Galaxy A17 4GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 119657	11748	https://cdn.tgdd.vn/Products/Images/42/341797/Slider/samsung-galaxy-a17-4gb-128gb638966403664130022.jpg	Samsung Galaxy A17 4GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
-119658	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403259772106.jpg	Samsung Galaxy A17 4GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-119659	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403261471047.jpg	Samsung Galaxy A17 4GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-119660	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403253162245.jpg	Samsung Galaxy A17 4GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-119661	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403257762207.jpg	Samsung Galaxy A17 4GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-119662	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403263601057.jpg	Samsung Galaxy A17 4GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-119663	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403267681148.jpg	Samsung Galaxy A17 4GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-119664	11748	https://cdn.tgdd.vn/Products/Images/42/341799/Slider/samsung-galaxy-a17-8gb-128gb638966403265501156.jpg	Samsung Galaxy A17 4GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-119665	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403955765071.jpg	Samsung Galaxy A17 4GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
-119666	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403959105178.jpg	Samsung Galaxy A17 4GB/128GB	16	f	2026-10-30 02:24:35.242364	\N
-119667	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403950905301.jpg	Samsung Galaxy A17 4GB/128GB	17	f	2026-10-30 02:24:35.242364	\N
-119668	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/vi-vn-samsung-galaxy-a17-8gb-256gb-3.jpg	Samsung Galaxy A17 4GB/128GB	18	f	2026-10-30 02:24:35.242364	\N
-119669	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403961465212.jpg	Samsung Galaxy A17 4GB/128GB	19	f	2026-10-30 02:24:35.242364	\N
-119670	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403963155243.jpg	Samsung Galaxy A17 4GB/128GB	20	f	2026-10-30 02:24:35.242364	\N
-119671	11748	https://cdn.tgdd.vn/Products/Images/42/341800/Slider/samsung-galaxy-a17-8gb-256gb638966403965035094.jpg	Samsung Galaxy A17 4GB/128GB	21	f	2026-10-30 02:24:35.242364	\N
 119672	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003323141771.jpg	HONOR X6c 6GB/128GB	2	f	2026-10-30 02:24:35.242364	Đen
 119673	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003320881557.jpg	HONOR X6c 6GB/128GB	3	f	2026-10-30 02:24:35.242364	Đen
 119674	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003326811738.jpg	HONOR X6c 6GB/128GB	4	f	2026-10-30 02:24:35.242364	Đen
@@ -36115,13 +35614,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119676	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003333881598.jpg	HONOR X6c 6GB/128GB	6	f	2026-10-30 02:24:35.242364	Đen
 119677	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003328891670.jpg	HONOR X6c 6GB/128GB	7	f	2026-10-30 02:24:35.242364	Đen
 119678	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003330901685.jpg	HONOR X6c 6GB/128GB	8	f	2026-10-30 02:24:35.242364	Đen
-119679	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000261104969.jpg	HONOR X6c 6GB/128GB	9	f	2026-10-30 02:24:35.242364	Đen
-119680	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000258184865.jpg	HONOR X6c 6GB/128GB	10	f	2026-10-30 02:24:35.242364	Đen
-119681	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000269844370.jpg	HONOR X6c 6GB/128GB	11	f	2026-10-30 02:24:35.242364	Đen
-119682	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000263454877.jpg	HONOR X6c 6GB/128GB	12	f	2026-10-30 02:24:35.242364	Đen
-119683	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000272304238.jpg	HONOR X6c 6GB/128GB	13	f	2026-10-30 02:24:35.242364	Đen
-119684	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000265194907.jpg	HONOR X6c 6GB/128GB	14	f	2026-10-30 02:24:35.242364	Đen
-119685	139	https://cdn.tgdd.vn/Products/Images/42/340221/Slider/honor-x6c-6gb-256gb638912000266707166.jpg	HONOR X6c 6GB/128GB	15	f	2026-10-30 02:24:35.242364	Đen
 119686	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003325191624.jpg	HONOR X6c 6GB/128GB	16	f	2026-10-30 02:24:35.242364	Xanh lá
 119687	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003328891670.jpg	HONOR X6c 6GB/128GB	17	f	2026-10-30 02:24:35.242364	Xanh lá
 119688	139	https://cdn.tgdd.vn/Products/Images/42/340220/Slider/honor-x6c-6gb-128gb638912003323141771.jpg	HONOR X6c 6GB/128GB	18	f	2026-10-30 02:24:35.242364	Xanh lá
@@ -36169,13 +35661,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119730	167	https://cdn.tgdd.vn/Products/Images/42/338736/Slider/vi-vn-samsung-galaxy-z-flip7-5.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 119731	167	https://cdn.tgdd.vn/Products/Images/42/338736/Slider/vi-vn-samsung-galaxy-z-flip7-6.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 119732	167	https://cdn.tgdd.vn/Products/Images/42/338736/Slider/vi-vn-samsung-galaxy-z-flip7-7.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-119733	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371423767566.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-119734	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371420763696.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-119735	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371426802369.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-119736	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371419280624.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-119737	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371429532359.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-119738	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371422265603.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
-119739	167	https://cdn.tgdd.vn/Products/Images/42/338737/Slider/samsung-galaxy-z-flip7-512gb638890371425242966.jpg	Samsung Galaxy Z Flip7 5G 12GB/256GB	14	f	2026-10-30 02:24:35.242364	\N
 119740	77	https://cdn.tgdd.vn/Products/Images/42/336408/Slider/vi-vn-vivo-v50-lite-5g-4.jpg	vivo V50 Lite 5G 8GB/256GB	1	f	2026-10-30 02:24:35.242364	Tím
 119741	77	https://cdn.tgdd.vn/Products/Images/42/336408/Slider/vi-vn-vivo-v50-lite-5g-1.jpg	vivo V50 Lite 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	Tím
 119742	77	https://cdn.tgdd.vn/Products/Images/42/336408/Slider/vi-vn-vivo-v50-lite-5g-6.jpg	vivo V50 Lite 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	Tím
@@ -36211,12 +35696,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119772	104	https://cdn.tgdd.vn/Products/Images/42/333347/Slider/samsung-galaxy-s25-ultra-camera-1564x866.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	5	f	2026-10-30 02:24:35.242364	\N
 119773	104	https://cdn.tgdd.vn/Products/Images/42/333347/Slider/vi-vn-samsung-galaxy-s25-ultra-6.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 119774	104	https://cdn.tgdd.vn/Products/Images/42/333347/Slider/vi-vn-samsung-galaxy-s25-ultra-7.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	7	f	2026-10-30 02:24:35.242364	\N
-119775	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035890579328.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	8	f	2026-10-30 02:24:35.242364	\N
-119776	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035887749345.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	9	f	2026-10-30 02:24:35.242364	\N
-119777	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035889099380.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	10	f	2026-10-30 02:24:35.242364	\N
-119778	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035896329383.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	11	f	2026-10-30 02:24:35.242364	\N
-119779	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035886189297.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	12	f	2026-10-30 02:24:35.242364	\N
-119780	104	https://cdn.tgdd.vn/Products/Images/42/333351/Slider/samsung-galaxy-s25-ultra-512gb638754035894969360.jpg	Samsung Galaxy S25 Ultra 5G 12GB/256GB	13	f	2026-10-30 02:24:35.242364	\N
 119781	11752	https://cdn.tgdd.vn/Products/Images/42/332934/Slider/oppo-reno13-5g638747946257189480.jpg	OPPO Reno13 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 119782	11752	https://cdn.tgdd.vn/Products/Images/42/332934/Slider/oppo-reno13-5g638747946343917646.jpg	OPPO Reno13 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 119783	11752	https://cdn.tgdd.vn/Products/Images/42/332934/Slider/vi-vn-oppo-reno13-5g-tongquan-1.jpg	OPPO Reno13 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -36379,7 +35858,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119940	110	https://cdn.tgdd.vn/Products/Images/42/284122/Slider/vi-vn-mobell-m239-tong-quan.jpg	Mobell M239 4G	2	f	2026-10-30 02:24:35.242364	\N
 119941	161	https://cdn.tgdd.vn/Products/Images/42/265311/Slider/Masstel-IZI-10-4G-0601-1020x570.jpg	Masstel IZI 10 4G	1	f	2026-10-30 02:24:35.242364	\N
 119942	91	https://cdn.tgdd.vn/Products/Images/42/207956/Slider/nokia-220-4g638545759432734084.jpg	Nokia 220 4G	2	f	2026-10-30 02:24:35.242364	\N
-119943	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363420/ipad-air-m4-11-inch-wifi-tem-99-639125397439881572.jpg	iPad Air M4 11 inch WiFi	2	f	2026-10-30 02:24:35.242364	\N
 119944	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-anh-sao-0-639176444901980495.jpg	iPad Air M4 11 inch WiFi	3	f	2026-10-30 02:24:35.242364	Trắng Starlight
 119945	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-starlight-2-639082212616438571.jpg	iPad Air M4 11 inch WiFi	4	f	2026-10-30 02:24:35.242364	Trắng Starlight
 119946	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-starlight-3-639082212624056924.jpg	iPad Air M4 11 inch WiFi	5	f	2026-10-30 02:24:35.242364	Trắng Starlight
@@ -36400,16 +35878,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119961	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-gray-8-639082211825543046.jpg	iPad Air M4 11 inch WiFi	20	f	2026-10-30 02:24:35.242364	Đen - Xám
 119962	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-gray-9-639082211832122440.jpg	iPad Air M4 11 inch WiFi	21	f	2026-10-30 02:24:35.242364	Đen - Xám
 119963	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-gray-10-639082211837469266.jpg	iPad Air M4 11 inch WiFi	22	f	2026-10-30 02:24:35.242364	Đen - Xám
-119964	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-0-639176445094170088.jpg	iPad Air M4 11 inch WiFi	23	f	2026-10-30 02:24:35.242364	Tím
-119965	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-1-639176445107418782.jpg	iPad Air M4 11 inch WiFi	24	f	2026-10-30 02:24:35.242364	Tím
-119966	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-2-639176445114839817.jpg	iPad Air M4 11 inch WiFi	25	f	2026-10-30 02:24:35.242364	Tím
-119967	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-3-639176445125440920.jpg	iPad Air M4 11 inch WiFi	26	f	2026-10-30 02:24:35.242364	Tím
-119968	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-4-639176445131926508.jpg	iPad Air M4 11 inch WiFi	27	f	2026-10-30 02:24:35.242364	Tím
-119969	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-5-639176445138031068.jpg	iPad Air M4 11 inch WiFi	28	f	2026-10-30 02:24:35.242364	Tím
-119970	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-6-639176445144427098.jpg	iPad Air M4 11 inch WiFi	29	f	2026-10-30 02:24:35.242364	Tím
-119971	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-7-639176445150614498.jpg	iPad Air M4 11 inch WiFi	30	f	2026-10-30 02:24:35.242364	Tím
-119972	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-8-639176445157419725.jpg	iPad Air M4 11 inch WiFi	31	f	2026-10-30 02:24:35.242364	Tím
-119973	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-tim-9-639176445166006460.jpg	iPad Air M4 11 inch WiFi	32	f	2026-10-30 02:24:35.242364	Tím
 119974	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363420/ipad-air-m4-11-inch-wifi-purple-1-639125394449710160.jpg	iPad Air M4 11 inch WiFi	33	f	2026-10-30 02:24:35.242364	Tím
 119975	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363420/ipad-air-m4-11-inch-wifi-purple-2-639125394456430372.jpg	iPad Air M4 11 inch WiFi	34	f	2026-10-30 02:24:35.242364	Tím
 119976	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363420/ipad-air-m4-11-inch-wifi-purple-3-639125394464754169.jpg	iPad Air M4 11 inch WiFi	35	f	2026-10-30 02:24:35.242364	Tím
@@ -36434,29 +35902,18 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 119995	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-blue-8-639082212375652483.jpg	iPad Air M4 11 inch WiFi	54	f	2026-10-30 02:24:35.242364	Xanh Dương
 119996	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-blue-9-639082212382614321.jpg	iPad Air M4 11 inch WiFi	55	f	2026-10-30 02:24:35.242364	Xanh Dương
 119997	610	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363417/ipad-air-m4-11-inch-wifi-blue-10-639082212391563435.jpg	iPad Air M4 11 inch WiFi	56	f	2026-10-30 02:24:35.242364	Xanh Dương
-119998	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723868637346.jpg	iPad A16 WiFi	2	f	2026-10-30 02:24:35.242364	Bạc
-119999	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723872138852.jpg	iPad A16 WiFi	3	f	2026-10-30 02:24:35.242364	Bạc
-120000	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723905071809.jpg	iPad A16 WiFi	4	f	2026-10-30 02:24:35.242364	Bạc
-120001	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723908591850.jpg	iPad A16 WiFi	5	f	2026-10-30 02:24:35.242364	Bạc
 120002	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724230980073.jpg	iPad A16 WiFi	6	f	2026-10-30 02:24:35.242364	Bạc
 120003	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724233620080.jpg	iPad A16 WiFi	7	f	2026-10-30 02:24:35.242364	Bạc
 120004	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724230000048.jpg	iPad A16 WiFi	8	f	2026-10-30 02:24:35.242364	Bạc
 120005	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724235530117.jpg	iPad A16 WiFi	9	f	2026-10-30 02:24:35.242364	Bạc
-120006	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723866707380.jpg	iPad A16 WiFi	10	f	2026-10-30 02:24:35.242364	Xanh Dương
-120007	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723871222059.jpg	iPad A16 WiFi	11	f	2026-10-30 02:24:35.242364	Xanh Dương
 120008	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-a16-thumbvideo-1920x1080.jpg	iPad A16 WiFi	12	f	2026-10-30 02:24:35.242364	Xanh Dương
 120009	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723905961980.jpg	iPad A16 WiFi	13	f	2026-10-30 02:24:35.242364	Xanh Dương
 120010	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723906791811.jpg	iPad A16 WiFi	14	f	2026-10-30 02:24:35.242364	Xanh Dương
 120011	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723909471830.jpg	iPad A16 WiFi	15	f	2026-10-30 02:24:35.242364	Xanh Dương
-120012	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724234670105.jpg	iPad A16 WiFi	16	f	2026-10-30 02:24:35.242364	Xanh Dương
 120013	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-a16-thumbvideo-1920x1080.jpg	iPad A16 WiFi	17	f	2026-10-30 02:24:35.242364	Vàng
 120014	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723867837366.jpg	iPad A16 WiFi	18	f	2026-10-30 02:24:35.242364	Vàng
 120015	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723870462156.jpg	iPad A16 WiFi	19	f	2026-10-30 02:24:35.242364	Vàng
-120016	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723904171854.jpg	iPad A16 WiFi	20	f	2026-10-30 02:24:35.242364	Vàng
-120017	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724232720059.jpg	iPad A16 WiFi	21	f	2026-10-30 02:24:35.242364	Vàng
 120018	609	https://cdn.tgdd.vn/Products/Images/522/335308/Slider/ipad-11-wifi-128gb638781723869527383.jpg	iPad A16 WiFi	22	f	2026-10-30 02:24:35.242364	Hồng
-120019	609	https://cdn.tgdd.vn/Products/Images/522/335309/Slider/ipad-11-wifi-256gb638781723907641807.jpg	iPad A16 WiFi	23	f	2026-10-30 02:24:35.242364	Hồng
-120020	609	https://cdn.tgdd.vn/Products/Images/522/335310/Slider/ipad-11-wifi-512gb638781724231840085.jpg	iPad A16 WiFi	24	f	2026-10-30 02:24:35.242364	Hồng
 120021	618	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/358082/ipad-pro-m5-11-inch-wifi-bac-0-639176343021156708.jpg	iPad Pro M5 11 inch WiFi 256GB	2	f	2026-10-30 02:24:35.242364	Bạc
 120022	618	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/358082/ipad-pro-m5-11-inch-wifi-bac-1-638980239095807297.jpg	iPad Pro M5 11 inch WiFi 256GB	3	f	2026-10-30 02:24:35.242364	Bạc
 120023	618	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/358082/ipad-pro-m5-11-inch-wifi-bac-2-638980239086039535.jpg	iPad Pro M5 11 inch WiFi 256GB	4	f	2026-10-30 02:24:35.242364	Bạc
@@ -36505,7 +35962,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120066	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-starlight-7-638651175013945563.jpg	iPad mini 7 WiFi	29	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120067	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-starlight-8-638651175021175155.jpg	iPad mini 7 WiFi	30	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120068	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-starlight-9-638651175026774045.jpg	iPad mini 7 WiFi	31	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120069	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331230/ipad-mini-7-wifi-kem-0-639226907114963998.jpg	iPad mini 7 WiFi	32	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120070	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-tim-0-639176467383876754.jpg	iPad mini 7 WiFi	33	f	2026-10-30 02:24:35.242364	Tím
 120071	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-purple-1-638651174600667416.jpg	iPad mini 7 WiFi	34	f	2026-10-30 02:24:35.242364	Tím
 120072	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-purple-2-638651174612580000.jpg	iPad mini 7 WiFi	35	f	2026-10-30 02:24:35.242364	Tím
@@ -36516,9 +35972,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120077	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-purple-7-638651174642527252.jpg	iPad mini 7 WiFi	40	f	2026-10-30 02:24:35.242364	Tím
 120078	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-purple-8-638651174648105188.jpg	iPad mini 7 WiFi	41	f	2026-10-30 02:24:35.242364	Tím
 120079	617	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331229/ipad-mini-7-wifi-purple-9-638651174654040892.jpg	iPad mini 7 WiFi	42	f	2026-10-30 02:24:35.242364	Tím
-120080	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420642656046.jpg	iPad A16 5G	2	f	2026-10-30 02:24:35.242364	Bạc
-120081	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420643445994.jpg	iPad A16 5G	3	f	2026-10-30 02:24:35.242364	Bạc
-120082	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420676293289.jpg	iPad A16 5G	4	f	2026-10-30 02:24:35.242364	Bạc
 120083	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-a16-5g-bac-0-639226574898604198.jpg	iPad A16 5G	5	f	2026-10-30 02:24:35.242364	Bạc
 120084	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-11-a16-5g-silver-1-638772993115052141.jpg	iPad A16 5G	6	f	2026-10-30 02:24:35.242364	Bạc
 120085	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-11-a16-5g-silver-2-638772993124278391.jpg	iPad A16 5G	7	f	2026-10-30 02:24:35.242364	Bạc
@@ -36527,26 +35980,15 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120088	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-11-a16-5g-silver-5-638772993136912485.jpg	iPad A16 5G	10	f	2026-10-30 02:24:35.242364	Bạc
 120089	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-11-a16-5g-silver-6-638772993142769778.jpg	iPad A16 5G	11	f	2026-10-30 02:24:35.242364	Bạc
 120090	626	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/335313/ipad-11-a16-5g-silver-7-638772993148175166.jpg	iPad A16 5G	12	f	2026-10-30 02:24:35.242364	Bạc
-120091	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-a16-thumbvideo-1920x1080.jpg	iPad A16 5G	13	f	2026-10-30 02:24:35.242364	Hồng
-120092	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420641066094.jpg	iPad A16 5G	14	f	2026-10-30 02:24:35.242364	Hồng
 120093	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420671049297.jpg	iPad A16 5G	15	f	2026-10-30 02:24:35.242364	Hồng
 120094	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420672763189.jpg	iPad A16 5G	16	f	2026-10-30 02:24:35.242364	Hồng
 120095	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420674663326.jpg	iPad A16 5G	17	f	2026-10-30 02:24:35.242364	Hồng
-120096	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420707743176.jpg	iPad A16 5G	18	f	2026-10-30 02:24:35.242364	Hồng
-120097	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420708643160.jpg	iPad A16 5G	19	f	2026-10-30 02:24:35.242364	Hồng
-120098	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420711133172.jpg	iPad A16 5G	20	f	2026-10-30 02:24:35.242364	Hồng
-120099	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420641846032.jpg	iPad A16 5G	21	f	2026-10-30 02:24:35.242364	Vàng
 120100	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420671846722.jpg	iPad A16 5G	22	f	2026-10-30 02:24:35.242364	Vàng
 120101	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420670189223.jpg	iPad A16 5G	23	f	2026-10-30 02:24:35.242364	Vàng
 120102	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-11-5g-256gb638782420675443134.jpg	iPad A16 5G	24	f	2026-10-30 02:24:35.242364	Vàng
-120103	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420710273223.jpg	iPad A16 5G	25	f	2026-10-30 02:24:35.242364	Vàng
 120104	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420639276042.jpg	iPad A16 5G	26	f	2026-10-30 02:24:35.242364	Xanh Dương
 120105	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420637916033.jpg	iPad A16 5G	27	f	2026-10-30 02:24:35.242364	Xanh Dương
 120106	626	https://cdn.tgdd.vn/Products/Images/522/335311/Slider/ipad-11-5g-128gb638782420640216018.jpg	iPad A16 5G	28	f	2026-10-30 02:24:35.242364	Xanh Dương
-120107	626	https://cdn.tgdd.vn/Products/Images/522/335312/Slider/ipad-a16-thumbvideo-1920x1080.jpg	iPad A16 5G	29	f	2026-10-30 02:24:35.242364	Xanh Dương
-120108	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420709483256.jpg	iPad A16 5G	30	f	2026-10-30 02:24:35.242364	Xanh Dương
-120109	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420706883174.jpg	iPad A16 5G	31	f	2026-10-30 02:24:35.242364	Xanh Dương
-120110	626	https://cdn.tgdd.vn/Products/Images/522/335313/Slider/ipad-11-5g-512gb638782420711883222.jpg	iPad A16 5G	32	f	2026-10-30 02:24:35.242364	Xanh Dương
 120111	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-tem-99-638684056714901285.jpg	iPad mini 7 5G	0	t	2026-10-30 02:24:35.242364	\N
 120112	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-xam-0-639226899334883991.jpg	iPad mini 7 5G	1	f	2026-10-30 02:24:35.242364	Đen - Xám
 120113	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-gray-1-638651196478617228.jpg	iPad mini 7 5G	2	f	2026-10-30 02:24:35.242364	Đen - Xám
@@ -36568,15 +36010,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120129	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-gray-7-638651196515542153.jpg	iPad mini 7 5G	18	f	2026-10-30 02:24:35.242364	Xanh Dương
 120130	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-gray-8-638651196520967352.jpg	iPad mini 7 5G	19	f	2026-10-30 02:24:35.242364	Xanh Dương
 120131	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-gray-9-638651196528728442.jpg	iPad mini 7 5G	20	f	2026-10-30 02:24:35.242364	Xanh Dương
-120132	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-1-638651196661900226.jpg	iPad mini 7 5G	21	f	2026-10-30 02:24:35.242364	Xanh Dương
-120133	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-2-638651196667437016.jpg	iPad mini 7 5G	22	f	2026-10-30 02:24:35.242364	Xanh Dương
-120134	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-3-638651196672912582.jpg	iPad mini 7 5G	23	f	2026-10-30 02:24:35.242364	Xanh Dương
-120135	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-4-638651196679032238.jpg	iPad mini 7 5G	24	f	2026-10-30 02:24:35.242364	Xanh Dương
-120136	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-5-638651196684331096.jpg	iPad mini 7 5G	25	f	2026-10-30 02:24:35.242364	Xanh Dương
-120137	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-6-638651196693148055.jpg	iPad mini 7 5G	26	f	2026-10-30 02:24:35.242364	Xanh Dương
-120138	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-7-638651196700654222.jpg	iPad mini 7 5G	27	f	2026-10-30 02:24:35.242364	Xanh Dương
-120139	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-8-638651196706698793.jpg	iPad mini 7 5G	28	f	2026-10-30 02:24:35.242364	Xanh Dương
-120140	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331233/ipad-mini-7-5g-blue-9-638651196711681836.jpg	iPad mini 7 5G	29	f	2026-10-30 02:24:35.242364	Xanh Dương
 120141	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-kem-0-639226899689778441.jpg	iPad mini 7 5G	30	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120142	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-starlight-1-638651197289736038.jpg	iPad mini 7 5G	31	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120143	15362	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/331232/ipad-mini-7-5g-starlight-2-638651197295522341.jpg	iPad mini 7 5G	32	f	2026-10-30 02:24:35.242364	Trắng Starlight
@@ -36621,16 +36054,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120182	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-blue-8-639082384615743719.jpg	iPad Air M4 13 inch 5G	19	f	2026-10-30 02:24:35.242364	Đen - Xám
 120183	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-blue-9-639082384622291377.jpg	iPad Air M4 13 inch 5G	20	f	2026-10-30 02:24:35.242364	Đen - Xám
 120184	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-blue-10-639082384631253029.jpg	iPad Air M4 13 inch 5G	21	f	2026-10-30 02:24:35.242364	Đen - Xám
-120185	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-1-639082383539913292.jpg	iPad Air M4 13 inch 5G	22	f	2026-10-30 02:24:35.242364	Đen - Xám
-120186	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-2-639082383547465933.jpg	iPad Air M4 13 inch 5G	23	f	2026-10-30 02:24:35.242364	Đen - Xám
-120187	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-3-639082383558943520.jpg	iPad Air M4 13 inch 5G	24	f	2026-10-30 02:24:35.242364	Đen - Xám
-120188	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-4-639082383570288097.jpg	iPad Air M4 13 inch 5G	25	f	2026-10-30 02:24:35.242364	Đen - Xám
-120189	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-5-639082383578585807.jpg	iPad Air M4 13 inch 5G	26	f	2026-10-30 02:24:35.242364	Đen - Xám
-120190	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-6-639082383586076478.jpg	iPad Air M4 13 inch 5G	27	f	2026-10-30 02:24:35.242364	Đen - Xám
-120191	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-7-639082383592648666.jpg	iPad Air M4 13 inch 5G	28	f	2026-10-30 02:24:35.242364	Đen - Xám
-120192	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-8-639082383598317561.jpg	iPad Air M4 13 inch 5G	29	f	2026-10-30 02:24:35.242364	Đen - Xám
-120193	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-9-639082383605746202.jpg	iPad Air M4 13 inch 5G	30	f	2026-10-30 02:24:35.242364	Đen - Xám
-120194	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363433/ipad-air-m4-13-inch-5g-gray-10-639082383613923068.jpg	iPad Air M4 13 inch 5G	31	f	2026-10-30 02:24:35.242364	Đen - Xám
 120195	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-purple-1-639082385812205454.jpg	iPad Air M4 13 inch 5G	32	f	2026-10-30 02:24:35.242364	Tím
 120196	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-purple-2-639082385819581787.jpg	iPad Air M4 13 inch 5G	33	f	2026-10-30 02:24:35.242364	Tím
 120197	648	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363432/ipad-air-m4-13-inch-5g-purple-3-639082385826438785.jpg	iPad Air M4 13 inch 5G	34	f	2026-10-30 02:24:35.242364	Tím
@@ -36681,16 +36104,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120242	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-blue-8-639082187565317741.jpg	iPad Air M4 11 inch 5G	29	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120243	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-blue-9-639082187572390273.jpg	iPad Air M4 11 inch 5G	30	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120244	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-blue-10-639082187579655337.jpg	iPad Air M4 11 inch 5G	31	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120245	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-1-639082187855613897.jpg	iPad Air M4 11 inch 5G	32	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120246	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-2-639082187863612645.jpg	iPad Air M4 11 inch 5G	33	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120247	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-3-639082187874249448.jpg	iPad Air M4 11 inch 5G	34	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120248	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-4-639082187884617214.jpg	iPad Air M4 11 inch 5G	35	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120249	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-5-639082187891666223.jpg	iPad Air M4 11 inch 5G	36	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120250	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-6-639082187899861837.jpg	iPad Air M4 11 inch 5G	37	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120251	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-7-639082187906535108.jpg	iPad Air M4 11 inch 5G	38	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120252	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-8-639082187914281006.jpg	iPad Air M4 11 inch 5G	39	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120253	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-9-639082187921869770.jpg	iPad Air M4 11 inch 5G	40	f	2026-10-30 02:24:35.242364	Trắng Starlight
-120254	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363428/ipad-air-m4-11-inch-5g-starlight-10-639082187928661102.jpg	iPad Air M4 11 inch 5G	41	f	2026-10-30 02:24:35.242364	Trắng Starlight
 120255	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-purple-1-639082188632475275.jpg	iPad Air M4 11 inch 5G	42	f	2026-10-30 02:24:35.242364	Tím
 120256	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-purple-2-639082188641150207.jpg	iPad Air M4 11 inch 5G	43	f	2026-10-30 02:24:35.242364	Tím
 120257	647	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/363427/ipad-air-m4-11-inch-5g-purple-3-639082188650017179.jpg	iPad Air M4 11 inch 5G	44	f	2026-10-30 02:24:35.242364	Tím
@@ -36844,7 +36257,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120405	11798	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/361231/oppo-pad-5-hong-9-639034647710991058.jpg	OPPO Pad 5 8GB/256GB	22	f	2026-10-30 02:24:35.242364	Hồng
 120406	11798	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/361231/oppo-pad-5-hong-10-639034647718314848.jpg	OPPO Pad 5 8GB/256GB	23	f	2026-10-30 02:24:35.242364	Hồng
 120407	11798	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/361231/oppo-pad-5-hong-11-639034647725056905.jpg	OPPO Pad 5 8GB/256GB	24	f	2026-10-30 02:24:35.242364	Hồng
-120408	11799	https://cdn.tgdd.vn/Products/Images/522/359089/Slider/samsung-galaxy-tab-a11-plus-5g-6gb-128gb639035482461379637.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120409	11799	https://cdn.tgdd.vn/Products/Images/522/359089/Slider/samsung-galaxy-tab-a11-plus-5g-6gb-128gb639035482463349672.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 120410	11799	https://cdn.tgdd.vn/Products/Images/522/359089/Slider/samsung-galaxy-tab-a11-plus-tong-quan-1020x570.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 120411	11799	https://cdn.tgdd.vn/Products/Images/522/359089/Slider/samsung-galaxy-tab-a11-plus-5g-6gb-128gb639035482468709771.jpg	Samsung Galaxy Tab A11+ 5G 8GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -36865,14 +36277,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120426	614	https://cdn.tgdd.vn/Products/Images/522/359086/Slider/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb639035482357920150.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120427	614	https://cdn.tgdd.vn/Products/Images/522/359086/Slider/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb639035482362420149.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 120428	614	https://cdn.tgdd.vn/Products/Images/522/359086/Slider/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb639035482365520253.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-120429	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639033038581754925.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-120430	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-8gb-3-2040x1140.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-120431	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639035487904109396.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-120432	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639035487898039405.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-120433	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639035487914089465.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-120434	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639035487906829438.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-120435	614	https://cdn.tgdd.vn/Products/Images/522/359087/Slider/samsung-galaxy-tab-a11-plus-wifi-8gb-256gb639035487910349446.jpg	Samsung Galaxy Tab A11+ WiFi 6GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
-120436	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-tem-99-639088392638824440.jpg	Xiaomi Pad 8 8GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120437	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-green-1-639057255215962397.jpg	Xiaomi Pad 8 8GB/256GB	2	f	2026-10-30 02:24:35.242364	Xanh lá đậm
 120438	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-green-2-639057255224204003.jpg	Xiaomi Pad 8 8GB/256GB	3	f	2026-10-30 02:24:35.242364	Xanh lá đậm
 120439	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-green-3-639057255232697425.jpg	Xiaomi Pad 8 8GB/256GB	4	f	2026-10-30 02:24:35.242364	Xanh lá đậm
@@ -36907,7 +36311,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120468	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-gray-10-639088381814607866.jpg	Xiaomi Pad 8 8GB/256GB	33	f	2026-10-30 02:24:35.242364	Xám
 120469	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-gray-11-639088381821523486.jpg	Xiaomi Pad 8 8GB/256GB	34	f	2026-10-30 02:24:35.242364	Xám
 120470	11800	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362716/xiaomi-pad-8-gray-12-639088381829260514.jpg	Xiaomi Pad 8 8GB/256GB	35	f	2026-10-30 02:24:35.242364	Xám
-120471	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-xanh-1-638889640017027283.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 120472	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-xanh-2-638889640023412908.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120473	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-xanh-3-638889640029868213.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
 120474	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-xanh-4-638889640036738493.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -36933,7 +36336,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120494	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-bac-11-638889639143324789.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	24	f	2026-10-30 02:24:35.242364	Bạc
 120495	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-bac-12-638889639149075027.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	25	f	2026-10-30 02:24:35.242364	Bạc
 120496	616	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339285/oppo-pad-se-bac-13-638889639157215309.jpg	OPPO Pad SE WiFi màn hình nhám 4GB/128GB	26	f	2026-10-30 02:24:35.242364	Bạc
-120497	11801	https://cdn.tgdd.vn/Products/Images/522/345548/Slider/samsung-galaxy-tab-a11-4g-4gb-64gb639035542844750835.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 120498	11801	https://cdn.tgdd.vn/Products/Images/522/345548/Slider/samsung-galaxy-tab-a11-4g-4gb-64gb639035542861380970.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120499	11801	https://cdn.tgdd.vn/Products/Images/522/345548/Slider/samsung-galaxy-tab-a11-4g-4gb-64gb639035542834730849.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
 120500	11801	https://cdn.tgdd.vn/Products/Images/522/345548/Slider/samsung-galaxy-tab-a11-4g-4gb-64gb639035542881781026.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -36947,14 +36349,12 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120508	11801	https://cdn.tgdd.vn/Products/Images/522/345549/Slider/samsung-galaxy-tab-a11-4g-8gb-128gb639035544068187618.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	12	f	2026-10-30 02:24:35.242364	Xám
 120509	11801	https://cdn.tgdd.vn/Products/Images/522/345549/Slider/samsung-galaxy-tab-a11-4g-8gb-128gb639035543923241672.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	13	f	2026-10-30 02:24:35.242364	Xám
 120510	11801	https://cdn.tgdd.vn/Products/Images/522/345549/Slider/samsung-galaxy-tab-a11-4g-8gb-128gb639035544095227829.jpg	Samsung Galaxy Tab A11 4G 8GB/128GB	14	f	2026-10-30 02:24:35.242364	Xám
-120511	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596558428962.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 120512	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596593435717.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120513	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596566725573.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
 120514	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596585435313.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
 120515	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596601016035.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
 120516	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596608306345.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120517	620	https://cdn.tgdd.vn/Products/Images/522/343062/Slider/samsung-galaxy-tab-s10-lite-wifi-6gb-128gb639036596578175102.jpg	Samsung Galaxy Tab S10 Lite 5G 6GB/128GB	7	f	2026-10-30 02:24:35.242364	Xám
-120518	11802	https://cdn.tgdd.vn/Products/Images/522/344721/Slider/samsung-galaxy-tab-s11-5g-12gb-128gb639044661161981058.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120519	11802	https://cdn.tgdd.vn/Products/Images/522/344721/Slider/samsung-galaxy-tab-s11-5g-12gb-128gb639044661165001234.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 120520	11802	https://cdn.tgdd.vn/Products/Images/522/344721/Slider/samsung-galaxy-tab-s11-5g-12gb-128gb639044661170949700.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 120521	11802	https://cdn.tgdd.vn/Products/Images/522/344721/Slider/samsung-galaxy-tab-s11-5g-12gb-128gb639044661174739827.jpg	Samsung Galaxy Tab S11 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -36972,14 +36372,11 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120533	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-green-2-639057244648136956.jpg	Xiaomi Pad 8 Pro 8GB/256GB	2	f	2026-10-30 02:24:35.242364	Xanh lá đậm
 120534	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-green-4-639057245089358882.jpg	Xiaomi Pad 8 Pro 8GB/256GB	3	f	2026-10-30 02:24:35.242364	Xanh lá đậm
 120535	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-green-5-639057253042106855.jpg	Xiaomi Pad 8 Pro 8GB/256GB	4	f	2026-10-30 02:24:35.242364	Xanh lá đậm
-120536	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362718/xiaomi-pad-8-pro-green-3-639057252533195160.jpg	Xiaomi Pad 8 Pro 8GB/256GB	5	f	2026-10-30 02:24:35.242364	Xanh lá đậm
 120537	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-black-1-639057253349282454.jpg	Xiaomi Pad 8 Pro 8GB/256GB	6	f	2026-10-30 02:24:35.242364	Xám
 120538	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-black-2-639057253356099549.jpg	Xiaomi Pad 8 Pro 8GB/256GB	7	f	2026-10-30 02:24:35.242364	Xám
 120539	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-black-3-639057253362039185.jpg	Xiaomi Pad 8 Pro 8GB/256GB	8	f	2026-10-30 02:24:35.242364	Xám
 120540	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-black-4-639057253369171593.jpg	Xiaomi Pad 8 Pro 8GB/256GB	9	f	2026-10-30 02:24:35.242364	Xám
 120541	11803	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362719/xiaomi-pad-8-pro-black-5-639057253376549283.jpg	Xiaomi Pad 8 Pro 8GB/256GB	10	f	2026-10-30 02:24:35.242364	Xám
-120542	11804	https://cdn.tgdd.vn/Products/Images/522/342547/Slider/lenovo-idea-tab-wifi-8gb-128gb639235086497655629.png	Lenovo Idea Tab WiFi 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
-120543	11804	https://cdn.tgdd.vn/Products/Images/522/342548/Slider/lenovo-idea-tab-5g-8gb-128gb639235084855726397.png	Lenovo Idea Tab WiFi 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
 120544	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-1-638889722791105651.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	1	f	2026-10-30 02:24:35.242364	Xám
 120545	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-2-638889722797826792.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	2	f	2026-10-30 02:24:35.242364	Xám
 120546	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-3-638889722805694870.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	3	f	2026-10-30 02:24:35.242364	Xám
@@ -36993,7 +36390,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120554	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-11-638889722861664261.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Xám
 120555	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-12-638889722868474601.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Xám
 120556	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xam-13-638889722876544504.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Xám
-120557	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xam-99-638889745087137929.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Xám
 120558	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-1-638889720108225424.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Tím
 120559	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-2-638889720115534080.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Tím
 120560	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-3-638889720121023638.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Tím
@@ -37007,19 +36403,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120568	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-11-638889720184318532.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	25	f	2026-10-30 02:24:35.242364	Tím
 120569	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-12-638889720190564383.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	26	f	2026-10-30 02:24:35.242364	Tím
 120570	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-tim-13-638889720196655642.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	27	f	2026-10-30 02:24:35.242364	Tím
-120571	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-2-638889729494192862.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	28	f	2026-10-30 02:24:35.242364	Tím
-120572	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-3-638889729500146743.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	29	f	2026-10-30 02:24:35.242364	Tím
-120573	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-4-638889729505692571.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	30	f	2026-10-30 02:24:35.242364	Tím
-120574	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-5-638889729511797283.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	31	f	2026-10-30 02:24:35.242364	Tím
-120575	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-6-638889729517690002.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	32	f	2026-10-30 02:24:35.242364	Tím
-120576	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-7-638889729523688877.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	33	f	2026-10-30 02:24:35.242364	Tím
-120577	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-8-638889729529522570.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	34	f	2026-10-30 02:24:35.242364	Tím
-120578	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-9-638889729535901552.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	35	f	2026-10-30 02:24:35.242364	Tím
-120579	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-10-638889729541676501.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	36	f	2026-10-30 02:24:35.242364	Tím
-120580	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-11-638889729549776813.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	37	f	2026-10-30 02:24:35.242364	Tím
-120581	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-12-638889729556310176.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	38	f	2026-10-30 02:24:35.242364	Tím
-120582	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-13-638889729563143990.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	39	f	2026-10-30 02:24:35.242364	Tím
-120583	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339206/xiaomi-redmi-pad-2-wifi-xanh-1-638889729487354796.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	40	f	2026-10-30 02:24:35.242364	Tím
 120584	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xanh-2-638889729861716585.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	41	f	2026-10-30 02:24:35.242364	Xanh lá
 120585	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xanh-3-638889729868897914.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	42	f	2026-10-30 02:24:35.242364	Xanh lá
 120586	11805	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339204/xiaomi-redmi-pad-2-wifi-xanh-4-638889729874726334.jpg	Xiaomi Redmi Pad 2 WiFi 8GB/256GB	43	f	2026-10-30 02:24:35.242364	Xanh lá
@@ -37078,13 +36461,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120639	629	https://cdn.tgdd.vn/Products/Images/522/336740/Slider/vi-vn-samsung-galaxy-tab-s10-fe-plus-3.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120640	629	https://cdn.tgdd.vn/Products/Images/522/336740/Slider/vi-vn-samsung-galaxy-tab-s10-fe-plus-5.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 120641	629	https://cdn.tgdd.vn/Products/Images/522/336740/Slider/vi-vn-samsung-galaxy-tab-s10-fe-plus-7.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-120642	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650963111949.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-120643	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650965341834.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-120644	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650975302928.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-120645	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650977662875.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-120646	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650967327113.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-120647	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650970454731.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-120648	629	https://cdn.tgdd.vn/Products/Images/522/339382/Slider/samsung-galaxy-tab-s10-fe-plus-12gb-256gb639044650972473000.jpg	Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
 120649	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334991/lenovo-tab-4g-xam-1-638766207134443497.jpg	Lenovo Tab 4G 4GB/64GB	0	t	2026-10-30 02:24:35.242364	\N
 120650	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334991/lenovo-tab-4g-xam-2-638766207141917980.jpg	Lenovo Tab 4G 4GB/64GB	1	f	2026-10-30 02:24:35.242364	\N
 120651	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334991/lenovo-tab-4g-xam-3-638766207148747258.jpg	Lenovo Tab 4G 4GB/64GB	2	f	2026-10-30 02:24:35.242364	\N
@@ -37118,7 +36494,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120679	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334992/lenovo-tab-wifi-xam-12-638772216651162851.jpg	Lenovo Tab 4G 4GB/64GB	30	f	2026-10-30 02:24:35.242364	Xám
 120680	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334992/lenovo-tab-wifi-xam-13-638772216657653007.jpg	Lenovo Tab 4G 4GB/64GB	31	f	2026-10-30 02:24:35.242364	Xám
 120681	15366	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/334992/lenovo-tab-wifi-xam-14-638772216917813193.jpg	Lenovo Tab 4G 4GB/64GB	32	f	2026-10-30 02:24:35.242364	Xám
-120682	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-sliver-1-638640920456430545.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120683	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-sliver-2-638640920463742318.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 120684	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-sliver-3-638640920472030657.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
 120685	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-sliver-4-638640920477764050.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -37141,11 +36516,9 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120702	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-gray-5-638629870764681884.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	21	f	2026-10-30 02:24:35.242364	Xám
 120703	11806	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/322130/samsung-galaxy-tab-s10-plus-tem-99-638640922250179140.jpg	Samsung Galaxy Tab S10+ 5G 12GB/256GB	22	f	2026-10-30 02:24:35.242364	Xám
 120704	652	https://cdn.tgdd.vn/Products/Images/522/368577/Slider/lenovo-idea-tab-pro-gen-2-12gb-256gb639235079556479086.png	Lenovo Idea Tab Pro Gen 2 Matte Edition WiFi 12GB/256GB	1	f	2026-10-30 02:24:35.242364	Xám
-120705	652	https://cdn.tgdd.vn/Products/Images/522/368578/Slider/lenovo-idea-tab-pro-gen-2-12gb-512gb639235079884605623.png	Lenovo Idea Tab Pro Gen 2 Matte Edition WiFi 12GB/256GB	2	f	2026-10-30 02:24:35.242364	Xám
 120706	654	https://cdn.tgdd.vn/Products/Images/522/368581/Slider/lenovo-legion-tab-gen-5-wifi-12gb-256gb639235078093315681.png	Lenovo Legion Tab Gen 5 WiFi 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120707	651	https://cdn.tgdd.vn/Products/Images/522/368580/Slider/lenovo-legion-tab-gen-3-wifi-12gb-256gb639235070039788795.png	Lenovo Legion Tab Gen 3 WiFi 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120708	643	https://cdn.tgdd.vn/Products/Images/522/368575/Slider/may-tinh-bang-lenovo-idea-tab-plus-8gb-256gb639235076971445959.png	Lenovo Idea Tab Plus Matte Edition WiFi 8GB/256GB	1	f	2026-10-30 02:24:35.242364	Xám
-120709	643	https://cdn.tgdd.vn/Products/Images/522/368576/Slider/lenovo-idea-tab-plus-12gb-256gb639235076698322631.png	Lenovo Idea Tab Plus Matte Edition WiFi 8GB/256GB	2	f	2026-10-30 02:24:35.242364	Xám
 120710	11810	https://cdn.tgdd.vn/Products/Images/522/368582/Slider/lenovo-yoga-tab-wifi-8gb-256gb639235075063823305.png	Lenovo Yoga Tab WiFi 8GB/256GB	6	f	2026-10-30 02:24:35.242364	\N
 120711	644	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368516/lenovo-idea-tab-4gb-xanh-1-639229895182889664.jpg	Lenovo Idea Tab 4GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120712	644	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/368516/lenovo-idea-tab-4gb-xanh-2-639229895190046095.jpg	Lenovo Idea Tab 4GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -37164,7 +36537,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120725	11811	https://cdn.tgdd.vn/Products/Images/522/367014/Slider/vi-vn-honor-pad-x8b-6gb-128gb-6.jpg	Honor Pad X8b 6GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
 120726	11811	https://cdn.tgdd.vn/Products/Images/522/367014/Slider/vi-vn-honor-pad-x8b-6gb-128gb-7.jpg	Honor Pad X8b 6GB/128GB	16	f	2026-10-30 02:24:35.242364	\N
 120727	11811	https://cdn.tgdd.vn/Products/Images/522/367014/Slider/vi-vn-honor-pad-x8b-6gb-128gb-8.jpg	Honor Pad X8b 6GB/128GB	17	f	2026-10-30 02:24:35.242364	\N
-120728	11812	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/366598/xiaomi-pad-2-4g-9-7-tem-99-639154340529786273.jpg	Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB	1	f	2026-10-30 02:24:35.242364	\N
 120729	11812	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/366598/xiaomi-pad-2-4g-9-7-xam-1-639147827835560411.jpg	Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB	2	f	2026-10-30 02:24:35.242364	Xám
 120730	11812	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/366598/xiaomi-pad-2-4g-9-7-xam-2-639147827841692192.jpg	Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB	3	f	2026-10-30 02:24:35.242364	Xám
 120731	11812	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/366598/xiaomi-pad-2-4g-9-7-xam-3-639147827848460338.jpg	Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB	4	f	2026-10-30 02:24:35.242364	Xám
@@ -37200,13 +36572,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120761	635	https://cdn.tgdd.vn/Products/Images/522/345546/Slider/samsung-galaxy-tab-a11-wifi-4gb-64gb639035542636633905.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	6	f	2026-10-30 02:24:35.242364	\N
 120762	635	https://cdn.tgdd.vn/Products/Images/522/345546/Slider/samsung-galaxy-tab-a11-wifi-4gb-64gb639035542692011402.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	7	f	2026-10-30 02:24:35.242364	\N
 120763	635	https://cdn.tgdd.vn/Products/Images/522/345546/Slider/samsung-galaxy-tab-a11-wifi-4gb-64gb639035542765601879.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	8	f	2026-10-30 02:24:35.242364	\N
-120764	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543785358390.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	9	f	2026-10-30 02:24:35.242364	\N
-120765	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543890375197.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	10	f	2026-10-30 02:24:35.242364	\N
-120766	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543817508525.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	11	f	2026-10-30 02:24:35.242364	\N
-120767	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543868355728.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	12	f	2026-10-30 02:24:35.242364	\N
-120768	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543797418457.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	13	f	2026-10-30 02:24:35.242364	\N
-120769	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543829626552.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	14	f	2026-10-30 02:24:35.242364	\N
-120770	635	https://cdn.tgdd.vn/Products/Images/522/345547/Slider/samsung-galaxy-tab-a11-wifi-8gb-128gb639035543854656494.jpg	Samsung Galaxy Tab A11 WiFi 4GB/64GB	15	f	2026-10-30 02:24:35.242364	\N
 120771	640	https://cdn.tgdd.vn/Products/Images/522/344725/Slider/samsung-galaxy-tab-s11-ultra-5g-12gb-256gb639051065055836113.jpg	Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB	1	f	2026-10-30 02:24:35.242364	\N
 120772	640	https://cdn.tgdd.vn/Products/Images/522/344725/Slider/samsung-galaxy-tab-s11-ultra-5g-12gb-256gb639051064881012081.jpg	Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
 120773	640	https://cdn.tgdd.vn/Products/Images/522/344725/Slider/samsung-galaxy-tab-s11-ultra-5g-12gb-256gb639051064949684231.jpg	Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -37228,13 +36593,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120789	639	https://cdn.tgdd.vn/Products/Images/522/344723/Slider/samsung-galaxy-tab-s11-wifi-12gb-128gb639044661478428717.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	5	f	2026-10-30 02:24:35.242364	\N
 120790	639	https://cdn.tgdd.vn/Products/Images/522/344723/Slider/samsung-galaxy-tab-s11-wifi-12gb-128gb639044661469692186.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120791	639	https://cdn.tgdd.vn/Products/Images/522/344723/Slider/samsung-galaxy-tab-s11-wifi-12gb-128gb639044661481068927.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
-120792	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666856894972.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-120793	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666861135076.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-120794	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666865135063.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-120795	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666868469779.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-120796	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666875819848.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-120797	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666880159855.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-120798	639	https://cdn.tgdd.vn/Products/Images/522/344724/Slider/samsung-galaxy-tab-s11-wifi-12gb-256gb639044666871859781.jpg	Samsung Galaxy Tab S11 WiFi 12GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
 120799	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638663194348.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120800	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638669850184.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
 120801	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638694112836.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -37242,13 +36600,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120803	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638680351352.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120804	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638687412034.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 120805	631	https://cdn.tgdd.vn/Products/Images/522/336738/Slider/samsung-galaxy-tab-s10-fe-5g639044638702753777.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-120806	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640884486100.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-120807	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640896936871.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-120808	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640926321606.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-120809	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640955552922.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-120810	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640973403807.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-120811	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640908447425.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-120812	631	https://cdn.tgdd.vn/Products/Images/522/339381/Slider/samsung-galaxy-tab-s10-fe-5g-12gb-256gb639044640942082240.jpg	Samsung Galaxy Tab S10 FE 5G 8GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
 120813	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-2.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120814	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-4.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
 120815	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-1.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	4	f	2026-10-30 02:24:35.242364	\N
@@ -37256,13 +36607,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120817	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-3.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	6	f	2026-10-30 02:24:35.242364	\N
 120818	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-5.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	7	f	2026-10-30 02:24:35.242364	\N
 120819	877	https://cdn.tgdd.vn/Products/Images/522/336737/Slider/vi-vn-samsung-galaxy-tab-s10-fe-7.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	8	f	2026-10-30 02:24:35.242364	\N
-120820	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639732424671.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	9	f	2026-10-30 02:24:35.242364	\N
-120821	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639655918609.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	10	f	2026-10-30 02:24:35.242364	\N
-120822	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639687540991.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	11	f	2026-10-30 02:24:35.242364	\N
-120823	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639666829415.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	12	f	2026-10-30 02:24:35.242364	\N
-120824	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639674924283.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	13	f	2026-10-30 02:24:35.242364	\N
-120825	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639701522013.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	14	f	2026-10-30 02:24:35.242364	\N
-120826	877	https://cdn.tgdd.vn/Products/Images/522/339380/Slider/samsung-galaxy-tab-s10-fe-12gb-256gb639044639714762979.jpg	Samsung Galaxy Tab S10 FE WiFi 8GB/128GB	15	f	2026-10-30 02:24:35.242364	\N
 120827	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-1-638889638812378599.jpg	OPPO Pad SE 4G	1	f	2026-10-30 02:24:35.242364	\N
 120828	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-2-638889638823123673.jpg	OPPO Pad SE 4G	2	f	2026-10-30 02:24:35.242364	\N
 120829	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-3-638889638830871279.jpg	OPPO Pad SE 4G	3	f	2026-10-30 02:24:35.242364	\N
@@ -37276,18 +36620,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120837	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-11-638889638889937353.jpg	OPPO Pad SE 4G	11	f	2026-10-30 02:24:35.242364	\N
 120838	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-12-638889638896373821.jpg	OPPO Pad SE 4G	12	f	2026-10-30 02:24:35.242364	\N
 120839	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/339286/oppo-pad-se-bac-13-638889638902798623.jpg	OPPO Pad SE 4G	13	f	2026-10-30 02:24:35.242364	\N
-120840	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-1-639091797600118969.jpg	OPPO Pad SE 4G	14	f	2026-10-30 02:24:35.242364	\N
-120841	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-2-639091797612324766.jpg	OPPO Pad SE 4G	15	f	2026-10-30 02:24:35.242364	\N
-120842	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-3-639091797619109553.jpg	OPPO Pad SE 4G	16	f	2026-10-30 02:24:35.242364	\N
-120843	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-4-639091797625690846.jpg	OPPO Pad SE 4G	17	f	2026-10-30 02:24:35.242364	\N
-120844	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-5-639091797635715272.jpg	OPPO Pad SE 4G	18	f	2026-10-30 02:24:35.242364	\N
-120845	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-6-639091797643315219.jpg	OPPO Pad SE 4G	19	f	2026-10-30 02:24:35.242364	\N
-120846	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-7-639091797649741743.jpg	OPPO Pad SE 4G	20	f	2026-10-30 02:24:35.242364	\N
-120847	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-8-639091797655685599.jpg	OPPO Pad SE 4G	21	f	2026-10-30 02:24:35.242364	\N
-120848	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-9-639091797661632669.jpg	OPPO Pad SE 4G	22	f	2026-10-30 02:24:35.242364	\N
-120849	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-10-639091797667327098.jpg	OPPO Pad SE 4G	23	f	2026-10-30 02:24:35.242364	\N
-120850	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-11-639091797675463558.jpg	OPPO Pad SE 4G	24	f	2026-10-30 02:24:35.242364	\N
-120851	634	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/522/362665/oppo-pad-se-4g-bac-12-639091797681642065.jpg	OPPO Pad SE 4G	25	f	2026-10-30 02:24:35.242364	\N
 120852	619	https://cdn.tgdd.vn/Products/Images/522/320992/Slider/vi-vn-oppo-pad-neo-slider--(2).jpg	OPPO Pad Neo 4G 8GB/128GB	1	f	2026-10-30 02:24:35.242364	\N
 120853	619	https://cdn.tgdd.vn/Products/Images/522/320992/Slider/vi-vn-oppo-pad-neo-slider--(3).jpg	OPPO Pad Neo 4G 8GB/128GB	2	f	2026-10-30 02:24:35.242364	\N
 120854	619	https://cdn.tgdd.vn/Products/Images/522/320992/Slider/vi-vn-oppo-pad-neo-slider--(5).jpg	OPPO Pad Neo 4G 8GB/128GB	3	f	2026-10-30 02:24:35.242364	\N
@@ -37360,7 +36692,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120921	180	https://cdn.tgdd.vn/Products/Images/44/358132/Slider/vi-vn-asus-vivobook-s14-s3407va-core-5-210h-ly146w-slider-4.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	23	f	2026-10-30 02:24:35.242364	\N
 120922	180	https://cdn.tgdd.vn/Products/Images/44/358132/Slider/vi-vn-asus-vivobook-s14-s3407va-core-5-210h-ly146w-slider-5.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	24	f	2026-10-30 02:24:35.242364	\N
 120923	180	https://cdn.tgdd.vn/Products/Images/44/358132/Slider/vi-vn-asus-vivobook-s14-s3407va-core-5-210h-ly146w-slider-6.jpg	Asus Vivobook S14 S3407VA Core 5 210H (LY146W)	25	f	2026-10-30 02:24:35.242364	\N
-120924	11756	https://cdn.tgdd.vn/Products/Images/44/363474/Slider/vi-vn-macbook-air-13-inch-m5-16gb-512gb-thumbvideo.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	3	f	2026-10-30 02:24:35.242364	Vàng
 120925	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-1-639082331418817775.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	4	f	2026-10-30 02:24:35.242364	Vàng
 120926	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-2-639082331410981834.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	5	f	2026-10-30 02:24:35.242364	Vàng
 120927	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-3-639082331404121728.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	6	f	2026-10-30 02:24:35.242364	Vàng
@@ -37379,15 +36710,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120940	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-7-639081774521071998.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	19	f	2026-10-30 02:24:35.242364	Xanh đen
 120941	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-8-639081774515629030.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	20	f	2026-10-30 02:24:35.242364	Xanh đen
 120942	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-9-639081774510167371.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	21	f	2026-10-30 02:24:35.242364	Xanh đen
-120943	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-1-639082331782432674.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	22	f	2026-10-30 02:24:35.242364	Xanh đen
-120944	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-2-639082331775735964.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	23	f	2026-10-30 02:24:35.242364	Xanh đen
-120945	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-3-639082331769572006.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	24	f	2026-10-30 02:24:35.242364	Xanh đen
-120946	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-4-639082331763640683.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	25	f	2026-10-30 02:24:35.242364	Xanh đen
-120947	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-5-639082331756680158.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	26	f	2026-10-30 02:24:35.242364	Xanh đen
-120948	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-6-639082331750658569.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	27	f	2026-10-30 02:24:35.242364	Xanh đen
-120949	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-7-639082331744070221.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	28	f	2026-10-30 02:24:35.242364	Xanh đen
-120950	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-8-639082331737739139.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	29	f	2026-10-30 02:24:35.242364	Xanh đen
-120951	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-9-639082331731523815.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	30	f	2026-10-30 02:24:35.242364	Xanh đen
 120952	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-1-639174819705736399.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	31	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 120953	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-2-639174819698983190.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	32	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 120954	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-3-639174819689276157.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	33	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
@@ -37397,16 +36719,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120958	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-7-639174819647842834.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	37	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 120959	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-8-639174819641440953.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	38	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 120960	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-9-639174819626533482.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	39	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120961	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-1-639082330516126614.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	40	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120962	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-2-639082330509500844.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	41	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120963	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-3-639082330503544203.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	42	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120964	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-4-639082330468584353.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	43	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120965	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-5-639082330497074372.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	44	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120966	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-6-639082330490302730.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	45	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120967	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-7-639082330461620048.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	46	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120968	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-8-639082330481516153.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	47	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120969	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363487/macbook-air-13-inch-m5-9-639082330475257412.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	48	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-120970	11756	https://cdn.tgdd.vn/Products/Images/44/363475/Slider/vi-vn-macbook-air-13-inch-m5-16gb-1tb-thumbvideo.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	49	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 120971	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-1-639082283680635571.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	50	f	2026-10-30 02:24:35.242364	Bạc
 120972	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-2-639082283673810966.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	51	f	2026-10-30 02:24:35.242364	Bạc
 120973	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-3-639082283667826151.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	52	f	2026-10-30 02:24:35.242364	Bạc
@@ -37416,16 +36728,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 120977	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-7-639082283638036232.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	56	f	2026-10-30 02:24:35.242364	Bạc
 120978	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-8-639082283631134671.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	57	f	2026-10-30 02:24:35.242364	Bạc
 120979	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363474/macbook-air-13-inch-m5-16gb-512gb-9-639082283624127443.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	58	f	2026-10-30 02:24:35.242364	Bạc
-120980	11756	https://cdn.tgdd.vn/Products/Images/44/363487/Slider/vi-vn-macbook-air-13-inch-m5-16gb-512gb-70w-thumbvideo.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	59	f	2026-10-30 02:24:35.242364	Bạc
-120981	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-1-639081775536644879.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	60	f	2026-10-30 02:24:35.242364	Bạc
-120982	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-2-639081775526626744.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	61	f	2026-10-30 02:24:35.242364	Bạc
-120983	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-3-639081775521204411.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	62	f	2026-10-30 02:24:35.242364	Bạc
-120984	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-4-639081775515524443.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	63	f	2026-10-30 02:24:35.242364	Bạc
-120985	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-5-639081775509854968.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	64	f	2026-10-30 02:24:35.242364	Bạc
-120986	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-6-639081775503536477.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	65	f	2026-10-30 02:24:35.242364	Bạc
-120987	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-7-639081775497625873.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	66	f	2026-10-30 02:24:35.242364	Bạc
-120988	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-8-639081775490221510.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	67	f	2026-10-30 02:24:35.242364	Bạc
-120989	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363475/macbook-air-13-inch-m5-16gb-1tb-9-639081775485043327.jpg	MacBook Air 13 inch M5 16GB/512GB/8GPU 30W	68	f	2026-10-30 02:24:35.242364	Bạc
 120990	222	https://cdn.tgdd.vn/Products/Images/44/340562/Slider/dell-15-dc15250-i7-dc5i7748w1-slider-1-fix-1020x571.jpg	Dell 15 DC15250 i7 1355U (DC5I7748W1)	7	f	2026-10-30 02:24:35.242364	\N
 120991	222	https://cdn.tgdd.vn/Products/Images/44/340562/Slider/vi-vn-dell-15-dc15250-i7-dc5i7748w1-slider-2.jpg	Dell 15 DC15250 i7 1355U (DC5I7748W1)	8	f	2026-10-30 02:24:35.242364	\N
 120992	222	https://cdn.tgdd.vn/Products/Images/44/340562/Slider/vi-vn-dell-15-dc15250-i7-dc5i7748w1-slider-3.jpg	Dell 15 DC15250 i7 1355U (DC5I7748W1)	9	f	2026-10-30 02:24:35.242364	\N
@@ -37447,15 +36749,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121008	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-7-639081785198698672.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	10	f	2026-10-30 02:24:35.242364	Xanh đen
 121009	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-8-639081785192905143.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	11	f	2026-10-30 02:24:35.242364	Xanh đen
 121010	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-9-639081785185039915.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	12	f	2026-10-30 02:24:35.242364	Xanh đen
-121011	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-1-639083025813976581.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	13	f	2026-10-30 02:24:35.242364	Xanh đen
-121012	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-2-639083025806361345.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	14	f	2026-10-30 02:24:35.242364	Xanh đen
-121013	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-3-639083025796881800.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	15	f	2026-10-30 02:24:35.242364	Xanh đen
-121014	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-4-639083025791006937.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	16	f	2026-10-30 02:24:35.242364	Xanh đen
-121015	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-5-639083025784538350.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	17	f	2026-10-30 02:24:35.242364	Xanh đen
-121016	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-6-639083025778179842.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	18	f	2026-10-30 02:24:35.242364	Xanh đen
-121017	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-7-639083025771041081.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	19	f	2026-10-30 02:24:35.242364	Xanh đen
-121018	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-8-639083025763705744.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	20	f	2026-10-30 02:24:35.242364	Xanh đen
-121019	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-9-639083025756061431.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	21	f	2026-10-30 02:24:35.242364	Xanh đen
 121020	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-1-639082298386987589.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	22	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 121021	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-2-639082298380770091.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	23	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 121022	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-3-639082298374696269.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	24	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
@@ -37465,7 +36758,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121026	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-7-639082298349326320.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	28	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 121027	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-8-639082298342977347.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	29	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 121028	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-9-639082298333547444.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	30	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-121029	11758	https://cdn.tgdd.vn/Products/Images/44/363507/Slider/vi-vn-macbook-air-15-inch-m5-16gb-512gb-70w-thumbvideo.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	31	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 121030	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-1-639082296710017046.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	32	f	2026-10-30 02:24:35.242364	Bạc
 121031	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-2-639082296703482014.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	33	f	2026-10-30 02:24:35.242364	Bạc
 121032	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-3-639082296695787276.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	34	f	2026-10-30 02:24:35.242364	Bạc
@@ -37475,16 +36767,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121036	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-7-639082296669066208.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	38	f	2026-10-30 02:24:35.242364	Bạc
 121037	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-8-639082296662081750.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	39	f	2026-10-30 02:24:35.242364	Bạc
 121038	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363477/macbook-air-15-inch-m5-16gb-512gb-9-639082296654020622.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	40	f	2026-10-30 02:24:35.242364	Bạc
-121039	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-1-639083023674703337.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	41	f	2026-10-30 02:24:35.242364	Bạc
-121040	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-2-639083023667731905.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	42	f	2026-10-30 02:24:35.242364	Bạc
-121041	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-3-639083023661631984.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	43	f	2026-10-30 02:24:35.242364	Bạc
-121042	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-4-639083023655590735.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	44	f	2026-10-30 02:24:35.242364	Bạc
-121043	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-5-639083023646161963.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	45	f	2026-10-30 02:24:35.242364	Bạc
-121044	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-6-639083023639007480.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	46	f	2026-10-30 02:24:35.242364	Bạc
-121045	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-7-639083023630247438.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	47	f	2026-10-30 02:24:35.242364	Bạc
-121046	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-8-639083023622655012.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	48	f	2026-10-30 02:24:35.242364	Bạc
-121047	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-9-639083023614916124.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	49	f	2026-10-30 02:24:35.242364	Bạc
-121048	11758	https://cdn.tgdd.vn/Products/Images/44/363477/Slider/vi-vn-macbook-air-15-inch-m5-16gb-512gb-thumbvideo.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	50	f	2026-10-30 02:24:35.242364	Vàng
 121049	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-1-639083024875555320.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	51	f	2026-10-30 02:24:35.242364	Vàng
 121050	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-2-639083024883672700.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	52	f	2026-10-30 02:24:35.242364	Vàng
 121051	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363507/macbook-air-15-inch-m5-3-639083024891930765.jpg	MacBook Air 15 inch M5 16GB/512GB 35W	53	f	2026-10-30 02:24:35.242364	Vàng
@@ -37541,7 +36823,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121102	228	https://cdn.tgdd.vn/Products/Images/44/337044/Slider/vi-vn-hp-pavilion-16-af0055tu-ultra-5-ay8c4pa-slider-5.jpg	HP Pavilion 16 af0055TU Ultra 5 125U (AY8C4PA)	21	f	2026-10-30 02:24:35.242364	\N
 121103	228	https://cdn.tgdd.vn/Products/Images/44/337044/Slider/vi-vn-hp-pavilion-16-af0055tu-ultra-5-ay8c4pa-slider-6.jpg	HP Pavilion 16 af0055TU Ultra 5 125U (AY8C4PA)	22	f	2026-10-30 02:24:35.242364	\N
 121104	228	https://cdn.tgdd.vn/Products/Images/44/337044/Slider/vi-vn-hp-pavilion-16-af0055tu-ultra-5-ay8c4pa-slider-7.jpg	HP Pavilion 16 af0055TU Ultra 5 125U (AY8C4PA)	23	f	2026-10-30 02:24:35.242364	\N
-121105	11760	https://cdn.tgdd.vn/Products/Images/44/363491/Slider/vi-vn-macbook-pro-16-inch-m5-pro-24gb-1tb-thumbvideo.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	1	f	2026-10-30 02:24:35.242364	Bạc
 121106	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363492/macbook-pro-16-inch-m5-pro-1-639082372306227721.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	2	f	2026-10-30 02:24:35.242364	Bạc
 121107	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363492/macbook-pro-16-inch-m5-pro-2-639082372312848575.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	3	f	2026-10-30 02:24:35.242364	Bạc
 121108	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363492/macbook-pro-16-inch-m5-pro-3-639082372320135765.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	4	f	2026-10-30 02:24:35.242364	Bạc
@@ -37560,7 +36841,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121121	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363491/macbook-pro-16-inch-m5-pro-24gb-1tb-7-639082371274911104.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	17	f	2026-10-30 02:24:35.242364	Đen
 121122	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363491/macbook-pro-16-inch-m5-pro-24gb-1tb-8-639082371281044108.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	18	f	2026-10-30 02:24:35.242364	Đen
 121123	11760	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363491/macbook-pro-16-inch-m5-pro-24gb-1tb-9-639082371287684417.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	19	f	2026-10-30 02:24:35.242364	Đen
-121124	11760	https://cdn.tgdd.vn/Products/Images/44/363492/Slider/vi-vn-macbook-pro-16-inch-m5-pro-48gb-1tb-thumbvideo.jpg	MacBook Pro 16 inch M5 Pro 24GB/1TB	20	f	2026-10-30 02:24:35.242364	Đen
 121125	254	https://cdn.tgdd.vn/Products/Images/44/325691/Slider/vi-vn-hp-15-fd0015tu-i7-a19c5pa-slider-1.jpg	HP 15 fd0015TU i7 1355U (A19C5PA)	17	f	2026-10-30 02:24:35.242364	\N
 121126	254	https://cdn.tgdd.vn/Products/Images/44/325691/Slider/vi-vn-hp-15-fd0015tu-i7-a19c5pa-slider-2.jpg	HP 15 fd0015TU i7 1355U (A19C5PA)	18	f	2026-10-30 02:24:35.242364	\N
 121127	254	https://cdn.tgdd.vn/Products/Images/44/325691/Slider/vi-vn-hp-15-fd0015tu-i7-a19c5pa-slider-3.jpg	HP 15 fd0015TU i7 1355U (A19C5PA)	19	f	2026-10-30 02:24:35.242364	\N
@@ -37687,6 +36967,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121247	239	https://cdn.tgdd.vn/Products/Images/44/341266/Slider/vi-vn-hp-omnibook-5-ai-16-af1046tu-ultra-5-225u-bz7q8pa-slider-3.jpg	HP OmniBook 5 AI 16 af1046TU Ultra 5 225U (BZ7Q8PA)	20	f	2026-10-30 02:24:35.242364	\N
 121248	239	https://cdn.tgdd.vn/Products/Images/44/341266/Slider/vi-vn-hp-omnibook-5-ai-16-af1046tu-ultra-5-225u-bz7q8pa-slider-4.jpg	HP OmniBook 5 AI 16 af1046TU Ultra 5 225U (BZ7Q8PA)	21	f	2026-10-30 02:24:35.242364	\N
 121249	239	https://cdn.tgdd.vn/Products/Images/44/341266/Slider/vi-vn-hp-omnibook-5-ai-16-af1046tu-ultra-5-225u-bz7q8pa-slider-5.jpg	HP OmniBook 5 AI 16 af1046TU Ultra 5 225U (BZ7Q8PA)	22	f	2026-10-30 02:24:35.242364	\N
+121787	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-6.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	30	f	2026-10-30 02:24:35.242364	\N
 121250	239	https://cdn.tgdd.vn/Products/Images/44/341266/Slider/vi-vn-hp-omnibook-5-ai-16-af1046tu-ultra-5-225u-bz7q8pa-slider-6.jpg	HP OmniBook 5 AI 16 af1046TU Ultra 5 225U (BZ7Q8PA)	23	f	2026-10-30 02:24:35.242364	\N
 121251	239	https://cdn.tgdd.vn/Products/Images/44/341266/Slider/vi-vn-hp-omnibook-5-ai-16-af1046tu-ultra-5-225u-bz7q8pa-slider-7.jpg	HP OmniBook 5 AI 16 af1046TU Ultra 5 225U (BZ7Q8PA)	24	f	2026-10-30 02:24:35.242364	\N
 121252	330	https://cdn.tgdd.vn/Products/Images/44/340560/Slider/vi-vn-dell-inspiron-15-3530-i5-71070372-slider-1.jpg	Dell Inspiron 15 3530 i5 1334U (71070372)	14	f	2026-10-30 02:24:35.242364	\N
@@ -37816,7 +37097,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121375	290	https://cdn.tgdd.vn/Products/Images/44/337843/Slider/vi-vn-gigabyte-a16-ga6h-i5-gaminga16cmhh2vn893sh-slider-4.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	23	f	2026-10-30 02:24:35.242364	\N
 121376	290	https://cdn.tgdd.vn/Products/Images/44/337843/Slider/vi-vn-gigabyte-a16-ga6h-i5-gaminga16cmhh2vn893sh-slider-5.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	24	f	2026-10-30 02:24:35.242364	\N
 121377	290	https://cdn.tgdd.vn/Products/Images/44/337843/Slider/vi-vn-gigabyte-a16-ga6h-i5-gaminga16cmhh2vn893sh-slider-6.jpg	GIGABYTE Gaming A16 GA6H i5 13420H (GAMING-A16-CMHH2VN893SH)	25	f	2026-10-30 02:24:35.242364	\N
-121378	11764	https://cdn.tgdd.vn/Products/Images/44/332397/Slider/vi-vn-acer-swift-ai-sf14-51-53p9-ultra-5-nxj2ksv002-thumbvideo.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	1	f	2026-10-30 02:24:35.242364	\N
 121379	11764	https://cdn.tgdd.vn/Products/Images/44/332397/Slider/vi-vn-acer-swift-ai-sf14-51-53p9-ultra-5-nxj2ksv002-slider-1.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	2	f	2026-10-30 02:24:35.242364	\N
 121380	11764	https://cdn.tgdd.vn/Products/Images/44/332397/Slider/vi-vn-acer-swift-ai-sf14-51-53p9-ultra-5-nxj2ksv002-slider-2.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	3	f	2026-10-30 02:24:35.242364	\N
 121381	11764	https://cdn.tgdd.vn/Products/Images/44/332397/Slider/vi-vn-acer-swift-ai-sf14-51-53p9-ultra-5-nxj2ksv002-slider-3.jpg	Acer Swift AI SF14 51 75VP Ultra 7 258V (NX.J2KSV.001)	4	f	2026-10-30 02:24:35.242364	\N
@@ -38189,6 +37469,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121749	437	https://cdn.tgdd.vn/Products/Images/44/362023/Slider/vi-vn-dell-16-dc16251-core-7-150u-dc6c7557w1-6.jpg	Dell 16 DC16251 Core 7 150U (DC6C7557W1)	18	f	2026-10-30 02:24:35.242364	\N
 121750	392	https://cdn.tgdd.vn/Products/Images/44/342521/Slider/vi-vn-lenovo-gaming-legion-5-15irx10-i7-13650hx-83ly00hqvn-slider-2.jpg	Lenovo Gaming Legion 5 15IRX10 i7 13650HX (83LY00HQVN)	7	f	2026-10-30 02:24:35.242364	\N
 121751	392	https://cdn.tgdd.vn/Products/Images/44/342521/Slider/vi-vn-lenovo-gaming-legion-5-15irx10-i7-13650hx-83ly00hqvn-slider-3.jpg	Lenovo Gaming Legion 5 15IRX10 i7 13650HX (83LY00HQVN)	8	f	2026-10-30 02:24:35.242364	\N
+121788	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-7.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	31	f	2026-10-30 02:24:35.242364	\N
 121752	392	https://cdn.tgdd.vn/Products/Images/44/342521/Slider/vi-vn-lenovo-gaming-legion-5-15irx10-i7-13650hx-83ly00hqvn-slider-4.jpg	Lenovo Gaming Legion 5 15IRX10 i7 13650HX (83LY00HQVN)	9	f	2026-10-30 02:24:35.242364	\N
 121753	392	https://cdn.tgdd.vn/Products/Images/44/342521/Slider/vi-vn-lenovo-gaming-legion-5-15irx10-i7-13650hx-83ly00hqvn-slider-5.jpg	Lenovo Gaming Legion 5 15IRX10 i7 13650HX (83LY00HQVN)	10	f	2026-10-30 02:24:35.242364	\N
 121754	392	https://cdn.tgdd.vn/Products/Images/44/342521/Slider/vi-vn-lenovo-gaming-legion-5-15irx10-i7-13650hx-83ly00hqvn-slider-6.jpg	Lenovo Gaming Legion 5 15IRX10 i7 13650HX (83LY00HQVN)	11	f	2026-10-30 02:24:35.242364	\N
@@ -38224,8 +37505,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 121784	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-3.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	27	f	2026-10-30 02:24:35.242364	\N
 121785	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-4.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	28	f	2026-10-30 02:24:35.242364	\N
 121786	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-5.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	29	f	2026-10-30 02:24:35.242364	\N
-121787	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-6.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	30	f	2026-10-30 02:24:35.242364	\N
-121788	463	https://cdn.tgdd.vn/Products/Images/44/331522/Slider/vi-vn-hp-elitebook-x360-830-g11-ultra-5-a7rb9pt-slider-7.jpg	HP Elitebook X360 830 G11 Ultra 5 135U (A7RB9PT)	31	f	2026-10-30 02:24:35.242364	\N
 121789	400	https://cdn.tgdd.vn/Products/Images/44/358119/Slider/vi-vn-hp-omnibook-7-14-fr0024tu-ultra-7-255h-c1mn0pa-slider-1.jpg	HP OmniBook 7 14 fr0024TU Ultra 7 255H (C1MN0PA)	6	f	2026-10-30 02:24:35.242364	\N
 121790	400	https://cdn.tgdd.vn/Products/Images/44/358119/Slider/vi-vn-hp-omnibook-7-14-fr0024tu-ultra-7-255h-c1mn0pa-slider-2.jpg	HP OmniBook 7 14 fr0024TU Ultra 7 255H (C1MN0PA)	7	f	2026-10-30 02:24:35.242364	\N
 121791	400	https://cdn.tgdd.vn/Products/Images/44/358119/Slider/vi-vn-hp-omnibook-7-14-fr0024tu-ultra-7-255h-c1mn0pa-slider-3.jpg	HP OmniBook 7 14 fr0024TU Ultra 7 255H (C1MN0PA)	8	f	2026-10-30 02:24:35.242364	\N
@@ -38516,27 +37795,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122076	526	https://cdn.tgdd.vn/Products/Images/44/370356/Slider/vi-vn-lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015vn-02.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK0015VN)	18	f	2026-10-30 02:24:35.242364	\N
 122077	526	https://cdn.tgdd.vn/Products/Images/44/370356/Slider/vi-vn-lenovo-yoga-slim-7-ultra-14iph11-ultra-7-355-83qk0015vn-04.jpg	Lenovo Yoga Slim 7 Ultra 14IPH11 Ultra 7 355 (83QK0015VN)	19	f	2026-10-30 02:24:35.242364	\N
 122078	491	https://cdnv2.tgdd.vn/pim/cdn/images/202609/vi-vn-asus-expertbook-p5-p5405csa-ultra-5-226v-nz1368w-thumbvideo172422.jpg	Asus ExpertBook P5 P5405CSA Ultra 5 226V (NZ1368W)	12	f	2026-10-30 02:24:35.242364	\N
-122079	11758	https://cdn.tgdd.vn/Products/Images/44/363511/Slider/vi-vn-macbook-air-15-inch-m5-24gb-512gb-70w-thumbvideo.jpg	MacBook Air 15 inch M5	60	f	2026-10-30 02:24:35.242364	Xanh đen
-122080	11758	https://cdn.tgdd.vn/Products/Images/44/363479/Slider/vi-vn-macbook-air-15-inch-m5-24gb-1tb-thumbvideo.jpg	MacBook Air 15 inch M5	61	f	2026-10-30 02:24:35.242364	Xanh đen
-122081	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-1-639083023980068171.jpg	MacBook Air 15 inch M5	62	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122082	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-2-639083023971523696.jpg	MacBook Air 15 inch M5	63	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122083	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-3-639083023964750493.jpg	MacBook Air 15 inch M5	64	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122084	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-4-639083023956944133.jpg	MacBook Air 15 inch M5	65	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122085	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-5-639083023950208811.jpg	MacBook Air 15 inch M5	66	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122086	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-6-639083023943943725.jpg	MacBook Air 15 inch M5	67	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122087	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-7-639083023936448961.jpg	MacBook Air 15 inch M5	68	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122088	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-8-639083023929777555.jpg	MacBook Air 15 inch M5	69	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122089	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363511/macbook-air-15-inch-m5-9-639083023923126924.jpg	MacBook Air 15 inch M5	70	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122090	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-1-639081786355191395.jpg	MacBook Air 15 inch M5	71	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122091	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-2-639081786349406376.jpg	MacBook Air 15 inch M5	72	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122092	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-3-639081786343411588.jpg	MacBook Air 15 inch M5	73	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122093	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-4-639081786338073386.jpg	MacBook Air 15 inch M5	74	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122094	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-5-639081786332900902.jpg	MacBook Air 15 inch M5	75	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122095	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-6-639081786326829973.jpg	MacBook Air 15 inch M5	76	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122096	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-7-639081786320985197.jpg	MacBook Air 15 inch M5	77	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122097	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-8-639081786311795569.jpg	MacBook Air 15 inch M5	78	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122098	11758	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363479/macbook-air-15-inch-m5-24gb-1tb-9-639081786304300016.jpg	MacBook Air 15 inch M5	79	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122099	11756	https://cdn.tgdd.vn/Products/Images/44/363503/Slider/vi-vn-macbook-air-13-inch-m5-24gb-512gb-thumbvideo.jpg	MacBook Air 13 inch M5 24GB/1TB 35W	69	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
 122100	551	https://cdn.tgdd.vn/Products/Images/44/335964/Slider/ba%CC%89o-ha%CC%80nh-1020x570.png	Acer Gaming Predator Helios 18 AI PH18 73 93P0 Ultra 9 275HX (NH.QVYSV.001)	7	f	2026-10-30 02:24:35.242364	\N
 122101	551	https://cdn.tgdd.vn/Products/Images/44/335964/Slider/vi-vn-acer-predator-helios-18-ai-ph18-73-93p0-ultra-9-nhqvysv001-slider-1.jpg	Acer Gaming Predator Helios 18 AI PH18 73 93P0 Ultra 9 275HX (NH.QVYSV.001)	8	f	2026-10-30 02:24:35.242364	\N
 122102	551	https://cdn.tgdd.vn/Products/Images/44/335964/Slider/vi-vn-acer-predator-helios-18-ai-ph18-73-93p0-ultra-9-nhqvysv001-slider-2.jpg	Acer Gaming Predator Helios 18 AI PH18 73 93P0 Ultra 9 275HX (NH.QVYSV.001)	9	f	2026-10-30 02:24:35.242364	\N
@@ -38596,8 +37854,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122156	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-9-639083038110262985.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	10	f	2026-10-30 02:24:35.242364	Hồng phấn
 122157	179	https://cdnv2.tgdd.vn/mwg-static/dmx/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-9-639226078777541909.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	11	f	2026-10-30 02:24:35.242364	Hồng phấn
 122158	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-10-639082631676231298.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	12	f	2026-10-30 02:24:35.242364	Hồng phấn
-122159	179	https://cdn.tgdd.vn/Products/Images/44/363538/Slider/vi-vn-macbook-neo-13-inch-a18-pro-8gb-512gb-thumbvideo.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	13	f	2026-10-30 02:24:35.242364	Hồng phấn
-122160	179	https://cdn.tgdd.vn/Products/Images/44/363537/Slider/vi-vn-macbook-neo-13-inch-a18-pro-8gb-256gb-thumbvideo.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	14	f	2026-10-30 02:24:35.242364	Bạc
 122161	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-1-639082638038720513.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	15	f	2026-10-30 02:24:35.242364	Bạc
 122162	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-2-639082638048650723.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	16	f	2026-10-30 02:24:35.242364	Bạc
 122163	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-3-639082638055197877.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	17	f	2026-10-30 02:24:35.242364	Bạc
@@ -38608,7 +37864,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122168	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-8-639082638086611775.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	22	f	2026-10-30 02:24:35.242364	Bạc
 122169	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-9-639082638092863838.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	23	f	2026-10-30 02:24:35.242364	Bạc
 122170	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-10-639082638098759817.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	24	f	2026-10-30 02:24:35.242364	Bạc
-122171	179	https://cdn.tgdd.vn/Products/Images/44/363537/Slider/vi-vn-macbook-neo-13-inch-a18-pro-8gb-256gb-thumbvideo.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	25	f	2026-10-30 02:24:35.242364	Vàng nhạt
 122172	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-1-639082639226812979.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	26	f	2026-10-30 02:24:35.242364	Vàng nhạt
 122173	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-2-639082639233054677.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	27	f	2026-10-30 02:24:35.242364	Vàng nhạt
 122174	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-3-639082639238796964.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	28	f	2026-10-30 02:24:35.242364	Vàng nhạt
@@ -38630,18 +37885,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122189	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-8-639082632550425443.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	43	f	2026-10-30 02:24:35.242364	Xanh Dương
 122190	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-9-639083039262041872.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	44	f	2026-10-30 02:24:35.242364	Xanh Dương
 122191	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363537/macbook-neo-13-inch-a18-pro-8gb-256gb-10-639082632562215487.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	45	f	2026-10-30 02:24:35.242364	Xanh Dương
-122192	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-1-639082639673482810.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	46	f	2026-10-30 02:24:35.242364	Xanh Dương
-122193	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-2-639082639679661734.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	47	f	2026-10-30 02:24:35.242364	Xanh Dương
-122194	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-3-639082639685232370.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	48	f	2026-10-30 02:24:35.242364	Xanh Dương
-122195	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-4-639082639690403555.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	49	f	2026-10-30 02:24:35.242364	Xanh Dương
-122196	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-5-639082639696490309.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	50	f	2026-10-30 02:24:35.242364	Xanh Dương
-122197	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-6-639082639702483302.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	51	f	2026-10-30 02:24:35.242364	Xanh Dương
-122198	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-7-639082639708459350.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	52	f	2026-10-30 02:24:35.242364	Xanh Dương
-122199	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-8-639082639715108732.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	53	f	2026-10-30 02:24:35.242364	Xanh Dương
-122200	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-9-639082639720740469.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	54	f	2026-10-30 02:24:35.242364	Xanh Dương
-122201	179	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363538/macbook-neo-13-inch-a18-pro-8gb-512gb-10-639082639727325121.jpg	MacBook Neo 13 inch A18 Pro 8GB/256GB	55	f	2026-10-30 02:24:35.242364	Xanh Dương
 122202	493	https://cdn.tgdd.vn/Products/Images/44/363488/Slider/vi-vn-macbook-pro-14-inch-m5-pro-24gb-1tb-thumbvideo.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	2	f	2026-10-30 02:24:35.242364	Bạc
-122203	493	https://cdn.tgdd.vn/Products/Images/44/363489/Slider/vi-vn-macbook-pro-14-inch-m5-pro-24gb-2tb-thumbvideo.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	3	f	2026-10-30 02:24:35.242364	Bạc
 122204	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-2-639082360513485777.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	4	f	2026-10-30 02:24:35.242364	Đen
 122205	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-3-639082360519399777.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	5	f	2026-10-30 02:24:35.242364	Đen
 122206	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-4-639082360528560537.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	6	f	2026-10-30 02:24:35.242364	Đen
@@ -38650,18 +37894,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122209	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-7-639082360550038255.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	9	f	2026-10-30 02:24:35.242364	Đen
 122210	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-8-639082360556088336.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	10	f	2026-10-30 02:24:35.242364	Đen
 122211	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363488/macbook-pro-14-inch-m5-pro-24gb-1tb-den-9-639082360568251767.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	11	f	2026-10-30 02:24:35.242364	Đen
-122212	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-1-639082363610434554.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	12	f	2026-10-30 02:24:35.242364	Đen
-122213	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-2-639082363617243848.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	13	f	2026-10-30 02:24:35.242364	Đen
-122214	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-3-639082363623754670.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	14	f	2026-10-30 02:24:35.242364	Đen
-122215	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-4-639082363630402352.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	15	f	2026-10-30 02:24:35.242364	Đen
-122216	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-5-639082363637741338.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	16	f	2026-10-30 02:24:35.242364	Đen
-122217	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-6-639082363646503347.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	17	f	2026-10-30 02:24:35.242364	Đen
-122218	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-7-639082363653033786.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	18	f	2026-10-30 02:24:35.242364	Đen
-122219	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-8-639082363661197140.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	19	f	2026-10-30 02:24:35.242364	Đen
-122220	493	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363489/macbook-pro-14-inch-m5-pro-24gb-2tb-9-639082363669591949.jpg	Laptop MacBook Pro 14 inch M5 Pro 24GB/1TB 70W	20	f	2026-10-30 02:24:35.242364	Đen
-122221	11758	https://cdn.tgdd.vn/Products/Images/44/363513/Slider/vi-vn-macbook-air-15-inch-m5-32gb-512gb-thumbvideo.jpg	MacBook Air 15 inch M5 16GB/1TB 35W	80	f	2026-10-30 02:24:35.242364	Xanh da trời nhạt
-122222	11758	https://cdn.tgdd.vn/Products/Images/44/363514/Slider/vi-vn-macbook-air-15-inch-m5-32gb-1tb-thumbvideo.jpg	MacBook Air 15 inch M5 16GB/1TB 35W	81	f	2026-10-30 02:24:35.242364	Vàng
-122223	11758	https://cdn.tgdd.vn/Products/Images/44/363509/Slider/vi-vn-macbook-air-15-inch-m5-24gb-512gb-thumbvideo.jpg	MacBook Air 15 inch M5 16GB/1TB 35W	82	f	2026-10-30 02:24:35.242364	Xanh đen
 122234	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-1-639143753249357491.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	1	f	2026-10-30 02:24:35.242364	Bạc
 122235	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-2-639143753256093951.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	2	f	2026-10-30 02:24:35.242364	Bạc
 122236	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-3-639143753266176574.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	3	f	2026-10-30 02:24:35.242364	Bạc
@@ -38689,8 +37921,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122258	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-83qm002fvn-12-639142697796977033.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	25	f	2026-10-30 02:24:35.242364	Xám
 122259	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-83qm002fvn-13-639142697803328295.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	26	f	2026-10-30 02:24:35.242364	Xám
 122260	460	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/367019/lenovo-yoga-slim-7-oled-14iph11-ultra-7-355-83qm002fvn-14-639142697813623564.jpg	Lenovo Yoga Slim 7 OLED 14IPH11 Ultra 7 355	27	f	2026-10-30 02:24:35.242364	Xám
-122261	11756	https://cdn.tgdd.vn/Products/Images/44/363504/Slider/macbook-air-m5-thumbvideo-1920x1080.jpg	Macbook Air 13 inch M5 24GB/512GB 70W	70	f	2026-10-30 02:24:35.242364	\N
-122262	11756	https://cdn.tgdd.vn/Products/Images/44/363504/Slider/vi-vn-macbook-air-13-inch-m5-24gb-512gb-70w-thumbvideo.jpg	Macbook Air 13 inch M5 24GB/512GB 70W	71	f	2026-10-30 02:24:35.242364	Xanh đen
 122263	343	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358089/macbook-pro-14-inch-m5-1-638962511548077123.jpg	MacBook Pro 14 inch M5 24GB/1TB	3	f	2026-10-30 02:24:35.242364	\N
 122264	343	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358089/macbook-pro-14-inch-m5-2-638962511516207871.jpg	MacBook Pro 14 inch M5 24GB/1TB	4	f	2026-10-30 02:24:35.242364	\N
 122265	343	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/358089/macbook-pro-14-inch-m5-3-638962511522957217.jpg	MacBook Pro 14 inch M5 24GB/1TB	5	f	2026-10-30 02:24:35.242364	\N
@@ -38781,8 +38011,6 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122352	549	https://cdn.tgdd.vn/Products/Images/44/332274/Slider/vi-vn-hp-omen-14-fb0135tx-ultra-7-ay8v1pa-slider-4.jpg	HP Gaming OMEN Transcend 14 fb0135TX Ultra 7 155H (AY8V1PA)	22	f	2026-10-30 02:24:35.242364	\N
 122353	549	https://cdn.tgdd.vn/Products/Images/44/332274/Slider/vi-vn-hp-omen-14-fb0135tx-ultra-7-ay8v1pa-slider-5.jpg	HP Gaming OMEN Transcend 14 fb0135TX Ultra 7 155H (AY8V1PA)	23	f	2026-10-30 02:24:35.242364	\N
 122354	549	https://cdn.tgdd.vn/Products/Images/44/332274/Slider/vi-vn-hp-omen-14-fb0135tx-ultra-7-ay8v1pa-slider-6.jpg	HP Gaming OMEN Transcend 14 fb0135TX Ultra 7 155H (AY8V1PA)	24	f	2026-10-30 02:24:35.242364	\N
-122355	48	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360311/xiaomi-redmi-note-15-5g-tem-99-639032316207427884.jpg	Xiaomi Redmi Note 15 5G 8GB/256GB	2	f	2026-10-30 02:24:35.242364	\N
-122379	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363506/macbook-air-13-inch-m5-1-639083015249824118.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	72	f	2026-10-30 02:24:35.242364	\N
 122380	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363506/macbook-air-13-inch-m5-2-639083015243357626.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	73	f	2026-10-30 02:24:35.242364	\N
 122381	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363506/macbook-air-13-inch-m5-3-639083015237535998.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	74	f	2026-10-30 02:24:35.242364	\N
 122382	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363506/macbook-air-13-inch-m5-4-639083015201982251.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	75	f	2026-10-30 02:24:35.242364	\N
@@ -38798,6 +38026,7 @@ COPY public.product_images (image_id, product_id, image_url, alt_text, display_o
 122360	48	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360311/xiaomi-redmi-note-15-5g-den-5-639032316200503736.jpg	Xiaomi Redmi Note 15 5G 8GB/256GB	7	f	2026-10-30 02:24:35.242364	Đen
 122361	48	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360311/xiaomi-redmi-note-15-5g-blue-1-639032316436256295.jpg	Xiaomi Redmi Note 15 5G 8GB/256GB	8	f	2026-10-30 02:24:35.242364	Xanh Dương
 122362	48	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/42/360311/xiaomi-redmi-note-15-5g-blue-2-639032316442375484.jpg	Xiaomi Redmi Note 15 5G 8GB/256GB	9	f	2026-10-30 02:24:35.242364	Xanh Dương
+122379	11756	https://cdnv2.tgdd.vn/mwg-static/tgdd/Products/Images/44/363506/macbook-air-13-inch-m5-1-639083015249824118.jpg	MacBook Air 13 inch M5 32GB/1TB 35W	72	t	2026-10-30 02:24:35.242364	\N
 \.
 
 
@@ -149911,61 +149140,61 @@ ALTER TABLE public.variant_attribute_values ENABLE TRIGGER ALL;
 -- Name: attribute_values_value_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.attribute_values_value_id_seq', 29142, true);
+SELECT pg_catalog.setval('public.attribute_values_value_id_seq', 38208, true);
 
 
 --
 -- Name: attributes_attribute_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.attributes_attribute_id_seq', 35, true);
+SELECT pg_catalog.setval('public.attributes_attribute_id_seq', 41, true);
 
 
 --
 -- Name: brands_brand_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.brands_brand_id_seq', 239, true);
+SELECT pg_catalog.setval('public.brands_brand_id_seq', 309, true);
 
 
 --
 -- Name: categories_category_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.categories_category_id_seq', 28306, true);
+SELECT pg_catalog.setval('public.categories_category_id_seq', 31364, true);
 
 
 --
 -- Name: product_images_image_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.product_images_image_id_seq', 122957, true);
+SELECT pg_catalog.setval('public.product_images_image_id_seq', 134475, true);
 
 
 --
 -- Name: product_specifications_specification_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.product_specifications_specification_id_seq', 701519, true);
+SELECT pg_catalog.setval('public.product_specifications_specification_id_seq', 786118, true);
 
 
 --
 -- Name: product_variants_variant_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.product_variants_variant_id_seq', 17902, true);
+SELECT pg_catalog.setval('public.product_variants_variant_id_seq', 19770, true);
 
 
 --
 -- Name: products_product_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.products_product_id_seq', 15405, true);
+SELECT pg_catalog.setval('public.products_product_id_seq', 16609, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UWxmJFwbCF8h1NzDeDbgwQ4qPILRWuT3fTVfF04T7UI9sKo4waX50ZXis5jrex0
+\unrestrict Rf2KLOqW1oR2uKYpOMl9pFzbsfbOTyviFVDgcf2cRUHr8sZuR7AfOWqHg5hAwGD
 

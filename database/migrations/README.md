@@ -33,6 +33,7 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 27 | `order_email.sql` | Email đơn hàng (kế hoạch v7): `orders.contact_email`, `orders.tracking_token` (link theo dõi đơn), bảng `email_log` |
 | 28 | `wishlist.sql` | Danh sách yêu thích (kế hoạch v7 GĐ4): `wishlist_items` (giá lúc thêm + mốc giá để báo giảm giá qua email) |
 | 29 | `product_base_names.sql` | Tên sản phẩm chỉ còn tên máy: dung lượng / màu / GPU / sạc ở cuối tên chuyển vào phiên bản (chọn ở trang chi tiết); sau đó chạy lại `merge_product_variants.sql` để gộp các tên trùng (sao lưu trước; dọn Redis `cache:*`, chạy lại dữ liệu AI) |
+| 30 | `dedupe_product_images.sql` | Bỏ ảnh trùng sau khi gộp phiên bản: mỗi (sản phẩm, màu) chỉ giữ bộ ảnh của một trang nguồn TGDĐ, không lặp theo bản dung lượng (dọn Redis `cache:*`) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

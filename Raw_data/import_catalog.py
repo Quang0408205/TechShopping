@@ -33,6 +33,7 @@ LEGACY_FILE = Path(__file__).with_name("legacy_seed_products.csv")
 MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "database" / "migrations"
 BASE_NAMES_FILE = MIGRATIONS_DIR / "product_base_names.sql"
 MERGE_FILE = MIGRATIONS_DIR / "merge_product_variants.sql"
+DEDUPE_IMAGES_FILE = MIGRATIONS_DIR / "dedupe_product_images.sql"
 SKU_PREFIX = "TGDD-"
 LEGACY_SKU_PREFIX = "TGDD-OLD-"
 # Trang chủ TGDĐ: crawler gán nhầm cho vài dòng lỗi, không dùng làm khoá đối chiếu.
@@ -729,9 +730,11 @@ def merge_variants(cursor):
     while cursor.nextset():
         pass
     row = cursor.fetchone() if cursor.description else None
+    names = [column.name for column in cursor.description] if row else []
+    # ảnh của các bản dung lượng vừa gộp trùng nhau: mỗi màu giữ một bộ (dedupe_product_images.sql)
+    run_migration(cursor, DEDUPE_IMAGES_FILE)
     if not row:
         return "-"
-    names = [column.name for column in cursor.description]
     return ", ".join(f"{name} = {value}" for name, value in zip(names, row))
 
 
