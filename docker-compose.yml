@@ -29,6 +29,8 @@ services:
       - ./database/docker-init/05c_sample_staff.sql:/docker-entrypoint-initdb.d/05c_sample_staff.sql:ro
       # Tồn kho mẫu: mọi phiên bản đang bán có 5–40 cái ở mỗi chi nhánh đang mở (demo)
       - ./database/docker-init/06_sample_stock.sql:/docker-entrypoint-initdb.d/06_sample_stock.sql:ro
+      # Khuyến mãi, voucher và combo mẫu (demo)
+      - ./database/docker-init/07_sample_promotions.sql:/docker-entrypoint-initdb.d/07_sample_promotions.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s
