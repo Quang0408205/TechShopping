@@ -325,10 +325,10 @@ document.addEventListener(
             const spend = formatPrice(Number(rules.vndPerPointSpent));
 
             const items = [
-                ["Tích điểm", "Mỗi " + earn + " tiền hàng thực trả (không tính phí giao hàng) = 1 điểm, nhân hệ số của hạng. Điểm được cộng khi đơn đã giao."],
+                ["Tích điểm", "Mỗi " + earn + " tiền hàng thực trả (không tính phí giao hàng) = 1 điểm, nhân hệ số của hạng. Điểm được cộng ngay khi đơn đã thanh toán (COD: khi nhận hàng)."],
                 ["Dùng điểm", "1 điểm = " + spend + ". Mỗi đơn dùng tối đa " + rules.maxRedeemPercent + "% giá trị hàng (sau voucher), dùng cùng voucher được."],
-                ["Huỷ / trả hàng", "Đơn huỷ được hoàn lại điểm đã dùng. Trả hàng: hoàn điểm đã dùng cho phần trả và trừ điểm đã tích tương ứng."],
-                ["Lên hạng", "Hạng tính theo tổng chi tiêu các đơn đã giao. Hạng đã đạt được giữ nguyên, không bị hạ."]
+                ["Huỷ / trả hàng", "Đơn huỷ được hoàn lại điểm đã dùng; đơn đã thanh toán mà huỷ thì trừ lại điểm đã tích. Trả hàng: hoàn điểm đã dùng cho phần trả và trừ điểm đã tích tương ứng."],
+                ["Lên hạng", "Hạng tính theo tổng chi tiêu các đơn đã thanh toán. Hạng đã đạt được giữ nguyên, không bị hạ."]
             ];
 
             document.getElementById("loyaltyRules").innerHTML = items.map(function (item, index) {
@@ -391,7 +391,7 @@ document.addEventListener(
 
                 box.innerHTML = rows
                     ? `<ul class="loyalty-tx-list">${rows}</ul>`
-                    : `<div class="loyalty-empty"><strong>Chưa có điểm nào</strong><p>Điểm được cộng khi đơn hàng của bạn đã giao.</p>
+                    : `<div class="loyalty-empty"><strong>Chưa có điểm nào</strong><p>Điểm được cộng khi đơn hàng của bạn đã thanh toán.</p>
                         <a class="btn btn-dark" href="${escapeHtml(siteUrl("customer/products.html"))}">Mua sắm ngay</a></div>`;
 
             } else {

@@ -27,10 +27,10 @@ public interface AdminOrderService {
      * Moves the order along the flow (OrderStatus.canMoveTo), else 409 INVALID_ORDER_STATUS. The same status
      * only updates the tracking number. CONFIRMED needs a paid bank transfer (409 PAYMENT_REQUIRED) or an approved
      * installment plan (409 INSTALLMENT_NOT_APPROVED), a store (409 ORDER_STORE_MISSING) with enough stock
-     * (409 INSUFFICIENT_STOCK), and takes the quantities from that store. DELIVERED sets deliveredAt, adds the total to
-     * the customer's total_spent, marks a COD payment PAID and starts an installment schedule; CANCELLED sets
-     * cancelledAt, cancels / queues for refund the payment, cancels a plan not started and, from CONFIRMED, puts the
-     * stock back.
+     * (409 INSUFFICIENT_STOCK), and takes the quantities from that store. DELIVERED sets deliveredAt and marks a COD
+     * payment PAID (the order then counts for total_spent and points, like any order once paid); CANCELLED sets
+     * cancelledAt, cancels / queues for refund the payment (taking back what a paid order counted), cancels a plan not
+     * started and, from CONFIRMED, puts the stock back.
      */
     AdminOrderResponse updateStatus(Long staffId, Long orderId, OrderStatusUpdateRequest request);
 

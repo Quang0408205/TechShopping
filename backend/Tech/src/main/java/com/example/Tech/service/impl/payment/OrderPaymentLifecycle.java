@@ -16,6 +16,7 @@ import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.service.mail.OrderMailPublisher;
 import com.example.Tech.service.payment.InstallmentPolicy;
 import com.example.Tech.service.payment.StripeGateway;
@@ -50,6 +51,7 @@ public class OrderPaymentLifecycle {
     private final StripeProperties stripe;
     private final StripeGateway stripeGateway;
     private final OrderMailPublisher mailPublisher;
+    private final LoyaltyService loyaltyService;
 
     /** Checks that installment data comes with INSTALLMENT and only with it, and fits its partner; called before the cart is read. */
     public void validateSelection(PaymentMethod method, InstallmentRequest installment) {
@@ -124,7 +126,10 @@ public class OrderPaymentLifecycle {
         }
     }
 
-    /** Delivered: COD money is collected by the courier. Installment money comes from the partner (see settle). */
+    /**
+     * Delivered: COD money is collected by the courier (the order counts for points then). Installment money comes
+     * from the partner (see settle).
+     */
     public void onOrderDelivered(Order order, User staff, LocalDateTime now) {
         if (order.getPaymentMethod() == PaymentMethod.COD) {
             paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(order.getId())
@@ -133,14 +138,15 @@ public class OrderPaymentLifecycle {
                         payment.setStatus(PaymentStatus.PAID);
                         payment.setPaidAt(now);
                         payment.setConfirmedBy(staff);
+                        loyaltyService.onPaid(order);
                     });
         }
     }
 
     /**
-     * The order was just cancelled: an awaited payment is cancelled, money already received waits for a refund, an
-     * installment application is withdrawn from its partner. An installment order only owes a refund once the partner
-     * has paid the shop.
+     * The order was just cancelled: an awaited payment is cancelled, money already received waits for a refund (and
+     * the points / spending it counted are taken back), an installment application is withdrawn from its partner. An
+     * installment order only owes a refund once the partner has paid the shop.
      */
     public void onOrderCancelled(Order order) {
         InstallmentOrder plan = installmentOrderRepository.findByOrderId(order.getId()).orElse(null);
@@ -152,6 +158,7 @@ public class OrderPaymentLifecycle {
                     expireCheckoutAfterCommit(payment.getCheckoutSessionId());
                 }
             } else if (payment.getStatus() == PaymentStatus.PAID) {
+                loyaltyService.onPaidOrderCancelled(order);
                 if (payment.getPaymentMethod() == PaymentMethod.INSTALLMENT && !partnerPaid) {
                     payment.setStatus(PaymentStatus.CANCELLED);
                 } else {
@@ -170,7 +177,7 @@ public class OrderPaymentLifecycle {
         }
     }
 
-    /** Staff saw the bank transfer arrive. COD is never confirmed by hand: it is paid on delivery. */
+    /** Staff (or the bank webhook) saw the transfer arrive: the order counts for points now. COD is paid on delivery. */
     public void confirmTransfer(Order order, User staff, String transactionId, LocalDateTime now) {
         Payment payment = mainPayment(order);
         if (payment.getPaymentMethod() != PaymentMethod.BANK_TRANSFER) {
@@ -182,6 +189,7 @@ public class OrderPaymentLifecycle {
         payment.setPaidAt(now);
         payment.setConfirmedBy(staff);
         payment.setTransactionId(trimToNull(transactionId));
+        loyaltyService.onPaid(order);
         mailPublisher.paymentReceived(order);
     }
 
@@ -233,6 +241,7 @@ public class OrderPaymentLifecycle {
             payment.setPaidAt(now);
             payment.setConfirmedBy(staff);
             payment.setTransactionId(application.getPartnerRef());
+            loyaltyService.onPaid(order);
             mailPublisher.paymentReceived(order);
         } else {
             application.setStatus(InstallmentStatus.REJECTED);

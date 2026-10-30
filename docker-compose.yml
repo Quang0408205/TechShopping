@@ -39,6 +39,8 @@ services:
       - ./database/docker-init/08_catalog_filters_needs.sql:/docker-entrypoint-initdb.d/08_catalog_filters_needs.sql:ro
       # Hoạt động mẫu: bảo hành, voucher trên đơn, đánh giá + lượt thích, yêu thích, liên hệ, yêu cầu hậu mãi (demo)
       - ./database/docker-init/09_sample_activity.sql:/docker-entrypoint-initdb.d/09_sample_activity.sql:ro
+      # Tích điểm khi đã thanh toán: cộng bù điểm / chi tiêu cho đơn mẫu đã trả tiền nhưng chưa giao (chạy sau 07–09)
+      - ./database/migrations/loyalty_on_payment.sql:/docker-entrypoint-initdb.d/10_loyalty_on_payment.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s
