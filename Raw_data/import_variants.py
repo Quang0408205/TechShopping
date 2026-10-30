@@ -62,13 +62,15 @@ def combo_fields(combo, specs):
 
 
 def split_images(record):
-    """{màu: [url]} riêng của màu, và [url] chung (xuất hiện ở mọi màu hoặc sản phẩm không có màu)."""
+    """{màu: [url]} riêng của màu, và [url] chung (xuất hiện ở mọi màu hoặc sản phẩm không có màu).
+    Mỗi bản dung lượng có một bộ ảnh giống nhau nhưng khác tên file ("...-512gb-den-1", "...-1tb-den-1"):
+    mỗi màu chỉ lấy bộ ảnh của một tổ hợp (tổ hợp nhiều ảnh nhất), không cộng dồn các bản dung lượng."""
     per_color = defaultdict(list)
     for combo in record["combos"]:
         color = next((v for k, v in combo["labels"].items() if "màu" in k.lower()), "")
-        for url in combo["images"]:
-            if ic.image_key(url) not in {ic.image_key(u) for u in per_color[color]}:
-                per_color[color].append(url)
+        urls = list(dict.fromkeys(combo["images"]))
+        if len(urls) > len(per_color[color]):
+            per_color[color] = urls
     colors = [c for c in per_color if c]
     common = []
     if not colors:

@@ -4,7 +4,6 @@ Ghi Raw_data/crawl_v5/needs.json: [{category, slug, name, urls: [...]}]. Nhập 
 Dùng: py -3 crawl_needs.py
 """
 import json
-import re
 import time
 from pathlib import Path
 
