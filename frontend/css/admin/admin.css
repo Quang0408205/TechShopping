@@ -236,10 +236,13 @@
 }
 
 .admin-stat-card {
+    min-width: 0;
     padding: 24px;
     background: var(--color-paper);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
+    /* để cỡ số theo bề rộng thẻ (cqi, xem admin-shell.css) */
+    container-type: inline-size;
 }
 
 .admin-stat-label {

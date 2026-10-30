@@ -139,9 +139,46 @@
     font-size: 15px;
 }
 
+/* tiền đã ghi gọn ("1,96 tỷ đ"); thẻ rất hẹp thì số nhỏ lại theo bề rộng thẻ thay vì tràn ra ngoài */
 .admin-stat-value {
-    font-size: 24px;
+    font-size: min(24px, 13cqi);
     letter-spacing: -0.01em;
+}
+
+/* rê chuột / focus vào số tiền gọn → hiện ngay số đầy đủ ("1.963.403.000đ") phía trên */
+.admin-stat-value [data-full] {
+    position: relative;
+    cursor: help;
+    outline: none;
+}
+
+.admin-stat-value [data-full]::after {
+    content: attr(data-full);
+    position: absolute;
+    left: 0;
+    bottom: calc(100% + 8px);
+    z-index: 5;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--color-ink);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity 0.12s ease, transform 0.12s ease, visibility 0.12s;
+    pointer-events: none;
+}
+
+.admin-stat-value [data-full]:hover::after,
+.admin-stat-value [data-full]:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
 }
 
 /* Bảng: tiêu đề dính khi cuộn trong khung */

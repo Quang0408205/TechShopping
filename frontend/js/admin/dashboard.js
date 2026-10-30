@@ -120,12 +120,12 @@ document.addEventListener("DOMContentLoaded", async function () {
         const cards = [
             {
                 label: "Doanh thu thuần hôm nay",
-                value: formatPrice(s.revenueToday || 0),
+                money: s.revenueToday || 0,
                 sub: s.deliveredToday + " đơn đã giao"
             },
             {
                 label: "Doanh thu thuần tháng này",
-                value: formatPrice(s.revenueThisMonth || 0),
+                money: s.revenueThisMonth || 0,
                 sub: trendText(s.revenueThisMonth, s.revenuePreviousMonthSamePeriod)
             },
             {
