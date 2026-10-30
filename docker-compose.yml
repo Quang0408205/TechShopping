@@ -32,7 +32,7 @@ services:
       # Tồn kho mẫu: mọi phiên bản đang bán có 5–40 cái ở mỗi chi nhánh đang mở (demo)
       - ./database/docker-init/06_sample_stock.sql:/docker-entrypoint-initdb.d/06_sample_stock.sql:ro
       # Khuyến mãi, voucher và combo mẫu (demo)
-      - ./database/docker-init/07_sample_promotions.sql:/docker-entrypoint-initdb.d/07_sample_promotions.sql:ro
+      - ./database/docker-init/08_sample_promotions.sql:/docker-entrypoint-initdb.d/08_sample_promotions.sql:ro
       # Doanh thu mẫu: 2.400 khách mẫu + ~3.000 đơn 05–10/2026 ở 6 chi nhánh (giao, huỷ, trả hàng, hoa hồng, điểm thưởng; demo)
       - ./database/docker-init/07_sample_sales.sql:/docker-entrypoint-initdb.d/07_sample_sales.sql:ro
       # Bộ lọc thông số + nhu cầu của catalogue (xuất từ reindex-filters / import_needs.py, khớp theo SKU)

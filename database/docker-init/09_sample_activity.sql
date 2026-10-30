@@ -1,6 +1,6 @@
 -- Hoạt động mẫu của khách (2026-10-30): dữ liệu demo, KHÔNG dùng cho production. Chạy sau 07_sample_sales.sql.
 --   * phiếu bảo hành cho mỗi dòng hàng đã giao (như backend cấp khi đơn thành "Đã giao");
---   * voucher (07_sample_promotions.sql) trên một phần đơn đặt trong thời gian áp dụng của voucher: tiền giảm chia
+--   * voucher (08_sample_promotions.sql) trên một phần đơn đặt trong thời gian áp dụng của voucher: tiền giảm chia
 --     theo dòng hàng, tổng đơn / thanh toán / doanh số / hoa hồng / điểm thưởng / hạng tính lại cho khớp;
 --   * đánh giá của khách đã nhận hàng (sao + nhận xét theo danh mục) kèm lượt thích, điểm sao của sản phẩm;
 --   * danh sách yêu thích, tin nhắn Liên hệ, yêu cầu bảo hành / bảo trì (đủ các trạng thái).

@@ -3,7 +3,7 @@
 --   Người tạo: tài khoản ADMIN nếu đã có (backend tạo ADMIN sau khi khởi động), không thì tài khoản đầu tiên.
 -- Docker chạy file này sau 06 khi tạo volume mới (docker-compose.yml). Chạy lại nhiều lần vẫn an toàn:
 -- chương trình / mã / combo trùng tên đã có thì bỏ qua.
---   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/docker-init/07_sample_promotions.sql
+--   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/docker-init/08_sample_promotions.sql
 
 begin;
 
