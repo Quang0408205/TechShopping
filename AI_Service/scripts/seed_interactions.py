@@ -3,7 +3,7 @@ Sinh dữ liệu hành vi MÔ PHỎNG cho Recommendation (chỉ dùng ở môi t
 
 Hệ thống mới chạy nên user_interactions gần như trống, ALS không học được gì. Script này:
   1. ghi PURCHASE cho các đơn hàng thật đã có (đơn đặt trước khi backend ghi nhận hành vi);
-  2. tạo N khách hàng mô phỏng (email sim.customer.NNN@example.test, không đăng nhập được) và
+  2. tạo N khách hàng mô phỏng (họ tên người Việt, email <tên><họ>5NNN@example.test, không đăng nhập được) và
      sinh chuỗi hành vi VIEW → CLICK → ADD_TO_CART → PURCHASE có cấu trúc:
        - mỗi khách có "hồ sơ": 1–2 danh mục quan tâm, 1–2 thương hiệu ưa thích, một tầm giá;
        - khách trung thành với hệ sinh thái (vd. Apple) xem cả điện thoại, máy tính bảng, phụ kiện cùng hãng,
@@ -18,13 +18,26 @@ Báo cáo phải ghi rõ đây là dữ liệu mô phỏng.
 import argparse
 import math
 import random
+import unicodedata
 from datetime import datetime, timedelta
 
 from app.db import connect
 
-SIM_EMAIL = "sim.customer.%03d@example.test"
-SIM_EMAIL_LIKE = "sim.customer.%@example.test"
+# Mật khẩu không đăng nhập được, cũng là dấu nhận ra khách mô phỏng (reset tìm theo nó)
 UNUSABLE_PASSWORD = "!simulated-account-no-login"
+# Email cũ "sim.customer.NNN@example.test" (trước 2026-10-30): đổi sang họ tên người Việt khi chạy lại
+LEGACY_EMAIL_LIKE = "sim.customer.%@example.test"
+
+FAMILY_NAMES = ("Nguyễn", "Nguyễn", "Nguyễn", "Trần", "Trần", "Lê", "Lê", "Phạm", "Hoàng", "Huỳnh",
+                "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý")
+MIDDLE_NAMES = {True: ("Thị", "Ngọc", "Thu", "Kim", "Thanh", "Bảo", "Mỹ", "Phương"),
+                False: ("Văn", "Minh", "Quốc", "Đức", "Hoàng", "Gia", "Thanh", "Hữu")}
+GIVEN_NAMES = {True: ("Anh", "Châu", "Chi", "Giang", "Hà", "Hạnh", "Hằng", "Hoa", "Hương", "Lan", "Linh", "Ly",
+                      "Mai", "My", "Ngân", "Nhi", "Nhung", "Oanh", "Phương", "Quỳnh", "Tâm", "Thảo", "Trang",
+                      "Trâm", "Uyên", "Vy", "Yến"),
+               False: ("An", "Bảo", "Bình", "Dũng", "Duy", "Hải", "Hiếu", "Hùng", "Huy", "Khang", "Khoa", "Long",
+                       "Minh", "Nam", "Phong", "Phúc", "Quân", "Quang", "Sơn", "Tài", "Thắng", "Thịnh", "Trí",
+                       "Trung", "Tuấn", "Việt")}
 
 # Mức quan tâm tới từng danh mục khi chọn hồ sơ khách (không theo số sản phẩm: 78% catalogue là đồng hồ thời trang)
 CATEGORY_INTEREST = {
@@ -50,11 +63,49 @@ def load_catalog(conn):
     return catalog
 
 
+def ascii_name(text: str) -> str:
+    text = unicodedata.normalize("NFD", text.lower()).replace("đ", "d")
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+
+def sim_identity(n: int) -> tuple[str, str, str, str]:
+    """Khách mô phỏng thứ n luôn ra cùng một người: "Trần Thu Hà" → hatran5012@example.test (số 5NNN không trùng
+    khách mẫu của 07_sample_sales.sql)."""
+    rng = random.Random(f"sim-customer-{n}")
+    family = rng.choice(FAMILY_NAMES)
+    female = rng.random() < 0.5
+    middle, given = rng.choice(MIDDLE_NAMES[female]), rng.choice(GIVEN_NAMES[female])
+    username = f"{ascii_name(given)}{ascii_name(family)}{5000 + n}"
+    phone = rng.choice(("09", "03", "07", "08")) + f"{(n * 104729 + 271828) % 10**8:08d}"
+    return f"{username}@example.test", username, f"{family} {middle} {given}", phone
+
+
+def rename_legacy_users(conn) -> int:
+    """Khách mô phỏng cũ (sim_customer_NNN, "Khách mô phỏng NNN") → họ tên như sim_identity; đơn hàng đổi tên người nhận."""
+    rows = conn.execute("select user_id, email, fullname from users where email like %s",
+                        (LEGACY_EMAIL_LIKE,)).fetchall()
+    for row in rows:
+        email, username, fullname, phone = sim_identity(int(row["email"].split("@")[0].rsplit(".", 1)[1]))
+        conn.execute("""
+            update users
+            set email = %s, username = %s, fullname = %s, updated_at = current_timestamp,
+                phone = coalesce(phone, (select o.recipient_phone from orders o where o.user_id = users.user_id
+                                         order by o.order_date desc limit 1), %s)
+            where user_id = %s
+        """, (email, username, fullname, phone, row["user_id"]))
+        conn.execute("update orders set recipient_name = %s where user_id = %s and recipient_name = %s",
+                     (fullname, row["user_id"], row["fullname"]))
+    return len(rows)
+
+
 def reset(conn):
     deleted = conn.execute("""
-        delete from user_interactions where user_id in (select user_id from users where email like %s)
-    """, (SIM_EMAIL_LIKE,)).rowcount
-    users = conn.execute("delete from users where email like %s", (SIM_EMAIL_LIKE,)).rowcount
+        delete from user_interactions where user_id in (select user_id from users where password_hash = %s)
+    """, (UNUSABLE_PASSWORD,)).rowcount
+    # khách mô phỏng đã có đơn (dữ liệu doanh thu mẫu) thì giữ lại, lần tạo sau dùng lại đúng tài khoản đó
+    users = conn.execute("""
+        delete from users u where u.password_hash = %s and not exists (select 1 from orders o where o.user_id = u.user_id)
+    """, (UNUSABLE_PASSWORD,)).rowcount
     print(f"Removed {deleted} simulated interactions and {users} simulated users")
 
 
@@ -76,12 +127,13 @@ def create_users(conn, count: int) -> list[int]:
     customer_role = conn.execute("select role_id from roles where name = 'CUSTOMER'").fetchone()["role_id"]
     ids = []
     for n in range(1, count + 1):
+        email, username, fullname, phone = sim_identity(n)
         row = conn.execute("""
-            insert into users (email, username, password_hash, fullname, is_active)
-            values (%s, %s, %s, %s, true)
+            insert into users (email, username, password_hash, fullname, phone, is_active)
+            values (%s, %s, %s, %s, %s, true)
             on conflict (email) do update set email = excluded.email
             returning user_id
-        """, (SIM_EMAIL % n, "sim_customer_%03d" % n, UNUSABLE_PASSWORD, "Khách mô phỏng %03d" % n)).fetchone()
+        """, (email, username, UNUSABLE_PASSWORD, fullname, phone)).fetchone()
         conn.execute("insert into user_roles (user_id, role_id) values (%s, %s) on conflict do nothing",
                      (row["user_id"], customer_role))
         ids.append(row["user_id"])
@@ -160,6 +212,7 @@ def main():
     args = parser.parse_args()
 
     with connect(readonly=False) as conn:
+        print(f"Renamed {rename_legacy_users(conn)} legacy simulated customers")
         reset(conn)
         if args.reset:
             return
