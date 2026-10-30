@@ -21,6 +21,8 @@ services:
       - ./database/docker-init/04_seed_local_sample_data.sql:/docker-entrypoint-initdb.d/04_seed_local_sample_data.sql:ro
       # Tên sản phẩm chỉ còn tên máy (dung lượng / màu / sạc vào phiên bản); chạy trước 05 để 05 gộp các tên trùng
       - ./database/migrations/product_base_names.sql:/docker-entrypoint-initdb.d/04b_product_base_names.sql:ro
+      # Khách mẫu của 04 thành họ tên / số điện thoại / địa chỉ như người thật (bỏ dấu "TÀI KHOẢN MẪU"); chạy trước 07
+      - ./database/docker-init/04c_sample_customer_names.sql:/docker-entrypoint-initdb.d/04c_sample_customer_names.sql:ro
       # Gộp sản phẩm chỉ khác RAM / bộ nhớ thành một sản phẩm nhiều phiên bản, bỏ phiên bản giá 0
       - ./database/migrations/merge_product_variants.sql:/docker-entrypoint-initdb.d/05_merge_product_variants.sql:ro
       # Chi nhánh mẫu: cửa hàng mẫu của 04 thành POY Quận 1, thêm 5 chi nhánh TP.HCM / Hà Nội / Đà Nẵng (demo)
@@ -30,7 +32,9 @@ services:
       # Tồn kho mẫu: mọi phiên bản đang bán có 5–40 cái ở mỗi chi nhánh đang mở (demo)
       - ./database/docker-init/06_sample_stock.sql:/docker-entrypoint-initdb.d/06_sample_stock.sql:ro
       # Khuyến mãi, voucher và combo mẫu (demo)
-      - ./database/docker-init/07_sample_promotions.sql:/docker-entrypoint-initdb.d/07_sample_promotions.sql:ro
+      - ./database/docker-init/08_sample_promotions.sql:/docker-entrypoint-initdb.d/08_sample_promotions.sql:ro
+      # Doanh thu mẫu: 2.400 khách mẫu + ~3.000 đơn 05–10/2026 ở 6 chi nhánh (giao, huỷ, trả hàng, hoa hồng, điểm thưởng; demo)
+      - ./database/docker-init/07_sample_sales.sql:/docker-entrypoint-initdb.d/07_sample_sales.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s

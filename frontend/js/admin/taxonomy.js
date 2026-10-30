@@ -210,7 +210,8 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    /* Danh mục: cha trước, con ngay dưới (thụt lề), theo thứ tự hiển thị rồi tên; thương hiệu: theo tên */
+    /* Danh mục: cha trước, con ngay dưới (thụt lề), theo thứ tự hiển thị rồi tên; thương hiệu: theo tên.
+     * Chưa đặt thứ tự = xếp cuối, giống trang khách (loadShopCategories) và backend (NULL đứng sau). */
 
     function orderedItems() {
 
@@ -219,7 +220,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         const byOrder = function (a, b) {
-            return (a.displayOrder ?? 0) - (b.displayOrder ?? 0) || a.name.localeCompare(b.name, "vi");
+            return (a.displayOrder ?? 9999) - (b.displayOrder ?? 9999) || a.name.localeCompare(b.name, "vi");
         };
 
         const ids = new Set(items.map(function (item) { return item.id; }));
@@ -319,7 +320,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         `;
 
         const middleCells = config.hasParent
-            ? `<td>${escapeHtml(item.parentName || "—")}</td><td>${escapeHtml(String(item.displayOrder ?? 0))}</td>`
+            ? `<td>${escapeHtml(item.parentName || "—")}</td><td>${item.displayOrder != null ? escapeHtml(String(item.displayOrder)) : "—"}</td>`
             : `<td>${isSafeHttpUrl(item.websiteUrl)
                 ? `<a href="${escapeHtml(item.websiteUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(shortUrl(item.websiteUrl))}</a>`
                 : "—"}</td>`;

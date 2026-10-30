@@ -21,7 +21,7 @@
  * lưu, chỉ khi vai trò trong phiên được vào trang), nên người không đủ quyền không thấy trang.
  *
  * Thứ tự nạp: js/core/api.js → js/core/ui.js → js/core/layout.js →
- * (js/admin/mock-staff-data.js: chỉ 2 trang chưa có backend) → js/admin/staff-auth.js →
+ * js/admin/staff-auth.js →
  * (js/admin/admin-charts.js) → js/admin/admin-layout.js → script của trang.
  * Script của trang: DOMContentLoaded → const staff = await adminLayoutReady.
  */
@@ -390,100 +390,6 @@ function fillStoreOptions(select, leadingOptions, stores, extraOptions) {
 }
 
 
-/*
- * Bộ lọc chi nhánh của trang còn dùng DỮ LIỆU MẪU (chỉ còn "Hỗ trợ khách hàng", chưa có
- * backend): 3 chi nhánh mẫu CN01–CN03 của mock-staff-data.js (chỉ trang đó nạp file này).
- */
-
-function setupMockStoreFilter(select, staff, extraOptions) {
-
-    if (staff.role === "ADMIN") {
-
-        const options = [{ value: "", label: "Tất cả chi nhánh" }]
-            .concat(getMockStores().map(function (store) {
-                return { value: store.id, label: store.name };
-            }))
-            .concat(extraOptions || []);
-
-        select.innerHTML = options.map(function (option) {
-            return `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`;
-        }).join("");
-
-        return;
-
-    }
-
-
-    select.innerHTML =
-        `<option value="${escapeHtml(staff.storeId || "")}">${escapeHtml(staff.storeName)}</option>`;
-
-    select.disabled = true;
-
-}
-
-
-/*
- * Chi nhánh dùng để lọc dữ liệu. Không phải ADMIN thì LUÔN là chi nhánh của
- * mình, kể cả khi ai đó sửa DOM (phòng thủ hai lớp).
- */
-
-/*
- * Nhân viên chưa được gán chi nhánh nhận mã không khớp chi nhánh nào, để không
- * bao giờ thấy dữ liệu của mọi chi nhánh (các bộ lọc coi storeId rỗng là "tất cả").
- */
-
-const NO_STORE_SCOPE = "NO_STORE";
-
-
-function getScopedStoreId(staff, select) {
-
-    if (staff.role === "ADMIN") {
-        return (select && select.value) || undefined;
-    }
-
-    return staff.storeId || NO_STORE_SCOPE;
-
-}
-
-
-/* Ô chọn trạng thái trong bảng; labels: { CODE: "Nhãn" } */
-
-function statusSelectHtml(id, currentStatus, labels, ariaLabel) {
-
-    const options = Object.keys(labels).map(function (code) {
-        return `<option value="${escapeHtml(code)}" ${code === currentStatus ? "selected" : ""}>${escapeHtml(labels[code])}</option>`;
-    }).join("");
-
-
-    return `
-        <select
-            class="admin-status-select js-status-select"
-            data-id="${escapeHtml(id)}"
-            data-status="${escapeHtml(currentStatus)}"
-            aria-label="${escapeHtml(ariaLabel || "Trạng thái")}"
-        >
-            ${options}
-        </select>
-    `;
-
-}
-
-
-/* Gắn onChange(id, status) cho các ô trạng thái trong container */
-
-function bindStatusSelects(container, onChange) {
-
-    container.querySelectorAll(".js-status-select").forEach(function (select) {
-
-        select.addEventListener("change", function () {
-            onChange(select.dataset.id, select.value);
-        });
-
-    });
-
-}
-
-
 /* Dòng đang tải dạng khung xương cho bảng */
 
 function adminSkeletonRow(colspan) {
@@ -508,16 +414,47 @@ function adminEmptyRow(colspan, message) {
 }
 
 
-/* cards: [{ label, value, sub }] */
+/* Tiền gọn cho thẻ tổng quan: 1963403000 → "1,96 tỷ đ", 845200000 → "845,2 triệu đ", dưới 1 triệu giữ nguyên */
+
+function formatMoneyShort(value) {
+
+    const amount = Number(value) || 0;
+
+    const size = Math.abs(amount);
+
+    /* 999.960.000 làm tròn thành 1 tỷ chứ không thành "1.000 triệu" */
+    if (size >= 999.95e6) {
+        return (amount / 1e9).toLocaleString("vi-VN", { maximumFractionDigits: 2 }) + " tỷ đ";
+    }
+
+    if (size >= 1e6) {
+        return (amount / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 }) + " triệu đ";
+    }
+
+    return formatPrice(amount);
+
+}
+
+
+/* cards: [{ label, value | money, sub }]; money = số tiền: hiện gọn, rê chuột thấy số đầy đủ */
 
 function adminStatCardsHtml(cards) {
 
     return cards.map(function (card) {
 
+        const money = card.money != null;
+
+        const value = money ? formatMoneyShort(card.money) : card.value;
+
+        const exact = money ? formatPrice(Number(card.money) || 0) : value;
+
+        /* chỉ khi số đã rút gọn (từ 1 triệu); "850.000đ" đã đầy đủ */
+        const full = exact !== value ? ` data-full="${escapeHtml(exact)}" tabindex="0"` : "";
+
         return `
             <div class="admin-stat-card">
                 <div class="admin-stat-label">${escapeHtml(card.label)}</div>
-                <div class="admin-stat-value">${escapeHtml(card.value)}</div>
+                <div class="admin-stat-value"><span${full}>${escapeHtml(value)}</span></div>
                 <div class="admin-stat-sub">${escapeHtml(card.sub || "")}</div>
             </div>
         `;
@@ -567,21 +504,5 @@ function truncateText(text, max) {
     const value = String(text || "");
 
     return value.length > max ? value.slice(0, max - 1) + "…" : value;
-
-}
-
-
-/*
- * Nhãn ngắn cho trục biểu đồ: bỏ tên loại ở đầu ("Điện thoại", "Laptop"...)
- * mà gần như mọi tên sản phẩm đều có, rồi cắt ngắn. Tên đầy đủ vẫn nằm
- * trong tooltip và bảng bên dưới biểu đồ.
- */
-
-function shortProductLabel(name) {
-
-    const withoutType = String(name || "")
-        .replace(/^(Điện thoại|Laptop|Máy tính bảng|Đồng hồ thông minh|Đồng hồ định vị trẻ em|Đồng hồ|Sạc nhanh|Ốp lưng)\s+/i, "");
-
-    return truncateText(withoutType, 13);
 
 }

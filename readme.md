@@ -142,8 +142,27 @@ Quy tắc chung:
 
 - **Cấu trúc:** `database/techshopping.sql` gồm khoảng 50 bảng chia theo nhóm: sản phẩm (danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thông số), người dùng và vai trò, giỏ hàng, đơn hàng (kèm lịch sử trạng thái), thanh toán và trả góp, chuyển khoản, chi nhánh / nhân viên / tồn kho, khuyến mãi, voucher, combo, hậu mãi, đánh giá, liên hệ, hành vi và chatbot. Các thay đổi sau này nằm ở `database/migrations/` (thứ tự chạy ghi trong `database/migrations/README.md`).
 - **Catalogue thật:** sản phẩm crawl từ Thế Giới Di Động (`Raw_data/`), làm sạch rồi nạp vào database; mã sản phẩm dạng `TGDD-<id nguồn>`, nên nạp lại chỉ cập nhật. Các sản phẩm chỉ khác RAM / bộ nhớ được gộp thành một sản phẩm nhiều phiên bản. Với các danh mục cào theo từng trang sản phẩm (màn hình, máy tính để bàn, máy tính bảng, đồng hồ), mỗi sản phẩm có đủ tổ hợp phiên bản × màu và ảnh riêng theo màu (`product_images.color`, rỗng = ảnh chung).
-- **Dữ liệu mẫu:** khi database Docker được tạo lần đầu, hệ thống nạp thêm khách hàng, đơn hàng và đánh giá mẫu có dấu `SAMPLE-DATA` để minh hoạ. Hành vi người dùng cho phần khuyến nghị có thể được **mô phỏng** (khách `sim.customer.NNN@example.test`, không đăng nhập được) để mô hình học được; dữ liệu này được ghi rõ trong báo cáo và xoá được.
+- **Dữ liệu mẫu:** khi database Docker được tạo lần đầu, hệ thống nạp thêm khách hàng, đơn hàng và đánh giá mẫu có dấu `SAMPLE-DATA` để minh hoạ. Hành vi người dùng cho phần khuyến nghị có thể được **mô phỏng** (khách mang họ tên người Việt, email `…5NNN@example.test`, không đăng nhập được) để mô hình học được; dữ liệu này được ghi rõ trong báo cáo và xoá được.
 - **Ảnh tải lên** (sản phẩm, danh mục, đánh giá, ảnh đại diện, ảnh hậu mãi) lưu trên đĩa của backend; đường dẫn lưu trong database.
+
+### Tài khoản demo
+
+Có sẵn khi database Docker được tạo lần đầu (`database/docker-init/`). Mọi tài khoản mẫu dùng chung mật khẩu **`SampleOnly123!`** và không bị bắt đổi mật khẩu. Chỉ dùng ở máy cá nhân / demo.
+
+- **ADMIN:** tài khoản khởi tạo theo `ADMIN_USERNAME` / `ADMIN_PASSWORD` trong `.env`.
+- **Nhân viên** (`05c_sample_staff.sql`, email `<tên đăng nhập>@poyshop.vn`). Đơn giao tận nhà tự về chi nhánh theo địa chỉ; chỉ nhân viên của chi nhánh đó xác nhận / giao đơn, ADMIN chỉ xem và đổi chi nhánh.
+
+| Chi nhánh | Quản lý chi nhánh | Tư vấn bán hàng | Kỹ thuật viên |
+|---|---|---|---|
+| POY Quận 1 | `longnguyen` | `anhtran` | `khoile` |
+| POY Quận 7 | `tungpham` | `duyenvo` | `vietdang` |
+| POY Thủ Đức | `baohuynh` | `vyngo` | `thinhbui` |
+| POY Cầu Giấy | `hungdo` | `trangnguyen` | `datvu` |
+| POY Hoàn Kiếm | `yentrinh` | `huyphan` | `hieuluong` |
+| POY Đà Nẵng | `phucle` | `oanhho` | `danhtruong` |
+
+- **Khách hàng:** 50 khách của `04_seed_local_sample_data.sql` (vd. `minhanhnguyen`, `quocbaotran`, `thuhale`) và 2.400 khách có đơn mẫu của `07_sample_sales.sql` (dạng `<tên><họ><4 số>`, vd. `baole0540`; xem trong trang Người dùng). Khách số `5NNN` (vd. `mainguyen5014`) là khách mô phỏng hành vi, không đăng nhập được. Email khách mẫu là `@example.test` nên email đơn hàng của họ không tới ai.
+- Quên tài khoản: trang admin **Nhân viên** (lọc theo chi nhánh, nhãn "Quản lý chi nhánh") hoặc **Người dùng & phân quyền** → tab Nội bộ.
 
 ---
 

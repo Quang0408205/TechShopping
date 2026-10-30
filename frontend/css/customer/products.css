@@ -753,11 +753,10 @@
 .product-grid.is-list .product-info {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 200px;
-    grid-template-rows: auto auto 1fr;
     column-gap: var(--space-3);
     align-content: center;
 
-    padding: var(--space-2) var(--space-3) var(--space-2) 0;
+    padding: var(--space-2) var(--space-3) var(--space-2) 24px;
 }
 
 .product-grid.is-list .product-info > * {
@@ -783,11 +782,30 @@
     justify-content: flex-end;
 }
 
+/* Nút trải qua các hàng đánh giá / chấm màu / trả góp: không kéo giãn riêng một hàng bên trái */
 .product-grid.is-list .add-cart {
-    grid-row: 3;
+    grid-row: 3 / span 3;
     align-self: start;
 
     margin-top: 12px;
+}
+
+/* Khung ảnh phủ hết chiều cao thẻ: bỏ tỉ lệ 1:1 của thẻ lưới (nền ngà không bị hở phía dưới) */
+.product-grid.is-list .product-image {
+    aspect-ratio: auto;
+    min-height: 180px;
+}
+
+/* Thẻ lưới kéo trả góp sát giá (margin âm); ở đây giá nằm cột phải nên trả góp đứng riêng, không đè chấm màu */
+.product-grid.is-list .product-installment {
+    margin: 8px 0 0;
+}
+
+/* Yêu thích / so sánh: góc trên bên phải của ảnh, không đè giá + nút giỏ ở cột phải */
+.product-grid.is-list .product-card-tools {
+    top: 10px;
+    right: auto;
+    left: calc(180px - 34px - 10px);
 }
 
 
@@ -1043,10 +1061,20 @@
         grid-template-columns: 112px minmax(0, 1fr);
     }
 
+    .product-grid.is-list .product-image {
+        min-height: 112px;
+    }
+
+    .product-grid.is-list .product-card-tools {
+        top: 6px;
+        left: calc(112px - 34px - 6px);
+        gap: 6px;
+    }
+
     .product-grid.is-list .product-info {
         display: flex;
 
-        padding: 12px 12px 12px 0;
+        padding: 12px 12px 12px 14px;
     }
 
     .product-grid.is-list .product-price {

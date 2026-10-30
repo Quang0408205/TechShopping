@@ -26,24 +26,24 @@ create temp table st_staff (
 ) on commit drop;
 
 insert into st_staff values
-    ('POY Quận 1',    'long.nguyen',    'Nguyễn Hoàng Long',   '0901001101', 'BRANCH_MANAGER', 'NV-Q1-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-03-04'),
-    ('POY Quận 1',    'anh.tran',       'Trần Ngọc Ánh',       '0901001102', 'STAFF',          'NV-Q1-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-01-06'),
-    ('POY Quận 1',    'khoi.le',        'Lê Minh Khôi',        '0901001103', 'STAFF',          'NV-Q1-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-06-02'),
-    ('POY Quận 7',    'tung.pham',      'Phạm Thanh Tùng',     '0901001201', 'BRANCH_MANAGER', 'NV-Q7-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-05-13'),
-    ('POY Quận 7',    'duyen.vo',       'Võ Thị Mỹ Duyên',     '0901001202', 'STAFF',          'NV-Q7-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-02-17'),
-    ('POY Quận 7',    'viet.dang',      'Đặng Quốc Việt',      '0901001203', 'STAFF',          'NV-Q7-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-08-11'),
-    ('POY Thủ Đức',   'bao.huynh',      'Huỳnh Gia Bảo',       '0901001301', 'BRANCH_MANAGER', 'NV-TD-01', 'Quản lý',  'Quản lý cửa hàng', 17000000, '2024-09-02'),
-    ('POY Thủ Đức',   'vy.ngo',         'Ngô Thảo Vy',         '0901001302', 'STAFF',          'NV-TD-02', 'Bán hàng', 'Tư vấn bán hàng',   9000000, '2025-03-10'),
-    ('POY Thủ Đức',   'thinh.bui',      'Bùi Đức Thịnh',       '0901001303', 'STAFF',          'NV-TD-03', 'Kỹ thuật', 'Kỹ thuật viên',    10500000, '2025-09-15'),
-    ('POY Cầu Giấy',  'hung.do',        'Đỗ Mạnh Hùng',        '0901002101', 'BRANCH_MANAGER', 'NV-CG-01', 'Quản lý',  'Quản lý cửa hàng', 17500000, '2024-04-08'),
-    ('POY Cầu Giấy',  'trang.nguyen',   'Nguyễn Thu Trang',    '0901002102', 'STAFF',          'NV-CG-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-01-13'),
-    ('POY Cầu Giấy',  'dat.vu',         'Vũ Tiến Đạt',         '0901002103', 'STAFF',          'NV-CG-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-07-07'),
-    ('POY Hoàn Kiếm', 'yen.trinh',      'Trịnh Hải Yến',       '0901002201', 'BRANCH_MANAGER', 'NV-HK-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-06-03'),
-    ('POY Hoàn Kiếm', 'huy.phan',       'Phan Quang Huy',      '0901002202', 'STAFF',          'NV-HK-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-04-14'),
-    ('POY Hoàn Kiếm', 'hieu.luong',     'Lương Văn Hiếu',      '0901002203', 'STAFF',          'NV-HK-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-10-06'),
-    ('POY Đà Nẵng',   'phuc.le',        'Lê Văn Phúc',         '0901003101', 'BRANCH_MANAGER', 'NV-DN-01', 'Quản lý',  'Quản lý cửa hàng', 16500000, '2024-08-05'),
-    ('POY Đà Nẵng',   'oanh.ho',        'Hồ Thị Kim Oanh',     '0901003102', 'STAFF',          'NV-DN-02', 'Bán hàng', 'Tư vấn bán hàng',   8500000, '2025-02-24'),
-    ('POY Đà Nẵng',   'danh.truong',    'Trương Công Danh',    '0901003103', 'STAFF',          'NV-DN-03', 'Kỹ thuật', 'Kỹ thuật viên',    10000000, '2025-11-03');
+    ('POY Quận 1',    'longnguyen',     'Nguyễn Hoàng Long',   '0901001101', 'BRANCH_MANAGER', 'NV-Q1-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-03-04'),
+    ('POY Quận 1',    'anhtran',        'Trần Ngọc Ánh',       '0901001102', 'STAFF',          'NV-Q1-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-01-06'),
+    ('POY Quận 1',    'khoile',         'Lê Minh Khôi',        '0901001103', 'STAFF',          'NV-Q1-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-06-02'),
+    ('POY Quận 7',    'tungpham',       'Phạm Thanh Tùng',     '0901001201', 'BRANCH_MANAGER', 'NV-Q7-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-05-13'),
+    ('POY Quận 7',    'duyenvo',        'Võ Thị Mỹ Duyên',     '0901001202', 'STAFF',          'NV-Q7-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-02-17'),
+    ('POY Quận 7',    'vietdang',       'Đặng Quốc Việt',      '0901001203', 'STAFF',          'NV-Q7-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-08-11'),
+    ('POY Thủ Đức',   'baohuynh',       'Huỳnh Gia Bảo',       '0901001301', 'BRANCH_MANAGER', 'NV-TD-01', 'Quản lý',  'Quản lý cửa hàng', 17000000, '2024-09-02'),
+    ('POY Thủ Đức',   'vyngo',          'Ngô Thảo Vy',         '0901001302', 'STAFF',          'NV-TD-02', 'Bán hàng', 'Tư vấn bán hàng',   9000000, '2025-03-10'),
+    ('POY Thủ Đức',   'thinhbui',       'Bùi Đức Thịnh',       '0901001303', 'STAFF',          'NV-TD-03', 'Kỹ thuật', 'Kỹ thuật viên',    10500000, '2025-09-15'),
+    ('POY Cầu Giấy',  'hungdo',         'Đỗ Mạnh Hùng',        '0901002101', 'BRANCH_MANAGER', 'NV-CG-01', 'Quản lý',  'Quản lý cửa hàng', 17500000, '2024-04-08'),
+    ('POY Cầu Giấy',  'trangnguyen',    'Nguyễn Thu Trang',    '0901002102', 'STAFF',          'NV-CG-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-01-13'),
+    ('POY Cầu Giấy',  'datvu',          'Vũ Tiến Đạt',         '0901002103', 'STAFF',          'NV-CG-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-07-07'),
+    ('POY Hoàn Kiếm', 'yentrinh',       'Trịnh Hải Yến',       '0901002201', 'BRANCH_MANAGER', 'NV-HK-01', 'Quản lý',  'Quản lý cửa hàng', 18000000, '2024-06-03'),
+    ('POY Hoàn Kiếm', 'huyphan',        'Phan Quang Huy',      '0901002202', 'STAFF',          'NV-HK-02', 'Bán hàng', 'Tư vấn bán hàng',   9500000, '2025-04-14'),
+    ('POY Hoàn Kiếm', 'hieuluong',      'Lương Văn Hiếu',      '0901002203', 'STAFF',          'NV-HK-03', 'Kỹ thuật', 'Kỹ thuật viên',    11000000, '2025-10-06'),
+    ('POY Đà Nẵng',   'phucle',         'Lê Văn Phúc',         '0901003101', 'BRANCH_MANAGER', 'NV-DN-01', 'Quản lý',  'Quản lý cửa hàng', 16500000, '2024-08-05'),
+    ('POY Đà Nẵng',   'oanhho',         'Hồ Thị Kim Oanh',     '0901003102', 'STAFF',          'NV-DN-02', 'Bán hàng', 'Tư vấn bán hàng',   8500000, '2025-02-24'),
+    ('POY Đà Nẵng',   'danhtruong',     'Trương Công Danh',    '0901003103', 'STAFF',          'NV-DN-03', 'Kỹ thuật', 'Kỹ thuật viên',    10000000, '2025-11-03');
 
 -- Chi nhánh có thật, tài khoản / mã chưa dùng; quản lý chỉ khi chi nhánh chưa có quản lý đang làm (mỗi chi nhánh một)
 create temp table st_new on commit drop as

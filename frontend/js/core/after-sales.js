@@ -39,9 +39,6 @@ const AFTER_SALES_RETURN_REASON_LABELS = {
     OTHER: "Khác"
 };
 
-const AFTER_SALES_FINAL_STATUSES = ["COMPLETED", "REFUNDED", "REJECTED", "CANCELLED"];
-
-
 function afterSalesStatusLabel(type, status) {
 
     const labels = type === "RETURN" ? AFTER_SALES_RETURN_STATUS_LABELS : AFTER_SALES_REPAIR_STATUS_LABELS;

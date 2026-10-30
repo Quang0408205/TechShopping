@@ -182,12 +182,12 @@ document.addEventListener(
 
 
             document.getElementById("reportStatGrid").innerHTML = adminStatCardsHtml([
-                { label: "Doanh thu thuần", value: formatPrice(s.netRevenue), sub: "Gộp " + formatPrice(s.grossRevenue) + " − hoàn " + formatPrice(s.refundAmount) },
+                { label: "Doanh thu thuần", money: s.netRevenue, sub: "Gộp " + formatPrice(s.grossRevenue) + " − hoàn " + formatPrice(s.refundAmount) },
                 { label: "Đơn đã giao", value: String(s.deliveredOrders), sub: s.unitsSold + " sản phẩm · TB " + formatPrice(s.averageOrderValue) + " / đơn" },
-                { label: "Tiền hoàn", value: formatPrice(s.refundAmount), sub: s.refundCount + " lần hoàn tiền" },
-                { label: "Phí giao hàng", value: formatPrice(s.shippingFees), sub: "Đã tính trong doanh thu gộp" },
-                { label: "Hoa hồng nhân viên", value: formatPrice(s.totalCommission), sub: "Theo đơn đã giao trong kỳ" },
-                { label: "Phí đối tác trả góp", value: formatPrice(s.installmentFees || 0), sub: "Cửa hàng chịu, khách vẫn 0%" }
+                { label: "Tiền hoàn", money: s.refundAmount, sub: s.refundCount + " lần hoàn tiền" },
+                { label: "Phí giao hàng", money: s.shippingFees, sub: "Đã tính trong doanh thu gộp" },
+                { label: "Hoa hồng nhân viên", money: s.totalCommission, sub: "Theo đơn đã giao trong kỳ" },
+                { label: "Phí đối tác trả góp", money: s.installmentFees || 0, sub: "Cửa hàng chịu, khách vẫn 0%" }
             ]);
 
 

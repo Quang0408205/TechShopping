@@ -483,25 +483,23 @@ function capacityInGb(value) {
 
 
 /*
- * Nhãn "phiên bản" = RAM + bộ nhớ: "8GB - 256GB", chỉ bộ nhớ → "256GB", laptop → "RAM 16GB - SSD 512GB".
+ * Nhãn "phiên bản" = RAM/bộ nhớ: "8GB/256GB", chỉ bộ nhớ → "256GB"; kèm GPU / sạc ghi trong tên phiên bản
+ * (database/migrations/product_base_names.sql): "16GB/512GB 8GPU Sạc 30W".
  * Không có cả hai → tên phiên bản bỏ phần màu (hoặc "" nếu chỉ khác nhau về màu).
  */
 
-function variantVersionLabel(variant, isLaptop) {
+function variantVersionLabel(variant) {
 
     const ram = compactCapacity(variant.ram);
 
     const storage = compactCapacity(variant.storage);
 
-    if (ram && storage) {
-        return isLaptop ? "RAM " + ram + " - SSD " + storage : ram + " - " + storage;
-    }
-
-    if (storage || ram) {
-        return isLaptop && ram ? "RAM " + ram : storage || ram;
-    }
-
     const name = String(variant.variantName || "").trim();
+
+    if (ram || storage) {
+        const extras = name.match(/\d+\s*GPU|Sạc\s*\d+\s*W/gi) || [];
+        return [ram && storage ? ram + "/" + storage : storage || ram].concat(extras).join(" ");
+    }
 
     if (!name || !variant.color) {
         return name;
@@ -520,13 +518,13 @@ function variantVersionLabel(variant, isLaptop) {
  * [{ label, variants: [...] }]. Thứ tự màu trong nhóm giữ như API.
  */
 
-function groupVariantsByVersion(variants, isLaptop) {
+function groupVariantsByVersion(variants) {
 
     const groups = [];
 
     (variants || []).forEach(function (variant) {
 
-        const label = variantVersionLabel(variant, isLaptop);
+        const label = variantVersionLabel(variant);
 
         let group = groups.find(function (item) { return item.label === label; });
 
@@ -582,13 +580,11 @@ function cardColorDotsHtml(product) {
 
 
 /*
- * Phiên bản trên thẻ (API GET /products trả product.variants, rẻ nhất trước): gộp theo nhãn
- * (dung lượng / RAM), mỗi nút đại diện phiên bản rẻ nhất còn hàng của nhãn đó. Chọn nút →
- * đổi giá, nhãn giảm giá, trạng thái hết hàng và phiên bản sẽ thêm vào giỏ.
- * Thiếu product.variants (gợi ý AI, API cũ) → không hiện nút; chỉ 1 phiên bản vẫn hiện 1 nút (đang chọn).
+ * Phiên bản của thẻ (API GET /products trả product.variants, rẻ nhất trước): gộp theo nhãn
+ * (dung lượng / RAM), giữ phiên bản rẻ nhất còn hàng của mỗi nhãn. Thẻ không hiện nút chọn
+ * phiên bản (chọn ở trang chi tiết): giá, "Thêm vào giỏ" dùng phiên bản rẻ nhất còn hàng.
+ * Thiếu product.variants (gợi ý AI, API cũ) → thẻ dùng giá của sản phẩm.
  */
-
-const CARD_VARIANT_CHIPS_MAX = 4;
 
 function cardVariantChoices(product) {
 
@@ -623,37 +619,7 @@ function cardVariantChoices(product) {
 }
 
 
-function cardVariantsHtml(choices, selectedId) {
-
-    if (choices.length < 1) {
-        return "";
-    }
-
-    const chips = choices.slice(0, CARD_VARIANT_CHIPS_MAX).map(function (choice) {
-
-        const selected = choice.id === selectedId;
-
-        return `
-            <button
-                type="button"
-                class="variant-chip${selected ? " is-selected" : ""}${isSoldOut(choice) ? " is-sold-out" : ""}"
-                data-variant-id="${escapeHtml(choice.id)}"
-                aria-pressed="${selected}"
-            >${escapeHtml(choice.label)}</button>
-        `;
-
-    }).join("");
-
-    const more = choices.length > CARD_VARIANT_CHIPS_MAX
-        ? `<a class="variant-chip variant-chip--more" href="#" data-more-variants>+${choices.length - CARD_VARIANT_CHIPS_MAX}</a>`
-        : "";
-
-    return `<div class="product-variants" role="group" aria-label="Chọn phiên bản">${chips}${more}</div>`;
-
-}
-
-
-/* Khối giá của thẻ; dùng cả lúc vẽ lần đầu lẫn khi đổi phiên bản */
+/* Khối giá của thẻ */
 
 function cardPriceHtml(price, basePrice) {
 
@@ -663,94 +629,6 @@ function cardPriceHtml(price, basePrice) {
 
     return formatPrice(price)
         + (basePrice > price ? `<span class="product-price-old">${formatPrice(basePrice)}</span>` : "");
-
-}
-
-
-function bindCardVariantChips(container) {
-
-    container.querySelectorAll(".product-card").forEach(function (card) {
-
-        const chips = card.querySelectorAll(".variant-chip[data-variant-id]");
-
-        if (chips.length === 0) {
-            return;
-        }
-
-        const choices = JSON.parse(card.dataset.variants || "[]");
-
-        chips.forEach(function (chip) {
-
-            chip.addEventListener("click", function () {
-
-                const choice = choices.find(function (item) { return String(item.id) === chip.dataset.variantId; });
-
-                if (!choice) {
-                    return;
-                }
-
-                chips.forEach(function (other) {
-                    const on = other === chip;
-                    other.classList.toggle("is-selected", on);
-                    other.setAttribute("aria-pressed", String(on));
-                });
-
-                const price = Number(choice.effectivePrice) || 0;
-                const listPrice = Number(choice.price) || 0;
-                const soldOut = price > 0 && isSoldOut(choice);
-                const hasDiscount = price > 0 && listPrice > price;
-
-                card.dataset.variantId = String(choice.id);
-
-                card.querySelector(".product-price").innerHTML = cardPriceHtml(price, listPrice);
-
-                const installment = card.querySelector(".product-installment");
-
-                if (installment) {
-                    installment.textContent = cardInstallmentText(soldOut ? 0 : price);
-                    installment.hidden = !installment.textContent;
-                }
-
-                const image = card.querySelector(".product-image");
-                const badge = image.querySelector(".product-badge");
-
-                if (hasDiscount) {
-                    const text = "-" + Math.round(100 - (price / listPrice) * 100) + "%";
-                    if (badge) {
-                        badge.textContent = text;
-                    } else {
-                        image.insertAdjacentHTML("afterbegin", `<span class="product-badge">${text}</span>`);
-                    }
-                } else if (badge) {
-                    badge.remove();
-                }
-
-                const stockBadge = image.querySelector(".product-stock-badge");
-
-                if (soldOut && !stockBadge) {
-                    image.insertAdjacentHTML("afterbegin", `<span class="product-stock-badge">Hết hàng</span>`);
-                } else if (!soldOut && stockBadge) {
-                    stockBadge.remove();
-                }
-
-                const button = card.querySelector(".add-cart");
-
-                button.dataset.price = String(price);
-                button.disabled = !(price > 0) || soldOut;
-                button.textContent = !(price > 0) ? "LIÊN HỆ ĐỂ ĐẶT HÀNG" : soldOut ? "TẠM HẾT HÀNG" : "THÊM VÀO GIỎ";
-
-            });
-
-        });
-
-        /* "+N": xem đủ phiên bản ở trang chi tiết */
-        const more = card.querySelector("[data-more-variants]");
-
-        if (more) {
-            more.setAttribute("href", card.querySelector(".product-image").getAttribute("href"));
-        }
-
-    });
 
 }
 
@@ -845,8 +723,6 @@ function productCardHtml(product, categorySlug) {
 
                 ${productCardRatingHtml(product)}
 
-                ${cardVariantsHtml(choices, firstChoice ? firstChoice.id : null)}
-
                 ${cardColorDotsHtml(product)}
 
                 <p class="product-price">${cardPriceHtml(price, basePrice)}</p>
@@ -918,8 +794,6 @@ function renderProductGrid(container, products, categorySlugById) {
     });
 
     decorateCardSales(container);
-
-    bindCardVariantChips(container);
 
     setupAddToCart(container);
 

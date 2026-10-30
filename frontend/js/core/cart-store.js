@@ -150,17 +150,6 @@ async function removeCartItem(productId, variantId) {
 }
 
 
-async function clearCart() {
-
-    const summary = toCartSummary(await apiRequest("/cart", { method: "DELETE", auth: true }));
-
-    setCartCount(summary.totalQuantity);
-
-    return summary;
-
-}
-
-
 async function getCartCount() {
 
     return (await getCartSummary()).totalQuantity;

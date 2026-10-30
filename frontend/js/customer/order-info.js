@@ -53,17 +53,6 @@ function saveOrderInfo(info) {
 }
 
 
-function clearOrderInfo() {
-
-    try {
-        sessionStorage.removeItem(orderInfoKey());
-    } catch (error) {
-        /* bỏ qua */
-    }
-
-}
-
-
 function isOrderInfoComplete(info) {
 
     if (!info || !info.recipientName || !ORDER_INFO_PHONE_PATTERN.test(info.recipientPhone || "")

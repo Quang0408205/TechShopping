@@ -784,11 +784,9 @@ document.addEventListener(
             }
 
 
-            const isLaptop = foldVariantText(product.categoryName).indexOf("laptop") !== -1;
-
             const hasColors = variants.some(function (variant) { return variant.color && String(variant.color).trim(); });
 
-            versionGroups = groupVariantsByVersion(variants, isLaptop);
+            versionGroups = groupVariantsByVersion(variants);
 
             versionGroups.forEach(function (group) {
                 if (!group.label && !hasColors) {
@@ -811,10 +809,6 @@ document.addEventListener(
 
                 const soldOut = group.variants.every(isSoldOut);
 
-                const cheapest = Math.min.apply(null, group.variants.map(function (variant) {
-                    return resolvePrices(product, variant).price;
-                }));
-
                 return `
                     <button
                         type="button"
@@ -824,7 +818,6 @@ document.addEventListener(
                         ${soldOut ? 'title="Tạm hết hàng"' : ""}
                     >
                         <span class="variant-btn-name">${escapeHtml(group.label)}</span>
-                        ${cheapest > 0 ? `<small class="variant-btn-price">${formatPrice(cheapest)}</small>` : ""}
                     </button>
                 `;
 
