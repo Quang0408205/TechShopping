@@ -30,7 +30,9 @@ import psycopg
 
 INPUT_FILE = Path(__file__).with_name("tgdd_products_cleaned.csv")
 LEGACY_FILE = Path(__file__).with_name("legacy_seed_products.csv")
-MERGE_FILE = Path(__file__).resolve().parent.parent / "database" / "migrations" / "merge_product_variants.sql"
+MIGRATIONS_DIR = Path(__file__).resolve().parent.parent / "database" / "migrations"
+BASE_NAMES_FILE = MIGRATIONS_DIR / "product_base_names.sql"
+MERGE_FILE = MIGRATIONS_DIR / "merge_product_variants.sql"
 SKU_PREFIX = "TGDD-"
 LEGACY_SKU_PREFIX = "TGDD-OLD-"
 # Trang chủ TGDĐ: crawler gán nhầm cho vài dòng lỗi, không dùng làm khoá đối chiếu.
@@ -724,13 +726,20 @@ class Importer:
         return hidden
 
 
-def merge_variants(cursor):
-    """Chạy database/migrations/merge_product_variants.sql trong cùng transaction (nên --dry-run vẫn rollback được):
-    gộp các sản phẩm vừa nạp chỉ khác RAM / bộ nhớ ở cuối tên, bỏ phiên bản trùng."""
-    sql = MERGE_FILE.read_text(encoding="utf-8")
+def run_migration(cursor, path):
+    """Chạy một file migration trong cùng transaction (nên --dry-run vẫn rollback được)."""
+    sql = path.read_text(encoding="utf-8")
     # bỏ begin / commit của file: importer tự quản lý transaction
     sql = "\n".join(line for line in sql.splitlines() if line.strip().lower() not in ("begin;", "commit;"))
     cursor.execute(sql)  # không có tham số → psycopg gửi cả file một lần (nhiều câu lệnh)
+
+
+def merge_variants(cursor):
+    """Sau khi nạp: tên sản phẩm về tên máy (product_base_names.sql: tên TGDĐ "iPhone 17 256GB", "Điện thoại …"
+    → "iPhone 17", dung lượng / màu / sạc vào phiên bản), rồi gộp các sản phẩm trùng tên thành một sản phẩm nhiều
+    phiên bản, bỏ phiên bản trùng (merge_product_variants.sql)."""
+    run_migration(cursor, BASE_NAMES_FILE)
+    run_migration(cursor, MERGE_FILE)
     while cursor.nextset():
         pass
     row = cursor.fetchone() if cursor.description else None
@@ -783,7 +792,7 @@ def main():
     print(f"  Thương hiệu bị ẩn vì không còn sản phẩm đang bán ({stats['brands_hidden']}): "
           f"{', '.join(hidden_brands) or '-'}")
     print(f"  Phiên bản đã gộp trước đó, chỉ cập nhật giá: {stats['merged_variant_updated']}")
-    print(f"  Gộp phiên bản (merge_product_variants.sql): {merge_summary}")
+    print(f"  Tên về tên máy + gộp phiên bản (product_base_names.sql, merge_product_variants.sql): {merge_summary}")
 
 
 if __name__ == "__main__":
