@@ -17,4 +17,11 @@ public record PaymentWebhookProperties(String secret, boolean simulatorEnabled) 
     public boolean configured() {
         return !secret.isEmpty();
     }
+
+    /** True when the key a caller sent (header value, trimmed) is the shared secret; compared in constant time. */
+    public boolean accepts(String sent) {
+        return sent != null && java.security.MessageDigest.isEqual(
+                sent.trim().getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                secret.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
 }

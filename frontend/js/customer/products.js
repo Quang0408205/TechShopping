@@ -17,7 +17,7 @@ document.addEventListener(
     function () {
 
         /*
-         * Giá trị radio → slug danh mục trong DB. Kế hoạch v3: tab dựng từ các danh mục ĐANG HIỂN THỊ
+         * Giá trị radio → slug danh mục trong DB. tab dựng từ các danh mục ĐANG HIỂN THỊ
          * (GET /categories), giá trị = khoá cũ (laptop, phone…) nếu có, không thì slug (categoryKeyOf, ui.js).
          */
 
@@ -143,7 +143,7 @@ document.addEventListener(
         }
 
 
-        /* ================= DẢI DANH MỤC (kế hoạch v6 B1) ================= */
+        /* ================= DẢI DANH MỤC ================= */
 
         const categoryStrip = document.querySelector(".category-strip");
 
@@ -650,7 +650,7 @@ document.addEventListener(
         }
 
 
-        /* ================= NHU CẦU + THÔNG SỐ (kế hoạch v5 GĐ9) ================= */
+        /* ================= NHU CẦU + THÔNG SỐ ================= */
 
         function addSpecFilter(group, value) {
 
@@ -990,7 +990,7 @@ document.addEventListener(
         }
 
 
-        /* ================= ĐẦU TRANG THEO DANH MỤC + Ô XEN LƯỚI (kế hoạch v8 bước 3) ================= */
+        /* ================= ĐẦU TRANG THEO DANH MỤC + Ô XEN LƯỚI ================= */
 
         const heroBox = document.getElementById("pageHero");
 

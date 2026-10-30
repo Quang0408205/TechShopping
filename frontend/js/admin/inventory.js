@@ -1,4 +1,4 @@
-/* ================= TỒN KHO (admin/inventory.html) — Phase 7.8 ================= */
+/* ================= TỒN KHO (admin/inventory.html) ================= */
 
 /*
  * API thật (backend kiểm tra lại vai trò + chi nhánh trong DB ở mọi request):
@@ -172,7 +172,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         openStockIn(null);
     });
 
-    /* Nhập kho bằng Excel (kế hoạch v4 bước 7): vào chi nhánh đang chọn; mỗi dòng là một lần nhập kho */
+    /* Nhập kho bằng Excel: vào chi nhánh đang chọn; mỗi dòng là một lần nhập kho */
     const importPanel = document.getElementById("stockImportPanel");
 
     const importStoreId = function () {

@@ -1,4 +1,4 @@
--- Phase AI (2026-10-13): khuyến nghị sản phẩm + chatbot AI. Chạy lại nhiều lần vẫn an toàn.
+-- khuyến nghị sản phẩm + chatbot AI. Chạy lại nhiều lần vẫn an toàn.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thứ dưới đây.
 --   Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping
 --   Get-Content database\migrations\ai_recommendation.sql -Raw | docker exec -i techshopping-postgres psql -U postgres -d techshopping_test

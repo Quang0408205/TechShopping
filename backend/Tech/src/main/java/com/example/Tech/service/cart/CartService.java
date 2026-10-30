@@ -31,6 +31,6 @@ public interface CartService {
 
     CartResponse clear(Long userId);
 
-    /** Plan v3 GĐ E: every open store, and whether it holds the whole cart (pickup choice at checkout). */
+    /** Every open store, and whether it holds the whole cart (pickup choice at checkout). */
     List<StoreAvailabilityResponse> storeAvailability(Long userId);
 }

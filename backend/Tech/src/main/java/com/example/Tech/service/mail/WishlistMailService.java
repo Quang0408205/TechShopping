@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.List;
 
-/** Mails a customer about price drops of the products they saved (plan v7 GĐ4). Never throws; logs to email_log. */
+/** Mails a customer about price drops of the products they saved. Never throws; logs to email_log. */
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -1,6 +1,6 @@
 /* ================= TRANG CHỦ ================= */
 
-/* Nhịp section (kế hoạch v6 B5): hero tối toàn màn hình → dải hãng → flash sale tối → bento → trưng bày ghim (kem)
+/* Nhịp section: hero tối toàn màn hình → dải hãng → flash sale tối → bento → trưng bày ghim (kem)
    → lưới sản phẩm → combo → số liệu tối → banner đôi → gợi ý tối → đã xem → đánh giá (kem) → lợi ích → dịch vụ */
 
 
@@ -37,7 +37,7 @@
 }
 
 
-/* ================= MÀN HÌNH MỞ ĐẦU: LOGO BAY VÀO HEADER (kế hoạch v6 B5) ================= */
+/* ================= MÀN HÌNH MỞ ĐẦU: LOGO BAY VÀO HEADER ================= */
 
 /*
  * 0–1,2 s: vẽ nét chữ POY; 0,9 s: đổ màu nâu ánh kim; 1,15 s: vệt sáng quét + dòng chữ gõ dần;
@@ -1554,7 +1554,7 @@ main > section[hidden] {
 }
 
 
-/* ================= COMBO NỔI BẬT (kế hoạch v6 B4) ================= */
+/* ================= COMBO NỔI BẬT ================= */
 
 .combo-grid {
     display: grid;
@@ -1689,7 +1689,7 @@ main > section[hidden] {
 }
 
 
-/* ================= SẢN PHẨM ĐÃ XEM (kế hoạch v6 B3) ================= */
+/* ================= SẢN PHẨM ĐÃ XEM ================= */
 
 .recent-viewed {
     padding-block: 56px;
@@ -2373,7 +2373,7 @@ main > section[hidden] {
 }
 
 
-/* Kế hoạch v8: dải thương hiệu = các hãng nhiều sản phẩm nhất, chữ đậm như logo, số sản phẩm nhỏ bên cạnh */
+/* Dải thương hiệu = các hãng nhiều sản phẩm nhất, chữ đậm như logo, số sản phẩm nhỏ bên cạnh */
 .brand-marquee-item {
     color: var(--color-ink);
     opacity: 0.55;

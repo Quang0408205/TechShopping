@@ -1,11 +1,11 @@
-/* ================= CHI TIẾT ĐƠN HÀNG (Phase 4–5) ================= */
+/* ================= CHI TIẾT ĐƠN HÀNG ================= */
 
 /*
  * customer/order-detail.html?id=<id đơn>[&justPlaced=1]: GET /api/v1/orders/{id}
  * (fetchMyOrder, js/core/order-store.js). Đơn của tài khoản khác, id sai hoặc
  * không tồn tại → "Không tìm thấy đơn hàng" (API trả 404). Lỗi khác → hộp lỗi
  * + "Thử lại". Đơn còn "Chờ xác nhận" có nút "Hủy đơn hàng" (POST /cancel).
- * Phase 5: trạng thái thanh toán, thông tin chuyển khoản + mã QR (khi đang chờ
+ * Trạng thái thanh toán, thông tin chuyển khoản + mã QR (khi đang chờ
  * tiền), hợp đồng trả góp + lịch các kỳ, lý do từ chối trả góp.
  * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
@@ -280,7 +280,7 @@ function renderOrder(order) {
 
 
 /*
- * Phase 7: giao tận nhà → người nhận + địa chỉ; nhận tại cửa hàng → người nhận +
+ * Giao tận nhà → người nhận + địa chỉ; nhận tại cửa hàng → người nhận +
  * cửa hàng (server ghi "Nhận tại cửa hàng: tên, địa chỉ…" vào địa chỉ đơn, và đổi
  * theo nếu cửa hàng ADMIN chuyển đơn sang). Chi nhánh xử lý đơn giao tận nhà là
  * việc nội bộ nên không hiện.
@@ -315,7 +315,7 @@ function renderDelivery(order) {
 }
 
 
-/* ================= PHASE 5: THANH TOÁN ================= */
+/* ================= THANH TOÁN ================= */
 
 function renderPayment(order) {
 
@@ -430,16 +430,18 @@ function paymentNotice(order) {
 
     if (installment) {
 
+        const partner = installment.partnerName || "Đối tác trả góp";
+
         if (installment.status === "PENDING_APPROVAL") {
-            return { tone: "pending", text: "Hồ sơ trả góp đang chờ duyệt. Nhân viên sẽ gọi điện cho bạn để xác minh." };
+            return { tone: "pending", text: partner + " đang xét hồ sơ trả góp của bạn. Cửa hàng sẽ xác nhận đơn ngay khi đối tác chấp thuận." };
         }
 
-        if (installment.status === "APPROVED") {
-            return { tone: "info", text: "Hồ sơ trả góp đã được duyệt. Lịch trả góp bắt đầu từ ngày bạn nhận hàng." };
+        if ((installment.status === "APPROVED" || installment.status === "SETTLED") && order.status === "PENDING") {
+            return { tone: "success", text: partner + " đã duyệt hồ sơ trả góp, đơn hàng đang chờ cửa hàng xác nhận." };
         }
 
-        if (installment.status === "REJECTED") {
-            return { tone: "danger", text: "Hồ sơ trả góp không được duyệt nên đơn hàng đã bị hủy." };
+        if (installment.status === "REJECTED" && order.status === "PENDING") {
+            return { tone: "danger", text: partner + " không duyệt hồ sơ trả góp. Bạn có thể gửi hồ sơ cho đối tác khác hoặc chọn cách thanh toán khác." };
         }
 
         if (installment.status === "ACTIVE" && installment.periods.some(function (period) { return period.overdue; })) {
@@ -528,13 +530,24 @@ function renderInstallment(order) {
             : "");
 
     const facts = [
-        factHtml("Trạng thái", `<span class="payment-badge payment-badge--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`),
+        factHtml("Trạng thái", `<span class="payment-badge payment-badge--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`)
+    ];
+
+    if (installment.partnerName) {
+        facts.push(factHtml("Đối tác", escapeHtml(installment.partnerName)));
+    }
+
+    facts.push(
         factHtml("Kỳ hạn", installment.numMonths + " tháng"),
         factHtml("Mỗi kỳ", escapeHtml(monthly)),
-        factHtml("Tổng trả góp", formatPrice(installment.totalAmount) + " · lãi suất 0%"),
-        factHtml("Ngân hàng thẻ", escapeHtml(installment.cardBankName)),
-        factHtml("Số CCCD", escapeHtml(installment.citizenId))
-    ];
+        factHtml("Tổng trả góp", formatPrice(installment.totalAmount) + " · lãi suất 0%")
+    );
+
+    if (installment.cardBankName) {
+        facts.push(factHtml("Ngân hàng thẻ", escapeHtml(installment.cardBankName)));
+    }
+
+    facts.push(factHtml("Số CCCD", escapeHtml(installment.citizenId)));
 
     if (installment.status === "ACTIVE" || installment.status === "COMPLETED") {
         facts.push(factHtml("Đã trả", installment.paidPeriods + "/" + installment.numMonths + " kỳ · "
@@ -554,6 +567,173 @@ function renderInstallment(order) {
 
     document.getElementById("orderInstallmentSchedule").innerHTML = scheduleHtml(installment);
 
+    if (installment.status === "REJECTED" && order.status === "PENDING") {
+        renderResubmitForm(order);
+    }
+
+}
+
+
+/* Hồ sơ bị từ chối: gửi cho đối tác khác (đối tác nhận đơn này, kỳ hạn của đối tác, CCCD nhập lại) hoặc đổi cách thanh toán */
+
+async function renderResubmitForm(order) {
+
+    const container = document.getElementById("orderInstallmentSchedule");
+
+    let options;
+
+    try {
+
+        options = await fetchInstallmentOptions(order.total);
+
+    } catch (error) {
+
+        container.innerHTML = "";
+
+        return;
+
+    }
+
+    const partners = options.partners || [];
+
+    container.innerHTML = `
+        <form class="order-resubmit" id="orderResubmitForm" novalidate>
+            <label for="resubmitPartner">Gửi hồ sơ cho đối tác khác</label>
+            <select id="resubmitPartner">
+                <option value="">-- Chọn đối tác --</option>
+                ${partners.map(function (partner) {
+                    return `<option value="${escapeHtml(partner.code)}">${escapeHtml(partner.name)}</option>`;
+                }).join("")}
+            </select>
+            <label for="resubmitMonths">Kỳ hạn</label>
+            <select id="resubmitMonths"><option value="">-- Chọn kỳ hạn --</option></select>
+            <label for="resubmitCitizen">Số CCCD</label>
+            <input type="text" id="resubmitCitizen" inputmode="numeric" autocomplete="off" maxlength="${options.citizenIdLength}">
+            <div id="resubmitBankGroup" hidden>
+                <label for="resubmitBank">Ngân hàng phát hành thẻ tín dụng</label>
+                <select id="resubmitBank">
+                    <option value="">-- Chọn ngân hàng --</option>
+                    ${(options.banks || []).map(function (bank) {
+                        return `<option value="${escapeHtml(bank.code)}">${escapeHtml(bank.name)}</option>`;
+                    }).join("")}
+                </select>
+            </div>
+            <p class="field-error" id="resubmitError" hidden></p>
+            <div class="order-detail-actions">
+                <button type="submit" class="btn btn-dark" id="resubmitBtn">GỬI HỒ SƠ</button>
+                <button type="button" class="btn btn-outline-dark" id="resubmitOtherMethodBtn">CHỌN CÁCH THANH TOÁN KHÁC</button>
+            </div>
+        </form>
+    `;
+
+    const partnerSelect = document.getElementById("resubmitPartner");
+
+    const monthsSelect = document.getElementById("resubmitMonths");
+
+    const bankGroup = document.getElementById("resubmitBankGroup");
+
+    const bankSelect = document.getElementById("resubmitBank");
+
+    const citizenInput = document.getElementById("resubmitCitizen");
+
+    const errorBox = document.getElementById("resubmitError");
+
+    function chosenPartner() {
+        return partners.find(function (partner) { return partner.code === partnerSelect.value; }) || null;
+    }
+
+    partnerSelect.addEventListener("change", function () {
+
+        const partner = chosenPartner();
+
+        monthsSelect.innerHTML = `<option value="">-- Chọn kỳ hạn --</option>` + (partner ? partner.termsInMonths : []).map(function (months) {
+            return `<option value="${months}">${months} tháng</option>`;
+        }).join("");
+
+        bankGroup.hidden = !(partner && partner.requiresCardBank);
+
+    });
+
+    citizenInput.addEventListener("input", function () {
+        citizenInput.value = citizenInput.value.replace(/\D/g, "");
+    });
+
+    function showError(message) {
+        errorBox.textContent = message;
+        errorBox.hidden = !message;
+    }
+
+    document.getElementById("orderResubmitForm").addEventListener("submit", async function (event) {
+
+        event.preventDefault();
+
+        const partner = chosenPartner();
+
+        if (!partner) {
+            return showError("Vui lòng chọn đối tác trả góp.");
+        }
+
+        if (!monthsSelect.value) {
+            return showError("Vui lòng chọn kỳ hạn trả góp.");
+        }
+
+        if (citizenInput.value.length !== options.citizenIdLength) {
+            return showError("Số CCCD phải gồm đúng " + options.citizenIdLength + " chữ số.");
+        }
+
+        if (partner.requiresCardBank && !bankSelect.value) {
+            return showError("Vui lòng chọn ngân hàng phát hành thẻ.");
+        }
+
+        showError("");
+
+        const button = document.getElementById("resubmitBtn");
+
+        button.disabled = true;
+
+        try {
+
+            await resubmitInstallment(order.id, {
+                partner: partner.code,
+                months: Number(monthsSelect.value),
+                citizenId: citizenInput.value,
+                cardBank: partner.requiresCardBank ? bankSelect.value : null
+            });
+
+            showToast("Đã gửi hồ sơ cho " + partner.name + ".", "success");
+
+            window.location.reload();
+
+        } catch (error) {
+
+            showError(getErrorMessage(error));
+
+            button.disabled = false;
+
+        }
+
+    });
+
+    document.getElementById("resubmitOtherMethodBtn").addEventListener("click", async function () {
+
+        this.disabled = true;
+
+        try {
+
+            await cancelOrderPayment(order.id);
+
+            window.location.href = "checkout.html";
+
+        } catch (error) {
+
+            showError(getErrorMessage(error));
+
+            this.disabled = false;
+
+        }
+
+    });
+
 }
 
 
@@ -561,8 +741,8 @@ function scheduleHtml(installment) {
 
     if (installment.periods.length === 0) {
 
-        if (installment.status === "PENDING_APPROVAL" || installment.status === "APPROVED") {
-            return `<p class="order-installment-hint">Lịch trả góp được tạo khi bạn nhận hàng; kỳ đầu tiên đến hạn sau 1 tháng.</p>`;
+        if (installment.status === "PENDING_APPROVAL" || installment.status === "APPROVED" || installment.status === "SETTLED") {
+            return `<p class="order-installment-hint">Đối tác trả góp thu tiền hằng tháng của bạn theo hợp đồng với đối tác; cửa hàng không thu tiền trả góp.</p>`;
         }
 
         return "";

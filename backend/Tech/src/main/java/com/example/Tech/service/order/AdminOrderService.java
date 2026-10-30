@@ -11,7 +11,7 @@ import org.springframework.data.domain.Pageable;
 
 /**
  * Order management for staff (STAFF or ADMIN). Every call re-checks that the caller still exists, is enabled
- * and has STAFF or ADMIN in the database (403 ACCESS_DENIED otherwise). Store scoping (Phase 7): an ADMIN sees and
+ * and has STAFF or ADMIN in the database (403 ACCESS_DENIED otherwise). Store scoping: an ADMIN sees and
  * acts on every order; a STAFF member only on the orders of their current store (403 NO_ACTIVE_STORE_ASSIGNMENT
  * without one, 403 ACCESS_DENIED for another store's order or an order without a store; the list is filtered).
  * Every change locks the order row first.
@@ -40,10 +40,13 @@ public interface AdminOrderService {
     /** Money of a cancelled paid order sent back: REFUND_PENDING → REFUNDED. 409 INVALID_PAYMENT_STATUS. */
     AdminOrderResponse refundPayment(Long staffId, Long orderId);
 
-    /** PENDING_APPROVAL → APPROVED. 404 INSTALLMENT_NOT_FOUND, 409 INVALID_INSTALLMENT_STATUS. */
+    /**
+     * Partner console (demo only): the installment partner approves the application, so the order counts as paid.
+     * 404 SIMULATOR_DISABLED, INSTALLMENT_NOT_FOUND; 409 INVALID_INSTALLMENT_STATUS.
+     */
     AdminOrderResponse approveInstallment(Long staffId, Long orderId);
 
-    /** PENDING_APPROVAL → REJECTED with the reason; the order is cancelled. */
+    /** Partner console (demo only): the partner rejects the application; the order stays pending. */
     AdminOrderResponse rejectInstallment(Long staffId, Long orderId, InstallmentRejectRequest request);
 
     /**

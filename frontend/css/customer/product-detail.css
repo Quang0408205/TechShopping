@@ -264,7 +264,7 @@
 }
 
 
-/* Kế hoạch v5 GĐ2: phiên bản | màu sắc */
+/* Phiên bản | màu sắc */
 
 .variant-picker {
     display: grid;
@@ -440,7 +440,7 @@
 
 /* ================= HÀNH ĐỘNG ================= */
 
-/* Kế hoạch v3 GĐ E: tình trạng hàng của phiên bản đang chọn */
+/* Tình trạng hàng của phiên bản đang chọn */
 .detail-stock {
     margin-bottom: var(--space-2);
 
@@ -1454,7 +1454,7 @@ body.buy-bar-open .chatbot-widget {
 }
 
 
-/* ================= MUA KÈM TIẾT KIỆM (kế hoạch v5 GĐ10) ================= */
+/* ================= MUA KÈM TIẾT KIỆM ================= */
 
 .combo-zone {
     margin-bottom: var(--space-5);
@@ -1645,7 +1645,7 @@ body.buy-bar-open .chatbot-widget {
 
 }
 
-/* ---- Khung ảnh chính có mũi tên, số ảnh và lightbox (kế hoạch v6 B1) ---- */
+/* ---- Khung ảnh chính có mũi tên, số ảnh và lightbox ---- */
 
 .detail-main-image {
     position: relative;
@@ -1906,7 +1906,7 @@ body.lightbox-open {
 }
 
 
-/* ================= THÔNG SỐ THEO NHÓM (kế hoạch v8; js/core/ui.js renderSpecGroups) ================= */
+/* ================= THÔNG SỐ THEO NHÓM (js/core/ui.js renderSpecGroups) ================= */
 
 .specs-table .spec-group-head th {
     width: auto;
@@ -2005,7 +2005,7 @@ body.lightbox-open {
 }
 
 
-/* Kế hoạch v8: ảnh chính + dải ảnh nhỏ trên cùng nền ngà với thẻ sản phẩm (ảnh nền trắng hoà vào nền) */
+/* ảnh chính + dải ảnh nhỏ trên cùng nền ngà với thẻ sản phẩm (ảnh nền trắng hoà vào nền) */
 .detail-main-image {
     background: #f6f5f2;
 }

@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v5 GĐ4: vouchers at checkout, evaluated against the logged-in customer's server cart. */
+/** Vouchers at checkout, evaluated against the logged-in customer's server cart. */
 @RestController
 @RequestMapping("/api/v1/vouchers")
 @RequiredArgsConstructor

@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 });
 
 
-/* ================= MEGA-MENU DANH MỤC (kế hoạch v6 B2) ================= */
+/* ================= MEGA-MENU DANH MỤC ================= */
 
 /*
  * Panel "Sản phẩm" (desktop) và ngăn kéo (điện thoại) dùng chung dữ liệu: mỗi danh mục tải MỘT lần rồi giữ trong
@@ -714,7 +714,7 @@ function setupHeaderSearch() {
 }
 
 
-/* ================= GỢI Ý DƯỚI Ô TÌM KIẾM (kế hoạch v5 GĐ3) ================= */
+/* ================= GỢI Ý DƯỚI Ô TÌM KIẾM ================= */
 
 /*
  * Ô trống: "Tìm gần đây" (5 từ khoá cuối, localStorage poy_recent_searches) + "Tìm nhiều" (chip trong header).
@@ -1145,7 +1145,7 @@ function setupScrollReveal() {
 }
 
 
-/* ================= CART (Phase 3) ================= */
+/* ================= CART ================= */
 
 /*
  * Lưu trữ giỏ hàng: js/core/cart-store.js (giỏ trên server, /api/v1/cart).
@@ -1158,7 +1158,7 @@ function setupScrollReveal() {
  * Thẻ sản phẩm render sau (products.js, home.js) gọi lại với lưới mới;
  * cờ data-cart-bound tránh gắn sự kiện 2 lần cho cùng một nút.
  * Thẻ không biết phiên bản, nên lúc bấm mới lấy GET /products/{id}/variants
- * và chọn phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E; không còn bản nào → báo hết hàng).
+ * và chọn phiên bản đầu tiên còn hàng (không còn bản nào → báo hết hàng).
  */
 
 function setupAddToCart(root) {

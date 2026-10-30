@@ -130,7 +130,7 @@ class AdminReportApiIntegrationTest {
         delivered(storeA, "2031-03-05T15:00", PaymentMethod.BANK_TRANSFER, "30000", employeeA, "2300", line(cover, 1));
         // 3: B, 10/4, installment, 1 phone = 10.000.000, employee B (100.000)
         delivered(storeB, "2031-04-10T11:00", PaymentMethod.INSTALLMENT, "0", employeeB, "100000", line(phone, 1));
-        // 4: A, 20/3, COD, 2 covers + 30.000 = 430.000, confirmed before Phase 10: no sales record
+        // 4: A, 20/3, COD, 2 covers + 30.000 = 430.000, confirmed before sales records existed: no sales record
         delivered(storeA, "2031-03-20T08:00", PaymentMethod.COD, "30000", null, null, line(cover, 2));
         // 5: delivered 28/2 (outside), employee A; refunded 1.000.000 on 10/3 (inside)
         Order early = delivered(storeA, "2031-02-28T18:00", PaymentMethod.COD, "0", employeeA, "100000", line(phone, 1));

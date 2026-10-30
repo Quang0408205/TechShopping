@@ -13,7 +13,7 @@ public interface ImageStorageService {
     /** Public path prefix of photos attached to product reviews. */
     String REVIEW_IMAGE_PATH = "/uploads/reviews/";
 
-    /** Avatars are smaller than the other images (kế hoạch v2 GĐ5). */
+    /** Avatars are smaller than the other images. */
     long MAX_AVATAR_BYTES = 2L * 1024 * 1024;
 
     /** Public path prefix of account avatars. */

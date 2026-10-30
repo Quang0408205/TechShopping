@@ -2,6 +2,8 @@ package com.example.Tech.dto.response.report;
 
 import com.example.Tech.dto.request.report.ReportGroupBy;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -36,7 +38,9 @@ public record SalesReportResponse(
             BigDecimal averageOrderValue,
             BigDecimal shippingFees,
             long refundCount,
-            BigDecimal totalCommission
+            BigDecimal totalCommission,
+            @Schema(description = "Fees kept by installment partners on the delivered installment orders of the period")
+            BigDecimal installmentFees
     ) {
     }
 
@@ -71,7 +75,7 @@ public record SalesReportResponse(
 
     /**
      * One row per employee and store; employeeId null = delivered orders nobody with an employee profile confirmed
-     * (confirmed before Phase 10). refundAmount = refunds in the period of orders credited to that row.
+     * (confirmed before). refundAmount = refunds in the period of orders credited to that row.
      */
     public record EmployeeRow(
             Long employeeId,
@@ -86,7 +90,7 @@ public record SalesReportResponse(
     ) {
     }
 
-    /** Plan v5 GĐ10: combos applied on delivered orders; revenue = the totals of those orders (an order with two combos is in both rows). */
+    /** Combos applied on delivered orders; revenue = the totals of those orders (an order with two combos is in both rows). */
     public record ComboRow(Long comboId, String comboName, long orders, long units, BigDecimal discount, BigDecimal revenue) {
     }
 

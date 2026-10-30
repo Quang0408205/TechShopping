@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ6: points earned on delivery, tiers, spending points at checkout, purchase history and "Mua lại". */
+/** Points earned on delivery, tiers, spending points at checkout, purchase history and "Mua lại". */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Plan v6 B4, public: the flash sale block of the home page, read from the promotions running right now. */
+/** Public: the flash sale block of the home page, read from the promotions running right now. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

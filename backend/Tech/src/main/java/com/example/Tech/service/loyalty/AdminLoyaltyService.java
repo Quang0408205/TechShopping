@@ -16,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Plan v5 GĐ6: ADMIN edits the tier thresholds + point multipliers (the 4 tiers themselves are fixed). */
+/** ADMIN edits the tier thresholds + point multipliers (the 4 tiers themselves are fixed). */
 @Slf4j
 @Service
 @RequiredArgsConstructor

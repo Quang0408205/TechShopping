@@ -1,10 +1,10 @@
--- phase 7 (2026-10-03): chi nhánh/nhân viên có API thật, tồn kho theo chi nhánh, gán chi nhánh xử lý cho đơn.
+-- chi nhánh/nhân viên có API thật, tồn kho theo chi nhánh, gán chi nhánh xử lý cho đơn.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thay đổi này; file này chỉ dành cho db tạo từ bản schema cũ
 -- (volume postgres_data đã có từ trước). chạy lại nhiều lần vẫn an toàn.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/stores_inventory.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/stores_inventory.sql
 
--- orders: chi nhánh xử lý đơn (null cho đơn đặt trước phase 7) + hình thức nhận hàng.
+-- orders: chi nhánh xử lý đơn (null cho đơn đặt trước) + hình thức nhận hàng.
 alter table orders add column if not exists store_id int;
 alter table orders add column if not exists delivery_type varchar(20) not null default 'HOME_DELIVERY';
 

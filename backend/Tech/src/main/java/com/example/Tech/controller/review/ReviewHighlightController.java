@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v6 B5, public: the review block of the home page. */
+/** Public: the review block of the home page. */
 @RestController
 @RequestMapping("/api/v1/reviews/highlights")
 @RequiredArgsConstructor

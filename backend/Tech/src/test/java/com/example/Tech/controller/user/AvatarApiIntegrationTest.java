@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Kế hoạch v2 GĐ5: POST /api/v1/uploads/avatar, PUT /users/me with an uploaded avatar only, and avatarUrl in the
+ * POST /api/v1/uploads/avatar, PUT /users/me with an uploaded avatar only, and avatarUrl in the
  * login / refresh response (test database, rolled back; files go to the test upload folder).
  */
 @SpringBootTest

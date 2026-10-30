@@ -2,14 +2,14 @@
 
 /*
  * Checkpoint B1: các trang admin/ chưa có API chạy trên dữ liệu mẫu: Bảo hành /
- * Bảo trì / Đổi trả (Phase 6), Doanh số / Tổng quan / Báo cáo (Phase 10),
- * Chatbot / Hỗ trợ (Phase 9). Đơn hàng (Phase 4.5), Chi nhánh / Nhân viên (Phase 7)
+ * Bảo trì / Đổi trả, Doanh số / Tổng quan / Báo cáo,
+ * Chatbot / Hỗ trợ. Đơn hàng, Chi nhánh / Nhân viên
  * đã dùng API thật.
  *
  * Nguyên tắc (giống cart / recommendation / contact phía khách hàng):
  *   - mọi hàm là HÀM ĐỒNG BỘ trả về dữ liệu tĩnh, KHÔNG gọi mạng;
  *   - trang admin chỉ gọi các hàm get... / update... / create... bên dưới,
- *     nên khi có API thật (giai đoạn C) chỉ cần thay thân hàm bằng
+ *     nên khi có API thật chỉ cần thay thân hàm bằng
  *     apiRequest(...), phần hiển thị giữ nguyên;
  *   - KHÔNG dùng catalogue sản phẩm mock của bản tham chiếu: bản ghi bán
  *     hàng / đơn hàng / bảo hành lưu sẵn tên sản phẩm (snapshot), giống cách
@@ -94,10 +94,10 @@ function applyOverride(record) {
 /* ================= CHI NHÁNH / NHÂN VIÊN MẪU ================= */
 
 /*
- * Chi nhánh và nhân viên THẬT đã có API từ Phase 7 (admin/stores, admin/employees,
+ * Chi nhánh và nhân viên THẬT đã có API (admin/stores, admin/employees,
  * GET /employees/me). Hai danh sách dưới đây chỉ còn là dữ liệu riêng của các trang
  * mẫu (Tổng quan, Báo cáo, Bảo hành / Đổi trả, Hỗ trợ) để chúng vẫn demo được cho
- * tới phase thay chúng (6, 9, 10); mã CN01… không trùng mã chi nhánh thật (số).
+ * tới khi có API thật thay chúng; mã CN01… không trùng mã chi nhánh thật (số).
  */
 
 const MOCK_STORES = [

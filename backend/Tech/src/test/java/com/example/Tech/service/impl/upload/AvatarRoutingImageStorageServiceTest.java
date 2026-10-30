@@ -20,7 +20,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/** Plan v5 GĐ7: avatars to Cloudinary when its keys are set, everything else (and avatars without keys) on disk. */
+/** Avatars to Cloudinary when its keys are set, everything else (and avatars without keys) on disk. */
 @ExtendWith(MockitoExtension.class)
 class AvatarRoutingImageStorageServiceTest {
 

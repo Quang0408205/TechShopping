@@ -18,7 +18,7 @@ public interface ProductService {
     PageResponse<ProductResponse> search(ProductSearchRequest filter, Pageable pageable);
 
     /**
-     * Search box suggestions (plan v5 GĐ3): products on sale whose name / slug / brand contain every word of the
+     * Search box suggestions: products on sale whose name / slug / brand contain every word of the
      * query, in stock first, then names starting with the first word, then the shortest names; at most {@code size}.
      */
     ProductSuggestResult suggest(String query, int size);

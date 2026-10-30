@@ -35,7 +35,7 @@ public final class ProductFilterSpecifications {
             predicates.add(cb.isNull(root.get("deletedAt")));
 
             if (filter.keyword() != null && !filter.keyword().isBlank()) {
-                // plan v5 GĐ3: the brand name counts too ("samsung 256" finds a Galaxy whose name has no "Samsung")
+                // The brand name counts too ("samsung 256" finds a Galaxy whose name has no "Samsung")
                 Join<Product, Brand> brand = root.join("brand", JoinType.LEFT);
                 // Every word must match, in any order: "iphone 256gb" finds "iPhone 18 Pro 256GB"
                 for (String word : WHITESPACE.split(filter.keyword().trim().toLowerCase(Locale.ROOT))) {
@@ -57,7 +57,7 @@ public final class ProductFilterSpecifications {
             if (filter.isActive() != null) {
                 predicates.add(cb.equal(root.get("active"), filter.isActive()));
             }
-            // plan v3: "on sale" (what the shop pages ask for) also needs a visible category; NULL counts as visible
+            // "on sale" (what the shop pages ask for) also needs a visible category; NULL counts as visible
             if (Boolean.TRUE.equals(filter.isActive())) {
                 var categoryActive = root.get("category").<Boolean>get("active");
                 predicates.add(cb.or(cb.isNull(categoryActive), cb.isTrue(categoryActive)));

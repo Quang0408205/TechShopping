@@ -4,7 +4,7 @@ package com.example.Tech.entity.order;
  * Order status, stored as upper-case text in orders.status (the DB default 'pending' is never used: the
  * application always sets the status).
  * Flow: PENDING → CONFIRMED → SHIPPING → DELIVERED; CANCELLED from PENDING or CONFIRMED.
- * Returns are Phase 6.
+ * Returns and refunds are handled by the after-sales flow.
  */
 public enum OrderStatus {
 

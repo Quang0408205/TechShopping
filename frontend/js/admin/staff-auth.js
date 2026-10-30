@@ -41,7 +41,7 @@ function getStaffRoleLabel(role) {
 
 /*
  * Vị trí tại chi nhánh (employee_assignments.position_at_store) đi theo role, backend tự đặt
- * (kế hoạch v3 GĐ D): STAFF = "Nhân viên chi nhánh", BRANCH_MANAGER = "Quản lý chi nhánh".
+ *: STAFF = "Nhân viên chi nhánh", BRANCH_MANAGER = "Quản lý chi nhánh".
  */
 
 const BRANCH_MANAGER_POSITION = "Quản lý chi nhánh";

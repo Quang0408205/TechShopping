@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ5: card payment through Stripe (mocked), the Stripe webhook, "Huỷ thanh toán" and the awaited order. */
+/** Card payment through Stripe (mocked), the Stripe webhook, "Huỷ thanh toán" and the awaited order. */
 @SpringBootTest(properties = "app.cors.allowed-origins=http://127.0.0.1:5503")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

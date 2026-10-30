@@ -73,17 +73,15 @@ public class AdminInstallmentServiceImpl implements AdminInstallmentService {
 
     @Override
     @Transactional
-    public AdminInstallmentResponse payPeriod(Long staffId, Long installmentId, int number, PaymentConfirmRequest request) {
+    public AdminInstallmentResponse settle(Long staffId, Long installmentId) {
         StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Long orderId = installmentOrderRepository.findOrderIdById(installmentId).orElseThrow(() -> notFound(installmentId));
-        // same lock as every order change: two staff members cannot record the same period twice. The plan is read
-        // only after the lock (the scalar query above does not load it), so its status is current.
-        orderRepository.findByIdForUpdate(orderId).ifPresent(scope::check);
-        InstallmentOrder plan = findWithOrder(installmentId);
-        orderPaymentLifecycle.payPeriod(plan, number, scope.user(), request != null ? request.transactionId() : null,
-                LocalDateTime.now(clock));
-        log.info("Staff id={} recorded period {} of installment plan id={}", staffId, number, installmentId);
-        return toResponse(plan);
+        // same lock as every order change; the application is read only after it (the scalar query above does not load it)
+        Order order = orderRepository.findByIdForUpdate(orderId).orElseThrow(() -> notFound(installmentId));
+        scope.check(order);
+        orderPaymentLifecycle.settle(order, scope.user(), LocalDateTime.now(clock));
+        log.info("Staff id={} recorded that the partner paid installment application id={}", staffId, installmentId);
+        return toResponse(findWithOrder(installmentId));
     }
 
     private InstallmentOrder findWithOrder(Long installmentId) {

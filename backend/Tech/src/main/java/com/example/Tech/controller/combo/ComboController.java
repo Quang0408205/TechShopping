@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v5 GĐ10, public: the combos running for a product ("Mua kèm tiết kiệm" on its page). */
+/** Public: the combos running for a product ("Mua kèm tiết kiệm" on its page). */
 @RestController
 @RequestMapping("/api/v1/products/{productId}/combos")
 @RequiredArgsConstructor

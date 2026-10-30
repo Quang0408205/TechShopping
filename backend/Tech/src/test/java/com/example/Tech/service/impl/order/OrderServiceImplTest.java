@@ -129,7 +129,7 @@ class OrderServiceImplTest {
                 currentUserLoader, orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, statusRecorder,
                 interactionRecorder, voucherService, new com.example.Tech.service.combo.ComboPricingService(
                         mock(com.example.Tech.repository.combo.ComboRepository.class), cartMapper, CLOCK),
-                loyaltyService, paymentRepository,
+                loyaltyService, paymentRepository, mock(com.example.Tech.repository.payment.InstallmentOrderRepository.class),
                 new BankTransferProperties(null, null, null, null, 24), CLOCK);
         user = new User();
         user.setId(USER_ID);
@@ -180,7 +180,7 @@ class OrderServiceImplTest {
         verify(cartItemRepository).deleteAllByCartId(30L);
         verify(cartRepository).touch(30L);
         verify(orderPaymentLifecycle).validateSelection(PaymentMethod.BANK_TRANSFER, null);
-        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.BANK_TRANSFER, order.getTotalAmount());
+        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.BANK_TRANSFER, order.getTotalAmount(), null);
         verify(orderPaymentLifecycle).onOrderPlaced(order, null);
     }
 
@@ -198,7 +198,7 @@ class OrderServiceImplTest {
 
         Order order = savedOrder();
         verify(orderStockLifecycle).validateDeliverySelection(DeliveryType.HOME_DELIVERY, null, "12 Nguyễn Trãi");
-        // plan v3 GĐ E: the cart quantities (and labels for the messages) go to the store choice
+        // The cart quantities (and labels for the messages) go to the store choice
         verify(orderStockLifecycle).assignBranch(order, DeliveryType.HOME_DELIVERY, null, Map.of(12L, 1), Map.of(12L, WHITE_LABEL));
         assertThat(order.getShippingCost()).isEqualByComparingTo("30000");
     }
@@ -265,7 +265,7 @@ class OrderServiceImplTest {
 
         Order order = savedOrder();
         verify(orderPaymentLifecycle).validateSelection(PaymentMethod.INSTALLMENT, installment);
-        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.INSTALLMENT, order.getTotalAmount());
+        verify(orderPaymentLifecycle).checkEligible(PaymentMethod.INSTALLMENT, order.getTotalAmount(), installment);
         verify(orderPaymentLifecycle).onOrderPlaced(order, installment);
     }
 
@@ -273,7 +273,7 @@ class OrderServiceImplTest {
     void placeOrder_whenThePaymentChoiceIsRefused_savesNothingAndKeepsTheCart() {
         cartWith(line(white, 1));
         doThrow(new BusinessException(ErrorCode.INSTALLMENT_NOT_ELIGIBLE))
-                .when(orderPaymentLifecycle).checkEligible(any(), any());
+                .when(orderPaymentLifecycle).checkEligible(any(), any(), any());
 
         assertThatThrownBy(() -> orderService.placeOrder(USER_ID, request(null, PaymentMethod.INSTALLMENT)))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())

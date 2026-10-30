@@ -9,7 +9,7 @@ import java.text.DecimalFormatSymbols;
 import java.util.List;
 import java.util.Locale;
 
-/** Subject, HTML and plain-text body of the price-drop mail (plan v7 GĐ4). Dynamic values are HTML-escaped. */
+/** Subject, HTML and plain-text body of the price-drop mail. Dynamic values are HTML-escaped. */
 public final class WishlistMailTemplates {
 
     private static final String INK = "#111111";

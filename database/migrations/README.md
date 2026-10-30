@@ -30,10 +30,11 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 24 | `variant_specifications.sql` | Thông số riêng của từng phiên bản (`product_specifications.variant_id`, NULL = chung) |
 | 25 | `filters_needs.sql` | Bộ lọc thông số nâng cao (`product_filter_values`) + nhu cầu (`needs`, `product_needs`); sau khi chạy gọi `POST /api/v1/admin/products/reindex-filters` |
 | 26 | `combos.sql` | Combo mua kèm giảm giá (`combos`, `combo_items`, `order_combos`; đơn + dòng hàng lưu `combo_discount`) |
-| 27 | `order_email.sql` | Email đơn hàng (kế hoạch v7): `orders.contact_email`, `orders.tracking_token` (link theo dõi đơn), bảng `email_log` |
-| 28 | `wishlist.sql` | Danh sách yêu thích (kế hoạch v7 GĐ4): `wishlist_items` (giá lúc thêm + mốc giá để báo giảm giá qua email) |
-| 29 | `product_base_names.sql` | Tên sản phẩm chỉ còn tên máy: dung lượng / màu / GPU / sạc ở cuối tên chuyển vào phiên bản (chọn ở trang chi tiết); sau đó chạy lại `merge_product_variants.sql` để gộp các tên trùng (sao lưu trước; dọn Redis `cache:*`, chạy lại dữ liệu AI) |
-| 30 | `dedupe_product_images.sql` | Bỏ ảnh trùng sau khi gộp phiên bản: mỗi (sản phẩm, màu) chỉ giữ bộ ảnh của một trang nguồn TGDĐ, không lặp theo bản dung lượng (dọn Redis `cache:*`) |
+| 27 | `order_email.sql` | Email đơn hàng: `orders.contact_email`, `orders.tracking_token` (link theo dõi đơn), bảng `email_log` |
+| 28 | `wishlist.sql` | Danh sách yêu thích: `wishlist_items` (giá lúc thêm + mốc giá để báo giảm giá qua email) |
+| 29 | `installment_partners.sql` | Trả góp qua đối tác: bảng `installment_partners`, `installment_fee_rates`; hồ sơ `installment_orders` thêm đối tác, phí / tiền thực nhận, mốc đối soát; hồ sơ cũ còn chờ duyệt chuyển cho đối tác thẻ tín dụng |
+| 30 | `product_base_names.sql` | Tên sản phẩm chỉ còn tên máy: dung lượng / màu / GPU / sạc ở cuối tên chuyển vào phiên bản (chọn ở trang chi tiết); sau đó chạy lại `merge_product_variants.sql` để gộp các tên trùng (sao lưu trước; dọn Redis `cache:*`, chạy lại dữ liệu AI) |
+| 31 | `dedupe_product_images.sql` | Bỏ ảnh trùng sau khi gộp phiên bản: mỗi (sản phẩm, màu) chỉ giữ bộ ảnh của một trang nguồn TGDĐ, không lặp theo bản dung lượng (dọn Redis `cache:*`) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

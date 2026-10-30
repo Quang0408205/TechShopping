@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
 
-/** The customer's points, tier and progress (plan v5 GĐ6). */
+/** The customer's points, tier and progress. */
 public record LoyaltySummaryResponse(
         int points,
         @Schema(description = "What the points are worth at checkout (1 point = 1.000đ)")

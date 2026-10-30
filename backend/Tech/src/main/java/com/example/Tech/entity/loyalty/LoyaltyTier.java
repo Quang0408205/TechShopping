@@ -12,7 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/** A membership tier (plan v5 GĐ6). The 4 codes are fixed; ADMIN edits the threshold and the point multiplier. */
+/** A membership tier. The 4 codes are fixed; ADMIN edits the threshold and the point multiplier. */
 @Entity
 @Table(name = "loyalty_tiers")
 @Getter

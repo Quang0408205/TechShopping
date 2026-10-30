@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/** Create / replace a voucher (ADMIN, plan v5 GĐ4). */
+/** Create / replace a voucher (ADMIN). */
 public record VoucherRequest(
 
         @Schema(description = "3–30 letters / digits / _ -, stored upper case", example = "POY10")

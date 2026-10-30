@@ -1,6 +1,6 @@
--- điểm đánh giá Thế Giới Di Động tách riêng (2026-10-07, bước R2 của "Đánh giá sản phẩm").
+-- Điểm đánh giá Thế Giới Di Động tách riêng.
 -- Catalogue crawl từ TGDĐ (Raw_data/import_catalog.py) từng ghi điểm + số lượt đánh giá của TGDĐ vào
--- products.rating / total_reviews. Từ R2, hai cột đó chỉ còn là số liệu của đánh giá THẬT trên web (bảng reviews,
+-- products.rating / total_reviews. Hai cột đó chỉ còn là số liệu của đánh giá THẬT trên web (bảng reviews,
 -- chỉ tính đánh giá đang hiện; Java tính lại mỗi lần ghi), còn số của TGDĐ chuyển sang 2 cột mới dưới đây và
 -- chỉ để hiển thị riêng ("Trên Thế Giới Di Động: ★ 4.6 (1.234)"). Importer từ nay ghi vào 2 cột mới.
 -- db tạo mới từ database/techshopping.sql đã có sẵn 2 cột này; file này chỉ dành cho db tạo từ bản schema cũ

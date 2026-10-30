@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Contact form (kiemthu GĐ7) over HTTP against the test database (rolled back). Redis counters are real, so every
+ * Contact form over HTTP against the test database (rolled back). Redis counters are real, so every
  * run uses fresh emails; the per-IP limit is raised in the test profile (all requests come from 127.0.0.1).
  */
 @SpringBootTest

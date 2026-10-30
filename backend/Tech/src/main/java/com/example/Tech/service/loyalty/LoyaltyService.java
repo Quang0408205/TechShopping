@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Plan v5 GĐ6: loyalty points + tiers. The balance lives in customer_profiles.loyalty_points (changed only with the
+ * Loyalty points + tiers. The balance lives in customer_profiles.loyalty_points (changed only with the
  * profile row locked) and every change writes a loyalty_transactions row. Tiers never go down.
  */
 @Slf4j

@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v5 GĐ10: combo management (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
+/** Combo management (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
 @RestController
 @RequestMapping("/api/v1/admin/combos")
 @RequiredArgsConstructor

@@ -317,7 +317,7 @@
 }
 
 
-/* ---- Dải danh mục (kế hoạch v6 B1): thẻ ngang, kéo / vuốt / nút ‹ ›, dính dưới header và thu gọn khi dính ----
+/* ---- Dải danh mục: thẻ ngang, kéo / vuốt / nút ‹ ›, dính dưới header và thu gọn khi dính ----
    radio name="category" ẩn trực quan trong từng thẻ, vẫn dùng bàn phím được */
 
 .products-main {
@@ -1064,7 +1064,7 @@
 
 }
 
-/* ---- Nhu cầu + thông số (GĐ9): ô chọn nhiều, kèm số sản phẩm ---- */
+/* ---- Nhu cầu + thông số: ô chọn nhiều, kèm số sản phẩm ---- */
 .spec-filter-options {
     display: flex;
     flex-direction: column;

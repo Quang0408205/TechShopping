@@ -72,7 +72,8 @@ const CHATBOT_TOPICS = [
         reply: function () {
             return {
                 text: "POY nhận thanh toán khi nhận hàng (COD), chuyển khoản (mã QR hiện ở trang đơn hàng) và trả góp 0% " +
-                    "kỳ hạn 3, 6, 9 hoặc 12 tháng cho đơn từ 3.000.000đ (nhập CCCD và ngân hàng phát hành thẻ, cửa hàng duyệt hồ sơ).",
+                    "cho đơn từ 3.000.000đ: bạn chọn đối tác (thẻ tín dụng hoặc công ty tài chính), kỳ hạn của đối tác đó và nhập CCCD. " +
+                    "Đối tác duyệt hồ sơ và thu tiền hằng tháng, cửa hàng xác nhận đơn sau khi đối tác chấp thuận.",
                 links: [["Hỏi đáp thanh toán", "customer/services.html"]]
             };
         }

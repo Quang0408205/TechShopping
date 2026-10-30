@@ -25,7 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Plan v5 GĐ4: an order voucher — discountPercent off the in-scope goods (after product promotions, shipping
+ * An order voucher — discountPercent off the in-scope goods (after product promotions, shipping
  * excluded), capped by maxDiscount (null = no cap), when those goods reach minOrderAmount. Valid while
  * {@code active && startsAt <= now < endsAt}. usedCount counts orders not cancelled; it is changed under a row lock.
  */

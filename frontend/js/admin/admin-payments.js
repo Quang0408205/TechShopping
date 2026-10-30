@@ -1,4 +1,4 @@
-/* ================= THANH TOÁN / TRẢ GÓP: DÙNG CHUNG KHU ADMIN (Phase 5) ================= */
+/* ================= THANH TOÁN / TRẢ GÓP: DÙNG CHUNG KHU ADMIN ================= */
 
 /*
  * Nhãn, huy hiệu và bảng lịch trả góp cho admin/orders.html và admin/installments.html.
@@ -20,11 +20,12 @@ const ADMIN_PAYMENT_STATUS = {
 };
 
 const ADMIN_INSTALLMENT_STATUS = {
-    PENDING_APPROVAL: ["Chờ duyệt", "admin-badge-warning"],
-    APPROVED: ["Đã duyệt", "admin-badge-info"],
-    REJECTED: ["Từ chối", "admin-badge-danger"],
-    ACTIVE: ["Đang trả góp", "admin-badge-info"],
-    COMPLETED: ["Đã trả đủ", "admin-badge-success"],
+    PENDING_APPROVAL: ["Chờ đối tác", "admin-badge-warning"],
+    APPROVED: ["Đối tác đã duyệt", "admin-badge-info"],
+    SETTLED: ["Đã nhận tiền từ đối tác", "admin-badge-success"],
+    REJECTED: ["Đối tác từ chối", "admin-badge-danger"],
+    ACTIVE: ["Hợp đồng cũ: đang trả góp", "admin-badge-info"],
+    COMPLETED: ["Hợp đồng cũ: đã trả đủ", "admin-badge-success"],
     CANCELLED: ["Đã hủy", "admin-badge-neutral"]
 };
 
@@ -82,7 +83,21 @@ function installmentTermText(installment) {
 }
 
 
-/* Bảng lịch các kỳ; trống (trước khi giao hàng) → câu giải thích */
+/* Phí đối tác và tiền thực nhận (đã chốt lúc đối tác duyệt); trống khi chưa duyệt */
+
+function installmentFeeText(installment) {
+
+    if (installment.feeAmount == null) {
+        return "";
+    }
+
+    return formatPrice(Number(installment.feeAmount)) + " (" + Number(installment.feePercent) + "%) · thực nhận "
+        + formatPrice(Number(installment.netAmount));
+
+}
+
+
+/* Bảng lịch các kỳ của hợp đồng cũ (trước khi có đối tác); hồ sơ của đối tác không có lịch kỳ */
 
 function installmentScheduleHtml(installment) {
 
@@ -90,8 +105,8 @@ function installmentScheduleHtml(installment) {
 
     if (periods.length === 0) {
 
-        return installment.status === "PENDING_APPROVAL" || installment.status === "APPROVED"
-            ? `<p class="admin-field-hint">Lịch các kỳ được tạo khi đơn chuyển sang Đã giao hàng (kỳ đầu đến hạn sau 1 tháng).</p>`
+        return installment.partner
+            ? `<p class="admin-field-hint">Đối tác thu tiền hằng tháng của khách; cửa hàng chỉ cần ghi nhận khi đối tác chuyển tiền.</p>`
             : "";
 
     }

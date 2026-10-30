@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 stage 9: normalised spec filters, needs and the product list filters (rolled back, test database). */
+/** Normalised spec filters, needs and the product list filters (rolled back, test database). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

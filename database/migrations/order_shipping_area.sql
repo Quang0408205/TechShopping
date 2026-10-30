@@ -1,4 +1,4 @@
--- Kế hoạch v5 GĐ1: địa chỉ giao hàng 2 cấp (từ 01/07/2025: Tỉnh / Thành → Phường / Xã, không còn quận / huyện).
+-- địa chỉ giao hàng 2 cấp (từ 01/07/2025: Tỉnh / Thành → Phường / Xã, không còn quận / huyện).
 -- Đơn giao tận nhà lưu thêm tỉnh + phường riêng; shipping_address vẫn là chuỗi đầy đủ. Đơn cũ / nhận tại cửa hàng: NULL.
 -- Chạy lại được.
 

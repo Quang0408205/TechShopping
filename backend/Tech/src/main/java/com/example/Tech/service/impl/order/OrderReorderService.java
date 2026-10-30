@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Plan v5 GĐ6 "Mua lại": puts the lines of a delivered / cancelled order back into the cart at today's prices. Each
+ * Puts the lines of a delivered / cancelled order back into the cart at today's prices. Each
  * line goes through the normal "add to cart" in its own transaction, so a line that is no longer sold, out of stock
  * or over the cart limits is skipped with its reason while the others are added.
  */

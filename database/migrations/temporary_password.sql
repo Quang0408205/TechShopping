@@ -1,4 +1,4 @@
--- Kế hoạch v3 / mật khẩu tạm (2026-10-15): tài khoản nội bộ mới tuyển phải đổi mật khẩu ở lần đăng nhập đầu,
+-- Mật khẩu tạm: tài khoản nội bộ mới tuyển phải đổi mật khẩu ở lần đăng nhập đầu,
 -- và mật khẩu tạm hết hạn nếu chưa đổi. Chạy lại nhiều lần vẫn an toàn.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/temporary_password.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/temporary_password.sql

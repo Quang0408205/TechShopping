@@ -78,7 +78,7 @@ document.addEventListener(
 
         const TABS = ["profile", "loyalty", "security", "address"];
 
-        /* Lịch sử điểm (kế hoạch v5 GĐ6): trang đang xem, 8 dòng / lần */
+        /* Lịch sử điểm: trang đang xem, 8 dòng / lần */
         const HISTORY_SIZE = 8;
 
         let historyPage = 0;
@@ -223,7 +223,7 @@ document.addEventListener(
         }
 
 
-        /* ================= HẠNG & ĐIỂM (kế hoạch v5 GĐ6) ================= */
+        /* ================= HẠNG & ĐIỂM ================= */
 
         /* Thẻ thành viên + ô thống kê + bậc hạng + cách tính điểm; lỗi thì giữ số từ hồ sơ */
         async function loadLoyalty() {

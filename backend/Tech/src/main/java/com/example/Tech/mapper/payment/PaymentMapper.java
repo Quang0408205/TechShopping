@@ -73,13 +73,21 @@ public class PaymentMapper {
                 plan.getInterestRate(),
                 revealCitizenId ? plan.getCitizenId() : InstallmentPolicy.maskCitizenId(plan.getCitizenId()),
                 plan.getCardBank(),
-                plan.getCardBank().getDisplayName(),
+                plan.getCardBank() != null ? plan.getCardBank().getDisplayName() : null,
                 plan.getRejectionReason(),
                 plan.getReviewedAt(),
                 paid.size(),
                 paidAmount,
                 closed ? BigDecimal.ZERO : total.subtract(paidAmount),
-                periods.stream().map(period -> toPeriodResponse(period, today)).toList());
+                periods.stream().map(period -> toPeriodResponse(period, today)).toList(),
+                plan.getPartner() != null ? plan.getPartner().getCode() : null,
+                plan.getPartner() != null ? plan.getPartner().getName() : null,
+                revealCitizenId ? plan.getPartnerRef() : null,
+                plan.getAttemptCount(),
+                revealCitizenId ? plan.getFeePercent() : null,
+                revealCitizenId ? plan.getFeeAmount() : null,
+                revealCitizenId ? plan.getNetAmount() : null,
+                plan.getSettledAt());
     }
 
     private BankTransferResponse toBankTransfer(Payment payment, Order order) {

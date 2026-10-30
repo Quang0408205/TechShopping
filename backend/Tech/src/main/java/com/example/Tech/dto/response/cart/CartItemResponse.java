@@ -23,12 +23,12 @@ public record CartItemResponse(
         @Schema(description = "unitPrice × quantity")
         BigDecimal lineTotal,
         @Schema(description = "false when the product was deleted, hidden or has no price, or when the open stores "
-                + "hold fewer units than quantity (plan v3); such lines are not counted in the subtotal")
+                + "hold fewer units than quantity; such lines are not counted in the subtotal")
         boolean available,
         @Schema(description = "Units of this variant in all open stores (0 = out of stock)")
         Integer availableQuantity,
         LocalDateTime addedAt,
-        @Schema(description = "Plan v5 GĐ10: combo discount on this line (0 when none)")
+        @Schema(description = "Combo discount on this line (0 when none)")
         BigDecimal comboDiscount,
         @Schema(description = "Names of the combos that discount this line")
         List<String> comboNames

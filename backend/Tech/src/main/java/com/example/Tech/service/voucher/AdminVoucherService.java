@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-/** Plan v5 GĐ4: voucher management, ADMIN only (re-checked in the database on every call). */
+/** Voucher management, ADMIN only (re-checked in the database on every call). */
 @Slf4j
 @Service
 @RequiredArgsConstructor

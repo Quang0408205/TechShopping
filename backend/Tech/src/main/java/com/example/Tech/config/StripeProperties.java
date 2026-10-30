@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 /**
- * Card payments through Stripe Checkout (plan v5 GĐ5). Stripe has no merchant accounts in Vietnam, so only test
+ * Card payments through Stripe Checkout. Stripe has no merchant accounts in Vietnam, so only test
  * keys ({@code sk_test_…}) are meant to be used: no real money moves. Empty {@code secretKey} = the card method is
  * hidden and refused. {@code webhookSecret} ({@code whsec_…}) checks the signature of Stripe's webhook; without it
  * the payment is still confirmed when the customer comes back from Stripe. {@code apiBase} is only changed by the

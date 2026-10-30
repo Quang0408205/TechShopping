@@ -1,4 +1,4 @@
-/* ================= "Bảo hành & đổi trả" ở chi tiết đơn đã giao (customer/order-detail.html) — Phase 6.5 ================= */
+/* ================= "Bảo hành & đổi trả" ở chi tiết đơn đã giao (customer/order-detail.html) ================= */
 
 /*
  * GET  /orders/{id}/after-sales            hạn bảo hành từng sản phẩm, yêu cầu đang mở, số lượng còn trả được

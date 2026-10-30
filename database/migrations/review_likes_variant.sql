@@ -1,4 +1,4 @@
--- Kế hoạch v4 mở rộng (2026-10-17): giao diện đánh giá kiểu sàn thương mại.
+-- giao diện đánh giá kiểu sàn thương mại.
 --   * reviews.variant_label: "Phân loại hàng" của người viết (phiên bản trong đơn ĐÃ GIAO gần nhất có sản phẩm này),
 --     ghi lại lúc viết đánh giá; đánh giá cũ được điền bù ở cuối file (không có đơn đã giao thì để trống);
 --   * review_likes: nút "Hữu ích" — mỗi tài khoản một lượt cho mỗi đánh giá.

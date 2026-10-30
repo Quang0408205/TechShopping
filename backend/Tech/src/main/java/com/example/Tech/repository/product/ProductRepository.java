@@ -54,7 +54,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     // Soft-deleted products still reference their category/brand through the FK
     boolean existsByCategoryId(Integer categoryId);
 
-    // Plan v3: deleting a category together with its products (CategoryServiceImpl.delete with withProducts)
+    // Deleting a category together with its products (CategoryServiceImpl.delete with withProducts)
 
     /** Products of the category, soft-deleted ones included (they still hold the foreign key). */
     @Query(value = "select count(*) from products where category_id = :categoryId", nativeQuery = true)

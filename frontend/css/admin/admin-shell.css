@@ -1,4 +1,4 @@
-/* ================= KHU NỘI BỘ: KHUNG MỚI (kế hoạch v2, GĐ4) ================= */
+/* ================= KHU NỘI BỘ: KHUNG MỚI ================= */
 
 /*
  * Nạp SAU css/admin/admin.css trên mọi trang admin/. Cùng tông đen / trắng / đồng và font
@@ -640,7 +640,7 @@
 }
 
 
-/* ================= VOUCHER (kế hoạch v5 GĐ4) ================= */
+/* ================= VOUCHER ================= */
 
 .admin-voucher-code {
     font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -680,7 +680,7 @@
 }
 
 
-/* Kế hoạch v5 GĐ6: ô nhập trong bảng hạng thành viên (admin/loyalty.html) */
+/* ô nhập trong bảng hạng thành viên (admin/loyalty.html) */
 #tierTableBody input {
     width: 100%;
     max-width: 200px;
@@ -712,7 +712,7 @@
 }
 
 
-/* ================= COMBO (kế hoạch v5 GĐ10) ================= */
+/* ================= COMBO ================= */
 
 .admin-combo-main,
 .admin-combo-item {

@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-/** Plan v3 GĐ E: whether one open store can hand over the whole cart (pickup choice at checkout). */
+/** Whether one open store can hand over the whole cart (pickup choice at checkout). */
 public record StoreAvailabilityResponse(
         Integer storeId,
         String name,

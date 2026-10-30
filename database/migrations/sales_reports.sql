@@ -1,4 +1,4 @@
--- Phase 10 (2026-10-09): báo cáo doanh thu + doanh số nhân viên. Chạy lại nhiều lần vẫn an toàn.
+-- báo cáo doanh thu + doanh số nhân viên. Chạy lại nhiều lần vẫn an toàn.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thứ dưới đây.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/sales_reports.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/sales_reports.sql

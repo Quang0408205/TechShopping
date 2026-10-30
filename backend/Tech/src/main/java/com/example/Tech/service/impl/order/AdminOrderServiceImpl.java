@@ -1,5 +1,6 @@
 package com.example.Tech.service.impl.order;
 
+import com.example.Tech.config.PaymentWebhookProperties;
 import com.example.Tech.dto.request.order.AdminOrderSearchRequest;
 import com.example.Tech.dto.request.order.OrderStatusUpdateRequest;
 import com.example.Tech.dto.request.order.OrderStoreRequest;
@@ -58,6 +59,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     private final SalesRecorder salesRecorder;
     private final VoucherService voucherService;
     private final LoyaltyService loyaltyService;
+    private final PaymentWebhookProperties webhook;
     private final Clock clock;
 
     @Override
@@ -127,7 +129,7 @@ public class AdminOrderServiceImpl implements AdminOrderService {
         if (from != to && to == OrderStatus.DELIVERED) {
             Long customerId = order.getUser().getId();
             if (customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount()) == 0) {
-                // plan v5 GĐ6: an account without a profile gets one, so its spending and points count
+                // An account without a profile gets one, so its spending and points count
                 customerProfileRepository.insertIfMissing(customerId);
                 customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount());
             }
@@ -162,27 +164,26 @@ public class AdminOrderServiceImpl implements AdminOrderService {
     @Override
     @Transactional
     public AdminOrderResponse approveInstallment(Long staffId, Long orderId) {
-        StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
-        Order order = lock(orderId, scope);
-        orderPaymentLifecycle.approveInstallment(order, scope.user(), LocalDateTime.now(clock));
-        log.info("Staff id={} approved the installment plan of order id={}", staffId, orderId);
-        return toAdminResponse(findWithUser(orderId));
+        return partnerAnswer(staffId, orderId, true, null);
     }
 
     @Override
     @Transactional
     public AdminOrderResponse rejectInstallment(Long staffId, Long orderId, InstallmentRejectRequest request) {
+        return partnerAnswer(staffId, orderId, false, request.reason());
+    }
+
+    /** The partner console: a staff member answers in the name of the simulated partner. */
+    private AdminOrderResponse partnerAnswer(Long staffId, Long orderId, boolean approved, String reason) {
+        if (!webhook.simulatorEnabled()) {
+            throw new BusinessException(ErrorCode.SIMULATOR_DISABLED);
+        }
         StoreAccessGuard.OrderScope scope = storeAccessGuard.processingScope(staffId);
         Order order = lock(orderId, scope);
-        LocalDateTime now = LocalDateTime.now(clock);
-        orderPaymentLifecycle.rejectInstallment(order, scope.user(), request.reason(), now);
-        statusRecorder.record(order, order.getStatus(), OrderStatus.CANCELLED, scope.user());
-        order.setStatus(OrderStatus.CANCELLED);
-        order.setCancelledAt(now);
-        voucherService.releaseFor(order);
-        loyaltyService.releaseFor(order);
+        orderPaymentLifecycle.applyPartnerDecision(order, approved, reason, scope.user(), null, LocalDateTime.now(clock));
         orderRepository.saveAndFlush(order);
-        log.info("Staff id={} rejected the installment plan of order id={}; order cancelled", staffId, orderId);
+        log.info("Staff id={} answered for the installment partner of order id={}: {}", staffId, orderId,
+                approved ? "approved" : "rejected");
         return toAdminResponse(findWithUser(orderId));
     }
 

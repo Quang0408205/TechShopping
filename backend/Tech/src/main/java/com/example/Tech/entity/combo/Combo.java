@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Plan v5 GĐ10: a "buy together" combo — one main product plus add-on products, each with its own discount.
+ * A "buy together" combo — one main product plus add-on products, each with its own discount.
  * Applied automatically while {@code active && startsAt <= now < endsAt} and the cart holds the main product.
  */
 @Entity

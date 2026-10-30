@@ -12,7 +12,7 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-/** One order mail that was sent, failed or skipped (plan v7). order_id is cleared if the order is ever deleted. */
+/** One order mail that was sent, failed or skipped. order_id is cleared if the order is ever deleted. */
 @Entity
 @Table(name = "email_log")
 @Getter

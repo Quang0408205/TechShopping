@@ -573,7 +573,7 @@
 }
 
 
-/* Kế hoạch v5 GĐ10: dòng "Giảm combo" của giỏ */
+/* Dòng "Giảm combo" của giỏ */
 .cart-total-combo strong {
     color: var(--color-success);
 }

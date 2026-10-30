@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** Plan v6 B4, public: the combos the home page features. */
+/** Public: the combos the home page features. */
 @RestController
 @RequestMapping("/api/v1/combos")
 @RequiredArgsConstructor

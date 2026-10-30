@@ -1,4 +1,4 @@
-/* ================= GIỎ HÀNG (Phase 3): GIỎ TRÊN SERVER ================= */
+/* ================= GIỎ HÀNG: GIỎ TRÊN SERVER ================= */
 
 /*
  * Giỏ hàng lưu ở backend theo tài khoản: /api/v1/cart (cần đăng nhập).
@@ -7,8 +7,8 @@
  * đổi sang dạng dùng cho trang giỏ / thanh toán:
  *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
  *               image, quantity, lineTotal, available }],
- *     totalQuantity, subtotal, comboDiscount (kế hoạch v5 GĐ10: tiền giảm combo), shippingFee, total, hasUnavailableItems }
- * availableQuantity: số còn ở các chi nhánh đang mở (kế hoạch v3 GĐ E; null = API cũ).
+ *     totalQuantity, subtotal, comboDiscount (tiền giảm combo), shippingFee, total, hasUnavailableItems }
+ * availableQuantity: số còn ở các chi nhánh đang mở (null = API cũ).
  * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá) hoặc không đủ hàng,
  * không tính vào tạm tính, chỉ còn nút xoá.
  *
@@ -31,7 +31,7 @@ function emptyCartSummary() {
 
 /*
  * CartResponse của API → dạng dùng ở giao diện. Phí ship và tổng tiền do
- * server tính (Phase 4: 30.000đ, miễn phí từ 10.000.000đ), đúng bằng số tiền
+ * server tính (30.000đ, miễn phí từ 10.000.000đ), đúng bằng số tiền
  * đơn hàng sẽ tính khi đặt.
  */
 

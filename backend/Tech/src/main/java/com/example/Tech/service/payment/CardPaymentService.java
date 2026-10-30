@@ -4,7 +4,7 @@ import com.example.Tech.dto.response.order.OrderResponse;
 import com.example.Tech.dto.response.payment.CardCheckoutResponse;
 import com.example.Tech.dto.response.payment.CardOptionsResponse;
 
-/** "Thẻ quốc tế": Stripe Checkout in test mode (plan v5 GĐ5). */
+/** "Thẻ quốc tế": Stripe Checkout in test mode. */
 public interface CardPaymentService {
 
     CardOptionsResponse options();

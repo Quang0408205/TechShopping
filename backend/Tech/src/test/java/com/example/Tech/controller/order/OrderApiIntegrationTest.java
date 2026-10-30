@@ -487,13 +487,18 @@ class OrderApiIntegrationTest {
     }
 
     @Test
-    void installmentOrder_createsAPlanWaitingForApproval_citizenIdMaskedForTheCustomer() throws Exception {
+    void installmentOrder_sendsTheApplicationToThePartner_citizenIdMaskedAndFeeHiddenFromTheCustomer() throws Exception {
         addToCart(black, 1);
         long orderId = data(send(post("/api/v1/orders"), token, installmentBody(6, " 0123456789 ", "TCB"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.paymentMethod").value("INSTALLMENT"))
-                .andExpect(jsonPath("$.data.payment").doesNotExist())
+                .andExpect(jsonPath("$.data.payment.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.payment.bankTransfer").doesNotExist())
                 .andExpect(jsonPath("$.data.installment.status").value("PENDING_APPROVAL"))
+                .andExpect(jsonPath("$.data.installment.partner").value("CREDIT_CARD"))
+                .andExpect(jsonPath("$.data.installment.partnerName").value("Thẻ tín dụng"))
+                .andExpect(jsonPath("$.data.installment.partnerRef").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.feeAmount").doesNotExist())
                 .andExpect(jsonPath("$.data.installment.numMonths").value(6))
                 .andExpect(jsonPath("$.data.installment.monthlyPayment").value(2498333))
                 .andExpect(jsonPath("$.data.installment.lastPayment").value(2498335))
@@ -551,9 +556,47 @@ class OrderApiIntegrationTest {
         send(post("/api/v1/orders"), token, installmentBody(3, "0123456789", "VCB"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_ELIGIBLE"))
-                .andExpect(jsonPath("$.error.message").value("Đơn hàng từ 3.000.000đ trở lên mới được trả góp"));
+                .andExpect(jsonPath("$.error.message").value("Thẻ tín dụng chỉ trả góp đơn hàng từ 3.000.000đ"));
         send(get("/api/v1/cart"), token, null)
                 .andExpect(jsonPath("$.data.items.length()").value(1));
+    }
+
+    @Test
+    void installmentOrder_withAPartner_followsItsTermsCardBankAndOrderRange() throws Exception {
+        addToCart(black, 1);
+
+        Map<String, Object> noPartner = installmentBody(6, "0123456789", "VCB");
+        ((Map<String, Object>) noPartner.get("installment")).remove("cardBank");
+        send(post("/api/v1/orders"), token, noPartner)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.partner']").exists());
+        send(post("/api/v1/orders"), token, partnerBody("NO_SUCH", 6, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.partner']").exists());
+        send(post("/api/v1/orders"), token, partnerBody("CREDIT_CARD", 6, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.cardBank']").exists());
+        send(post("/api/v1/orders"), token, partnerBody("FINANCE_A", 6, "VCB"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.cardBank']").exists());
+        send(post("/api/v1/orders"), token, partnerBody("FINANCE_A", 3, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details['installment.months']").value("Công ty tài chính A không hỗ trợ kỳ hạn 3 tháng"));
+        // 14.990.000đ is inside the 15.000.000đ limit of company B; two phones are not
+        send(post("/api/v1/orders"), token, partnerBody("FINANCE_B", 6, null))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.installment.partner").value("FINANCE_B"))
+                .andExpect(jsonPath("$.data.installment.cardBank").doesNotExist())
+                .andExpect(jsonPath("$.data.installment.attemptCount").value(1));
+
+        addToCart(black, 2);
+        send(post("/api/v1/orders"), token, partnerBody("FINANCE_B", 6, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_ELIGIBLE"))
+                .andExpect(jsonPath("$.error.message").value(org.hamcrest.Matchers.containsString("Công ty tài chính B")));
+        send(post("/api/v1/orders"), token, partnerBody("FINANCE_A", 12, null))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.installment.partner").value("FINANCE_A"));
     }
 
     @Test
@@ -570,7 +613,28 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.citizenIdLength").value(10))
                 .andExpect(jsonPath("$.data.banks.length()").value(10))
                 .andExpect(jsonPath("$.data.banks[0].code").value("VCB"))
-                .andExpect(jsonPath("$.data.banks[0].name").value("Vietcombank"));
+                .andExpect(jsonPath("$.data.banks[0].name").value("Vietcombank"))
+                .andExpect(jsonPath("$.data.partners.length()").value(3))
+                .andExpect(jsonPath("$.data.partners[0].code").value("CREDIT_CARD"))
+                .andExpect(jsonPath("$.data.partners[0].requiresCardBank").value(true))
+                .andExpect(jsonPath("$.data.partners[0].termsInMonths.length()").value(4))
+                .andExpect(jsonPath("$.data.partners[1].code").value("FINANCE_A"))
+                .andExpect(jsonPath("$.data.partners[1].requiresCardBank").value(false))
+                .andExpect(jsonPath("$.data.partners[1].termsInMonths[0]").value(6))
+                .andExpect(jsonPath("$.data.partners[2].maxOrderTotal").value(15000000))
+                .andExpect(jsonPath("$.data.partners[0].feePercent").doesNotExist());
+    }
+
+    @Test
+    void installmentOptions_withTheOrderTotal_onlyListThePartnersThatAcceptIt() throws Exception {
+        send(get("/api/v1/payments/installment-options").param("total", "20000000"), token, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.partners.length()").value(2))
+                .andExpect(jsonPath("$.data.partners[1].code").value("FINANCE_A"));
+        send(get("/api/v1/payments/installment-options").param("total", "2000000"), token, null)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.partners.length()").value(0))
+                .andExpect(jsonPath("$.data.termsInMonths.length()").value(0));
     }
 
     @Test
@@ -704,7 +768,17 @@ class OrderApiIntegrationTest {
 
     private static Map<String, Object> installmentBody(int months, String citizenId, String cardBank) {
         Map<String, Object> body = orderBody("INSTALLMENT");
-        body.put("installment", Map.of("months", months, "citizenId", citizenId, "cardBank", cardBank));
+        body.put("installment", new HashMap<>(Map.of("months", months, "citizenId", citizenId, "cardBank", cardBank)));
+        return body;
+    }
+
+    private static Map<String, Object> partnerBody(String partner, int months, String cardBank) {
+        Map<String, Object> installment = new HashMap<>(Map.of("months", months, "citizenId", "0123456789", "partner", partner));
+        if (cardBank != null) {
+            installment.put("cardBank", cardBank);
+        }
+        Map<String, Object> body = orderBody("INSTALLMENT");
+        body.put("installment", installment);
         return body;
     }
 

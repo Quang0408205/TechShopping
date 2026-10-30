@@ -1,4 +1,4 @@
--- Kế hoạch v7 GĐ4: danh sách yêu thích của khách hàng (theo tài khoản).
+-- Danh sách yêu thích của khách hàng (theo tài khoản).
 -- - price_at_add: giá bán lúc khách bấm yêu thích (để hiện "đã giảm bao nhiêu từ lúc bạn lưu")
 -- - last_alert_price: mốc giá để báo giảm giá qua email: giá hiện tại thấp hơn mốc thì gửi mail rồi hạ mốc xuống;
 --   giá tăng lên thì nâng mốc lên (lần giảm sau lại được báo)

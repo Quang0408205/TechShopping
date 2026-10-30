@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/orders/track")
 @RequiredArgsConstructor
-@Tag(name = "Order tracking", description = "Public order progress page, opened from the link in the order emails (plan v7)")
+@Tag(name = "Order tracking", description = "Public order progress page, opened from the link in the order emails")
 public class OrderTrackingController {
 
     private final OrderTrackingService trackingService;

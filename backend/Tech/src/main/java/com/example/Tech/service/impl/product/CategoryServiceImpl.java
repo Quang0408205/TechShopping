@@ -126,7 +126,7 @@ public class CategoryServiceImpl implements CategoryService {
                         "Danh mục còn %d sản phẩm".formatted(products),
                         Map.of("reason", "PRODUCTS", "products", String.valueOf(products)));
             }
-            // plan v3: products with a sales / stock / review history are never removed (hide the category instead)
+            // Products with a sales / stock / review history are never removed (hide the category instead)
             long withHistory = productRepository.countWithHistoryByCategoryId(id);
             if (withHistory > 0) {
                 throw new BusinessException(ErrorCode.RESOURCE_IN_USE,

@@ -1,4 +1,4 @@
-/* ================= LỊCH SỬ MUA HÀNG (làm mới ở kế hoạch v5 GĐ6) ================= */
+/* ================= LỊCH SỬ MUA HÀNG ================= */
 
 .orders-toolbar {
     display: flex;
@@ -563,7 +563,7 @@
     line-height: 1.6;
 }
 
-/* Phase 7: cửa hàng nhận hàng (đơn nhận tại cửa hàng) */
+/* Cửa hàng nhận hàng (đơn nhận tại cửa hàng) */
 .order-detail-block .order-pickup-store {
     margin-top: 6px;
 
@@ -627,7 +627,7 @@
 }
 
 
-/* ================= PHASE 4: ĐƠN TRÊN SERVER ================= */
+/* ================= ĐƠN TRÊN SERVER ================= */
 
 /* Đơn đã hủy: thay cho timeline các bước xử lý */
 .order-cancelled-note {
@@ -712,7 +712,7 @@
 }
 
 
-/* ================= PHASE 5: THANH TOÁN / TRẢ GÓP ================= */
+/* ================= THANH TOÁN / TRẢ GÓP ================= */
 
 .payment-badge {
     display: inline-block;
@@ -906,6 +906,47 @@
     font-size: 13px;
 }
 
+.order-resubmit {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    margin-top: 16px;
+}
+
+.order-resubmit input,
+.order-resubmit select {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    background: #fff;
+
+    font-size: 14px;
+}
+
+.order-resubmit input:focus,
+.order-resubmit select:focus {
+    border-color: var(--color-ink);
+    outline: none;
+}
+
+.order-resubmit label {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.order-resubmit .order-detail-actions {
+    margin-top: 8px;
+}
+
+.order-resubmit .field-error {
+    color: var(--color-danger);
+    font-size: 12px;
+}
+
 .order-installment-hint {
     margin-top: 16px;
 
@@ -951,7 +992,7 @@
 }
 
 
-/* Kế hoạch v5 GĐ4: dòng voucher trong tổng tiền của đơn */
+/* Dòng voucher trong tổng tiền của đơn */
 .checkout-total-voucher[hidden] {
     display: none;
 }
@@ -961,7 +1002,7 @@
 }
 
 
-/* Kế hoạch v5 GĐ6: điểm được cộng của đơn đã giao */
+/* điểm được cộng của đơn đã giao */
 .order-points-earned {
     margin: 12px 0 0;
     padding: 8px 12px;
@@ -973,7 +1014,7 @@
 }
 
 
-/* ===== Vừa đặt hàng xong (kế hoạch v7 GĐ5): dấu tích vẽ nét, pháo giấy, các bước tiếp theo ===== */
+/* ===== Vừa đặt hàng xong: dấu tích vẽ nét, pháo giấy, các bước tiếp theo ===== */
 
 .placed-hero {
     position: relative;

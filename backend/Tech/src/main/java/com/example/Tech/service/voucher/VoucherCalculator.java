@@ -13,7 +13,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Plan v5 GĐ4, no I/O: whether a voucher applies to a set of lines and how much it takes off.
+ * No I/O: whether a voucher applies to a set of lines and how much it takes off.
  * In-scope lines = every line, or the lines of the voucher's categories. discount = ⌊in-scope × percent⌋ (whole
  * đồng), capped by maxDiscount and by the in-scope amount. The discount is split over the in-scope lines in
  * proportion to their subtotal (rounded down; the remainder goes to the largest line) so a return pays back

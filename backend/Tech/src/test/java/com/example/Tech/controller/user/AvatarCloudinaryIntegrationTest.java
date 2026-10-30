@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ7: with Cloudinary keys the avatar upload answers a Cloudinary URL the account can then save. */
+/** With Cloudinary keys the avatar upload answers a Cloudinary URL the account can then save. */
 @SpringBootTest(properties = {"app.upload.cloudinary.cloud-name=demo", "app.upload.cloudinary.api-key=key",
         "app.upload.cloudinary.api-secret=secret"})
 @AutoConfigureMockMvc

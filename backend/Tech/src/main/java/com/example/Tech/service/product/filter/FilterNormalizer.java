@@ -11,7 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Turns the free-text specifications of a product into a few filter values per group (plan v5 stage 9):
+ * Turns the free-text specifications of a product into a few filter values per group:
  * "Snapdragon 8 Elite Gen 5 8 nhân" → chip "Snapdragon 8 series", "5000 mAh" → pin "5000 – 5999 mAh"...
  * Pure functions: the same input always gives the same values, so the whole index can be rebuilt at any time.
  * The groups that exist depend on the category type (phone / tablet, laptop, desktop, monitor, watch).

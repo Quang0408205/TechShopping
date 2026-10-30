@@ -15,7 +15,7 @@ public interface CartRepository extends JpaRepository<Cart, Long> {
 
     /**
      * Locks the cart row (SELECT … FOR UPDATE) during checkout: a second "Đặt hàng" sent at the same time
-     * waits, then finds the cart already emptied (Phase 4).
+     * waits, then finds the cart already emptied.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from Cart c where c.user.id = :userId")

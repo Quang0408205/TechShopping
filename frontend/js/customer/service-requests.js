@@ -1,4 +1,4 @@
-/* ================= YÊU CẦU DỊCH VỤ CỦA TÔI (customer/service-requests.html) — Phase 6.5 ================= */
+/* ================= YÊU CẦU DỊCH VỤ CỦA TÔI (customer/service-requests.html) ================= */
 
 /*
  * GET  /service-requests/mine?type=&status=&page=&size=   bảo hành / bảo trì / trả hàng, mới nhất trước

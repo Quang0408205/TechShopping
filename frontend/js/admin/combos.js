@@ -1,4 +1,4 @@
-/* ================= COMBO (admin/combos.html, kế hoạch v5 GĐ10) ================= */
+/* ================= COMBO (admin/combos.html) ================= */
 
 /*
  * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):

@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** Plan v6 B5, public: real customer reviews for the home page ("Khách hàng nói gì"). */
+/** Public: real customer reviews for the home page ("Khách hàng nói gì"). */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)

@@ -6,6 +6,6 @@ public enum PaymentMethod {
     COD,
     BANK_TRANSFER,
     INSTALLMENT,
-    /** International card through Stripe Checkout (test mode; plan v5 GĐ5). */
+    /** International card through Stripe Checkout (test mode). */
     CARD
 }

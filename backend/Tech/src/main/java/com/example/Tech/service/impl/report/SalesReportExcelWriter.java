@@ -117,7 +117,8 @@ final class SalesReportExcelWriter {
         r = moneyRow(sheet, r, "Giá trị trung bình / đơn", s.averageOrderValue());
         r = moneyRow(sheet, r, "Phí giao hàng", s.shippingFees());
         r = number(sheet, r, "Số lần hoàn tiền", s.refundCount());
-        moneyRow(sheet, r, "Tổng hoa hồng", s.totalCommission());
+        r = moneyRow(sheet, r, "Tổng hoa hồng", s.totalCommission());
+        moneyRow(sheet, r, "Phí đối tác trả góp (cửa hàng chịu)", s.installmentFees());
         sheet.setColumnWidth(0, 52 * 256);
         sheet.setColumnWidth(1, 24 * 256);
     }

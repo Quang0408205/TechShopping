@@ -64,7 +64,7 @@ public class ProductController {
     }
 
     @GetMapping("/sales")
-    @Operation(summary = "Plan v8: units sold (orders not cancelled) and the best-seller flag of up to 60 products",
+    @Operation(summary = "Units sold (orders not cancelled) and the best-seller flag of up to 60 products",
             description = "ids = comma separated product ids, as listed on one page of cards")
     @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (ids missing, not numbers or more than 60)")
     public ResponseEntity<ApiResult<List<ProductSalesResponse>>> sales(@RequestParam(required = false) String ids) {
@@ -84,7 +84,7 @@ public class ProductController {
     }
 
     @GetMapping("/{id}/store-stock")
-    @Operation(summary = "Plan v8: which open stores hold each variant of the product, and how many")
+    @Operation(summary = "Which open stores hold each variant of the product, and how many")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Rows for stores with stock (may be empty)"),
             @ApiResponse(responseCode = "404", description = "PRODUCT_NOT_FOUND")
@@ -94,7 +94,7 @@ public class ProductController {
     }
 
     @GetMapping("/suggest")
-    @Operation(summary = "Search box suggestions: products on sale with image and price (plan v5)",
+    @Operation(summary = "Search box suggestions: products on sale with image and price",
             description = "Every word of q must be in the name, the slug (no accents needed) or the brand. "
                     + "In stock first, then names starting with the first word, then shorter names.")
     @ApiResponses({

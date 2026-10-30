@@ -40,7 +40,7 @@ public record EmployeeCreateRequest(
         Integer storeId,
 
         @Size(max = 100, message = "Vị trí tại chi nhánh tối đa 100 ký tự")
-        @Schema(description = "Ignored since plan v3: the label follows the role (\"Nhân viên chi nhánh\" / \"Quản lý chi nhánh\"); "
+        @Schema(description = "Ignored: the label follows the role (\"Nhân viên chi nhánh\" / \"Quản lý chi nhánh\"); "
                 + "\"Quản lý chi nhánh\" for an account without the BRANCH_MANAGER role is refused")
         String positionAtStore
 ) {

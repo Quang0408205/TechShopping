@@ -13,7 +13,11 @@ public record AdminInstallmentSearchRequest(
 
         InstallmentStatus status,
 
-        @Schema(description = "true: only plans with an unpaid period past its due date")
-        Boolean overdue
+        @Schema(description = "true: only plans from before partners existed with an unpaid period past its due date")
+        Boolean overdue,
+
+        @Schema(description = "Partner code: CREDIT_CARD, FINANCE_A, FINANCE_B")
+        @Size(max = 30, message = "Mã đối tác tối đa 30 ký tự")
+        String partner
 ) {
 }

@@ -65,7 +65,7 @@
     </section>
 
 
-    <!-- Kế hoạch v5 GĐ5: đơn chuyển khoản / thẻ còn chờ tiền (khách bấm Back từ trang thanh toán) -->
+    <!-- đơn chuyển khoản / thẻ còn chờ tiền (khách bấm Back từ trang thanh toán) -->
     <section class="container awaiting-pay-slot" id="awaitingPayment" hidden></section>
 
 
@@ -103,7 +103,7 @@
 
                 <div id="orderInfoFields">
 
-                <!-- Phase 7: giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (khách chọn) -->
+                <!-- Giao tận nhà (hệ thống tự chọn chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (khách chọn) -->
                 <div class="payment-methods delivery-types">
 
                     <label class="payment-method">
@@ -192,7 +192,7 @@
                         </span>
                     </label>
 
-                    <!-- Kế hoạch v5 GĐ5: chỉ hiện khi server bật Stripe (GET /payments/card-options) -->
+                    <!-- Chỉ hiện khi server bật Stripe (GET /payments/card-options) -->
                     <label class="payment-method" id="cardMethod" hidden>
                         <input type="radio" name="paymentMethod" value="CARD">
                         <span>
@@ -204,20 +204,27 @@
                     <label class="payment-method" id="installmentMethod">
                         <input type="radio" name="paymentMethod" value="INSTALLMENT">
                         <span>
-                            <strong>Trả góp 0% qua thẻ tín dụng</strong>
+                            <strong>Trả góp 0% qua đối tác</strong>
                             <small id="installmentMethodHint">Lãi suất 0%, không cần trả trước.</small>
                         </span>
                     </label>
 
                 </div>
 
-                <!-- Phase 5: hồ sơ trả góp, chỉ hiện khi chọn "Trả góp" -->
+                <!-- Hồ sơ trả góp, chỉ hiện khi chọn "Trả góp" -->
                 <div class="installment-box" id="installmentBox" hidden>
 
                     <p class="installment-note">
-                        Nhân viên sẽ gọi điện xác minh và duyệt hồ sơ trước khi xác nhận đơn.
-                        Lịch trả góp bắt đầu từ ngày bạn nhận hàng.
+                        Chọn đối tác trả góp. Đối tác xét hồ sơ và thu tiền hằng tháng của bạn,
+                        cửa hàng chỉ xác nhận đơn sau khi đối tác chấp thuận.
                     </p>
+
+                    <label for="installmentPartner">Đối tác trả góp</label>
+                    <select id="installmentPartner">
+                        <option value="">-- Chọn đối tác --</option>
+                    </select>
+                    <small class="field-error" data-field="installment.partner"></small>
+                    <p class="installment-preview" id="installmentPartnerNote" hidden></p>
 
                     <label for="installmentMonths">Kỳ hạn trả góp</label>
                     <select id="installmentMonths">
@@ -231,11 +238,13 @@
                     <input type="text" id="citizenId" inputmode="numeric" autocomplete="off" maxlength="10">
                     <small class="field-error" data-field="installment.citizenId"></small>
 
-                    <label for="cardBank">Ngân hàng phát hành thẻ tín dụng</label>
-                    <select id="cardBank">
-                        <option value="">-- Chọn ngân hàng --</option>
-                    </select>
-                    <small class="field-error" data-field="installment.cardBank"></small>
+                    <div id="cardBankGroup" hidden>
+                        <label for="cardBank">Ngân hàng phát hành thẻ tín dụng</label>
+                        <select id="cardBank">
+                            <option value="">-- Chọn ngân hàng --</option>
+                        </select>
+                        <small class="field-error" data-field="installment.cardBank"></small>
+                    </div>
 
                     <small class="field-error" data-field="installment"></small>
 
@@ -255,7 +264,7 @@
 
                 <div id="checkoutItems" class="checkout-items"></div>
 
-                <!-- Kế hoạch v5 GĐ4: nhập mã hoặc chọn voucher (POST /vouchers/apply, GET /vouchers/available) -->
+                <!-- Nhập mã hoặc chọn voucher (POST /vouchers/apply, GET /vouchers/available) -->
                 <div class="checkout-voucher" id="checkoutVoucher">
 
                     <div class="checkout-voucher-input" id="voucherInputRow">
@@ -278,7 +287,7 @@
 
                 </div>
 
-                <!-- Kế hoạch v5 GĐ6: dùng điểm tích luỹ (1 điểm = 1.000đ, tối đa 10% tiền hàng sau voucher); ẩn khi không có điểm -->
+                <!-- Dùng điểm tích luỹ (1 điểm = 1.000đ, tối đa 10% tiền hàng sau voucher); ẩn khi không có điểm -->
                 <label class="checkout-points" id="checkoutPoints" hidden>
                     <input type="checkbox" id="usePoints">
                     <span class="checkout-points-icon" aria-hidden="true">

@@ -138,7 +138,7 @@ class AdminEmployeeApiIntegrationTest {
         assertThat(created.get("username").asString()).isEqualTo("nv.staff");
         assertThat(created.get("employeeCode").asString()).isEqualTo("ZZNV01");
         assertThat(created.get("assignment").get("storeId").asInt()).isEqualTo(storeA.getId());
-        // plan v3 GĐ D: the sent label is ignored, staff are always "Nhân viên chi nhánh"
+        // The sent label is ignored, staff are always "Nhân viên chi nhánh"
         assertThat(created.get("assignment").get("positionAtStore").asString()).isEqualTo("Nhân viên chi nhánh");
 
         JsonNode mine = data(send(get(ME_URL), staffToken, null).andExpect(status().isOk()));

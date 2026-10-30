@@ -392,7 +392,7 @@ WITH chosen_orders AS (
 )
 INSERT INTO installment_orders (
     order_id, num_months, monthly_payment, interest_rate, total_interest,
-    status, citizen_id, card_bank_code
+    status, citizen_id, card_bank_code, partner_code
 )
 SELECT order_id,
        12,
@@ -401,7 +401,8 @@ SELECT order_id,
        0,
        'PENDING_APPROVAL',
        lpad(plan_no::text, 12, '0'),
-       'SAMPLE'
+       'SAMPLE',
+       'CREDIT_CARD'
 FROM chosen_orders;
 
 INSERT INTO installment_payments (

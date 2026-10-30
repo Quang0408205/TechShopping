@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
-/** Plan v5 GĐ6 "Mua lại": what went into the cart and what was left out (with the reason). */
+/** What went into the cart and what was left out (with the reason). */
 public record ReorderResponse(
         List<Line> added,
         List<Line> skipped,

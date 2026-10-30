@@ -20,13 +20,13 @@ import org.springframework.security.web.SecurityFilterChain;
  * <ul>
  *     <li>Auth endpoints, Swagger and uploaded images (GET /uploads/**) are public.</li>
  *     <li>Product catalogue (8 resources): GET is public, POST/PUT/PATCH/DELETE require ADMIN.</li>
- *     <li>GET /api/v1/stores (open stores for the checkout pickup picker) is public (Phase 7).</li>
- *     <li>POST /api/v1/recommendations and POST /api/v1/chat are public (AI phase); the token is optional.</li>
- *     <li>/api/v1/admin/orders/** (Phase 4), /api/v1/admin/installments/** (Phase 5) and
- *         /api/v1/admin/stores/{id}/inventory/** (Phase 7, store-scoped in the service), service requests (Phase 6),
- *         reports and the dashboard (Phase 10, scoped in the service) require STAFF, BRANCH_MANAGER or ADMIN;
+ *     <li>GET /api/v1/stores (open stores for the checkout pickup picker) is public.</li>
+ *     <li>POST /api/v1/recommendations and POST /api/v1/chat are public; the token is optional.</li>
+ *     <li>/api/v1/admin/orders/**, /api/v1/admin/installments/** and
+ *         /api/v1/admin/stores/{id}/inventory/** (store-scoped in the service), service requests,
+ *         reports and the dashboard (scoped in the service) require STAFF, BRANCH_MANAGER or ADMIN;
  *         the rest of /api/v1/admin/** requires
- *         ADMIN; /api/v1/branch/** (own-branch management, Phase v2 GĐ2) requires BRANCH_MANAGER;
+ *         ADMIN; /api/v1/branch/** (own-branch management) requires BRANCH_MANAGER;
  *         any other /api/v1/** requires a valid access token.</li>
  *     <li>Everything else is denied.</li>
  * </ul>
@@ -86,10 +86,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/promotions/flash-sale", "/api/v1/combos/featured",
                                 "/api/v1/reviews/highlights").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/contact-requests").permitAll()
-                        // plan v7: order progress page opened from the email link (the random token is the key)
+                        // Order progress page opened from the email link (the random token is the key)
                         .requestMatchers(HttpMethod.GET, "/api/v1/orders/track/*").permitAll()
                         // bank webhook: no token, the shared key is checked by the controller
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/installment/webhook").permitAll()
                         // Stripe webhook: no token, the Stripe-Signature header is checked by CardPaymentService
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/stripe/webhook").permitAll()                        // recommendations and the chatbot work for guests; a token makes them personal
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")

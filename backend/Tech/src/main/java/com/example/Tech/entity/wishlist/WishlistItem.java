@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
- * A product a customer saved (plan v7 GĐ4). priceAtAdd = the price when saved; lastAlertPrice = the price the next
+ * A product a customer saved. priceAtAdd = the price when saved; lastAlertPrice = the price the next
  * price-drop mail is compared with (lowered after each mail, raised when the price goes up again).
  */
 @Entity

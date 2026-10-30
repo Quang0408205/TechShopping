@@ -18,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Plan v5 GĐ7: the image storage everyone gets. Avatars go to Cloudinary when its keys are set; every other image,
+ * The image storage everyone gets. Avatars go to Cloudinary when its keys are set; every other image,
  * and avatars without keys, stay on the local disk ({@link LocalImageStorageService}). Avatars stored on disk before
  * the switch stay valid, and are deleted from disk when replaced.
  */

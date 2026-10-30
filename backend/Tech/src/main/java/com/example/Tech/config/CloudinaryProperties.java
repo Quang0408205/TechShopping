@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
 /**
- * Plan v5 GĐ7: account avatars on Cloudinary (cropped square around the face, compressed). Any of the 3 keys empty =
+ * Account avatars on Cloudinary (cropped square around the face, compressed). Any of the 3 keys empty =
  * avatars stay on the local disk like every other upload. {@code apiBase} is only changed by tests.
  */
 @ConfigurationProperties(prefix = "app.upload.cloudinary")

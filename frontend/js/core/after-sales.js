@@ -1,4 +1,4 @@
-/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ: nhãn dùng chung (khách + quản trị) — Phase 6 ================= */
+/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ: nhãn dùng chung (khách + quản trị) ================= */
 
 const AFTER_SALES_TYPE_LABELS = {
     WARRANTY: "Bảo hành",

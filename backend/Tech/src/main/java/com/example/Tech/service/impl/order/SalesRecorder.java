@@ -42,7 +42,7 @@ public class SalesRecorder {
         this.commissionRate = commissionRate;
     }
 
-    /** Empty when nobody with an employee profile confirmed the order (e.g. confirmed before Phase 10). */
+    /** Empty when nobody with an employee profile confirmed the order (e.g. confirmed before). */
     public Optional<SalesRecord> recordFor(Order order, LocalDateTime deliveredAt) {
         Optional<Employee> seller = historyRepository
                 .findFirstByOrder_IdAndNewStatusOrderByChangedAtDescIdDesc(order.getId(), OrderStatus.CONFIRMED)

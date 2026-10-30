@@ -1,5 +1,6 @@
 package com.example.Tech.controller.order;
 
+import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
 import com.example.Tech.dto.request.payment.CardCheckoutRequest;
 import com.example.Tech.dto.response.common.ApiResult;
@@ -74,7 +75,7 @@ public class OrderController {
 
     @GetMapping
     @Operation(summary = "My orders (purchase history), newest first",
-            description = "Plan v5 GĐ6: optional status (repeat it for several, e.g. status=CONFIRMED&status=SHIPPING) "
+            description = "Optional status (repeat it for several, e.g. status=CONFIRMED&status=SHIPPING) "
                     + "and keyword (order code such as DH00000042, or a product name)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Page of orders with their items"),
@@ -177,6 +178,22 @@ public class OrderController {
     public ResponseEntity<ApiResult<OrderResponse>> refreshCardPayment(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
                                                                        @PathVariable Long id) {
         return ResponseEntity.ok(ApiResult.ok(cardPaymentService.refresh(userId(jwt), id)));
+    }
+
+    @PostMapping("/{id}/installment/resubmit")
+    @Operation(summary = "Send the installment application rejected by its partner to another partner",
+            description = "Only for my PENDING installment order whose application was rejected; same body as the installment "
+                    + "part of POST /orders")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Application sent again (waiting for the partner)"),
+            @ApiResponse(responseCode = "400", description = "VALIDATION_ERROR (partner, term or card bank), INSTALLMENT_NOT_ELIGIBLE"),
+            @ApiResponse(responseCode = "404", description = "ORDER_NOT_FOUND (also another user's order)"),
+            @ApiResponse(responseCode = "409", description = "INVALID_INSTALLMENT_STATUS (not rejected)")
+    })
+    public ResponseEntity<ApiResult<OrderResponse>> resubmitInstallment(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
+                                                                        @PathVariable Long id,
+                                                                        @Valid @RequestBody InstallmentRequest request) {
+        return ResponseEntity.ok(ApiResult.ok(orderService.resubmitInstallment(userId(jwt), id, request)));
     }
 
     @PostMapping("/{id}/payment/demo-confirm")

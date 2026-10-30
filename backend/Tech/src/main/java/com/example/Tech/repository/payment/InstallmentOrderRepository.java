@@ -29,6 +29,9 @@ public interface InstallmentOrderRepository extends JpaRepository<InstallmentOrd
     @EntityGraph(attributePaths = {"order", "order.user"})
     Optional<InstallmentOrder> findWithOrderById(Long id);
 
+    @Query("select p.order.id from InstallmentOrder p where p.partnerRef = :partnerRef")
+    Optional<Long> findOrderIdByPartnerRef(String partnerRef);
+
     /** Scalar: does not load the plan, so it can be read fresh after the order row is locked. */
     @Query("select p.order.id from InstallmentOrder p where p.id = :id")
     Optional<Long> findOrderIdById(Long id);

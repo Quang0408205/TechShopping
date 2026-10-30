@@ -7,7 +7,7 @@ Lần chạy đầu trên database có catalogue seed cũ (877 sản phẩm, xem
   * sản phẩm cũ không còn trong CSV bị ẩn (is_active = false), không xoá;
   * thương hiệu bị tách ("iPhone (Apple)", "MacBook"...) được gộp về tên chuẩn, thương hiệu
     không còn sản phẩm đang bán bị ẩn.
-Không nạp điểm / số lượt đánh giá của TGDĐ (bỏ từ kế hoạch v4, migration reviews_own_only.sql):
+Không nạp điểm / số lượt đánh giá của TGDĐ (migration reviews_own_only.sql):
 products.rating / total_reviews là đánh giá thật trên web, importer không đụng tới.
 Mọi thứ chạy trong một transaction; --dry-run chạy hết rồi rollback để xem trước số liệu.
 """

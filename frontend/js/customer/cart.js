@@ -1,11 +1,11 @@
-/* ================= TRANG GIỎ HÀNG (Phase 3) ================= */
+/* ================= TRANG GIỎ HÀNG ================= */
 
 /*
  * Giao diện lấy từ bản frontend mới; dữ liệu là giỏ trên server
  * (js/core/cart-store.js → /api/v1/cart). Chưa đăng nhập → mời đăng nhập.
  * Dòng đã ngừng bán: không tính tiền, chỉ còn nút xoá, và chặn thanh toán
  * cho tới khi xoá hết. Mọi dữ liệu đưa vào innerHTML đều escape.
- * Kế hoạch v5 GĐ5: có đơn chuyển khoản / thẻ còn chờ tiền → khung nhắc phía trên giỏ
+ * Có đơn chuyển khoản / thẻ còn chờ tiền → khung nhắc phía trên giỏ
  * (awaiting-payment.js); "Huỷ đơn & lấy lại giỏ" xong thì tải lại giỏ.
  */
 
@@ -154,7 +154,7 @@ function renderCart(summary) {
 
         const variantAttribute = `data-variant-id="${escapeHtml(String(item.variantId))}"`;
 
-        /* Kế hoạch v3 GĐ E: thiếu hàng ≠ ngừng bán; dòng thiếu hàng vẫn giảm được số lượng */
+        /* Thiếu hàng ≠ ngừng bán; dòng thiếu hàng vẫn giảm được số lượng */
         const stockShort = !item.available && item.availableQuantity !== null && item.availableQuantity < item.quantity;
 
         const unavailableTag = !stockShort
@@ -316,7 +316,7 @@ function renderCart(summary) {
 }
 
 
-/* Nhãn "Combo" dưới tên món mua kèm được giảm (kế hoạch v5 GĐ10) */
+/* Nhãn "Combo" dưới tên món mua kèm được giảm */
 function comboTagHtml(item) {
 
     return `<span class="combo-tag" title="${escapeHtml(item.comboNames.join(", "))}">Combo −${escapeHtml(formatPrice(item.comboDiscount))}</span>`;

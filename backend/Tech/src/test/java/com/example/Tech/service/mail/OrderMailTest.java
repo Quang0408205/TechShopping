@@ -142,7 +142,7 @@ class OrderMailTest {
     }
 
     @Test
-    void placedMail_isNotRequestedForQrOrCardOrders_butIsForCodAndInstallment() {
+    void placedMail_isNotRequestedForQrCardOrInstallmentOrders_butIsForCod() {
         org.springframework.context.ApplicationEventPublisher events = org.mockito.Mockito.mock(org.springframework.context.ApplicationEventPublisher.class);
         OrderMailPublisher publisher = new OrderMailPublisher(events);
         Order order = order();
@@ -151,18 +151,18 @@ class OrderMailTest {
         publisher.statusChanged(order, OrderStatus.PENDING);
         order.setPaymentMethod(PaymentMethod.CARD);
         publisher.statusChanged(order, OrderStatus.PENDING);
+        order.setPaymentMethod(PaymentMethod.INSTALLMENT);
+        publisher.statusChanged(order, OrderStatus.PENDING);
         verify(events, never()).publishEvent(any(Object.class));
 
         order.setPaymentMethod(PaymentMethod.COD);
         publisher.statusChanged(order, OrderStatus.PENDING);
-        order.setPaymentMethod(PaymentMethod.INSTALLMENT);
-        publisher.statusChanged(order, OrderStatus.PENDING);
-        verify(events, org.mockito.Mockito.times(2)).publishEvent(any(Object.class));
+        verify(events, org.mockito.Mockito.times(1)).publishEvent(any(Object.class));
 
         order.setPaymentMethod(PaymentMethod.BANK_TRANSFER);
         publisher.statusChanged(order, OrderStatus.CONFIRMED);
         publisher.paymentReceived(order);
-        verify(events, org.mockito.Mockito.times(4)).publishEvent(any(Object.class));
+        verify(events, org.mockito.Mockito.times(3)).publishEvent(any(Object.class));
     }
 
     @Test

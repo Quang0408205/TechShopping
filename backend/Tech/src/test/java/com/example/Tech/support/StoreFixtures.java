@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Store-side test data for integration tests that run inside the test's transaction (rolled back): a store, a
- * STAFF account assigned to it, and stock. Since Phase 7.6 a STAFF member only reaches the orders of their store and
+ * STAFF account assigned to it, and stock. A STAFF member only reaches the orders of their store and
  * confirming an order needs stock there.
  */
 public final class StoreFixtures {
@@ -54,7 +54,7 @@ public final class StoreFixtures {
     }
 
     /**
-     * Plan v3 GĐ E: the cart and checkout only sell what an open store holds. An open store (in a district no test
+     * The cart and checkout only sell what an open store holds. An open store (in a district no test
      * address names) with 50 units of each variant, so carts and home-delivery orders of the test work.
      */
     public static Store warehouse(EntityManager entityManager, ProductVariant... variants) {

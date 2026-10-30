@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Plan v5 GĐ10: loads the combos running now for the products of a cart / order and lets {@link ComboCalculator}
+ * Loads the combos running now for the products of a cart / order and lets {@link ComboCalculator}
  * decide. Cart and checkout use the same code, so the cart total is the order total.
  */
 @Service

@@ -52,7 +52,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v7 GĐ4: /api/v1/wishlist (save / list / remove) and the price-drop check + mail (ADMIN run). */
+/** /api/v1/wishlist (save / list / remove) and the price-drop check + mail (ADMIN run). */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

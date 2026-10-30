@@ -10,7 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** One normalised filter value of a product (group + label), rebuilt from its specifications (plan v5 stage 9). */
+/** One normalised filter value of a product (group + label), rebuilt from its specifications. */
 @Entity
 @Table(name = "product_filter_values")
 @Getter

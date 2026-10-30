@@ -13,7 +13,7 @@ public record CartResponse(
         int totalQuantity,
         @Schema(description = "Sum of lineTotal over the available lines; shipping is not included")
         BigDecimal subtotal,
-        @Schema(description = "Plan v5 GĐ10: combo discount over the available lines (add-ons bought with their main product)")
+        @Schema(description = "Combo discount over the available lines (add-ons bought with their main product)")
         BigDecimal comboDiscount,
         @Schema(description = "Combos applied now")
         List<ComboApplied> combos,

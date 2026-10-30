@@ -31,7 +31,7 @@ import java.util.List;
 public class StaffRoles {
 
     /**
-     * The one label of a STAFF assignment (plan v3 GĐ D: the old free labels "Nhân viên bán hàng / kỹ thuật / Thu ngân"
+     * The one label of a STAFF assignment (the old free labels "Nhân viên bán hàng / kỹ thuật / Thu ngân"
      * changed nothing, so they were merged; migration 13 renamed the stored ones). Labels sent by clients are ignored.
      */
     public static final String DEFAULT_POSITION = "Nhân viên chi nhánh";

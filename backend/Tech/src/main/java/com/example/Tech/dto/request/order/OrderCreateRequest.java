@@ -61,18 +61,18 @@ public record OrderCreateRequest(
         @Size(max = 100, message = "Shipping ward must be at most 100 characters")
         String shippingWard,
 
-        @Schema(description = "Optional voucher code (plan v5); re-checked against the cart when the order is placed",
+        @Schema(description = "Optional voucher code; re-checked against the cart when the order is placed",
                 example = "POY10")
         @Size(max = 30, message = "Mã voucher tối đa 30 ký tự")
         String voucherCode,
 
-        @Schema(description = "Optional loyalty points to spend (plan v5 GĐ6): 1 point = 1.000đ, at most 10% of the goods "
+        @Schema(description = "Optional loyalty points to spend: 1 point = 1.000đ, at most 10% of the goods "
                 + "after the voucher and at most the balance", example = "200")
         @Min(value = 0, message = "Số điểm không được âm")
         @Max(value = 1_000_000, message = "Số điểm quá lớn")
         Integer pointsToUse,
 
-        @Schema(description = "Plan v7: where the order mails go (placed, confirmed, shipping…); when absent the account's "
+        @Schema(description = "Where the order mails go (placed, confirmed, shipping…); when absent the account's "
                 + "email is used", example = "an@example.com")
         @Email(message = "Email chưa hợp lệ")
         @Size(max = 255, message = "Email tối đa 255 ký tự")

@@ -1,12 +1,14 @@
-/* ================= TRẢ GÓP (admin/installments.html) — Phase 5 ================= */
+/* ================= TRẢ GÓP (admin/installments.html) ================= */
 
 /*
+ * Hồ sơ trả góp do đối tác (thẻ tín dụng, công ty tài chính) xét và thu tiền; cửa hàng chỉ theo dõi và đối soát.
  * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET  /admin/installments?keyword=&status=&overdue=true&page=&size=   mới nhất trước
- *   POST /admin/installments/{id}/periods/{number}/pay { transactionId? }
- * Chỉ ghi nhận được kỳ sớm nhất chưa thu (nextPeriod) của hợp đồng đang trả góp;
- * 409 INSTALLMENT_PERIOD_OUT_OF_ORDER / INVALID_INSTALLMENT_STATUS (người khác vừa ghi) → báo và tải lại.
- * ?keyword= trên URL (link "Xem lịch trả góp" ở trang Đơn hàng) được điền sẵn vào ô tìm.
+ *   GET  /admin/installments?keyword=&status=&partner=&page=&size=   mới nhất trước
+ *   POST /admin/installments/{id}/settle     đối tác đã chuyển tiền (hồ sơ đã duyệt, đơn đã giao)
+ *   GET  /admin/installment-partners         (ADMIN) điều kiện + bảng phí của đối tác
+ *   PUT  /admin/installment-partners/{code}  (ADMIN) { active, minOrderTotal, maxOrderTotal, rates: [{ numMonths, feePercent }] }
+ * Hợp đồng cũ (trước khi có đối tác) vẫn xem được cùng lịch kỳ nhưng không thao tác.
+ * ?keyword= và ?status= trên URL (link ở trang Đơn hàng và Tổng quan) được điền sẵn vào bộ lọc.
  */
 
 const INSTALLMENT_PAGE_SIZE = 20;
@@ -37,7 +39,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     const statusFilter = document.getElementById("installmentStatusFilter");
 
-    const overdueFilter = document.getElementById("installmentOverdueFilter");
+    const partnerFilter = document.getElementById("installmentPartnerFilter");
 
     const tbody = document.getElementById("installmentTableBody");
 
@@ -71,7 +73,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     });
 
-    [statusFilter, overdueFilter].forEach(function (control) {
+    [statusFilter, partnerFilter].forEach(function (control) {
         control.addEventListener("change", reloadFromFirstPage);
     });
 
@@ -88,8 +90,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         if (button.dataset.action === "toggle") {
             toggleDetail(entry.installment.id);
-        } else if (button.dataset.action === "pay") {
-            payNextPeriod(entry);
+        } else if (button.dataset.action === "settle") {
+            settlePlan(entry);
         }
 
     });
@@ -111,6 +113,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
     loadPlans();
+
+    if (isAdmin) {
+        setupPartnerPanel();
+    }
 
 
     /* ================= TẢI DANH SÁCH ================= */
@@ -143,8 +149,8 @@ document.addEventListener("DOMContentLoaded", async function () {
             params.set("status", statusFilter.value);
         }
 
-        if (overdueFilter.checked) {
-            params.set("overdue", "true");
+        if (partnerFilter.value) {
+            params.set("partner", partnerFilter.value);
         }
 
 
@@ -159,7 +165,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 return;
             }
 
-            /* Hợp đồng cuối của trang cuối vừa rời bộ lọc (vd. vừa trả đủ) → lùi một trang */
+            /* Hồ sơ cuối của trang cuối vừa rời bộ lọc → lùi một trang */
             if ((page.content || []).length === 0 && currentPage > 0 && page.totalPages > 0) {
 
                 currentPage = page.totalPages - 1;
@@ -201,10 +207,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     function renderTable(page) {
 
-        document.getElementById("installmentRowCount").textContent = page.totalElements + " hợp đồng";
+        document.getElementById("installmentRowCount").textContent = page.totalElements + " hồ sơ";
 
         tbody.innerHTML = currentPlans.map(renderPlanRows).join("") ||
-            adminEmptyRow(7, "Không có hợp đồng trả góp nào phù hợp bộ lọc");
+            adminEmptyRow(7, "Không có hồ sơ trả góp nào phù hợp bộ lọc");
 
         renderPagination(page);
 
@@ -223,19 +229,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const expanded = expandedIds.has(plan.id);
 
-        const next = entry.nextPeriod;
+        const canSettle = !isAdmin && plan.status === "APPROVED" && plan.partner && order.status === "DELIVERED";
 
-        const started = plan.status === "ACTIVE" || plan.status === "COMPLETED";
-
-
-        const nextHtml = next
-            ? `Kỳ ${escapeHtml(String(next.number))} · ${escapeHtml(formatDateVi(next.dueDate))}
-               <span class="admin-subtext">${escapeHtml(formatPrice(Number(next.amount)))}</span>
-               ${next.overdue ? '<span class="admin-badge admin-badge-danger">Quá hạn</span>' : ""}`
-            : "—";
-
-        const payButton = !isAdmin && plan.status === "ACTIVE" && next
-            ? `<div class="admin-pay-cell"><button type="button" class="btn btn-dark admin-action-btn" data-action="pay" data-id="${id}">GHI NHẬN KỲ ${escapeHtml(String(next.number))}</button></div>`
+        const settleButton = canSettle
+            ? `<div class="admin-pay-cell"><button type="button" class="btn btn-dark admin-action-btn" data-action="settle" data-id="${id}">ĐÃ NHẬN TIỀN TỪ ĐỐI TÁC</button></div>`
             : "";
 
 
@@ -247,7 +244,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                         class="admin-row-toggle"
                         data-action="toggle"
                         data-id="${id}"
-                        aria-label="Xem lịch trả góp đơn ${escapeHtml(order.code)}"
+                        aria-label="Xem hồ sơ trả góp đơn ${escapeHtml(order.code)}"
                         aria-expanded="${expanded}"
                     >${expanded ? "▾" : "▸"}</button>
                 </td>
@@ -263,15 +260,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <span class="admin-subtext">${escapeHtml(customer.email || "")}</span>
                 </td>
                 <td>
+                    ${escapeHtml(plan.partnerName || "—")}
+                    <span class="admin-subtext">${escapeHtml(plan.partnerRef || (plan.partner ? "" : "Hợp đồng cũ"))}</span>
+                </td>
+                <td>
                     ${escapeHtml(plan.numMonths + " tháng")}
                     <span class="admin-subtext">${escapeHtml(formatPrice(Number(plan.monthlyPayment)) + "/kỳ")}</span>
                 </td>
                 <td>
-                    ${started ? escapeHtml(plan.paidPeriods + "/" + plan.numMonths + " kỳ · " + formatPrice(Number(plan.paidAmount))) : "—"}
-                    <span class="admin-subtext">${escapeHtml("Còn " + formatPrice(Number(plan.remainingAmount)))}</span>
+                    ${plan.feeAmount != null ? escapeHtml(installmentFeeText(plan)) : "—"}
+                    ${plan.settledAt ? `<span class="admin-subtext">Nhận tiền ${escapeHtml(formatDateTimeVi(plan.settledAt))}</span>` : ""}
                 </td>
-                <td>${nextHtml}${payButton}</td>
-                <td>${installmentBadgeHtml(plan)}</td>
+                <td>${installmentBadgeHtml(plan)}${settleButton}</td>
             </tr>
             <tr class="js-installment-detail" data-installment-id="${id}" ${expanded ? "" : "hidden"}>
                 <td></td>
@@ -290,12 +290,19 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const facts = [
             ["Số CCCD", escapeHtml(plan.citizenId)],
-            ["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)],
             ["Người nhận", escapeHtml(order.recipientName + " · " + order.recipientPhone)],
-            ["Tổng trả góp", escapeHtml(formatPrice(Number(plan.totalAmount)) + " · lãi suất 0%")],
+            ["Tổng trả góp", escapeHtml(formatPrice(Number(plan.totalAmount)) + " · lãi suất 0% với khách")],
             ["Kỳ hạn", escapeHtml(installmentTermText(plan))],
             ["Trạng thái đơn", escapeHtml(INSTALLMENT_ORDER_STATUS_LABELS[order.status] || order.status)]
         ];
+
+        if (plan.cardBankName || plan.cardBank) {
+            facts.splice(1, 0, ["Ngân hàng thẻ", escapeHtml(plan.cardBankName || plan.cardBank)]);
+        }
+
+        if (plan.attemptCount > 1) {
+            facts.push(["Số lần gửi hồ sơ", escapeHtml(String(plan.attemptCount))]);
+        }
 
         if (plan.reviewedAt) {
             facts.push([plan.status === "REJECTED" ? "Từ chối lúc" : "Duyệt lúc", escapeHtml(formatDateTimeVi(plan.reviewedAt))]);
@@ -364,34 +371,27 @@ document.addEventListener("DOMContentLoaded", async function () {
     }
 
 
-    /* ================= GHI NHẬN KỲ ================= */
+    /* ================= ĐỐI SOÁT: ĐỐI TÁC ĐÃ CHUYỂN TIỀN ================= */
 
-    function payNextPeriod(entry) {
+    function settlePlan(entry) {
 
         const plan = entry.installment;
 
-        const next = entry.nextPeriod;
-
-        if (plan.status !== "ACTIVE" || !next) {
-            return;
-        }
-
-        const last = next.number === plan.numMonths;
-
-        openPaymentConfirmModal({
-            title: "Ghi nhận kỳ " + next.number + "/" + plan.numMonths + " đơn " + entry.order.code + "?",
-            message: "Đã thu đủ " + formatPrice(Number(next.amount)) + " (hạn " + formatDateVi(next.dueDate) + ")."
-                + (last ? " Đây là kỳ cuối: hợp đồng sẽ hoàn tất." : ""),
-            confirmLabel: "ĐÃ THU",
-            onConfirm: function (body) {
-                recordPeriod(entry, next.number, body);
+        openConfirmModal({
+            title: "Đã nhận tiền từ " + plan.partnerName + " cho đơn " + entry.order.code + "?",
+            message: "Đối tác chuyển " + formatPrice(Number(plan.netAmount)) + " (đơn " + formatPrice(Number(plan.totalAmount))
+                + " trừ phí " + formatPrice(Number(plan.feeAmount)) + ").",
+            confirmLabel: "ĐÃ NHẬN",
+            cancelLabel: "Quay lại",
+            onConfirm: function () {
+                recordSettlement(entry);
             }
         });
 
     }
 
 
-    async function recordPeriod(entry, number, body) {
+    async function recordSettlement(entry) {
 
         const planId = entry.installment.id;
 
@@ -402,24 +402,16 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         try {
 
-            const updated = await apiRequest("/admin/installments/" + planId + "/periods/" + number + "/pay", {
-                method: "POST",
-                body: body,
-                auth: true
-            });
+            await apiRequest("/admin/installments/" + planId + "/settle", { method: "POST", auth: true });
 
-            showToast(updated.installment.status === "COMPLETED"
-                ? "Đã ghi nhận kỳ " + number + ". Hợp đồng đơn " + entry.order.code + " đã trả đủ."
-                : "Đã ghi nhận kỳ " + number + " của đơn " + entry.order.code + ".", "success");
+            showToast("Đã ghi nhận đối tác chuyển tiền đơn " + entry.order.code + ".", "success");
 
         } catch (error) {
 
             handleError(error, function (message) {
 
                 showToast(
-                    error.code === "INSTALLMENT_PERIOD_OUT_OF_ORDER" || error.code === "INVALID_INSTALLMENT_STATUS"
-                        ? message.replace(/\.?$/, ".") + " Danh sách đã được tải lại."
-                        : message,
+                    error.code === "INVALID_INSTALLMENT_STATUS" ? message.replace(/\.?$/, ".") + " Danh sách đã được tải lại." : message,
                     "error"
                 );
 
@@ -428,6 +420,128 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
 
         loadPlans();
+
+    }
+
+
+    /* ================= ĐỐI TÁC VÀ PHÍ (ADMIN) ================= */
+
+    async function setupPartnerPanel() {
+
+        const panel = document.getElementById("partnerPanel");
+
+        const body = document.getElementById("partnerTableBody");
+
+        let partners;
+
+        try {
+
+            partners = await apiRequest("/admin/installment-partners", { auth: true });
+
+        } catch (error) {
+
+            return;
+
+        }
+
+        panel.hidden = false;
+
+        body.innerHTML = partners.map(function (partner) {
+
+            const code = escapeHtml(partner.code);
+
+            const rates = partner.rates.map(function (rate) {
+                return rate.numMonths + "=" + Number(rate.feePercent);
+            }).join(", ");
+
+            return `
+                <tr data-partner="${code}">
+                    <td><strong>${escapeHtml(partner.name)}</strong><span class="admin-subtext">${code}</span></td>
+                    <td><input type="number" min="0" step="1" class="js-partner-min" value="${escapeHtml(String(Number(partner.minOrderTotal)))}" aria-label="Đơn tối thiểu ${code}"></td>
+                    <td><input type="number" min="0" step="1" class="js-partner-max" value="${partner.maxOrderTotal == null ? "" : escapeHtml(String(Number(partner.maxOrderTotal)))}" aria-label="Đơn tối đa ${code}"></td>
+                    <td><input type="text" class="js-partner-rates" value="${escapeHtml(rates)}" aria-label="Phí theo kỳ hạn ${code}"></td>
+                    <td><input type="checkbox" class="js-partner-active" ${partner.active ? "checked" : ""} aria-label="Đối tác ${code} hoạt động"></td>
+                    <td><button type="button" class="btn btn-dark admin-action-btn" data-partner-save="${code}">LƯU</button></td>
+                </tr>
+            `;
+
+        }).join("");
+
+
+        body.addEventListener("click", async function (event) {
+
+            const button = event.target.closest("button[data-partner-save]");
+
+            if (!button) {
+                return;
+            }
+
+            const row = button.closest("tr");
+
+            const rates = parseRates(row.querySelector(".js-partner-rates").value);
+
+            if (!rates) {
+
+                showToast("Phí nhập theo dạng 3=2, 6=3 (kỳ hạn tháng = phần trăm phí).", "error");
+
+                return;
+
+            }
+
+            const maxValue = row.querySelector(".js-partner-max").value.trim();
+
+            button.disabled = true;
+
+            try {
+
+                await apiRequest("/admin/installment-partners/" + encodeURIComponent(button.dataset.partnerSave), {
+                    method: "PUT",
+                    auth: true,
+                    body: {
+                        active: row.querySelector(".js-partner-active").checked,
+                        minOrderTotal: Number(row.querySelector(".js-partner-min").value || 0),
+                        maxOrderTotal: maxValue === "" ? null : Number(maxValue),
+                        rates: rates
+                    }
+                });
+
+                showToast("Đã lưu đối tác " + button.dataset.partnerSave + ".", "success");
+
+            } catch (error) {
+
+                handleError(error, function (message) {
+                    showToast(message, "error");
+                });
+
+            } finally {
+
+                button.disabled = false;
+
+            }
+
+        });
+
+    }
+
+
+    /* "3=2, 6=3.5" → [{ numMonths: 3, feePercent: 2 }, …]; sai định dạng → null */
+    function parseRates(text) {
+
+        const rates = [];
+
+        for (const part of text.split(",")) {
+
+            const match = part.trim().match(/^(\d{1,2})\s*=\s*(\d{1,3}(?:\.\d{1,2})?)$/);
+
+            if (!match) {
+                return null;
+            }
+
+            rates.push({ numMonths: Number(match[1]), feePercent: Number(match[2]) });
+
+        }
+
+        return rates;
 
     }
 

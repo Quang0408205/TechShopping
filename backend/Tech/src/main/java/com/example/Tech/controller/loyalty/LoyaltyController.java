@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Plan v5 GĐ6: my points and tier. Requires a valid access token. */
+/** My points and tier. Requires a valid access token. */
 @RestController
 @RequestMapping("/api/v1/loyalty")
 @RequiredArgsConstructor

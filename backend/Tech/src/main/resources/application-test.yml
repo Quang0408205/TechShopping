@@ -46,6 +46,8 @@ app:
     webhook:
       secret: test-only-webhook-secret
       simulator-enabled: true
+    installment:
+      auto-decide-seconds: -1
     stripe:
       # Test-only fake keys: backend tests mock Stripe; the E2E tests point api-base to a local fake Stripe
       secret-key: sk_test_only_fake_key

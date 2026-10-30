@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Plan v5 GĐ4: voucher management (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
+/** Voucher management (ADMIN only: URL rule + @PreAuthorize + a database re-check). */
 @RestController
 @RequestMapping("/api/v1/admin/vouchers")
 @RequiredArgsConstructor

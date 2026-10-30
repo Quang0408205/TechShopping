@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import java.time.Duration;
 
 /**
- * Plan v5 GĐ3: per-IP limit on the search box suggestions (Redis counter). Behind the deploy proxy every visitor has
+ * Per-IP limit on the search box suggestions (Redis counter). Behind the deploy proxy every visitor has
  * the proxy's IP, so the default is generous; the page also waits for a pause in typing before asking.
  */
 @ConfigurationProperties(prefix = "app.search")

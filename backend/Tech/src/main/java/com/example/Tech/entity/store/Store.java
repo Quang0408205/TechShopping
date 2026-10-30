@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 
 /**
  * A branch/store (chi nhánh). Referenced by {@code employee_assignments}, {@code sales_records},
- * {@code inventory}, {@code stock_movements} and {@code orders.store_id} (Phase 7).
+ * {@code inventory}, {@code stock_movements} and {@code orders.store_id}.
  */
 @Entity
 @Table(name = "stores")

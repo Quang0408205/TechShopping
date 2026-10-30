@@ -1,4 +1,4 @@
--- Phase 6 (2026-10-08): bảo hành / bảo trì / đổi trả. Chạy lại nhiều lần vẫn an toàn.
+-- bảo hành / bảo trì / đổi trả. Chạy lại nhiều lần vẫn an toàn.
 -- db tạo mới từ database/techshopping.sql đã có sẵn mọi thứ dưới đây.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/after_sales.sql
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping_test < database/migrations/after_sales.sql
@@ -139,7 +139,7 @@ select 'RETURN' || '-' || rr.return_request_id, 'RETURN', rr.return_request_id, 
 from return_requests rr
 join orders o on o.order_id = rr.order_id;
 
--- phiếu bảo hành cho đơn đã giao trước Phase 6 (từ ngày giao, theo số tháng bảo hành hiện tại của sản phẩm)
+-- phiếu bảo hành cho đơn đã giao trước khi có bảo hành (từ ngày giao, theo số tháng bảo hành hiện tại của sản phẩm)
 insert into warranties (order_item_id, warranty_start_date, warranty_end_date, warranty_type)
 select oi.order_item_id, o.delivered_at::date, (o.delivered_at::date + make_interval(months => p.warranty_months))::date,
        'STANDARD'

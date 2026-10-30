@@ -99,13 +99,13 @@ public enum ErrorCode {
     PROMOTION_PRODUCT_OVERLAP(HttpStatus.CONFLICT,
             "Sản phẩm đã thuộc một chương trình khuyến mãi khác đang bật trong khoảng thời gian này"),
 
-    // Vouchers (plan v5)
+    // Vouchers
     VOUCHER_NOT_FOUND(HttpStatus.NOT_FOUND, "Mã voucher không tồn tại"),
     VOUCHER_NOT_APPLICABLE(HttpStatus.BAD_REQUEST, "Voucher không áp dụng được cho đơn hàng này"),
     DUPLICATE_VOUCHER(HttpStatus.CONFLICT, "Mã voucher đã tồn tại"),
     VOUCHER_IN_USE(HttpStatus.CONFLICT, "Voucher đã có đơn hàng sử dụng, không đổi được mã hoặc xoá"),
 
-    // Combos (plan v5 GĐ10)
+    // Combos
     COMBO_NOT_FOUND(HttpStatus.NOT_FOUND, "Combo không tồn tại"),
     COMBO_IN_USE(HttpStatus.CONFLICT, "Combo đã có đơn hàng áp dụng, chỉ có thể tạm ngưng"),
 
@@ -117,7 +117,7 @@ public enum ErrorCode {
     INVALID_BANK_TRANSACTION(HttpStatus.CONFLICT, "Giao dịch ngân hàng không cho phép thao tác này"),
     WEBHOOK_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "Khóa webhook không đúng"),
     WEBHOOK_NOT_CONFIGURED(HttpStatus.SERVICE_UNAVAILABLE, "Webhook ngân hàng chưa được cấu hình"),
-    SIMULATOR_DISABLED(HttpStatus.NOT_FOUND, "Chức năng giả lập chuyển khoản đang tắt"),
+    SIMULATOR_DISABLED(HttpStatus.NOT_FOUND, "Chức năng giả lập thanh toán đang tắt"),
     PAYMENT_REQUIRED(HttpStatus.CONFLICT, "Đơn chuyển khoản chưa được xác nhận đã nhận tiền"),
     CARD_PAYMENT_DISABLED(HttpStatus.BAD_REQUEST, "Thanh toán thẻ quốc tế đang tạm tắt, vui lòng chọn hình thức khác"),
     CARD_AMOUNT_TOO_LARGE(HttpStatus.BAD_REQUEST, "Đơn hàng vượt hạn mức thanh toán thẻ, vui lòng chọn hình thức khác"),
@@ -126,7 +126,6 @@ public enum ErrorCode {
     INSTALLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy hợp đồng trả góp"),
     INVALID_INSTALLMENT_STATUS(HttpStatus.CONFLICT, "Trạng thái hợp đồng trả góp không cho phép thao tác này"),
     INSTALLMENT_NOT_APPROVED(HttpStatus.CONFLICT, "Hợp đồng trả góp chưa được duyệt"),
-    INSTALLMENT_PERIOD_OUT_OF_ORDER(HttpStatus.CONFLICT, "Phải ghi nhận kỳ trả góp sớm nhất chưa thanh toán"),
 
     // Store
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy chi nhánh"),
@@ -151,14 +150,14 @@ public enum ErrorCode {
     // Inventory
     INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh xử lý không đủ hàng để xác nhận đơn"),
     ORDER_STORE_MISSING(HttpStatus.CONFLICT, "Đơn chưa có chi nhánh xử lý; ADMIN cần gán chi nhánh trước"),
-    /** Plan v3 GĐ E: no open store holds the whole cart (home delivery), the chosen pickup store lacks items, or the cart asks for more than all stores hold. */
+    /** No open store holds the whole cart (home delivery), the chosen pickup store lacks items, or the cart asks for more than all stores hold. */
     OUT_OF_STOCK(HttpStatus.CONFLICT, "Không đủ hàng"),
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy đánh giá"),
     REVIEW_TOO_SOON(HttpStatus.TOO_MANY_REQUESTS, "Bạn vừa gửi đánh giá, vui lòng đợi 1 phút rồi gửi tiếp"),
 
-    // After-sales (Phase 6)
+    // After-sales
     SERVICE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy yêu cầu"),
     AFTER_SALES_NOT_AVAILABLE(HttpStatus.CONFLICT, "Chỉ gửi yêu cầu bảo hành, bảo trì, đổi trả cho đơn đã giao"),
     WARRANTY_NOT_VALID(HttpStatus.CONFLICT, "Sản phẩm không còn bảo hành; bạn có thể gửi yêu cầu bảo trì"),
@@ -166,7 +165,7 @@ public enum ErrorCode {
     RETURN_NOT_AVAILABLE(HttpStatus.CONFLICT, "Đơn hàng không trả hàng được"),
     INVALID_SERVICE_REQUEST_STATUS(HttpStatus.CONFLICT, "Trạng thái yêu cầu không cho phép thao tác này"),
 
-    // Contact form (kiemthu GĐ7)
+    // Contact form
     CONTACT_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy tin nhắn liên hệ"),
     INVALID_CONTACT_STATUS(HttpStatus.CONFLICT, "Tin nhắn đã xử lý không quay lại trạng thái Mới được"),
     TOO_MANY_REQUESTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn gửi quá nhiều lần, vui lòng thử lại sau"),
@@ -175,7 +174,7 @@ public enum ErrorCode {
     AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ AI đang tạm ngưng, vui lòng thử lại sau"),
     CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện"),
 
-    // Login lock (Phase 10)
+    // Login lock
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mật khẩu quá nhiều lần, vui lòng thử lại sau");
 
     private final HttpStatus status;

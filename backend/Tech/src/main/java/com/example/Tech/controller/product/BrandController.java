@@ -48,7 +48,7 @@ public class BrandController {
     }
 
     @GetMapping("/top")
-    @Operation(summary = "Plan v8: brands with the most products on sale (home page strip), at most 40")
+    @Operation(summary = "Brands with the most products on sale (home page strip), at most 40")
     public ResponseEntity<ApiResult<List<TopBrandResponse>>> top(@RequestParam(defaultValue = "24") int size) {
         return ResponseEntity.ok(ApiResult.ok(topBrandService.top(Math.max(1, Math.min(size, 40)))));
     }

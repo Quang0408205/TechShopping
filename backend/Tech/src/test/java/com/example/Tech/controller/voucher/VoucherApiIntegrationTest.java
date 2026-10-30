@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Plan v5 GĐ4: admin voucher API + customer preview + checkout with a voucher + use given back on cancel. */
+/** Admin voucher API + customer preview + checkout with a voucher + use given back on cancel. */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")

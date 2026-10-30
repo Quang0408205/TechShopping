@@ -37,6 +37,49 @@
 }
 
 
+/*
+ * Chuyển trang giữ nguyên sidebar + thanh trên: trình duyệt giữ ảnh của trang cũ cho tới khi
+ * trang mới vẽ xong, hai khối này đứng yên, chỉ phần nội dung mờ chuyển (Chrome / Edge; trình
+ * duyệt khác bỏ qua và chuyển trang như cũ).
+ */
+
+@view-transition {
+    navigation: auto;
+}
+
+.admin-sidebar {
+    view-transition-name: admin-sidebar;
+}
+
+.admin-topbar {
+    view-transition-name: admin-topbar;
+}
+
+::view-transition-group(admin-sidebar),
+::view-transition-group(admin-topbar) {
+    animation: none;
+}
+
+::view-transition-old(admin-sidebar),
+::view-transition-new(admin-sidebar),
+::view-transition-old(admin-topbar),
+::view-transition-new(admin-topbar) {
+    animation: none;
+    mix-blend-mode: normal;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+    animation-duration: 120ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    @view-transition {
+        navigation: none;
+    }
+}
+
+
 /* ================= SIDEBAR ================= */
 
 .admin-sidebar {
@@ -845,7 +888,7 @@ button.admin-badge {
     border-bottom-color: var(--color-ink);
 }
 
-/* ================= V3 GĐ B: TRANG ĐƠN HÀNG ================= */
+/* ================= TRANG ĐƠN HÀNG ================= */
 
 .admin-order-tabs {
     flex-wrap: wrap;
@@ -957,7 +1000,7 @@ button.admin-badge {
     cursor: not-allowed;
 }
 
-/* ================= V3 GĐ C: DANH MỤC / THƯƠNG HIỆU ================= */
+/* ================= DANH MỤC / THƯƠNG HIỆU ================= */
 
 .admin-tax-child {
     padding-left: calc(var(--tax-depth, 0) * 24px);
@@ -1370,7 +1413,7 @@ button.admin-badge {
 }
 
 
-/* ================= PHASE 5: THANH TOÁN / TRẢ GÓP ================= */
+/* ================= THANH TOÁN / TRẢ GÓP ================= */
 
 .admin-badge-info {
     background: #e6f0fb;
@@ -1477,7 +1520,7 @@ button.admin-badge {
 }
 
 
-/* ================= PHASE 7.8: TỒN KHO ================= */
+/* ================= TỒN KHO ================= */
 
 .admin-stock-qty {
     margin-right: 4px;
@@ -1511,7 +1554,7 @@ button.admin-badge {
 }
 
 
-/* ================= PHASE 7.10: HÀNG NHẬP KHO (admin/reports) ================= */
+/* ================= HÀNG NHẬP KHO (admin/reports) ================= */
 
 /* 4 thẻ trong 1 khung admin-panel: ô nhỏ hơn để vừa một hàng */
 .admin-stat-grid--compact {
@@ -1632,7 +1675,7 @@ button.admin-badge {
 }
 
 
-/* ================= PHASE 6: BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests) ================= */
+/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests) ================= */
 
 .admin-action-modal {
     max-width: 480px;
@@ -1827,7 +1870,7 @@ button.admin-badge {
     white-space: nowrap;
 }
 
-/* Phase 12: thẻ phiên bản (admin/products.html) */
+/* Thẻ phiên bản (admin/products.html) */
 .admin-version-card {
     padding: 14px 16px;
     margin-bottom: 14px;

@@ -8,7 +8,7 @@
  * Doanh thu = đơn đã giao (theo ngày giao, gồm phí giao hàng); tiền hoàn = trả hàng đã hoàn tiền (theo ngày hoàn).
  * Mặc định 30 ngày gần nhất; tối đa 366 ngày; theo ngày tối đa 62 ngày (lỗi 400 hiện dưới bộ lọc).
  *
- * Phase 7.10, chỉ ADMIN, bộ lọc riêng (chi nhánh thật + khoảng ngày):
+ * Chỉ ADMIN, bộ lọc riêng (chi nhánh thật + khoảng ngày):
  *   GET /admin/inventory/stock-in-stats?storeId&fromDate&toDate
  *   → tổng số lượng / số lần nhập / số phiên bản / số nhà cung cấp + từng chi nhánh.
  */
@@ -86,7 +86,7 @@ document.addEventListener(
 
         render();
 
-        /* Phase 7.10: hàng nhập kho (dữ liệu thật), chỉ ADMIN */
+        /* Hàng nhập kho (dữ liệu thật), chỉ ADMIN */
         if (isAdmin) {
             setupStockInStats();
         }
@@ -186,7 +186,8 @@ document.addEventListener(
                 { label: "Đơn đã giao", value: String(s.deliveredOrders), sub: s.unitsSold + " sản phẩm · TB " + formatPrice(s.averageOrderValue) + " / đơn" },
                 { label: "Tiền hoàn", value: formatPrice(s.refundAmount), sub: s.refundCount + " lần hoàn tiền" },
                 { label: "Phí giao hàng", value: formatPrice(s.shippingFees), sub: "Đã tính trong doanh thu gộp" },
-                { label: "Hoa hồng nhân viên", value: formatPrice(s.totalCommission), sub: "Theo đơn đã giao trong kỳ" }
+                { label: "Hoa hồng nhân viên", value: formatPrice(s.totalCommission), sub: "Theo đơn đã giao trong kỳ" },
+                { label: "Phí đối tác trả góp", value: formatPrice(s.installmentFees || 0), sub: "Cửa hàng chịu, khách vẫn 0%" }
             ]);
 
 
@@ -253,7 +254,7 @@ document.addEventListener(
             document.querySelector("#reportEmployeeTable tbody").innerHTML = report.byEmployee.map(function (row) {
                 return `
                     <tr>
-                        <td>${row.employeeId === null ? '<span class="admin-subtext">Không gán nhân viên (đơn xác nhận trước Phase 10)</span>'
+                        <td>${row.employeeId === null ? '<span class="admin-subtext">Không gán nhân viên (đơn xác nhận trước)</span>'
                             : escapeHtml(row.fullname) + (row.employeeCode ? ' <span class="admin-subtext">' + escapeHtml(row.employeeCode) + "</span>" : "")}</td>
                         <td>${escapeHtml(row.storeName || "—")}</td>
                         <td class="admin-number">${row.orders}</td>
@@ -362,7 +363,7 @@ document.addEventListener(
 );
 
 
-/* ================= HÀNG NHẬP KHO THEO CHI NHÁNH (Phase 7.10, chỉ ADMIN) ================= */
+/* ================= HÀNG NHẬP KHO THEO CHI NHÁNH (chỉ ADMIN) ================= */
 
 async function setupStockInStats() {
 

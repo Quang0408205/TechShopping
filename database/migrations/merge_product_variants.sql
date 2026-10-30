@@ -1,4 +1,4 @@
--- Kế hoạch v4 bước 5 (2026-10-17): gộp các sản phẩm thật ra là phiên bản của nhau, bỏ phiên bản giá 0.
+-- gộp các sản phẩm thật ra là phiên bản của nhau, bỏ phiên bản giá 0.
 --   1. Phiên bản giá 0 chưa từng bán: xoá (kèm tồn kho / sổ kho mẫu, dòng giỏ); sản phẩm không còn phiên bản → xoá.
 --   2. Sản phẩm ĐANG BÁN cùng danh mục, tên giống nhau sau khi bỏ phần RAM/bộ nhớ ở cuối ("8GB/256GB", "256GB")
 --      → một sản phẩm. Sản phẩm chính = phiên bản rẻ nhất (hoà: id nhỏ). Tên sản phẩm chính bỏ phần RAM/bộ nhớ.

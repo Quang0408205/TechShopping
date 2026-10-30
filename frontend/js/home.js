@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/* ================= MÀN HÌNH MỞ ĐẦU: LOGO BAY VÀO HEADER (kế hoạch v6 B5) ================= */
+/* ================= MÀN HÌNH MỞ ĐẦU: LOGO BAY VÀO HEADER ================= */
 
 /*
  * index.html thêm lớp has-intro lần đầu mỗi phiên (sessionStorage poy_intro_seen, không hiện khi giảm chuyển động).
@@ -259,7 +259,7 @@ async function renderBrandMarquee() {
         return;
     }
 
-    /* kế hoạch v8: chỉ các hãng có nhiều sản phẩm đang bán nhất (GET /brands/top), kèm số sản phẩm */
+    /* Chỉ các hãng có nhiều sản phẩm đang bán nhất (GET /brands/top), kèm số sản phẩm */
     let brands = null;
 
     try {
@@ -901,7 +901,7 @@ async function renderHomeReviews() {
 }
 
 
-/* ================= COMBO NỔI BẬT (kế hoạch v6 B4) ================= */
+/* ================= COMBO NỔI BẬT ================= */
 
 /* GET /combos/featured: tối đa 3 combo đang chạy; không có (hoặc lỗi) → khối ẩn */
 
@@ -970,7 +970,7 @@ async function renderFeaturedCombos() {
 }
 
 
-/* ================= SẢN PHẨM ĐÃ XEM (kế hoạch v6 B3) ================= */
+/* ================= SẢN PHẨM ĐÃ XEM ================= */
 
 /*
  * Id lưu trên trình duyệt (rememberViewedProduct, js/core/ui.js); giá / tên lấy mới từ GET /products/{id}.

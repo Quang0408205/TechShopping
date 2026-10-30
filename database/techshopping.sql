@@ -36,7 +36,7 @@ create table user_roles (
     primary key (user_id, role_id)
 );
 
--- bảng loyalty_tiers (kế hoạch v5): 4 hạng thành viên, ADMIN sửa ngưỡng tổng chi tiêu + hệ số nhân điểm
+-- bảng loyalty_tiers: 4 hạng thành viên, ADMIN sửa ngưỡng tổng chi tiêu + hệ số nhân điểm
 create table loyalty_tiers (
     tier_code varchar(20) primary key,
     name varchar(50) not null,
@@ -296,7 +296,7 @@ create table orders (
 
 create unique index uq_orders_tracking_token on orders(tracking_token);
 
--- bảng email_log: mail đơn hàng đã gửi / thất bại (kế hoạch v7)
+-- bảng email_log: mail đơn hàng đã gửi / thất bại
 create table email_log (
     email_log_id bigserial primary key,
     order_id bigint references orders(order_id) on delete set null,
@@ -308,7 +308,7 @@ create table email_log (
     created_at timestamp not null default current_timestamp
 );
 
--- bảng wishlist_items: sản phẩm khách yêu thích; mốc giá để báo giảm giá qua email (kế hoạch v7)
+-- bảng wishlist_items: sản phẩm khách yêu thích; mốc giá để báo giảm giá qua email
 create table wishlist_items (
     wishlist_item_id bigserial primary key,
     user_id bigint not null references users(user_id),
@@ -352,7 +352,26 @@ create table order_status_history (
 -- nhóm 4: thanh toán và trả góp
 -- =====================================================
 
--- bảng installment_orders: hợp đồng trả góp của đơn hàng (hồ sơ + kết quả duyệt)
+-- bảng installment_partners: đối tác trả góp (thẻ tín dụng, công ty tài chính) và điều kiện của từng đối tác
+create table installment_partners (
+    partner_code varchar(30) primary key,
+    partner_name varchar(100) not null,
+    partner_type varchar(30) not null,
+    min_order_total decimal(15, 2) not null default 3000000,
+    max_order_total decimal(15, 2),
+    is_active boolean not null default true,
+    display_order int not null default 0
+);
+
+-- bảng installment_fee_rates: phí đối tác (% giá trị đơn) theo kỳ hạn; không có dòng = không hỗ trợ kỳ hạn đó
+create table installment_fee_rates (
+    partner_code varchar(30) not null references installment_partners(partner_code) on delete cascade,
+    num_months int not null,
+    fee_percent decimal(5, 2) not null,
+    primary key (partner_code, num_months)
+);
+
+-- bảng installment_orders: hồ sơ trả góp của đơn hàng (đối tác xử lý, phí và tiền thực nhận, đối soát)
 create table installment_orders (
     installment_id bigserial primary key,
     order_id bigint unique not null references orders(order_id),
@@ -362,12 +381,21 @@ create table installment_orders (
     total_interest decimal(15, 2),
     status varchar(50) default 'PENDING_APPROVAL',
     citizen_id varchar(20) not null,
-    card_bank_code varchar(20) not null,
+    card_bank_code varchar(20),
     rejection_reason text,
     reviewed_by bigint references users(user_id),
     reviewed_at timestamp,
     created_at timestamp default current_timestamp,
-    updated_at timestamp default current_timestamp
+    updated_at timestamp default current_timestamp,
+    partner_code varchar(30) references installment_partners(partner_code),
+    partner_ref varchar(60),
+    fee_percent decimal(5, 2),
+    fee_amount decimal(15, 2),
+    net_amount decimal(15, 2),
+    settled_at timestamp,
+    settled_by bigint references users(user_id),
+    attempt_count int not null default 1,
+    last_event_id varchar(80)
 );
 
 -- bảng installment_payments: quản lý các kỳ thanh toán trả góp
@@ -728,7 +756,7 @@ create table promotion_products (
     primary key (promotion_id, product_id)
 );
 
--- bảng vouchers (kế hoạch v5): mã giảm % cho đơn hàng, đơn tối thiểu, giảm tối đa, lượt dùng, phạm vi danh mục
+-- bảng vouchers: mã giảm % cho đơn hàng, đơn tối thiểu, giảm tối đa, lượt dùng, phạm vi danh mục
 create table vouchers (
     voucher_id bigserial primary key,
     code varchar(30) not null unique,
@@ -767,7 +795,7 @@ create table voucher_usages (
     released_at timestamp
 );
 
--- bảng combos (kế hoạch v5 GĐ10): mua kèm giảm giá = 1 sản phẩm chính + món mua kèm, tự áp khi giỏ đủ món
+-- bảng combos: mua kèm giảm giá = 1 sản phẩm chính + món mua kèm, tự áp khi giỏ đủ món
 create table combos (
     combo_id bigserial primary key,
     name varchar(150) not null,
@@ -800,7 +828,7 @@ create table order_combos (
     discount_amount decimal(15, 2) not null
 );
 
--- bảng loyalty_transactions (kế hoạch v5): lịch sử điểm tích luỹ (+ / −) kèm số dư sau giao dịch
+-- bảng loyalty_transactions: lịch sử điểm tích luỹ (+ / −) kèm số dư sau giao dịch
 create table loyalty_transactions (
     loyalty_transaction_id bigserial primary key,
     user_id bigint not null references users(user_id) on delete cascade,
@@ -879,18 +907,27 @@ create index idx_orders_store on orders(store_id);
 create index idx_orders_shipping_province on orders(shipping_province);
 create index idx_order_status_history_order on order_status_history(order_id, changed_at);
 create index idx_order_status_history_changed_by on order_status_history(changed_by);
--- báo cáo (Phase 10): doanh thu theo ngày giao, tiền hoàn theo ngày hoàn, doanh số theo chi nhánh / nhân viên
+-- báo cáo: doanh thu theo ngày giao, tiền hoàn theo ngày hoàn, doanh số theo chi nhánh / nhân viên
 create index idx_orders_delivered_at on orders(delivered_at) where status = 'DELIVERED';
 create index idx_return_requests_refunded_at on return_requests(completed_at) where status = 'REFUNDED';
 create index idx_sales_records_store_recorded on sales_records(store_id, recorded_at);
 create index idx_sales_records_employee_recorded on sales_records(employee_id, recorded_at);
 
+insert into installment_partners (partner_code, partner_name, partner_type, min_order_total, max_order_total, display_order) values
+    ('CREDIT_CARD', 'Thẻ tín dụng', 'CREDIT_CARD', 3000000, null, 1),
+    ('FINANCE_A', 'Công ty tài chính A', 'FINANCE_COMPANY', 3000000, null, 2),
+    ('FINANCE_B', 'Công ty tài chính B', 'FINANCE_COMPANY', 3000000, 15000000, 3);
+insert into installment_fee_rates (partner_code, num_months, fee_percent) values
+    ('CREDIT_CARD', 3, 2), ('CREDIT_CARD', 6, 3), ('CREDIT_CARD', 9, 4), ('CREDIT_CARD', 12, 5),
+    ('FINANCE_A', 6, 4), ('FINANCE_A', 9, 5), ('FINANCE_A', 12, 6),
+    ('FINANCE_B', 3, 3), ('FINANCE_B', 6, 4);
 -- payment indexes
 create index idx_payments_order_id on payments(order_id);
 create index idx_payments_status on payments(status);
 create unique index uq_payments_order_main on payments(order_id) where installment_payment_id is null;
 create unique index uq_payments_checkout_session on payments(checkout_session_id) where checkout_session_id is not null;
 create index idx_installment_orders_status on installment_orders(status);
+create index idx_installment_orders_partner on installment_orders(partner_code, status);
 create index idx_installment_payments_due on installment_payments(status, due_date);
 
 -- interaction indexes
@@ -978,7 +1015,13 @@ alter table payments add constraint chk_payments_status
 alter table payments add constraint chk_payments_method check (payment_method in ('COD', 'BANK_TRANSFER', 'INSTALLMENT', 'CARD'));
 alter table payments add constraint chk_payments_amount_positive check (amount > 0);
 alter table installment_orders add constraint chk_installment_orders_status
-    check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ACTIVE', 'COMPLETED', 'CANCELLED'));
+    check (status in ('PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'SETTLED'));
+alter table installment_partners add constraint chk_installment_partners_type
+    check (partner_type in ('CREDIT_CARD', 'FINANCE_COMPANY'));
+alter table installment_partners add constraint chk_installment_partners_range
+    check (min_order_total >= 0 and (max_order_total is null or max_order_total >= min_order_total));
+alter table installment_fee_rates add constraint chk_installment_fee_rates_months check (num_months > 0);
+alter table installment_fee_rates add constraint chk_installment_fee_rates_percent check (fee_percent >= 0 and fee_percent <= 100);
 alter table installment_orders add constraint chk_installment_orders_months_positive check (num_months > 0);
 alter table installment_orders add constraint chk_installment_orders_monthly_positive check (monthly_payment > 0);
 alter table installment_orders add constraint chk_installment_orders_citizen_id_digits check (citizen_id ~ '^[0-9]+$');

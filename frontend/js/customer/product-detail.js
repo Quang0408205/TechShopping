@@ -11,7 +11,7 @@
  *
  * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng không bịa phân
  * bố sao (dòng ★ = đánh giá thật, chưa có thì điểm Thế Giới Di Động), bỏ các vùng
- * gợi ý mua kèm / nâng cấp (Phase 8) và không dùng catalogue mock.
+ * gợi ý mua kèm / nâng cấp và không dùng catalogue mock.
  * Giỏ hàng: snapshot {productId, variantId, ...} theo tài khoản (js/core/cart-store.js, F2).
  */
 
@@ -158,7 +158,7 @@ document.addEventListener(
             }
 
 
-            /* Kế hoạch v3: danh mục bị ẩn → sản phẩm không bán, xử lý như ngừng bán */
+            /* Danh mục bị ẩn → sản phẩm không bán, xử lý như ngừng bán */
 
             if (categoryMaps && categoryMaps.hiddenIds && categoryMaps.hiddenIds[product.categoryId]) {
 
@@ -425,7 +425,7 @@ document.addEventListener(
         }
 
         /*
-         * Khung ảnh (kế hoạch v6 B1): mũi tên ‹ › nằm trên ảnh chính, bấm → ảnh kế tiếp thay ảnh chính (vòng lại),
+         * Khung ảnh: mũi tên ‹ › nằm trên ảnh chính, bấm → ảnh kế tiếp thay ảnh chính (vòng lại),
          * dải ảnh nhỏ bên dưới đổi viền đang chọn và tự cuộn theo; vuốt trên điện thoại, phím ← →, số "3 / 12",
          * bấm ảnh chính → xem toàn màn hình (lightbox).
          */
@@ -766,7 +766,7 @@ document.addEventListener(
 
 
         /*
-         * Kế hoạch v5 GĐ2: 2 cột — trái "Phiên bản" (RAM + bộ nhớ), phải "Màu sắc" của phiên bản đang chọn.
+         * 2 cột — trái "Phiên bản" (RAM + bộ nhớ), phải "Màu sắc" của phiên bản đang chọn.
          * Màu không thuộc phiên bản bị ẩn, màu hết hàng làm mờ (bấm vẫn xem được giá, nút mua bị khoá).
          * Chỉ khác nhau về màu → chỉ cột màu; không có màu → chỉ cột phiên bản.
          */
@@ -853,7 +853,7 @@ document.addEventListener(
             });
 
 
-            /* Mở trang ở phiên bản đầu tiên còn hàng (kế hoạch v3 GĐ E), theo thứ tự hiển thị */
+            /* Mở trang ở phiên bản đầu tiên còn hàng, theo thứ tự hiển thị */
             const ordered = versionGroups.reduce(function (all, group) { return all.concat(group.variants); }, []);
 
             selectVariant(ordered.find(function (variant) { return !isSoldOut(variant); }) || ordered[0]);
@@ -973,7 +973,7 @@ document.addEventListener(
             promoEl.hidden = !prices.promotionName;
 
 
-            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3 GĐ E) */
+            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3) */
 
             const canBuy = canBuyCurrent();
 
@@ -1093,7 +1093,7 @@ document.addEventListener(
         /* ================= THÊM VÀO GIỎ / MUA NGAY ================= */
 
         /*
-         * Phase 3: giỏ hàng trên server, mỗi dòng là một variantId (cart-store.js),
+         * Giỏ hàng trên server, mỗi dòng là một variantId (cart-store.js),
          * nên cùng một phiên bản thêm từ trang danh sách hay trang chi tiết
          * luôn gộp chung một dòng. Giá do server tính.
          */
@@ -1325,7 +1325,7 @@ document.addEventListener(
         }
 
 
-        /* ================= MUA KÈM TIẾT KIỆM (kế hoạch v5 GĐ10) ================= */
+        /* ================= MUA KÈM TIẾT KIỆM ================= */
 
         /*
          * GET /products/{id}/combos (công khai): mỗi combo là danh sách món kèm + giá sau giảm của từng phiên bản.
