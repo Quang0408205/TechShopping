@@ -401,7 +401,7 @@ SELECT order_id,
        0,
        'PENDING_APPROVAL',
        lpad(plan_no::text, 12, '0'),
-       'SAMPLE',
+       'VCB', -- mã ngân hàng phải có trong InstallmentBank, không thì trang trả góp lỗi
        'CREDIT_CARD'
 FROM chosen_orders;
 
@@ -420,7 +420,7 @@ SELECT io.installment_id,
 FROM installment_orders io
 JOIN orders o ON o.order_id = io.order_id
 CROSS JOIN generate_series(1, io.num_months) AS payment_no
-WHERE io.card_bank_code = 'SAMPLE'
+WHERE io.card_bank_code = 'VCB'
   AND o.notes LIKE 'SAMPLE-DATA: TS-WEB-ORDER-%';
 
 INSERT INTO dev_sample_seed_registry (seed_key)
