@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nhà cung cấp - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="admin-body" data-page-title="Nhà cung cấp" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="suppliers"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+
+            <div class="admin-filter-bar admin-filter-bar--split">
+
+                <form class="admin-filter-bar" id="supplierFilterForm" role="search">
+
+                    <input type="search" id="supplierKeyword" placeholder="Tên, số điện thoại, mã số thuế…" maxlength="100" aria-label="Từ khoá">
+
+                    <select id="supplierStatusFilter" aria-label="Trạng thái">
+                        <option value="">Mọi trạng thái</option>
+                        <option value="true">Đang hợp tác</option>
+                        <option value="false">Đã ngừng hợp tác</option>
+                    </select>
+
+                    <button type="submit" class="btn btn-dark">TÌM</button>
+
+                </form>
+
+                <button type="button" class="btn btn-dark" id="supplierNewBtn">+ THÊM NHÀ CUNG CẤP</button>
+
+            </div>
+
+
+            <section class="admin-panel" id="supplierFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="supplierFormTitle">Thêm nhà cung cấp</h2>
+                </div>
+
+                <form id="supplierForm" novalidate>
+
+                    <p id="supplierFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="supplierName">Tên nhà cung cấp *</label>
+                            <input type="text" id="supplierName" maxlength="150" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="supplierPhone">Số điện thoại</label>
+                            <input type="tel" id="supplierPhone" maxlength="20">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="supplierEmail">Email</label>
+                            <input type="email" id="supplierEmail" maxlength="120">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="supplierTaxCode">Mã số thuế</label>
+                            <input type="text" id="supplierTaxCode" maxlength="20">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="supplierAddress">Địa chỉ</label>
+                            <input type="text" id="supplierAddress" maxlength="500">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="supplierNote">Ghi chú</label>
+                            <textarea id="supplierNote" rows="2" maxlength="1000"></textarea>
+                        </div>
+
+                        <label class="admin-field-check admin-field-wide">
+                            <input type="checkbox" id="supplierActive" checked>
+                            Đang hợp tác (được chọn khi lập phiếu nhập)
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="supplierSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="supplierCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách nhà cung cấp</h2>
+                    <span class="admin-row-count" id="supplierRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Nhà cung cấp</th>
+                                <th>Liên hệ</th>
+                                <th>Mã số thuế</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="supplierTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="supplierPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/suppliers.js"></script>
+
+</body>
+</html>

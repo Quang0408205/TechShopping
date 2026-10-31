@@ -9,5 +9,8 @@ public enum MovementType {
     IN,
     OUT,
     ADJUSTMENT,
-    RETURN
+    RETURN,
+    /** A stock transfer takes the goods out of the sending store; a transfer cancelled in transit puts them back as TRANSFER_IN. */
+    TRANSFER_OUT,
+    TRANSFER_IN
 }

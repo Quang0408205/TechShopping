@@ -4,6 +4,7 @@ import com.example.Tech.dto.request.auth.LoginRequest;
 import com.example.Tech.dto.request.auth.RefreshTokenRequest;
 import com.example.Tech.dto.request.auth.RegisterRequest;
 import com.example.Tech.dto.response.auth.AuthResponse;
+import com.example.Tech.service.auth.google.GoogleIdentity;
 
 public interface AuthService {
 
@@ -15,4 +16,7 @@ public interface AuthService {
     AuthResponse refresh(RefreshTokenRequest request);
 
     void logout(RefreshTokenRequest request);
+
+    /** Signs in with a verified Google identity: links it to the account with the same email, or creates a customer. */
+    AuthResponse loginWithGoogle(GoogleIdentity identity);
 }

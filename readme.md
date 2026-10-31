@@ -66,7 +66,7 @@ Quy tắc chung:
 ## 3. Tính năng
 
 ### Khu khách hàng
-- **Tài khoản:** đăng ký, đăng nhập, hồ sơ, ảnh đại diện, đổi mật khẩu, địa chỉ. Nhập sai mật khẩu nhiều lần thì bị khoá đăng nhập tạm thời.
+- **Tài khoản:** đăng ký, đăng nhập (mật khẩu hoặc tài khoản Google), hồ sơ, ảnh đại diện, đổi mật khẩu, địa chỉ. Quên mật khẩu: hệ thống gửi email chứa liên kết đặt lại có hạn 30 phút, dùng một lần, và kết thúc mọi phiên đang đăng nhập. Đăng nhập bằng Google gắn vào tài khoản cùng email đã được Google xác minh hoặc tạo tài khoản khách mới; tài khoản nhân sự không dùng Google. Nhập sai mật khẩu nhiều lần thì bị khoá đăng nhập tạm thời.
 - **Sản phẩm:** trang chủ, danh sách có tab danh mục, lọc thương hiệu và khoảng giá, tìm kiếm, phân trang, bộ lọc thông số theo danh mục (RAM, bộ nhớ, chip, pin, CPU, card đồ hoạ, kích thước…) và theo nhu cầu (gaming, học tập – văn phòng, đồ hoạ…); thẻ sản phẩm hiện nút **phiên bản** (dung lượng / RAM) và đổi giá theo phiên bản; chi tiết có ảnh, thông số kỹ thuật, giá và tên khuyến mãi đang chạy; chọn màu thì ảnh chính và dãy ảnh nhỏ đổi sang bộ ảnh của màu đó.
 - **Giỏ hàng và đặt hàng:** giỏ lưu trên server theo tài khoản; thông tin nhận hàng nhập trong một cửa sổ ngay ở giỏ hàng (giao tận nhà hoặc nhận tại cửa hàng), sau đó sang bước thanh toán.
 - **Tài khoản:** thẻ thành viên theo màu hạng (điểm, tiến độ lên hạng), thống kê đơn và chi tiêu, tab "Hạng & điểm" (các hạng, cách tính điểm, lịch sử điểm), hồ sơ, địa chỉ, bảo mật; trên điện thoại menu là hàng tab cuộn ngang.
@@ -87,6 +87,8 @@ Quy tắc chung:
 - **Bảo hành / Bảo trì / Đổi trả, Liên hệ khách hàng:** các hộp việc có lọc, ghi chú xử lý và lý do từ chối.
 - **Đối soát chuyển khoản:** nhật ký tiền về, gán thủ công hoặc bỏ qua (có lý do), ô giả lập ngân hàng báo tiền để trình diễn.
 - **Tồn kho:** tồn theo chi nhánh, cảnh báo sắp hết / hết hàng, nhập kho, lịch sử nhập xuất, nhập kho từ Excel.
+- **Nhập hàng và giá vốn:** ADMIN quản lý danh sách nhà cung cấp (không xoá được nhà cung cấp đã có phiếu, chỉ ngừng hợp tác). Nhân viên lập phiếu nhập nhiều dòng cho chi nhánh mình (nhà cung cấp, từng phiên bản, số lượng, giá nhập); phiếu nháp sửa hoặc huỷ tự do, chỉ khi hoàn tất mới cộng tồn kho, ghi sổ kho kèm mã phiếu và cập nhật giá vốn bình quân gia quyền của phiên bản (tính trên tồn kho của mọi chi nhánh). Khi đơn được xác nhận, giá vốn của từng dòng được chốt lại để báo cáo lợi nhuận không đổi về sau.
+- **Chuyển kho giữa chi nhánh:** chi nhánh gửi lập phiếu nhiều dòng (nháp chỉ chi nhánh gửi thấy), gửi hàng thì tồn kho chi nhánh gửi giảm ngay (không đủ hàng thì không gửi và báo từng dòng thiếu), chi nhánh nhận xác nhận nhận hàng thì tồn kho của họ tăng; huỷ phiếu đang chuyển trả hàng về chi nhánh gửi. Mọi bước ghi sổ kho (loại chuyển đi / chuyển đến, không tính là hàng nhập) kèm mã phiếu; ADMIN làm được mọi bước.
 - **Sản phẩm, Danh mục, Thương hiệu (ADMIN):** thêm sửa, ảnh tải lên, phiên bản và thông số theo danh mục, nhập sản phẩm từ Excel (kiểm tra trước, có lỗi thì không ghi gì).
 - **Khuyến mãi (ADMIN):** chương trình theo thời gian, giảm theo phần trăm hoặc số tiền, mức riêng từng sản phẩm; giỏ hàng lấy giá thấp hơn.
 - **Voucher (ADMIN):** mã giảm % cho đơn hàng, có mức giảm tối đa, đơn tối thiểu, phạm vi toàn bộ hoặc theo danh mục, tổng lượt và lượt mỗi khách; ở trang thanh toán khách nhập mã hoặc chọn từ danh sách (mã chưa đủ điều kiện hiện lý do). Voucher tính trên giá đã khuyến mãi, không giảm phí ship; đơn huỷ trước khi giao được trả lại lượt, trả hàng hoàn đúng số tiền đã trả.

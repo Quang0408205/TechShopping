@@ -20,16 +20,20 @@ import com.example.Tech.security.JwtTokenService;
 import com.example.Tech.security.RefreshTokenService;
 import com.example.Tech.service.auth.AuthService;
 import com.example.Tech.service.auth.LoginAttemptLimiter;
+import com.example.Tech.service.auth.google.GoogleIdentity;
 import com.example.Tech.util.AccountUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Slf4j
 @Service
@@ -137,6 +141,70 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(RefreshTokenRequest request) {
         refreshTokenService.revoke(request.refreshToken());
+    }
+
+    @Override
+    public AuthResponse loginWithGoogle(GoogleIdentity identity) {
+        if (!identity.emailVerified() || identity.email() == null) {
+            throw new BusinessException(ErrorCode.GOOGLE_EMAIL_NOT_VERIFIED);
+        }
+        String email = AccountUtil.normalize(identity.email());
+        User user = userRepository.findByGoogleSub(identity.subject()).or(() -> userRepository.findByEmail(email))
+                .orElse(null);
+        List<String> roles;
+        if (user == null) {
+            user = createGoogleCustomer(identity, email);
+            roles = List.of(RoleName.CUSTOMER.name());
+        } else {
+            roles = roleNames(user.getId());
+            if (!roles.stream().allMatch(RoleName.CUSTOMER.name()::equals)) {
+                throw new BusinessException(ErrorCode.GOOGLE_LOGIN_NOT_ALLOWED);
+            }
+            ensureEnabled(user);
+            if (user.getGoogleSub() == null) {
+                user.setGoogleSub(identity.subject());
+            } else if (!user.getGoogleSub().equals(identity.subject())) {
+                // the email belongs to an account linked to another Google account
+                throw new BusinessException(ErrorCode.GOOGLE_TOKEN_INVALID);
+            }
+        }
+        user.setLastLogin(LocalDateTime.now(clock));
+        log.info("User id={} logged in with Google", user.getId());
+        return issueTokens(user, roles);
+    }
+
+    private User createGoogleCustomer(GoogleIdentity identity, String email) {
+        User user = new User();
+        user.setEmail(email);
+        user.setUsername(freeUsername(email));
+        user.setFullname(truncate(StringUtils.hasText(identity.name()) ? identity.name().trim() : email, 120));
+        user.setAvatarUrl(identity.pictureUrl());
+        user.setGoogleSub(identity.subject());
+        // nobody knows this password: the account signs in with Google, or sets a password through "Quên mật khẩu"
+        user.setPasswordHash(passwordEncoder.encode(UUID.randomUUID() + UUID.randomUUID().toString()));
+        User saved = userRepository.saveAndFlush(user);
+        Role customerRole = roleRepository.findByName(RoleName.CUSTOMER.name())
+                .orElseThrow(() -> new IllegalStateException("Role CUSTOMER is missing"));
+        userRoleRepository.save(new UserRole(saved, customerRole));
+        customerProfileRepository.save(new CustomerProfile(saved));
+        userRoleRepository.flush();
+        log.info("Registered user id={} through Google", saved.getId());
+        return saved;
+    }
+
+    /** The part of the email before "@" as a username; a random suffix when it is too short or already taken. */
+    private String freeUsername(String email) {
+        String base = email.substring(0, email.indexOf('@')).replaceAll("[^a-z0-9._-]", "");
+        base = truncate(base.length() < 3 ? "user" + base : base, 40);
+        String candidate = base;
+        while (userRepository.existsByUsername(candidate)) {
+            candidate = base + ThreadLocalRandom.current().nextInt(1000, 10000);
+        }
+        return candidate;
+    }
+
+    private static String truncate(String value, int max) {
+        return value.length() <= max ? value : value.substring(0, max);
     }
 
     private Optional<User> findByIdentifier(String identifier) {

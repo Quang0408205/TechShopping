@@ -135,6 +135,8 @@ public class OrderStockLifecycle {
         Map<Long, Integer> needed = new TreeMap<>();
         Map<Long, ProductVariant> variants = new HashMap<>();
         for (OrderItem item : orderItemRepository.findAllWithProductByOrderIdIn(List.of(order.getId()))) {
+            // the cost of the goods is fixed now, so a later change of the average cost does not rewrite this order
+            item.setUnitCost(item.getVariant().getAverageCost());
             needed.merge(item.getVariant().getId(), item.getQuantity(), Integer::sum);
             variants.put(item.getVariant().getId(), item.getVariant());
         }

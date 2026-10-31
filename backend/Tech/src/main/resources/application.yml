@@ -142,6 +142,9 @@ app:
       per-ip: ${CONTACT_LIMIT_PER_IP:10}
       per-email: ${CONTACT_LIMIT_PER_EMAIL:3}
       window: 1h
+  google:
+    # Client ID (OAuth 2.0, type Web) for "Đăng nhập với Google"; empty = the button is hidden
+    client-id: ${GOOGLE_CLIENT_ID:}
   auth:
     # Wrong passwords on one account within failure-window lock it for lock-duration; per-IP limits on register / refresh (Redis)
     rate-limit:

@@ -21,12 +21,14 @@ create table users (
     avatar_url text,
     is_active boolean default true,
     must_change_password boolean not null default false,
+    google_sub varchar(64),
     password_expires_at timestamp,
     last_login timestamp,
     created_at timestamp default current_timestamp,
     updated_at timestamp default current_timestamp,
     deleted_at timestamp
 );
+create unique index uq_users_google_sub on users(google_sub) where google_sub is not null;
 
 -- bảng user_roles: liên kết người dùng với vai trò
 create table user_roles (
@@ -160,6 +162,7 @@ create table product_variants (
     price decimal(15, 2) not null,
     discount_price decimal(15, 2),
     stock_quantity int default 0,
+    average_cost decimal(15, 2),
     color varchar(50),
     storage varchar(50),
     ram varchar(50),
@@ -335,7 +338,8 @@ create table order_items (
     subtotal decimal(15, 2) not null,
     voucher_discount decimal(15, 2) not null default 0,
     combo_discount decimal(15, 2) not null default 0,
-    points_discount decimal(15, 2) not null default 0
+    points_discount decimal(15, 2) not null default 0,
+    unit_cost decimal(15, 2)
 );
 
 -- bảng order_status_history: lịch sử đổi trạng thái đơn hàng, ghi bằng code java mỗi lần orders.status đổi
@@ -628,6 +632,83 @@ create table stock_movements (
     created_by bigint references users(user_id),
     created_at timestamp default current_timestamp
 );
+
+-- bảng suppliers: nhà cung cấp do admin quản lý
+-- bảng purchase_receipts / purchase_receipt_items: phiếu nhập kho của chi nhánh; chỉ phiếu COMPLETED mới cộng tồn
+create table suppliers (
+    supplier_id serial primary key,
+    name varchar(150) not null,
+    phone varchar(20),
+    email varchar(120),
+    address text,
+    tax_code varchar(20),
+    note text,
+    is_active boolean not null default true,
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
+);
+
+create unique index uq_suppliers_name on suppliers (lower(name));
+
+create table purchase_receipts (
+    receipt_id bigserial primary key,
+    store_id int not null references stores(store_id),
+    supplier_id int not null references suppliers(supplier_id),
+    status varchar(12) not null default 'DRAFT' check (status in ('DRAFT', 'COMPLETED', 'CANCELLED')),
+    note text,
+    created_by bigint references users(user_id),
+    created_at timestamp not null default current_timestamp,
+    completed_by bigint references users(user_id),
+    completed_at timestamp,
+    cancelled_at timestamp
+);
+
+create index idx_purchase_receipts_store on purchase_receipts (store_id, created_at desc);
+create index idx_purchase_receipts_supplier on purchase_receipts (supplier_id);
+
+create table purchase_receipt_items (
+    item_id bigserial primary key,
+    receipt_id bigint not null references purchase_receipts(receipt_id) on delete cascade,
+    variant_id bigint not null references product_variants(variant_id),
+    quantity int not null check (quantity > 0),
+    unit_cost decimal(15, 2) not null check (unit_cost >= 0),
+    unique (receipt_id, variant_id)
+);
+
+alter table stock_movements add column receipt_id bigint references purchase_receipts(receipt_id);
+create index idx_stock_movements_receipt on stock_movements (receipt_id) where receipt_id is not null;
+
+-- bảng stock_transfers / stock_transfer_items: phiếu chuyển kho giữa chi nhánh (DRAFT -> IN_TRANSIT -> RECEIVED, hoặc CANCELLED)
+create table stock_transfers (
+    transfer_id bigserial primary key,
+    from_store_id int not null references stores(store_id),
+    to_store_id int not null references stores(store_id),
+    status varchar(12) not null default 'DRAFT' check (status in ('DRAFT', 'IN_TRANSIT', 'RECEIVED', 'CANCELLED')),
+    note text,
+    created_by bigint references users(user_id),
+    created_at timestamp not null default current_timestamp,
+    sent_by bigint references users(user_id),
+    sent_at timestamp,
+    received_by bigint references users(user_id),
+    received_at timestamp,
+    cancelled_by bigint references users(user_id),
+    cancelled_at timestamp,
+    check (from_store_id <> to_store_id)
+);
+
+create index idx_stock_transfers_from on stock_transfers (from_store_id, created_at desc);
+create index idx_stock_transfers_to on stock_transfers (to_store_id, created_at desc);
+
+create table stock_transfer_items (
+    item_id bigserial primary key,
+    transfer_id bigint not null references stock_transfers(transfer_id) on delete cascade,
+    variant_id bigint not null references product_variants(variant_id),
+    quantity int not null check (quantity > 0),
+    unique (transfer_id, variant_id)
+);
+
+alter table stock_movements add column transfer_id bigint references stock_transfers(transfer_id);
+create index idx_stock_movements_transfer on stock_movements (transfer_id) where transfer_id is not null;
 
 -- =====================================================
 -- nhóm 7: hệ thống khuyến nghị
@@ -1063,7 +1144,7 @@ alter table vouchers add constraint chk_vouchers_code check (code ~ '^[A-Z0-9_-]
 alter table orders add constraint chk_orders_delivery_type check (delivery_type in ('HOME_DELIVERY', 'PICKUP'));
 alter table inventory add constraint chk_inventory_quantity_non_negative check (quantity >= 0);
 alter table stock_movements add constraint chk_stock_movements_type
-    check (movement_type in ('IN', 'OUT', 'ADJUSTMENT', 'RETURN'));
+    check (movement_type in ('IN', 'OUT', 'ADJUSTMENT', 'RETURN', 'TRANSFER_OUT', 'TRANSFER_IN'));
 alter table reviews add constraint chk_reviews_rating_range check (rating between 1 and 5);
 alter table reviews add constraint chk_reviews_comment_length check (char_length(comment) between 10 and 2000);
 alter table reviews add constraint chk_reviews_hidden_reason check (not is_hidden or hidden_reason is not null);

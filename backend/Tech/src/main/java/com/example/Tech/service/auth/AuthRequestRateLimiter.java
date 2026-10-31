@@ -23,6 +23,14 @@ public class AuthRequestRateLimiter {
         acquire("register", clientIp, properties.registerPerIp(), properties.registerWindow());
     }
 
+    public void acquirePasswordReset(String clientIp) {
+        acquire("forgot", clientIp, properties.registerPerIp(), properties.registerWindow());
+    }
+
+    public void acquireGoogle(String clientIp) {
+        acquire("google", clientIp, properties.refreshPerIp(), properties.refreshWindow());
+    }
+
     public void acquireRefresh(String clientIp) {
         acquire("refresh", clientIp, properties.refreshPerIp(), properties.refreshWindow());
     }

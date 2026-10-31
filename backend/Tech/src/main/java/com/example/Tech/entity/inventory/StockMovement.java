@@ -69,6 +69,14 @@ public class StockMovement {
     @JoinColumn(name = "created_by")
     private User createdBy;
 
+    /** The purchase receipt that produced this IN row, if any. */
+    @Column(name = "receipt_id")
+    private Long receiptId;
+
+    /** The stock transfer that produced this row, if any. */
+    @Column(name = "transfer_id")
+    private Long transferId;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

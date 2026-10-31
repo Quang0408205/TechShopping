@@ -69,6 +69,10 @@ public class OrderItem {
     @Column(name = "points_discount", precision = 15, scale = 2, nullable = false)
     private BigDecimal pointsDiscount = BigDecimal.ZERO;
 
+    /** Cost of one unit when the order was confirmed (the variant average cost then); null = not known. */
+    @Column(name = "unit_cost", precision = 15, scale = 2)
+    private BigDecimal unitCost;
+
     /** The line total after the combo discount: what the voucher and the points are worked out on. */
     public BigDecimal afterCombo() {
         return subtotal.subtract(comboDiscount == null ? BigDecimal.ZERO : comboDiscount);

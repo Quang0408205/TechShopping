@@ -36,6 +36,9 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 30 | `product_base_names.sql` | Tên sản phẩm chỉ còn tên máy: dung lượng / màu / GPU / sạc ở cuối tên chuyển vào phiên bản (chọn ở trang chi tiết); sau đó chạy lại `merge_product_variants.sql` để gộp các tên trùng (sao lưu trước; dọn Redis `cache:*`, chạy lại dữ liệu AI) |
 | 31 | `dedupe_product_images.sql` | Bỏ ảnh trùng sau khi gộp phiên bản: mỗi (sản phẩm, màu) chỉ giữ bộ ảnh của một trang nguồn TGDĐ, không lặp theo bản dung lượng (dọn Redis `cache:*`) |
 | 32 | `loyalty_on_payment.sql` | Tích điểm khi đơn đã thanh toán (không đợi giao): cộng bù điểm / chi tiêu cho đơn đã trả tiền nhưng chưa giao; chạy lại được |
+| 33 | `google_login.sql` | Đăng nhập bằng Google: `users.google_sub` (mã Google đã liên kết, duy nhất); chạy lại được |
+| 34 | `suppliers_purchase.sql` | Nhà cung cấp, phiếu nhập kho nhiều dòng có giá nhập (`suppliers`, `purchase_receipts`, `purchase_receipt_items`), giá vốn bình quân `product_variants.average_cost`, giá vốn dòng đơn `order_items.unit_cost`, `stock_movements.receipt_id`; giá vốn mẫu: `database/docker-init/11_sample_costs.sql` |
+| 35 | `stock_transfers.sql` | Chuyển kho giữa chi nhánh: `stock_transfers`, `stock_transfer_items` (DRAFT -> IN_TRANSIT -> RECEIVED / CANCELLED), `stock_movements.transfer_id`, thêm loại sổ kho TRANSFER_OUT / TRANSFER_IN |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

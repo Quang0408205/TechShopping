@@ -351,3 +351,39 @@
     }
 
 }
+
+/* ================= ĐĂNG NHẬP BẰNG GOOGLE ================= */
+
+.google-signin {
+    margin-top: var(--space-3);
+}
+
+.google-signin[hidden] {
+    display: none;
+}
+
+.google-signin-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.google-signin-divider::before,
+.google-signin-divider::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--color-border, #e5e5e5);
+}
+
+.google-signin-button {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-3);
+}
+
+.auth-page .form-success {
+    margin-bottom: var(--space-3);
+}

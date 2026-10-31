@@ -26,7 +26,9 @@ const MOVEMENT_TYPES = {
     IN: { label: "Nhập kho", badge: "admin-badge-success" },
     OUT: { label: "Xuất bán", badge: "admin-badge-neutral" },
     RETURN: { label: "Hoàn kho", badge: "admin-badge-info" },
-    ADJUSTMENT: { label: "Điều chỉnh", badge: "admin-badge-warning" }
+    ADJUSTMENT: { label: "Điều chỉnh", badge: "admin-badge-warning" },
+    TRANSFER_OUT: { label: "Chuyển đi", badge: "admin-badge-neutral" },
+    TRANSFER_IN: { label: "Chuyển đến", badge: "admin-badge-info" }
 };
 
 

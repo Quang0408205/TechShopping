@@ -80,6 +80,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/google/config").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         // home page blocks: flash sale + featured combos
@@ -100,9 +101,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.DELETE, CATALOG_PATHS).hasRole(ADMIN)
+                        // suppliers: staff read them to fill a receipt, only an ADMIN changes them (checked again in the service)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/suppliers", "/api/v1/admin/suppliers/**")
+                        .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)
                         // shop staff manage orders and installments too (must come before the ADMIN-only admin rule)
                         .requestMatchers("/api/v1/admin/orders/**", "/api/v1/admin/installments/**",
                                 "/api/v1/admin/stores/*/inventory", "/api/v1/admin/stores/*/inventory/**",
+                                "/api/v1/admin/stores/*/purchase-receipts", "/api/v1/admin/stores/*/purchase-receipts/**",
+                                "/api/v1/admin/stock-transfers", "/api/v1/admin/stock-transfers/**",
                                 "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
                                 "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**")
                         .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)

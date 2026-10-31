@@ -174,6 +174,26 @@ public enum ErrorCode {
     AI_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Dịch vụ AI đang tạm ngưng, vui lòng thử lại sau"),
     CHAT_SESSION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện"),
 
+    // Password reset and Google sign-in
+    PASSWORD_RESET_TOKEN_INVALID(HttpStatus.BAD_REQUEST, "Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn"),
+    GOOGLE_LOGIN_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "Đăng nhập bằng Google chưa được bật"),
+    GOOGLE_TOKEN_INVALID(HttpStatus.UNAUTHORIZED, "Phiên đăng nhập Google không hợp lệ hoặc đã hết hạn"),
+    GOOGLE_EMAIL_NOT_VERIFIED(HttpStatus.BAD_REQUEST, "Email của tài khoản Google chưa được xác minh"),
+    GOOGLE_LOGIN_NOT_ALLOWED(HttpStatus.FORBIDDEN, "Tài khoản nhân viên không đăng nhập bằng Google, vui lòng dùng mật khẩu"),
+
+    // Suppliers and purchase receipts
+    SUPPLIER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy nhà cung cấp"),
+    DUPLICATE_SUPPLIER(HttpStatus.CONFLICT, "Tên nhà cung cấp đã tồn tại"),
+    SUPPLIER_HAS_RECEIPTS(HttpStatus.CONFLICT, "Nhà cung cấp đã có phiếu nhập, hãy chuyển sang ngừng hợp tác thay vì xoá"),
+    SUPPLIER_INACTIVE(HttpStatus.CONFLICT, "Nhà cung cấp đã ngừng hợp tác"),
+    PURCHASE_RECEIPT_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy phiếu nhập"),
+    PURCHASE_RECEIPT_NOT_DRAFT(HttpStatus.CONFLICT, "Chỉ sửa, hoàn tất hoặc huỷ được phiếu nhập đang ở trạng thái nháp"),
+
+    // Stock transfers between stores
+    STOCK_TRANSFER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy phiếu chuyển kho"),
+    STOCK_TRANSFER_INVALID_STATUS(HttpStatus.CONFLICT, "Phiếu chuyển kho không ở trạng thái phù hợp cho thao tác này"),
+    STOCK_TRANSFER_INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh gửi không đủ hàng để chuyển"),
+
     // Login lock
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mật khẩu quá nhiều lần, vui lòng thử lại sau");
 

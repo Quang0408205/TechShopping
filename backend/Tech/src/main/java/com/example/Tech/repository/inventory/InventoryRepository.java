@@ -54,6 +54,10 @@ public interface InventoryRepository extends JpaRepository<Inventory, InventoryI
             + "on conflict (store_id, variant_id) do nothing", nativeQuery = true)
     int insertIfMissing(@Param("storeId") Integer storeId, @Param("variantId") Long variantId);
 
+    /** Quantity of one variant over every store (what the average cost is weighted by). */
+    @Query("select coalesce(sum(i.quantity), 0) from Inventory i where i.id.variantId = :variantId")
+    long sumQuantityByVariantId(@Param("variantId") Long variantId);
+
     boolean existsByIdStoreId(Integer storeId);
 
     boolean existsByIdVariantIdAndQuantityGreaterThan(Long variantId, Integer quantity);

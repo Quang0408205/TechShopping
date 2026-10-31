@@ -49,6 +49,10 @@ public class ProductVariant {
     @Column(name = "stock_quantity")
     private Integer stockQuantity = 0;
 
+    /** Weighted average cost over the whole system, updated when a purchase receipt is completed; null = unknown. */
+    @Column(name = "average_cost", precision = 15, scale = 2)
+    private BigDecimal averageCost;
+
     @Column(name = "color", length = 50)
     private String color;
 

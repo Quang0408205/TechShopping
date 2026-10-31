@@ -51,6 +51,10 @@ public class User {
     @Column(name = "is_active")
     private Boolean active = true;
 
+    /** Google account id ("sub") linked to this account; null = never signed in with Google. */
+    @Column(name = "google_sub", length = 64)
+    private String googleSub;
+
     /** Set when the account is hired with a temporary password; cleared by the first password change. */
     @Column(name = "must_change_password", nullable = false)
     private boolean mustChangePassword = false;

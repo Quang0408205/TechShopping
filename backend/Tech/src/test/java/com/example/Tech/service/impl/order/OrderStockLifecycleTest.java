@@ -219,6 +219,25 @@ class OrderStockLifecycleTest {
     }
 
     @Test
+    void onOrderConfirmed_fixesTheUnitCostOfEachLineFromTheVariantAverageCost() {
+        Store store = store(3, "POY Quận 1", true);
+        ProductVariant phone = variant(10L, "Đen 128GB");
+        phone.setAverageCost(new java.math.BigDecimal("700000"));
+        ProductVariant cover = variant(20L, "Ốp lưng");
+        Order order = order(store);
+        OrderItem phoneLine = item(phone, 1);
+        OrderItem coverLine = item(cover, 1);
+        when(orderItemRepository.findAllWithProductByOrderIdIn(List.of(5L))).thenReturn(List.of(phoneLine, coverLine));
+        when(inventoryRepository.findAllForUpdate(3, List.of(10L, 20L)))
+                .thenReturn(List.of(new Inventory(store, phone, 1), new Inventory(store, cover, 1)));
+
+        lifecycle.onOrderConfirmed(order, new User());
+
+        assertThat(phoneLine.getUnitCost()).isEqualByComparingTo("700000");
+        assertThat(coverLine.getUnitCost()).isNull();
+    }
+
+    @Test
     void onOrderConfirmed_short_listsEveryMissingVariant_andChangesNothing() {
         Store store = store(3, "POY Quận 1", true);
         ProductVariant phone = variant(10L, "Đen 128GB");
