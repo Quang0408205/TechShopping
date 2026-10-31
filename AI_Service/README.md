@@ -297,7 +297,7 @@ sequenceDiagram
 | `POLICY` | `knowledge/*.md`, mỗi mục `##` là một chunk | 15 | Giao hàng, thanh toán, trả góp, bảo hành, bảo trì, trả hàng, hỗ trợ |
 | `PRODUCT` | Bảng `products` + thông số + phiên bản | 4.288 | Tên, danh mục, hãng, giá, bảo hành, phiên bản, tối đa 12 thông số |
 
-- Nội dung chính sách viết **đúng theo code Backend**: phí giao hàng 30.000đ, miễn phí từ 10.000.000đ; trả góp 0% cho đơn từ 3.000.000đ, kỳ hạn 3/6/9/12 tháng; trả hàng trong 7 ngày…
+- Nội dung chính sách viết **đúng theo code Backend**: phí giao hàng mặc định 30.000đ (một số tỉnh có phí riêng), không có ngưỡng miễn phí; trả góp 0% cho đơn từ 3.000.000đ, kỳ hạn 3/6/9/12 tháng; trả hàng trong 7 ngày…
 - **Không đưa mô tả sản phẩm crawl vào chunk.** Phần mô tả toàn câu quảng cáo ("thu cũ đổi mới, trả góp 0%…"). Khi còn để mô tả, câu hỏi "đổi trả trong bao nhiêu ngày" trả về… đồng hồ Casio.
 - Mỗi chunk lưu `metadata` (danh mục, hãng, giá) để lọc.
 - Mô hình E5 cần tiền tố `"passage: "` cho tài liệu và `"query: "` cho câu hỏi.

@@ -61,7 +61,11 @@ public record OrderResponse(
         @Schema(description = "Store that handles the order (nearest to the address, or the pickup store); "
                 + "null for orders placed before stores existed")
         Integer storeId,
-        String storeName
+        String storeName,
+        @Schema(description = "Company invoice details typed at checkout; null when none")
+        String invoiceCompany,
+        String invoiceTaxCode,
+        String invoiceAddress
 ) {
 
     public record ComboApplied(String name, int units, BigDecimal discount) {

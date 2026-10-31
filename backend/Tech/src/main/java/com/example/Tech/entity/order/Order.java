@@ -120,6 +120,16 @@ public class Order {
     @Column(name = "contact_email", length = 255)
     private String contactEmail;
 
+    /** Company invoice details typed at checkout (all three or none); only stored and printed on the invoice. */
+    @Column(name = "invoice_company", length = 200)
+    private String invoiceCompany;
+
+    @Column(name = "invoice_tax_code", length = 20)
+    private String invoiceTaxCode;
+
+    @Column(name = "invoice_address", length = 500)
+    private String invoiceAddress;
+
     /** Random code of the public tracking link (customer/track.html?token=…); never shown with the id. */
     @Column(name = "tracking_token", length = 64, nullable = false, updatable = false)
     private String trackingToken = newTrackingToken();

@@ -220,7 +220,7 @@ class AdminPromotionApiIntegrationTest {
         entityManager.clear();
         JsonNode kept = data(send(get("/api/v1/orders/" + orderId), customerToken, null).andExpect(status().isOk()));
         assertThat(kept.get("items").get(0).get("unitPrice").decimalValue()).isEqualByComparingTo("900000");
-        assertThat(kept.get("total").decimalValue()).isEqualByComparingTo("10400000");
+        assertThat(kept.get("total").decimalValue()).isEqualByComparingTo("10430000");
         addToCart(phoneBlack, 1);
         JsonNode cartAfter = data(send(get("/api/v1/cart"), customerToken, null).andExpect(status().isOk()));
         assertThat(cartAfter.get("items").get(0).get("unitPrice").decimalValue()).isEqualByComparingTo("1000000");

@@ -1,5 +1,6 @@
 package com.example.Tech.controller.order;
 
+import com.example.Tech.entity.order.ShippingFeeRule;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.store.Store;
 import com.example.Tech.entity.product.Product;
@@ -84,6 +85,9 @@ class OrderApiIntegrationTest {
     private OrderRepository orderRepository;
 
     @Autowired
+    private com.example.Tech.repository.order.ShippingFeeRuleRepository shippingFeeRuleRepository;
+
+    @Autowired
     private InstallmentOrderRepository installmentOrderRepository;
 
     @Autowired
@@ -151,8 +155,8 @@ class OrderApiIntegrationTest {
         addToCart(white, 1);
         send(get("/api/v1/cart"), token, null)
                 .andExpect(jsonPath("$.data.subtotal").value(2 * 14990000L + 18990000L))
-                .andExpect(jsonPath("$.data.shippingFee").value(0))
-                .andExpect(jsonPath("$.data.total").value(2 * 14990000L + 18990000L));
+                .andExpect(jsonPath("$.data.shippingFee").value(30000))
+                .andExpect(jsonPath("$.data.total").value(2 * 14990000L + 18990000L + 30000L));
 
         JsonNode order = data(send(post("/api/v1/orders"), token, orderBody())
                 .andExpect(status().isCreated())
@@ -172,8 +176,8 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.items[1].originalPrice").doesNotExist())
                 .andExpect(jsonPath("$.data.totalQuantity").value(3))
                 .andExpect(jsonPath("$.data.subtotal").value(48970000))
-                .andExpect(jsonPath("$.data.shippingFee").value(0))
-                .andExpect(jsonPath("$.data.total").value(48970000))
+                .andExpect(jsonPath("$.data.shippingFee").value(30000))
+                .andExpect(jsonPath("$.data.total").value(49000000))
                 .andExpect(jsonPath("$.data.orderDate", notNullValue()))
                 .andExpect(jsonPath("$.data.cancellable").value(true)));
         assertThat(order.get("code").asString()).isEqualTo("DH%08d".formatted(order.get("id").asLong()));
@@ -206,6 +210,81 @@ class OrderApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.items[0].unitPrice").value(200000))
                 .andExpect(jsonPath("$.data.total").value(430000));
+    }
+
+    @Test
+    void placeOrder_aHighValueOrderStillPaysTheDefaultShipping_noFreeThreshold() throws Exception {
+        addToCart(white, 1);
+        long id = data(send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.shippingFee").value(30000))
+                .andExpect(jsonPath("$.data.total").value(19020000))).get("id").asLong();
+        assertThat(orderRepository.findById(id).orElseThrow().getShippingCost()).isEqualByComparingTo("30000");
+    }
+
+    @Test
+    void placeOrder_aProvinceRuleSetsTheFee_otherProvincesAndPickupKeepTheirs() throws Exception {
+        ShippingFeeRule rule = new ShippingFeeRule();
+        rule.setProvinceName("Thành phố Hồ Chí Minh");
+        rule.setFee(new BigDecimal("15000"));
+        shippingFeeRuleRepository.saveAndFlush(rule);
+        ShippingFeeRule free = new ShippingFeeRule();
+        free.setProvinceName("Thành phố Đà Nẵng");
+        free.setFee(BigDecimal.ZERO);
+        shippingFeeRuleRepository.saveAndFlush(free);
+
+        addToCart(cover, 1);
+        Map<String, Object> hcm = orderBody();
+        hcm.put("shippingProvince", "thành phố hồ chí minh");
+        send(post("/api/v1/orders"), token, hcm).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.shippingFee").value(15000)).andExpect(jsonPath("$.data.total").value(215000));
+
+        addToCart(cover, 1);
+        Map<String, Object> danang = orderBody();
+        danang.put("shippingProvince", "Thành phố Đà Nẵng");
+        send(post("/api/v1/orders"), token, danang).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.shippingFee").value(0)).andExpect(jsonPath("$.data.total").value(200000));
+
+        addToCart(cover, 1);
+        Map<String, Object> other = orderBody();
+        other.put("shippingProvince", "Thành phố Hà Nội");
+        send(post("/api/v1/orders"), token, other).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.shippingFee").value(30000));
+
+        addToCart(cover, 1);
+        Map<String, Object> pickup = orderBody();
+        pickup.put("deliveryType", "PICKUP");
+        pickup.put("pickupStoreId", warehouse.getId());
+        pickup.put("shippingProvince", "Thành phố Hồ Chí Minh");
+        send(post("/api/v1/orders"), token, pickup).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.shippingFee").value(0));
+    }
+
+    @Test
+    void placeOrder_keepsTheCompanyInvoiceDetails_allThreeOrNone() throws Exception {
+        addToCart(cover, 1);
+        Map<String, Object> partial = orderBody();
+        partial.put("invoiceCompany", "Công ty TNHH ABC");
+        send(post("/api/v1/orders"), token, partial).andExpect(status().isBadRequest());
+        Map<String, Object> badTax = orderBody();
+        badTax.put("invoiceCompany", "Công ty TNHH ABC");
+        badTax.put("invoiceTaxCode", "12AB");
+        badTax.put("invoiceAddress", "1 Lê Lợi, Quận 1");
+        send(post("/api/v1/orders"), token, badTax).andExpect(status().isBadRequest());
+        assertThat(orderRepository.findAllByUserId(userId, PageRequest.of(0, 10)).getTotalElements()).isZero();
+
+        Map<String, Object> full = orderBody();
+        full.put("invoiceCompany", "  Công ty TNHH ABC ");
+        full.put("invoiceTaxCode", "0312345678-001");
+        full.put("invoiceAddress", "1 Lê Lợi, Quận 1");
+        long id = data(send(post("/api/v1/orders"), token, full).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.invoiceCompany").value("Công ty TNHH ABC"))
+                .andExpect(jsonPath("$.data.invoiceTaxCode").value("0312345678-001"))
+                .andExpect(jsonPath("$.data.invoiceAddress").value("1 Lê Lợi, Quận 1"))).get("id").asLong();
+        assertThat(orderRepository.findById(id).orElseThrow().getInvoiceCompany()).isEqualTo("Công ty TNHH ABC");
+
+        addToCart(cover, 1);
+        send(post("/api/v1/orders"), token, orderBody()).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.invoiceCompany").isEmpty());
     }
 
     @Test
@@ -476,14 +555,14 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.payment.bankTransfer.bankName").value("Vietcombank"))
                 .andExpect(jsonPath("$.data.payment.bankTransfer.accountNumber").value("0123456789"))
                 .andExpect(jsonPath("$.data.payment.bankTransfer.accountName").value("CONG TY POY"))
-                .andExpect(jsonPath("$.data.payment.bankTransfer.amount").value(14990000))
+                .andExpect(jsonPath("$.data.payment.bankTransfer.amount").value(15020000))
                 .andExpect(jsonPath("$.data.payment.bankTransfer.payBefore", notNullValue())));
         String code = order.get("code").asString();
         JsonNode transfer = order.get("payment").get("bankTransfer");
 
         assertThat(transfer.get("transferContent").asString()).isEqualTo(code);
         assertThat(transfer.get("qrImageUrl").asString())
-                .startsWith("https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=14990000&addInfo=" + code);
+                .startsWith("https://img.vietqr.io/image/970436-0123456789-compact2.png?amount=15020000&addInfo=" + code);
     }
 
     @Test
@@ -500,14 +579,14 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.installment.partnerRef").doesNotExist())
                 .andExpect(jsonPath("$.data.installment.feeAmount").doesNotExist())
                 .andExpect(jsonPath("$.data.installment.numMonths").value(6))
-                .andExpect(jsonPath("$.data.installment.monthlyPayment").value(2498333))
-                .andExpect(jsonPath("$.data.installment.lastPayment").value(2498335))
-                .andExpect(jsonPath("$.data.installment.totalAmount").value(14990000))
+                .andExpect(jsonPath("$.data.installment.monthlyPayment").value(2503333))
+                .andExpect(jsonPath("$.data.installment.lastPayment").value(2503335))
+                .andExpect(jsonPath("$.data.installment.totalAmount").value(15020000))
                 .andExpect(jsonPath("$.data.installment.interestRate").value(0))
                 .andExpect(jsonPath("$.data.installment.citizenId").value("******6789"))
                 .andExpect(jsonPath("$.data.installment.cardBank").value("TCB"))
                 .andExpect(jsonPath("$.data.installment.cardBankName").value("Techcombank"))
-                .andExpect(jsonPath("$.data.installment.remainingAmount").value(14990000))
+                .andExpect(jsonPath("$.data.installment.remainingAmount").value(15020000))
                 .andExpect(jsonPath("$.data.installment.periods.length()").value(0))).get("id").asLong();
         assertThat(installmentOrderRepository.findByOrderId(orderId).orElseThrow().getCitizenId()).isEqualTo("0123456789");
 
@@ -582,8 +661,15 @@ class OrderApiIntegrationTest {
         send(post("/api/v1/orders"), token, partnerBody("FINANCE_A", 3, null))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error.details['installment.months']").value("Công ty tài chính A không hỗ trợ kỳ hạn 3 tháng"));
-        // 14.990.000đ is inside the 15.000.000đ limit of company B; two phones are not
+        // 14.990.000đ is inside the 15.000.000đ limit of company B picked up in a store; delivered it carries the
+        // 30.000đ shipping fee and is over the limit, and so are two phones
         send(post("/api/v1/orders"), token, partnerBody("FINANCE_B", 6, null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("INSTALLMENT_NOT_ELIGIBLE"));
+        Map<String, Object> pickedUp = partnerBody("FINANCE_B", 6, null);
+        pickedUp.put("deliveryType", "PICKUP");
+        pickedUp.put("pickupStoreId", warehouse.getId());
+        send(post("/api/v1/orders"), token, pickedUp)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.installment.partner").value("FINANCE_B"))
                 .andExpect(jsonPath("$.data.installment.cardBank").doesNotExist())
@@ -725,7 +811,7 @@ class OrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.paymentMethod").value("COD"))
                 .andExpect(jsonPath("$.data.items.length()").value(1))
                 .andExpect(jsonPath("$.data.items[0].name").value("Điện thoại Đơn Hàng X - Đen 128GB"))
-                .andExpect(jsonPath("$.data.total").value(14990000))
+                .andExpect(jsonPath("$.data.total").value(15020000))
                 .andExpect(jsonPath("$.data.steps.length()").value(1))
                 .andReturn().getResponse().getContentAsString();
         assertThat(body).doesNotContain("0901").doesNotContain("Nguyễn Trãi").doesNotContain("Nguyễn Văn An")

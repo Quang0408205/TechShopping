@@ -118,7 +118,11 @@ final class SalesReportExcelWriter {
         r = moneyRow(sheet, r, "Phí giao hàng", s.shippingFees());
         r = number(sheet, r, "Số lần hoàn tiền", s.refundCount());
         r = moneyRow(sheet, r, "Tổng hoa hồng", s.totalCommission());
-        moneyRow(sheet, r, "Phí đối tác trả góp (cửa hàng chịu)", s.installmentFees());
+        r = moneyRow(sheet, r, "Phí đối tác trả góp (cửa hàng chịu)", s.installmentFees());
+        r = moneyRow(sheet, r, "Giá vốn hàng bán (dòng đã biết giá vốn)", s.costOfGoods());
+        r = moneyRow(sheet, r, "Lợi nhuận gộp (chưa trừ tiền hoàn)", s.grossProfit());
+        r = text(sheet, r, "Biên lợi nhuận gộp", s.profitMargin() == null ? "—" : s.profitMargin().toPlainString() + "%");
+        number(sheet, r, "Số sản phẩm chưa có giá vốn (không tính vào lợi nhuận)", s.unitsWithoutCost());
         sheet.setColumnWidth(0, 52 * 256);
         sheet.setColumnWidth(1, 24 * 256);
     }

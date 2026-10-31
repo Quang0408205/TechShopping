@@ -29,6 +29,10 @@ public class SalesReportQueries {
     public record Totals(long orders, BigDecimal revenue, BigDecimal shipping) {
     }
 
+    /** Goods cost of the delivered lines whose cost is known, the revenue of those same lines, and the units left out. */
+    public record Profit(BigDecimal costOfGoods, BigDecimal revenueWithCost, long unitsWithoutCost) {
+    }
+
     public record Refunds(long count, BigDecimal amount) {
     }
 
@@ -77,6 +81,19 @@ public class SalesReportQueries {
                 + "join orders o on o.order_id = oi.order_id where" + DELIVERED + store(storeId),
                 params(from, to, storeId), Long.class);
         return units == null ? 0 : units;
+    }
+
+    /**
+     * Cost of goods of the delivered lines (the unit cost fixed when each order was confirmed). Lines without a known
+     * cost are left out of both the cost and the revenue compared with it, and counted, so the margin is never faked.
+     */
+    public Profit profit(LocalDateTime from, LocalDateTime to, Integer storeId) {
+        return jdbc.queryForObject("select coalesce(sum(oi.unit_cost * oi.quantity) filter (where oi.unit_cost is not null), 0) cost, "
+                        + "coalesce(sum(oi.subtotal - oi.voucher_discount - oi.combo_discount) filter (where oi.unit_cost is not null), 0) revenue, "
+                        + "coalesce(sum(oi.quantity) filter (where oi.unit_cost is null), 0) missing "
+                        + "from order_items oi join orders o on o.order_id = oi.order_id where" + DELIVERED + store(storeId),
+                params(from, to, storeId), (rs, i) -> new Profit(rs.getBigDecimal("cost"), rs.getBigDecimal("revenue"),
+                        rs.getLong("missing")));
     }
 
     public Refunds refunds(LocalDateTime from, LocalDateTime to, Integer storeId) {

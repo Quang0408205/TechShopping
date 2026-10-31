@@ -106,6 +106,12 @@ document.addEventListener(
                 "Vui lòng chọn tỉnh / thành phố trong danh sách.",
             shippingWard:
                 "Vui lòng chọn phường / xã trong danh sách.",
+            invoiceCompany:
+                "Vui lòng nhập tên công ty.",
+            invoiceTaxCode:
+                "Mã số thuế gồm 10 chữ số (hoặc 13 chữ số với chi nhánh).",
+            invoiceAddress:
+                "Vui lòng nhập địa chỉ công ty.",
             shippingStreet:
                 "Vui lòng nhập số nhà, tên đường.",
             pickupStoreId:
@@ -216,6 +222,13 @@ document.addEventListener(
         /* Giỏ trên server gần nhất (phí ship trong đó luôn là phí giao tận nhà) */
         let lastCart = summary;
 
+        /* Phí giao hàng riêng của tỉnh đang chọn; null = dùng phí giỏ hàng (mặc định) */
+        let provinceFee = null;
+
+        let provinceFeeKey = "";
+
+        let provinceFeeCounter = 0;
+
         /* Voucher đang áp (VoucherOptionResponse của POST /vouchers/apply) hoặc null */
         let appliedVoucher = null;
 
@@ -280,6 +293,21 @@ document.addEventListener(
 
         form.addEventListener("submit", handleSubmit);
 
+        /* Xuất hoá đơn công ty: ô nhập chỉ hiện khi tích chọn */
+        document.getElementById("invoiceToggle").addEventListener("change", function () {
+            document.getElementById("invoiceFields").hidden = !this.checked;
+        });
+
+
+        /* Phí giao hàng theo tỉnh: hỏi server khi chọn xong tỉnh / thành (tỉnh không có phí riêng vẫn là phí mặc định) */
+        ["input", "change", "blur"].forEach(function (name) {
+            document.getElementById("shippingProvince").addEventListener(name, refreshProvinceFee);
+        });
+
+        document.querySelectorAll('input[name="deliveryType"]').forEach(function (radio) {
+            radio.addEventListener("change", refreshProvinceFee);
+        });
+
 
         document.getElementById("voucherApplyBtn").addEventListener("click", function () {
             applyVoucherCode(document.getElementById("voucherCodeInput").value, false);
@@ -337,6 +365,7 @@ document.addEventListener(
             document.getElementById("shippingStreet").value = stored.shippingStreet || "";
 
             area.setValue(stored.shippingProvince, stored.shippingWard);
+            area.ready.then(refreshProvinceFee);
 
             form.querySelector('input[name="deliveryType"][value="' + stored.deliveryType + '"]').checked = true;
 
@@ -413,6 +442,7 @@ document.addEventListener(
 
                 if (!document.getElementById("shippingProvince").value.trim()) {
                     area.setValue(profile.city, profile.ward);
+                    area.ready.then(refreshProvinceFee);
                 }
 
             }
@@ -465,11 +495,65 @@ document.addEventListener(
         }
 
 
-        /* Phí ship + tổng theo hình thức nhận: nhận tại cửa hàng miễn phí (giống ShippingPolicy ở server) */
+
+        async function refreshProvinceFee() {
+
+            const province = area.getValue().province;
+
+            const key = selectedDeliveryType() + "|" + (province || "") + "|" + (lastCart ? lastCart.subtotal : "");
+
+            if (key === provinceFeeKey) {
+                return;
+            }
+
+            provinceFeeKey = key;
+
+            if (selectedDeliveryType() === "PICKUP" || !province || !lastCart) {
+
+                provinceFee = null;
+
+                renderTotals();
+
+                return;
+
+            }
+
+            const requestId = ++provinceFeeCounter;
+
+            try {
+
+                const result = await apiRequest("/shipping-fee?province=" + encodeURIComponent(province)
+                    + "&subtotal=" + encodeURIComponent(String(lastCart.subtotal)));
+
+                if (requestId === provinceFeeCounter) {
+
+                    provinceFee = Number(result.fee);
+
+                    renderTotals();
+
+                }
+
+            } catch (error) {
+
+                if (requestId === provinceFeeCounter) {
+
+                    provinceFee = null;
+
+                    renderTotals();
+
+                }
+
+            }
+
+        }
+
+
+        /* Phí ship + tổng theo hình thức nhận: nhận tại cửa hàng miễn phí, giao tận nhà theo tỉnh (giống ShippingFeeService ở server) */
 
         function renderTotals() {
 
-            const shippingFee = selectedDeliveryType() === "PICKUP" ? 0 : lastCart.shippingFee;
+            const shippingFee = selectedDeliveryType() === "PICKUP" ? 0
+                : (provinceFee !== null && lastCart.shippingFee > 0 ? provinceFee : lastCart.shippingFee);
 
             /* voucher chỉ giảm tiền hàng, không giảm phí ship (giống server) */
             const voucherDiscount = appliedVoucher ? Number(appliedVoucher.discount) || 0 : 0;
@@ -1229,7 +1313,12 @@ document.addEventListener(
                 shippingStreet: valueOf("shippingStreet").trim(),
                 pickupStoreId: pickupSelect.value ? Number(pickupSelect.value) : null,
                 note: valueOf("orderNote").trim(),
-                paymentMethod: selectedPaymentMethod()
+                paymentMethod: selectedPaymentMethod(),
+                invoice: document.getElementById("invoiceToggle").checked ? {
+                    company: valueOf("invoiceCompany").trim(),
+                    taxCode: valueOf("invoiceTaxCode").trim(),
+                    address: valueOf("invoiceAddress").trim()
+                } : null
             };
 
 
@@ -1263,6 +1352,22 @@ document.addEventListener(
 
             }
 
+
+            if (data.invoice) {
+
+                if (!data.invoice.company) {
+                    invalid.push("invoiceCompany");
+                }
+
+                if (!/^\d{10}(-?\d{3})?$/.test(data.invoice.taxCode)) {
+                    invalid.push("invoiceTaxCode");
+                }
+
+                if (!data.invoice.address) {
+                    invalid.push("invoiceAddress");
+                }
+
+            }
 
             let installment = null;
 
@@ -1355,7 +1460,10 @@ document.addEventListener(
                     note: data.note || null,
                     paymentMethod: data.paymentMethod,
                     voucherCode: appliedVoucher ? appliedVoucher.code : null,
-                    pointsToUse: pointsToUse > 0 ? pointsToUse : null
+                    pointsToUse: pointsToUse > 0 ? pointsToUse : null,
+                    invoiceCompany: data.invoice ? data.invoice.company : null,
+                    invoiceTaxCode: data.invoice ? data.invoice.taxCode : null,
+                    invoiceAddress: data.invoice ? data.invoice.address : null
                 };
 
                 if (installment) {

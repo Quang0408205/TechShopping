@@ -39,6 +39,9 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 33 | `google_login.sql` | Đăng nhập bằng Google: `users.google_sub` (mã Google đã liên kết, duy nhất); chạy lại được |
 | 34 | `suppliers_purchase.sql` | Nhà cung cấp, phiếu nhập kho nhiều dòng có giá nhập (`suppliers`, `purchase_receipts`, `purchase_receipt_items`), giá vốn bình quân `product_variants.average_cost`, giá vốn dòng đơn `order_items.unit_cost`, `stock_movements.receipt_id`; giá vốn mẫu: `database/docker-init/11_sample_costs.sql` |
 | 35 | `stock_transfers.sql` | Chuyển kho giữa chi nhánh: `stock_transfers`, `stock_transfer_items` (DRAFT -> IN_TRANSIT -> RECEIVED / CANCELLED), `stock_movements.transfer_id`, thêm loại sổ kho TRANSFER_OUT / TRANSFER_IN |
+| 36 | `audit_logs.sql` | Nhật ký thao tác của nhân sự (`audit_logs`: ai, vai trò, yêu cầu, đối tượng, IP, dữ liệu gửi lên đã che trường nhạy cảm); chỉ thêm, ADMIN xem |
+| 37 | `shipping_fees.sql` | Phí giao hàng theo tỉnh / thành (`shipping_fee_rules`, ADMIN đặt; tỉnh không có dòng tính phí mặc định 30.000đ, không còn ngưỡng miễn phí) |
+| 38 | `invoice_info.sql` | Thông tin xuất hoá đơn công ty trên đơn hàng (`orders.invoice_company`, `invoice_tax_code`, `invoice_address`; tuỳ chọn, chỉ lưu và in) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex">
+
+    <title>Hoá đơn - POY</title>
+
+    <link rel="stylesheet" href="../css/invoice.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="invoice-body">
+
+<div class="invoice-toolbar">
+    <a href="orders.html" id="invoiceBack">← Về đơn hàng của tôi</a>
+    <button type="button" id="invoicePrintBtn" hidden>IN HOÁ ĐƠN</button>
+</div>
+
+<main id="invoiceRoot" class="invoice-message">Đang tải hoá đơn…</main>
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/invoice-print.js"></script>
+<script src="../js/customer/invoice.js"></script>
+
+</body>
+</html>

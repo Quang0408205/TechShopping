@@ -157,11 +157,11 @@ class ComboApiIntegrationTest {
                 .andExpect(jsonPath("$.data.combos[0].units").value(1))
                 .andExpect(jsonPath("$.data.items[?(@.variantId == " + cover.getId() + ")].comboDiscount").value(100000))
                 .andExpect(jsonPath("$.data.items[?(@.variantId == " + cover.getId() + ")].comboNames[0]").value("Combo mua kèm"))
-                .andExpect(jsonPath("$.data.total").value(15300000));
+                .andExpect(jsonPath("$.data.total").value(15330000));
         addToCart(charger, 1);
         send(get("/api/v1/cart"), customer, null).andExpect(jsonPath("$.data.comboDiscount").value(200000));
 
-        // combo first, then the 10 % voucher on what is left (15.900.000 − 200.000), then free shipping from the goods before both
+        // combo first, then the 10 % voucher on what is left (15.900.000 − 200.000), then the shipping fee on top
         Map<String, Object> voucher = new HashMap<>();
         voucher.put("code", "COMBOTEST");
         voucher.put("name", "Voucher thử combo");
@@ -179,8 +179,8 @@ class ComboApiIntegrationTest {
                 .andExpect(jsonPath("$.data.comboDiscount").value(200000))
                 .andExpect(jsonPath("$.data.combos[0].name").value("Combo mua kèm"))
                 .andExpect(jsonPath("$.data.voucherDiscount").value(1570000))
-                .andExpect(jsonPath("$.data.shippingFee").value(0))
-                .andExpect(jsonPath("$.data.total").value(14130000)));
+                .andExpect(jsonPath("$.data.shippingFee").value(30000))
+                .andExpect(jsonPath("$.data.total").value(14160000)));
         Long orderId = order.get("id").asLong();
         assertThat(sum("order_items", "combo_discount", orderId)).isEqualByComparingTo("200000");
         assertThat(sum("order_combos", "discount_amount", orderId)).isEqualByComparingTo("200000");
@@ -195,7 +195,7 @@ class ComboApiIntegrationTest {
                 .andExpect(jsonPath("$.data.byCombo[?(@.comboId == " + id + ")].orders").value(1))
                 .andExpect(jsonPath("$.data.byCombo[?(@.comboId == " + id + ")].units").value(2))
                 .andExpect(jsonPath("$.data.byCombo[?(@.comboId == " + id + ")].discount").value(200000.0))
-                .andExpect(jsonPath("$.data.byCombo[?(@.comboId == " + id + ")].revenue").value(14130000.0));
+                .andExpect(jsonPath("$.data.byCombo[?(@.comboId == " + id + ")].revenue").value(14160000.0));
 
         // a combo an order used cannot be deleted: switch it off, and a new cart gets no discount
         send(delete("/api/v1/admin/combos/" + id), admin, null)

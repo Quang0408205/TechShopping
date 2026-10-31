@@ -162,8 +162,8 @@ class VoucherApiIntegrationTest {
                 .andExpect(jsonPath("$.data.voucherCode").value("POY10TEST"))
                 .andExpect(jsonPath("$.data.voucherDiscount").value(500000))
                 .andExpect(jsonPath("$.data.subtotal").value(15190000))
-                .andExpect(jsonPath("$.data.shippingFee").value(0))
-                .andExpect(jsonPath("$.data.total").value(14690000)));
+                .andExpect(jsonPath("$.data.shippingFee").value(30000))
+                .andExpect(jsonPath("$.data.total").value(14720000)));
         Long orderId = order.get("id").asLong();
         assertThat(usedCount(id)).isEqualTo(1);
         assertThat(lineShares(orderId)).isEqualByComparingTo("500000");

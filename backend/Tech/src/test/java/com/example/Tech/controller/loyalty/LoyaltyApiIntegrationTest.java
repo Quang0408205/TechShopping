@@ -126,8 +126,8 @@ class LoyaltyApiIntegrationTest {
         send(get("/api/v1/orders/" + first), customer, null).andExpect(jsonPath("$.data.pointsEarned").value(1599));
         send(get("/api/v1/loyalty/me"), customer, null)
                 .andExpect(jsonPath("$.data.points").value(1599))
-                .andExpect(jsonPath("$.data.totalSpent").value(15990000))
-                .andExpect(jsonPath("$.data.progressPercent").value(31));
+                .andExpect(jsonPath("$.data.totalSpent").value(16020000))
+                .andExpect(jsonPath("$.data.progressPercent").value(32));
         send(get("/api/v1/loyalty/me/history"), customer, null)
                 .andExpect(jsonPath("$.data.content[0].type").value("EARN"))
                 .andExpect(jsonPath("$.data.content[0].points").value(1599))
@@ -163,13 +163,13 @@ class LoyaltyApiIntegrationTest {
                 .andExpect(jsonPath("$.data.pointsEarned").value(1599));
         send(get("/api/v1/loyalty/me"), customer, null)
                 .andExpect(jsonPath("$.data.points").value(1599))
-                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+                .andExpect(jsonPath("$.data.totalSpent").value(16020000));
 
         // delivering it later counts nothing more
         deliver(paid);
         send(get("/api/v1/loyalty/me"), customer, null)
                 .andExpect(jsonPath("$.data.points").value(1599))
-                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+                .andExpect(jsonPath("$.data.totalSpent").value(16020000));
 
         addToCart(phone, 1);
         long cancelled = data(send(post("/api/v1/orders"), customer, orderBody(null, "BANK_TRANSFER"))
@@ -179,7 +179,7 @@ class LoyaltyApiIntegrationTest {
         send(post("/api/v1/orders/" + cancelled + "/cancel"), customer, null).andExpect(status().isOk());
         send(get("/api/v1/loyalty/me"), customer, null)
                 .andExpect(jsonPath("$.data.points").value(1599))
-                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+                .andExpect(jsonPath("$.data.totalSpent").value(16020000));
         send(get("/api/v1/loyalty/me/history"), customer, null)
                 .andExpect(jsonPath("$.data.content[0].type").value("REVOKE"))
                 .andExpect(jsonPath("$.data.content[0].points").value(-1599))
@@ -244,7 +244,7 @@ class LoyaltyApiIntegrationTest {
         long orderId = placeOrder(Map.of(phone, 1), 1000);
         deliver(orderId);
         JsonNode order = data(send(get("/api/v1/orders/" + orderId), customer, null));
-        assertThat(order.get("total").decimalValue()).isEqualByComparingTo("14990000");
+        assertThat(order.get("total").decimalValue()).isEqualByComparingTo("15020000");
         assertThat(order.get("pointsEarned").asInt()).isEqualTo(1499);
         send(get("/api/v1/loyalty/me"), customer, null).andExpect(jsonPath("$.data.points").value(1499));
 

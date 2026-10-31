@@ -59,6 +59,9 @@ class BankWebhookApiIntegrationTest {
     private static final String SECRET = "test-only-webhook-secret";
     private static final String PRICE = "10000000";
 
+    /** What a delivered order of one PRICE product costs: the goods plus the 30.000đ shipping fee. */
+    private static final String TOTAL = "10030000";
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -132,7 +135,7 @@ class BankWebhookApiIntegrationTest {
 
     @Test
     void webhook_needsTheSharedKey() throws Exception {
-        Map<String, Object> body = notice("KEY-1", "DH00000001 test", PRICE);
+        Map<String, Object> body = notice("KEY-1", "DH00000001 test", TOTAL);
 
         webhook(body, null).andExpect(status().isUnauthorized()).andExpect(jsonPath("$.error.code").value("WEBHOOK_UNAUTHORIZED"));
         webhook(body, "wrong-key").andExpect(status().isUnauthorized());
@@ -144,17 +147,17 @@ class BankWebhookApiIntegrationTest {
         webhook(body, SECRET).andExpect(status().isOk());
         mockMvc.perform(post("/api/v1/payments/webhook").header("X-Webhook-Secret", SECRET)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonMapper.writeValueAsString(notice("KEY-2", "khong ma don", PRICE))))
+                        .content(jsonMapper.writeValueAsString(notice("KEY-2", "khong ma don", TOTAL))))
                 .andExpect(status().isOk());
     }
 
     @Test
     void webhook_validatesTheBody() throws Exception {
-        Map<String, Object> noAmount = notice("BAD-1", "DH00000001", PRICE);
+        Map<String, Object> noAmount = notice("BAD-1", "DH00000001", TOTAL);
         noAmount.remove("transferAmount");
         webhook(noAmount, SECRET).andExpect(status().isBadRequest()).andExpect(jsonPath("$.error.details.transferAmount").exists());
         webhook(notice("BAD-2", "DH00000001", "-5"), SECRET).andExpect(status().isBadRequest());
-        Map<String, Object> noId = notice("x", "DH00000001", PRICE);
+        Map<String, Object> noId = notice("x", "DH00000001", TOTAL);
         noId.remove("id");
         webhook(noId, SECRET).andExpect(status().isBadRequest());
     }
@@ -165,7 +168,7 @@ class BankWebhookApiIntegrationTest {
         patchStatus(orderId, "CONFIRMED").andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("PAYMENT_REQUIRED"));
 
-        webhook(notice("FT-OK-1", "Nguyen Van An chuyen tien " + code(orderId), PRICE), SECRET)
+        webhook(notice("FT-OK-1", "Nguyen Van An chuyen tien " + code(orderId), TOTAL), SECRET)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("MATCHED"))
                 .andExpect(jsonPath("$.data.orderCode").value(code(orderId)))
@@ -182,14 +185,14 @@ class BankWebhookApiIntegrationTest {
         long orderId = placeOrder("BANK_TRANSFER");
         String lower = code(orderId).toLowerCase().replace("dh", "dh ");
 
-        webhook(notice("FT-LOWER-1", "chuyen tien " + lower + " cam on", PRICE), SECRET)
+        webhook(notice("FT-LOWER-1", "chuyen tien " + lower + " cam on", TOTAL), SECRET)
                 .andExpect(jsonPath("$.data.status").value("MATCHED"));
     }
 
     @Test
     void sameTransactionId_isStoredOnce() throws Exception {
         long orderId = placeOrder("BANK_TRANSFER");
-        Map<String, Object> body = notice("FT-DUP-1", code(orderId), PRICE);
+        Map<String, Object> body = notice("FT-DUP-1", code(orderId), TOTAL);
 
         webhook(body, SECRET).andExpect(jsonPath("$.data.duplicate").value(false)).andExpect(jsonPath("$.data.status").value("MATCHED"));
         webhook(body, SECRET).andExpect(status().isOk()).andExpect(jsonPath("$.data.duplicate").value(true));
@@ -201,7 +204,7 @@ class BankWebhookApiIntegrationTest {
     @Test
     void moneyOut_isIgnored() throws Exception {
         long orderId = placeOrder("BANK_TRANSFER");
-        Map<String, Object> out = notice("FT-OUT-1", code(orderId), PRICE);
+        Map<String, Object> out = notice("FT-OUT-1", code(orderId), TOTAL);
         out.put("transferType", "out");
 
         webhook(out, SECRET).andExpect(status().isOk()).andExpect(jsonPath("$.data.status").doesNotExist());
@@ -263,15 +266,15 @@ class BankWebhookApiIntegrationTest {
     void cancelledOrAlreadyPaidOrder_isNeverConfirmedTwice() throws Exception {
         long cancelled = placeOrder("BANK_TRANSFER");
         patchStatus(cancelled, "CANCELLED").andExpect(status().isOk());
-        webhook(notice("FT-CANCEL-1", code(cancelled), PRICE), SECRET)
+        webhook(notice("FT-CANCEL-1", code(cancelled), TOTAL), SECRET)
                 .andExpect(jsonPath("$.data.status").value("REVIEW"));
 
         long paid = placeOrder("BANK_TRANSFER");
-        webhook(notice("FT-PAID-1", code(paid), PRICE), SECRET).andExpect(jsonPath("$.data.status").value("MATCHED"));
-        webhook(notice("FT-PAID-2", code(paid), PRICE), SECRET).andExpect(jsonPath("$.data.status").value("REVIEW"));
+        webhook(notice("FT-PAID-1", code(paid), TOTAL), SECRET).andExpect(jsonPath("$.data.status").value("MATCHED"));
+        webhook(notice("FT-PAID-2", code(paid), TOTAL), SECRET).andExpect(jsonPath("$.data.status").value("REVIEW"));
 
         long cod = placeOrder("COD");
-        webhook(notice("FT-COD-1", code(cod), PRICE), SECRET).andExpect(jsonPath("$.data.status").value("REVIEW"));
+        webhook(notice("FT-COD-1", code(cod), TOTAL), SECRET).andExpect(jsonPath("$.data.status").value("REVIEW"));
 
         JsonNode review = list("status", "REVIEW").get("content");
         assertThat(review).hasSize(3);
@@ -300,7 +303,7 @@ class BankWebhookApiIntegrationTest {
 
         send(post("/api/v1/admin/bank-transactions/simulate"), adminToken, Map.of("content", "", "amount", 1000))
                 .andExpect(status().isBadRequest());
-        send(post("/api/v1/admin/bank-transactions/simulate"), adminToken, Map.of("content", code(orderId), "amount", PRICE))
+        send(post("/api/v1/admin/bank-transactions/simulate"), adminToken, Map.of("content", code(orderId), "amount", TOTAL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("MATCHED"));
 

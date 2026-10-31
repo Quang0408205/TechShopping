@@ -171,6 +171,30 @@
                 <label for="orderNote">Ghi chú (không bắt buộc)</label>
                 <textarea id="orderNote" rows="2" maxlength="300"></textarea>
 
+                <label class="checkout-invoice-toggle">
+                    <input type="checkbox" id="invoiceToggle">
+                    Xuất hoá đơn công ty
+                </label>
+
+                <div class="checkout-invoice-fields" id="invoiceFields" hidden>
+
+                    <label for="invoiceCompany">Tên công ty</label>
+                    <input type="text" id="invoiceCompany" maxlength="200" autocomplete="organization">
+                    <small class="field-error" data-field="invoiceCompany"></small>
+
+                    <label for="invoiceTaxCode">Mã số thuế</label>
+                    <input type="text" id="invoiceTaxCode" maxlength="14" inputmode="numeric" placeholder="10 hoặc 13 chữ số">
+                    <small class="field-error" data-field="invoiceTaxCode"></small>
+
+                    <label for="invoiceAddress">Địa chỉ công ty</label>
+                    <input type="text" id="invoiceAddress" maxlength="500" autocomplete="street-address">
+                    <small class="field-error" data-field="invoiceAddress"></small>
+
+                    <small class="checkout-invoice-note">Thông tin chỉ dùng để in trên hoá đơn bán hàng.</small>
+
+                </div>
+
+
 
                 <h2 class="checkout-heading checkout-section-spacer"><span id="paymentStepNumber">3</span>Phương thức thanh toán</h2>
 

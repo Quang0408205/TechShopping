@@ -130,7 +130,8 @@ class OrderServiceImplTest {
                 interactionRecorder, voucherService, new com.example.Tech.service.combo.ComboPricingService(
                         mock(com.example.Tech.repository.combo.ComboRepository.class), cartMapper, CLOCK),
                 loyaltyService, paymentRepository, mock(com.example.Tech.repository.payment.InstallmentOrderRepository.class),
-                new BankTransferProperties(null, null, null, null, 24), CLOCK);
+                new BankTransferProperties(null, null, null, null, 24),
+                new com.example.Tech.service.order.ShippingFeeService(mock(com.example.Tech.repository.order.ShippingFeeRuleRepository.class), null), CLOCK);
         user = new User();
         user.setId(USER_ID);
         cart = new Cart(user);
@@ -142,7 +143,7 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void placeOrder_buildsTheOrderFromTheCart_freeShippingFrom10Million_emptiesTheCart() {
+    void placeOrder_buildsTheOrderFromTheCart_flatShippingFeeWhateverTheValue_emptiesTheCart() {
         cartWith(line(black, 2), line(white, 1));
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
             Order order = invocation.getArgument(0);
@@ -174,9 +175,9 @@ class OrderServiceImplTest {
                         tuple(11L, 2, "14990000", "2000000", "29980000"),
                         tuple(12L, 1, "2000000", "0", "2000000"));
         assertThat(order.getItems()).allSatisfy(item -> assertThat(item.getOrder()).isSameAs(order));
-        assertThat(order.getShippingCost()).isEqualByComparingTo("0");
+        assertThat(order.getShippingCost()).isEqualByComparingTo("30000");
         assertThat(order.getTaxAmount()).isEqualByComparingTo("0");
-        assertThat(order.getTotalAmount()).isEqualByComparingTo("31980000");
+        assertThat(order.getTotalAmount()).isEqualByComparingTo("32010000");
         verify(cartItemRepository).deleteAllByCartId(30L);
         verify(cartRepository).touch(30L);
         verify(orderPaymentLifecycle).validateSelection(PaymentMethod.BANK_TRANSFER, null);

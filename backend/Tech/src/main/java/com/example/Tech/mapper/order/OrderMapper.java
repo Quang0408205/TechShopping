@@ -68,7 +68,8 @@ public class OrderMapper {
                 installment,
                 order.getDeliveryType(),
                 order.getStore() == null ? null : order.getStore().getId(),
-                order.getStore() == null ? null : order.getStore().getName());
+                order.getStore() == null ? null : order.getStore().getName(),
+                order.getInvoiceCompany(), order.getInvoiceTaxCode(), order.getInvoiceAddress());
     }
 
     public OrderItemResponse toItemResponse(OrderItem item, String imageUrl) {

@@ -31,7 +31,7 @@ function emptyCartSummary() {
 
 /*
  * CartResponse của API → dạng dùng ở giao diện. Phí ship và tổng tiền do
- * server tính (30.000đ, miễn phí từ 10.000.000đ), đúng bằng số tiền
+ * server tính (phí mặc định 30.000đ cho giao tận nhà), đúng bằng số tiền
  * đơn hàng sẽ tính khi đặt.
  */
 

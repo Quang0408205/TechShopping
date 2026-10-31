@@ -722,6 +722,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 : []),
             ["Phí giao hàng", Number(order.shippingFee) > 0 ? escapeHtml(formatPrice(Number(order.shippingFee))) : "Miễn phí"],
             ["Mã vận đơn", trackingHtml],
+            ...(order.invoiceCompany ? [["Xuất hoá đơn công ty", escapeHtml(order.invoiceCompany + " · MST " + order.invoiceTaxCode + " · " + order.invoiceAddress)]] : []),
             ["SĐT tài khoản khách", customerPhone ? escapeHtml(customerPhone) : "—"]
         ];
 
@@ -747,6 +748,10 @@ document.addEventListener("DOMContentLoaded", async function () {
                     </thead>
                     <tbody>${itemRows}</tbody>
                 </table>
+                <div class="admin-payment-actions">
+                    ${order.status === "CANCELLED" ? "" : `<a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/print-order.html?type=invoice&id=" + order.id))}" target="_blank" rel="noopener">IN HOÁ ĐƠN</a>`}
+                    <a class="btn btn-outline-dark admin-action-btn" href="${escapeHtml(siteUrl("admin/print-order.html?type=delivery&id=" + order.id))}" target="_blank" rel="noopener">IN PHIẾU GIAO HÀNG</a>
+                </div>
                 ${paymentSectionHtml(order)}
             </div>
         `;

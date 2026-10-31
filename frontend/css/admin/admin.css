@@ -2015,3 +2015,25 @@ button.admin-badge {
     color: #9a5b00;
     font-style: normal;
 }
+
+
+/* ================= NHẬT KÝ THAO TÁC ================= */
+
+.admin-detail-row td {
+    background: var(--gray-50, #f8f8f8);
+}
+
+.admin-code {
+    max-width: 100%;
+    margin: 6px 0 0;
+    padding: 10px 12px;
+    overflow-x: auto;
+
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: #fff;
+
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}

@@ -40,7 +40,7 @@ const CHATBOT_TOPICS = [
         keywords: ["giao hang", "ship", "van chuyen", "phi giao", "nhan tai cua hang"],
         reply: function () {
             return {
-                text: "Giao tận nhà: phí 30.000đ, miễn phí cho đơn từ 10.000.000đ. " +
+                text: "Giao tận nhà: phí mặc định 30.000đ cho mọi đơn (một số tỉnh / thành có phí riêng, hiện ở bước thanh toán). " +
                     "Nhận tại cửa hàng: miễn phí, chọn cửa hàng ở bước thanh toán.",
                 links: [["Xem cửa hàng ở trang Dịch vụ", "customer/services.html"]]
             };

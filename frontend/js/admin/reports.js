@@ -187,7 +187,9 @@ document.addEventListener(
                 { label: "Tiền hoàn", money: s.refundAmount, sub: s.refundCount + " lần hoàn tiền" },
                 { label: "Phí giao hàng", money: s.shippingFees, sub: "Đã tính trong doanh thu gộp" },
                 { label: "Hoa hồng nhân viên", money: s.totalCommission, sub: "Theo đơn đã giao trong kỳ" },
-                { label: "Phí đối tác trả góp", money: s.installmentFees || 0, sub: "Cửa hàng chịu, khách vẫn 0%" }
+                { label: "Phí đối tác trả góp", money: s.installmentFees || 0, sub: "Cửa hàng chịu, khách vẫn 0%" },
+                { label: "Lợi nhuận gộp", money: s.grossProfit || 0, sub: (s.profitMargin == null ? "Chưa có dữ liệu giá vốn" : "Biên " + String(s.profitMargin).replace(".", ",") + "%") + (s.unitsWithoutCost ? " · " + s.unitsWithoutCost + " sp chưa có giá vốn" : "") },
+                { label: "Giá vốn hàng bán", money: s.costOfGoods || 0, sub: "Giá vốn chốt lúc xác nhận đơn, chưa trừ tiền hoàn" }
             ]);
 
 

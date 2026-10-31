@@ -214,8 +214,8 @@ class AdminPaymentApiIntegrationTest {
                 .andExpect(jsonPath("$.data.order.installment.citizenId").value("0123456789"))
                 .andExpect(jsonPath("$.data.order.installment.partnerRef", notNullValue()))
                 .andExpect(jsonPath("$.data.order.installment.feePercent").value(2))
-                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(200000))
-                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9800000))
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(200600))
+                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9829400))
                 .andExpect(jsonPath("$.data.order.installment.reviewedAt", notNullValue()))
                 .andExpect(jsonPath("$.data.order.payment.status").value("PAID"));
         send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
@@ -247,7 +247,7 @@ class AdminPaymentApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.installment.status").value("SETTLED"))
                 .andExpect(jsonPath("$.data.installment.settledAt", notNullValue()))
-                .andExpect(jsonPath("$.data.installment.netAmount").value(9800000));
+                .andExpect(jsonPath("$.data.installment.netAmount").value(9829400));
         send(post(settleUrl(installmentId)), staffToken, null)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INVALID_INSTALLMENT_STATUS"));
@@ -295,8 +295,8 @@ class AdminPaymentApiIntegrationTest {
         send(post(orderUrl(orderId, "installment/approve")), staffToken, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order.installment.feePercent").value(4))
-                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(400000))
-                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9600000));
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(401200))
+                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9628800));
 
         long codOrder = placeOrder(mouse, "COD", null);
         send(post(orderUrl(codOrder, "installment/approve")), staffToken, null)

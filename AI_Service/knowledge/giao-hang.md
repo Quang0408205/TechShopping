@@ -4,7 +4,7 @@
 POY có hai hình thức nhận hàng: giao tận nhà hoặc nhận tại cửa hàng. Khách chọn hình thức ở bước thanh toán.
 
 ## Phí giao hàng
-Giao tận nhà: phí 30.000đ cho mỗi đơn. Đơn từ 10.000.000đ trở lên được miễn phí giao hàng.
+Giao tận nhà: phí mặc định 30.000đ cho mỗi đơn, không phân biệt giá trị đơn. Một số tỉnh / thành có phí riêng; phí chính xác hiện ở bước thanh toán sau khi chọn tỉnh / thành.
 Nhận tại cửa hàng: miễn phí vận chuyển. Khách chọn cửa hàng muốn nhận ở bước thanh toán.
 
 ## Chi nhánh xử lý đơn

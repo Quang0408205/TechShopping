@@ -165,8 +165,8 @@ class InstallmentPartnerApiIntegrationTest {
                 .andExpect(jsonPath("$.data.payment.status").value("PAID"));
         // 5% of 10.000.000đ for company A over 9 months
         send(get("/api/v1/admin/installments").param("keyword", "partner.customer"), staffToken, null)
-                .andExpect(jsonPath("$.data.content[0].installment.feeAmount").value(500000))
-                .andExpect(jsonPath("$.data.content[0].installment.netAmount").value(9500000));
+                .andExpect(jsonPath("$.data.content[0].installment.feeAmount").value(501500))
+                .andExpect(jsonPath("$.data.content[0].installment.netAmount").value(9528500));
 
         webhook(Map.of("eventId", "evt-7", "partnerRef", partnerRef, "decision", "APPROVED"), WEBHOOK_SECRET)
                 .andExpect(status().isOk())
@@ -258,10 +258,10 @@ class InstallmentPartnerApiIntegrationTest {
 
         send(post("/api/v1/admin/orders/" + after + "/installment/approve"), staffToken, null)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(250000))
-                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9750000));
+                .andExpect(jsonPath("$.data.order.installment.feeAmount").value(250750))
+                .andExpect(jsonPath("$.data.order.installment.netAmount").value(9779250));
         send(get("/api/v1/admin/installments/" + installmentIdOf(before)), staffToken, null)
-                .andExpect(jsonPath("$.data.installment.feeAmount").value(200000));
+                .andExpect(jsonPath("$.data.installment.feeAmount").value(200600));
 
         // a term the partner no longer has cannot be chosen
         Map<String, Object> gone = new HashMap<>();

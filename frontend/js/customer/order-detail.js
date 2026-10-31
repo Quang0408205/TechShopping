@@ -275,6 +275,10 @@ function renderOrder(order) {
 
     document.getElementById("orderActions").hidden = !order.cancellable;
 
+    document.getElementById("orderInvoice").hidden = order.status === "CANCELLED";
+
+    document.getElementById("orderInvoiceLink").href = "invoice.html?id=" + encodeURIComponent(order.id);
+
     document.getElementById("orderBuyAgain").hidden = order.status !== "DELIVERED" && order.status !== "CANCELLED";
 
 }

@@ -240,7 +240,7 @@ class AdminOrderApiIntegrationTest {
                 .andExpect(jsonPath("$.data.order.trackingNumber").value("GHN123456"));
 
         assertThat(customerProfileRepository.findById(customerId).orElseThrow().getTotalSpent())
-                .isEqualByComparingTo(spentBefore.add(new BigDecimal("15990000")));
+                .isEqualByComparingTo(spentBefore.add(new BigDecimal("16020000")));
         // One warranty per line, from the delivery day for the product's 12 months
         List<Warranty> warranties = entityManager.createQuery(
                         "select w from Warranty w where w.orderItem.order.id = :orderId", Warranty.class)
@@ -258,8 +258,8 @@ class AdminOrderApiIntegrationTest {
         SalesRecord sale = salesRecordRepository.findByOrder_Id(orderId).orElseThrow();
         assertThat(sale.getEmployee().getUser().getId()).isEqualTo(staffId);
         assertThat(sale.getStore().getId()).isEqualTo(storeA.getId());
-        assertThat(sale.getSalesAmount()).isEqualByComparingTo("15990000");
-        assertThat(sale.getCommission()).isEqualByComparingTo("159900");
+        assertThat(sale.getSalesAmount()).isEqualByComparingTo("16020000");
+        assertThat(sale.getCommission()).isEqualByComparingTo("160200");
         assertThat(sale.getRecordedAt()).isNotNull();
         send(get("/api/v1/orders/" + orderId), customerToken, null)
                 .andExpect(jsonPath("$.data.status").value("DELIVERED"))

@@ -198,6 +198,33 @@ class AdminReportApiIntegrationTest {
     }
 
     @Test
+    void profit_usesTheCostFixedOnEachLine_andCountsTheUnitsWithoutOne() throws Exception {
+        entityManager.flush();
+        // the phones carry a cost fixed at confirmation (8.000.000 each), the covers have none
+        entityManager.createNativeQuery("update order_items set unit_cost = 8000000 where variant_id = :variant")
+                .setParameter("variant", phone.getId()).executeUpdate();
+        entityManager.clear();
+
+        JsonNode summary = data(send(get(SALES + PERIOD + "&groupBy=MONTH"), adminToken).andExpect(status().isOk())).get("summary");
+
+        // 3 phones sold in the period (the one delivered on 28/2 is outside): cost 24.000.000 on 30.000.000 of revenue
+        assertMoney(summary.get("costOfGoods"), "24000000");
+        assertMoney(summary.get("grossProfit"), "6000000");
+        assertThat(summary.get("profitMargin").decimalValue()).isEqualByComparingTo("20.0");
+        assertThat(summary.get("unitsWithoutCost").asLong()).isEqualTo(3);
+    }
+
+    @Test
+    void profit_withNoKnownCost_hasNoMargin() throws Exception {
+        JsonNode summary = data(send(get(SALES + PERIOD + "&groupBy=MONTH"), adminToken).andExpect(status().isOk())).get("summary");
+
+        assertMoney(summary.get("costOfGoods"), "0");
+        assertMoney(summary.get("grossProfit"), "0");
+        assertThat(summary.get("profitMargin").isNull()).isTrue();
+        assertThat(summary.get("unitsWithoutCost").asLong()).isEqualTo(6);
+    }
+
+    @Test
     void export_admin_everySheet_matchesTheReport() throws Exception {
         MvcResult result = send(get(SALES + "/export" + PERIOD + "&groupBy=MONTH"), adminToken)
                 .andExpect(status().isOk())

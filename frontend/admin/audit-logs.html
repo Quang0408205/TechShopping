@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Nhật ký thao tác - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="admin-body" data-page-title="Nhật ký thao tác" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="audit-logs"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-subtext">
+                Mỗi thao tác ghi dữ liệu thành công của nhân viên, quản lý chi nhánh và quản trị viên được lưu lại: ai làm, lúc nào,
+                làm gì, trên đối tượng nào, từ địa chỉ IP nào. Nhật ký chỉ xem, không sửa hay xoá được.
+            </p>
+
+            <form class="admin-filter-bar" id="auditFilterForm" role="search">
+
+                <input type="search" id="auditKeyword" placeholder="Người thao tác, hành động, đường dẫn…" maxlength="100" aria-label="Từ khoá">
+
+                <select id="auditEntityFilter" aria-label="Đối tượng">
+                    <option value="">Mọi đối tượng</option>
+                </select>
+
+                <select id="auditMethodFilter" aria-label="Loại thao tác">
+                    <option value="">Mọi thao tác</option>
+                    <option value="POST">Tạo / thực hiện (POST)</option>
+                    <option value="PUT">Cập nhật (PUT)</option>
+                    <option value="PATCH">Cập nhật một phần (PATCH)</option>
+                    <option value="DELETE">Xoá (DELETE)</option>
+                </select>
+
+                <label class="admin-check-filter">Từ ngày <input type="date" id="auditFrom"></label>
+
+                <label class="admin-check-filter">Đến ngày <input type="date" id="auditTo"></label>
+
+                <button type="submit" class="btn btn-dark">LỌC</button>
+
+                <button type="button" class="btn btn-outline-dark" id="auditResetBtn">XOÁ LỌC</button>
+
+            </form>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Nhật ký</h2>
+                    <span class="admin-row-count" id="auditRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Người thao tác</th>
+                                <th>Hành động</th>
+                                <th>Đối tượng</th>
+                                <th>IP</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="auditTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="auditPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/audit-logs.js"></script>
+
+</body>
+</html>

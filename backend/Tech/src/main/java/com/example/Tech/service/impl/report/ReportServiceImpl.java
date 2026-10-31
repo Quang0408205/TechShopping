@@ -105,13 +105,18 @@ public class ReportServiceImpl implements ReportService {
 
         Totals delivered = queries.delivered(from, to, storeId);
         SalesReportQueries.Refunds refunds = queries.refunds(from, to, storeId);
+        SalesReportQueries.Profit profit = queries.profit(from, to, storeId);
         SalesReportResponse.Summary summary = new SalesReportResponse.Summary(
                 delivered.revenue(), refunds.amount(), delivered.revenue().subtract(refunds.amount()),
                 delivered.orders(), queries.unitsSold(from, to, storeId),
                 delivered.orders() == 0 ? BigDecimal.ZERO
                         : delivered.revenue().divide(BigDecimal.valueOf(delivered.orders()), 0, RoundingMode.HALF_UP),
                 delivered.shipping(), refunds.count(), queries.commission(from, to, storeId),
-                queries.installmentFees(from, to, storeId));
+                queries.installmentFees(from, to, storeId), profit.costOfGoods(),
+                profit.revenueWithCost().subtract(profit.costOfGoods()),
+                profit.revenueWithCost().signum() == 0 ? null : profit.revenueWithCost().subtract(profit.costOfGoods())
+                        .multiply(BigDecimal.valueOf(100)).divide(profit.revenueWithCost(), 1, RoundingMode.HALF_UP),
+                profit.unitsWithoutCost());
 
         return new SalesReportResponse(storeId, store != null ? store.getName() : null, fromDate, toDate, groupBy,
                 summary,

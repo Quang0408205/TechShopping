@@ -76,15 +76,36 @@ public record OrderCreateRequest(
                 + "email is used", example = "an@example.com")
         @Email(message = "Email chưa hợp lệ")
         @Size(max = 255, message = "Email tối đa 255 ký tự")
-        String contactEmail
+        String contactEmail,
+
+        @Schema(description = "Optional company invoice details; all three or none", example = "Công ty TNHH ABC")
+        @Size(max = 200, message = "Tên công ty tối đa 200 ký tự")
+        String invoiceCompany,
+
+        @Schema(description = "10 digits, or 13 with the branch suffix", example = "0312345678")
+        @Pattern(regexp = "^\\s*(\\d{10}(-?\\d{3})?)?\\s*$", message = "Mã số thuế gồm 10 chữ số (hoặc 13 chữ số với chi nhánh)")
+        String invoiceTaxCode,
+
+        @Size(max = 500, message = "Địa chỉ công ty tối đa 500 ký tự")
+        String invoiceAddress
 ) {
+
+    public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
+                              PaymentMethod paymentMethod, InstallmentRequest installment,
+                              DeliveryType deliveryType, Integer pickupStoreId,
+                              String shippingProvince, String shippingWard, String voucherCode, Integer pointsToUse,
+                              String contactEmail) {
+        this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
+                pickupStoreId, shippingProvince, shippingWard, voucherCode, pointsToUse, contactEmail, null, null, null);
+    }
+
 
     public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,
                               PaymentMethod paymentMethod, InstallmentRequest installment,
                               DeliveryType deliveryType, Integer pickupStoreId,
                               String shippingProvince, String shippingWard, String voucherCode, Integer pointsToUse) {
         this(recipientName, recipientPhone, shippingAddress, note, paymentMethod, installment, deliveryType,
-                pickupStoreId, shippingProvince, shippingWard, voucherCode, pointsToUse, null);
+                pickupStoreId, shippingProvince, shippingWard, voucherCode, pointsToUse, null, null, null, null);
     }
 
     public OrderCreateRequest(String recipientName, String recipientPhone, String shippingAddress, String note,

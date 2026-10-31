@@ -291,6 +291,9 @@ create table orders (
     points_discount decimal(15, 2) not null default 0,
     points_earned int not null default 0,
     contact_email varchar(255),
+    invoice_company varchar(200),
+    invoice_tax_code varchar(20),
+    invoice_address varchar(500),
     tracking_token varchar(64) not null default (md5(random()::text || clock_timestamp()::text)
                                                  || md5(random()::text || clock_timestamp()::text)),
     created_at timestamp default current_timestamp,
@@ -709,6 +712,36 @@ create table stock_transfer_items (
 
 alter table stock_movements add column transfer_id bigint references stock_transfers(transfer_id);
 create index idx_stock_movements_transfer on stock_movements (transfer_id) where transfer_id is not null;
+
+-- bảng audit_logs: nhật ký thao tác ghi dữ liệu của nhân sự (chỉ thêm; user_id không có khoá ngoại để nhật ký còn khi tài khoản bị xoá)
+create table audit_logs (
+    log_id bigserial primary key,
+    user_id bigint not null,
+    username varchar(50) not null,
+    full_name varchar(120),
+    role varchar(20) not null,
+    method varchar(8) not null,
+    path varchar(300) not null,
+    action_label varchar(150) not null,
+    entity_type varchar(50) not null,
+    entity_id varchar(40),
+    status int not null,
+    ip varchar(64),
+    request_data text,
+    created_at timestamp not null default current_timestamp
+);
+create index idx_audit_logs_created on audit_logs (created_at desc);
+create index idx_audit_logs_user on audit_logs (user_id, created_at desc);
+create index idx_audit_logs_entity on audit_logs (entity_type, created_at desc);
+
+-- bảng shipping_fee_rules: phí giao hàng riêng của từng tỉnh / thành (tỉnh không có dòng tính phí mặc định)
+create table shipping_fee_rules (
+    rule_id serial primary key,
+    province_name varchar(100) not null,
+    fee decimal(15, 2) not null check (fee >= 0),
+    updated_at timestamp not null default current_timestamp
+);
+create unique index uq_shipping_fee_rules_province on shipping_fee_rules (lower(province_name));
 
 -- =====================================================
 -- nhóm 7: hệ thống khuyến nghị

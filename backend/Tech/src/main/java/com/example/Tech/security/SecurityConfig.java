@@ -1,5 +1,7 @@
 package com.example.Tech.security;
 
+import com.example.Tech.service.audit.AuditLogService;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -59,6 +61,8 @@ public class SecurityConfig {
     private final RestAccessDeniedHandler accessDeniedHandler;
     private final JwtAuthenticationConverter jwtAuthenticationConverter;
     private final SecurityErrorResponseWriter errorWriter;
+    private final AuditLogService auditLogService;
+    private final JsonMapper jsonMapper;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -81,6 +85,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/google/config").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/shipping-fee").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         // home page blocks: flash sale + featured combos
@@ -117,7 +122,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/**").authenticated()
                         .anyRequest().denyAll()
                 )
-                .addFilterAfter(new PasswordChangeRequiredFilter(errorWriter), BearerTokenAuthenticationFilter.class);
+                .addFilterAfter(new PasswordChangeRequiredFilter(errorWriter), BearerTokenAuthenticationFilter.class)
+                .addFilterAfter(new AuditLogFilter(auditLogService, jsonMapper), PasswordChangeRequiredFilter.class);
         return http.build();
     }
 

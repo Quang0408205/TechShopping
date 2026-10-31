@@ -40,7 +40,15 @@ public record SalesReportResponse(
             long refundCount,
             BigDecimal totalCommission,
             @Schema(description = "Fees kept by installment partners on the delivered installment orders of the period")
-            BigDecimal installmentFees
+            BigDecimal installmentFees,
+            @Schema(description = "Cost of goods of the delivered lines whose cost is known (unit cost fixed at order confirmation)")
+            BigDecimal costOfGoods,
+            @Schema(description = "Revenue of those lines minus their cost; refunds are not taken off")
+            BigDecimal grossProfit,
+            @Schema(description = "grossProfit as a percentage of the revenue of the lines with a known cost; null when there is none")
+            BigDecimal profitMargin,
+            @Schema(description = "Units sold in the period whose cost is unknown (left out of the profit figures)")
+            long unitsWithoutCost
     ) {
     }
 

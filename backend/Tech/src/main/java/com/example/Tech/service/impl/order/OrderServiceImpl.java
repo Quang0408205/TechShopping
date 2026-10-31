@@ -36,7 +36,7 @@ import com.example.Tech.service.combo.ComboPricingService;
 import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.OrderService;
-import com.example.Tech.service.order.ShippingPolicy;
+import com.example.Tech.service.order.ShippingFeeService;
 import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import com.example.Tech.service.voucher.VoucherService;
@@ -81,6 +81,7 @@ public class OrderServiceImpl implements OrderService {
     private final PaymentRepository paymentRepository;
     private final InstallmentOrderRepository installmentOrderRepository;
     private final BankTransferProperties bankTransfer;
+    private final ShippingFeeService shippingFeeService;
     private final Clock clock;
 
     @Override
@@ -114,6 +115,7 @@ public class OrderServiceImpl implements OrderService {
         order.setRecipientPhone(request.recipientPhone().trim());
         order.setShippingAddress(trimToNull(request.shippingAddress()));
         order.setContactEmail(trimToNull(request.contactEmail()));
+        applyInvoiceDetails(order, request);
         if (deliveryType == DeliveryType.HOME_DELIVERY) {
             order.setShippingProvince(trimToNull(request.shippingProvince()));
             order.setShippingWard(trimToNull(request.shippingWard()));
@@ -138,7 +140,7 @@ public class OrderServiceImpl implements OrderService {
             subtotal = subtotal.add(item.getSubtotal());
         }
         // Combo first (add-ons bought with their main product), then voucher, then points;
-        // the free-shipping threshold uses the goods before all of them
+        // the shipping fee depends on the delivery type and the province, not on the discounts
         BigDecimal comboDiscount = applyCombos(order);
         // The voucher takes its % off the goods (shipping excluded)
         String voucherCode = trimToNull(request.voucherCode());
@@ -146,7 +148,7 @@ public class OrderServiceImpl implements OrderService {
                 : voucherService.applyToOrder(order, user, voucherCode);
         // Points after the voucher, at most 10% of what is left of the goods
         BigDecimal pointsDiscount = loyaltyService.applyToOrder(order, user, request.pointsToUse());
-        BigDecimal shippingFee = ShippingPolicy.feeFor(subtotal, deliveryType);
+        BigDecimal shippingFee = shippingFeeService.feeFor(subtotal, deliveryType, order.getShippingProvince());
         order.setShippingCost(shippingFee);
         order.setTaxAmount(BigDecimal.ZERO);
         order.setTotalAmount(subtotal.subtract(comboDiscount).subtract(voucherDiscount).subtract(pointsDiscount).add(shippingFee));
@@ -339,6 +341,23 @@ public class OrderServiceImpl implements OrderService {
 
     private static BusinessException cartEmpty() {
         return new BusinessException(ErrorCode.CART_EMPTY, ErrorCode.CART_EMPTY.getDefaultMessage());
+    }
+
+    /** Company invoice details come as a set: the three of them, or none. */
+    private static void applyInvoiceDetails(Order order, OrderCreateRequest request) {
+        String company = trimToNull(request.invoiceCompany());
+        String taxCode = trimToNull(request.invoiceTaxCode());
+        String address = trimToNull(request.invoiceAddress());
+        if (company == null && taxCode == null && address == null) {
+            return;
+        }
+        if (company == null || taxCode == null || address == null) {
+            throw new BusinessException(ErrorCode.VALIDATION_ERROR,
+                    "Xuất hoá đơn công ty cần đủ tên công ty, mã số thuế và địa chỉ");
+        }
+        order.setInvoiceCompany(company);
+        order.setInvoiceTaxCode(taxCode);
+        order.setInvoiceAddress(address);
     }
 
     private static String trimToNull(String value) {

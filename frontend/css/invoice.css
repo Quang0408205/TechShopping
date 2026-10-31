@@ -1,0 +1,184 @@
+/* ================= HOÁ ĐƠN / PHIẾU GIAO HÀNG (in) ================= */
+
+body.invoice-body {
+    margin: 0;
+    padding: 24px;
+
+    background: #eee;
+    color: #111;
+    font-family: "Be Vietnam Pro", Arial, Helvetica, sans-serif;
+    font-size: 14px;
+}
+
+.invoice-toolbar {
+    max-width: 800px;
+    margin: 0 auto 16px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.invoice-sheet {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 32px 36px;
+
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+.invoice-message {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 24px;
+
+    background: #fff;
+    text-align: center;
+}
+
+.invoice-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+
+    padding-bottom: 16px;
+    border-bottom: 2px solid #111;
+}
+
+.invoice-brand {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 6px;
+}
+
+.invoice-title {
+    text-align: right;
+}
+
+.invoice-title h1 {
+    margin: 0 0 6px;
+    font-size: 20px;
+}
+
+.invoice-muted {
+    color: #666;
+    font-size: 12px;
+}
+
+.invoice-block {
+    margin-top: 16px;
+}
+
+.invoice-block h2 {
+    margin: 0 0 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.invoice-block p {
+    margin: 2px 0;
+}
+
+.invoice-items {
+    width: 100%;
+    margin-top: 18px;
+    border-collapse: collapse;
+}
+
+.invoice-items th,
+.invoice-items td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.invoice-items th {
+    border-bottom: 2px solid #111;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.invoice-num {
+    text-align: right !important;
+    white-space: nowrap;
+}
+
+.invoice-totals {
+    width: 55%;
+    margin: 14px 0 0 auto;
+    border-collapse: collapse;
+}
+
+.invoice-totals td {
+    padding: 4px 6px;
+}
+
+.invoice-totals td:last-child {
+    text-align: right;
+}
+
+.invoice-grand td {
+    border-top: 2px solid #111;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.invoice-collect {
+    font-size: 16px;
+}
+
+.invoice-foot {
+    display: flex;
+    justify-content: space-around;
+    gap: 24px;
+
+    margin-top: 40px;
+    padding-bottom: 60px;
+    text-align: center;
+}
+
+@media print {
+
+    body.invoice-body {
+        padding: 0;
+        background: #fff;
+    }
+
+    .invoice-toolbar {
+        display: none;
+    }
+
+    .invoice-sheet {
+        max-width: none;
+        padding: 0;
+        box-shadow: none;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    body.invoice-body {
+        padding: 8px;
+    }
+
+    .invoice-sheet {
+        padding: 16px;
+    }
+
+    .invoice-head {
+        flex-direction: column;
+    }
+
+    .invoice-title {
+        text-align: left;
+    }
+
+    .invoice-totals {
+        width: 100%;
+    }
+
+}
