@@ -53,6 +53,11 @@ public class OrderMailService {
             }
             MailMessage message = OrderMailTemplates.build(kind, order, recipient, trackUrl(order));
             subject = message.subject();
+            if (ReservedAddresses.isReserved(recipient)) {
+                emailLogRepository.save(new EmailLog(orderId, kind.name(), recipient, subject, EmailLog.SKIPPED,
+                        ReservedAddresses.SKIP_REASON));
+                return;
+            }
             if (!rateLimiter.tryAcquire(recipient)) {
                 emailLogRepository.save(new EmailLog(orderId, kind.name(), recipient, subject, EmailLog.SKIPPED,
                         "Too many mails to this address in the current window"));

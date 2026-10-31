@@ -354,6 +354,11 @@ document.addEventListener(
 
             fields.hidden = true;
 
+            // Bản tóm tắt thay cho 2 bước "Hình thức nhận hàng" + "Thông tin người nhận": thanh toán thành bước 2
+            document.getElementById("deliveryTypeHeading").hidden = true;
+
+            document.getElementById("paymentStepNumber").textContent = "2";
+
         }
 
 

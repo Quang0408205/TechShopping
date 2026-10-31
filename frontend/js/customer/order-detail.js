@@ -268,7 +268,8 @@ function renderOrder(order) {
 
     const earned = document.getElementById("orderPointsEarned");
 
-    earned.hidden = !(order.pointsEarned > 0);
+    // đơn đã trả tiền rồi huỷ: điểm đã tích bị trừ lại
+    earned.hidden = !(order.pointsEarned > 0) || order.status === "CANCELLED";
 
     earned.textContent = "Đơn này đã được cộng +" + new Intl.NumberFormat("vi-VN").format(order.pointsEarned) + " điểm tích luỹ.";
 

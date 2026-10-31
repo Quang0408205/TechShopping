@@ -19,7 +19,6 @@ import com.example.Tech.entity.user.User;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.repository.order.OrderRepository;
-import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.service.store.StoreAccessGuard;
 import com.example.Tech.service.user.CurrentUserLoader;
 import org.junit.jupiter.api.BeforeEach;
@@ -71,9 +70,6 @@ class AdminOrderServiceImplTest {
     private OrderRepository orderRepository;
 
     @Mock
-    private CustomerProfileRepository customerProfileRepository;
-
-    @Mock
     private CurrentUserLoader currentUserLoader;
 
     @Mock
@@ -111,7 +107,7 @@ class AdminOrderServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        adminOrderService = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
+        adminOrderService = new AdminOrderServiceImpl(orderRepository, currentUserLoader,
                 orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
                 statusRecorder, salesRecorder, voucherService, loyaltyService,
                 new com.example.Tech.config.PaymentWebhookProperties("secret", true), CLOCK);
@@ -126,7 +122,7 @@ class AdminOrderServiceImplTest {
     }
 
     @Test
-    void updateStatus_pendingToConfirmed_savesWithoutTouchingTotalSpent() {
+    void updateStatus_pendingToConfirmed_savesAndTakesTheStock() {
         Order order = stored(OrderStatus.PENDING);
 
         AdminOrderResponse response = adminOrderService.updateStatus(STAFF_ID, 5L,
@@ -136,7 +132,6 @@ class AdminOrderServiceImplTest {
         assertThat(order.getDeliveredAt()).isNull();
         assertThat(order.getCancelledAt()).isNull();
         verify(orderRepository).saveAndFlush(order);
-        verify(customerProfileRepository, never()).addToTotalSpent(anyLong(), any());
         verify(storeAccessGuard).processingScope(STAFF_ID);
         // payment rules first, then the stock is taken from the order's store, then the save
         InOrder inOrder = inOrder(orderPaymentLifecycle, orderStockLifecycle, orderRepository);
@@ -161,23 +156,19 @@ class AdminOrderServiceImplTest {
     }
 
     @Test
-    void updateStatus_shippingToDelivered_setsDeliveredAtAndAddsToTotalSpent() {
+    void updateStatus_shippingToDelivered_setsDeliveredAt_paysCod_issuesWarranties_recordsTheSale() {
         Order order = stored(OrderStatus.SHIPPING);
-        when(customerProfileRepository.addToTotalSpent(CUSTOMER_ID, order.getTotalAmount())).thenReturn(1);
 
         adminOrderService.updateStatus(STAFF_ID, 5L, new OrderStatusUpdateRequest(OrderStatus.DELIVERED, null));
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.DELIVERED);
         assertThat(order.getDeliveredAt()).isEqualTo(NOW);
-        verify(customerProfileRepository).addToTotalSpent(CUSTOMER_ID, new BigDecimal("31980000"));
-        // payment changes happen before the flush that precedes addToTotalSpent (it clears the persistence context)
-        InOrder inOrder = inOrder(orderPaymentLifecycle, warrantyIssuer, salesRecorder, orderRepository,
-                customerProfileRepository);
+        // points / total_spent come with the payment (OrderPaymentLifecycle), never from the delivery itself
+        InOrder inOrder = inOrder(orderPaymentLifecycle, warrantyIssuer, salesRecorder, orderRepository);
         inOrder.verify(orderPaymentLifecycle).onOrderDelivered(order, staff, NOW);
         inOrder.verify(warrantyIssuer).issueFor(order, NOW.toLocalDate());
         inOrder.verify(salesRecorder).recordFor(order, NOW);
         inOrder.verify(orderRepository).saveAndFlush(order);
-        inOrder.verify(customerProfileRepository).addToTotalSpent(anyLong(), any());
     }
 
     @Test
@@ -188,7 +179,6 @@ class AdminOrderServiceImplTest {
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
-        verify(customerProfileRepository, never()).addToTotalSpent(anyLong(), any());
         verify(orderPaymentLifecycle).onOrderCancelled(order);
         verify(orderStockLifecycle).onOrderCancelled(order, OrderStatus.CONFIRMED, staff);
         verify(orderPaymentLifecycle, never()).onOrderDelivered(any(), any(), any());
@@ -340,7 +330,7 @@ class AdminOrderServiceImplTest {
 
     @Test
     void partnerConsole_isOffWhenTheSimulatorIsOff() {
-        AdminOrderServiceImpl off = new AdminOrderServiceImpl(orderRepository, customerProfileRepository, currentUserLoader,
+        AdminOrderServiceImpl off = new AdminOrderServiceImpl(orderRepository, currentUserLoader,
                 orderViewLoader, orderPaymentLifecycle, orderStockLifecycle, storeAccessGuard, warrantyIssuer,
                 statusRecorder, salesRecorder, voucherService, loyaltyService,
                 new com.example.Tech.config.PaymentWebhookProperties("secret", false), CLOCK);

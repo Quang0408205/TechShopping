@@ -48,6 +48,10 @@
     font-size: 13px;
 }
 
+.checkout-heading[hidden] {
+    display: none;
+}
+
 .checkout-section-spacer {
     margin-top: var(--space-4);
     padding-top: var(--space-4);

@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** Points earned on delivery, tiers, spending points at checkout, purchase history and "Mua lại". */
+/** Points earned once the order is paid (COD: on delivery), tiers, spending points at checkout, purchase history and "Mua lại". */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -147,6 +147,43 @@ class LoyaltyApiIntegrationTest {
         // raising the threshold again never takes the tier away
         send(put("/api/v1/admin/loyalty/tiers"), admin, tiers("0", "50000000", "150000000", "300000000")).andExpect(status().isOk());
         send(get("/api/v1/loyalty/me"), customer, null).andExpect(jsonPath("$.data.tier.code").value("SILVER"));
+    }
+
+    @Test
+    void bankTransfer_earnsWhenThePaymentIsConfirmed_andACancelTakesItBack() throws Exception {
+        addToCart(phone, 1);
+        long paid = data(send(post("/api/v1/orders"), customer, orderBody(null, "BANK_TRANSFER"))
+                .andExpect(status().isCreated())).get("id").asLong();
+        send(get("/api/v1/loyalty/me"), customer, null).andExpect(jsonPath("$.data.points").value(0));
+
+        send(post("/api/v1/admin/orders/" + paid + "/payment/confirm"), staff, Map.of("transactionId", "FT-DIEM"))
+                .andExpect(status().isOk());
+        send(get("/api/v1/orders/" + paid), customer, null)
+                .andExpect(jsonPath("$.data.status").value("PENDING"))
+                .andExpect(jsonPath("$.data.pointsEarned").value(1599));
+        send(get("/api/v1/loyalty/me"), customer, null)
+                .andExpect(jsonPath("$.data.points").value(1599))
+                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+
+        // delivering it later counts nothing more
+        deliver(paid);
+        send(get("/api/v1/loyalty/me"), customer, null)
+                .andExpect(jsonPath("$.data.points").value(1599))
+                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+
+        addToCart(phone, 1);
+        long cancelled = data(send(post("/api/v1/orders"), customer, orderBody(null, "BANK_TRANSFER"))
+                .andExpect(status().isCreated())).get("id").asLong();
+        send(post("/api/v1/admin/orders/" + cancelled + "/payment/confirm"), staff, null).andExpect(status().isOk());
+        send(get("/api/v1/loyalty/me"), customer, null).andExpect(jsonPath("$.data.points").value(1599 * 2));
+        send(post("/api/v1/orders/" + cancelled + "/cancel"), customer, null).andExpect(status().isOk());
+        send(get("/api/v1/loyalty/me"), customer, null)
+                .andExpect(jsonPath("$.data.points").value(1599))
+                .andExpect(jsonPath("$.data.totalSpent").value(15990000));
+        send(get("/api/v1/loyalty/me/history"), customer, null)
+                .andExpect(jsonPath("$.data.content[0].type").value("REVOKE"))
+                .andExpect(jsonPath("$.data.content[0].points").value(-1599))
+                .andExpect(jsonPath("$.data.content[0].orderId").value(cancelled));
     }
 
     @Test
@@ -296,11 +333,15 @@ class LoyaltyApiIntegrationTest {
     }
 
     private static Map<String, Object> orderBody(Integer points) {
+        return orderBody(points, "COD");
+    }
+
+    private static Map<String, Object> orderBody(Integer points, String paymentMethod) {
         Map<String, Object> body = new HashMap<>();
         body.put("recipientName", "Khách Điểm");
         body.put("recipientPhone", "0901234567");
         body.put("shippingAddress", "12 Nguyễn Trãi, Quận 5, TP. Hồ Chí Minh");
-        body.put("paymentMethod", "COD");
+        body.put("paymentMethod", paymentMethod);
         if (points != null) {
             body.put("pointsToUse", points);
         }

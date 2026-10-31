@@ -19,7 +19,6 @@ import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.order.OrderFilterSpecifications;
 import com.example.Tech.repository.order.OrderRepository;
-import com.example.Tech.repository.user.CustomerProfileRepository;
 import com.example.Tech.service.impl.aftersales.WarrantyIssuer;
 import com.example.Tech.service.impl.payment.OrderPaymentLifecycle;
 import com.example.Tech.service.order.AdminOrderService;
@@ -48,7 +47,6 @@ import java.util.stream.Collectors;
 public class AdminOrderServiceImpl implements AdminOrderService {
 
     private final OrderRepository orderRepository;
-    private final CustomerProfileRepository customerProfileRepository;
     private final CurrentUserLoader currentUserLoader;
     private final OrderViewLoader orderViewLoader;
     private final OrderPaymentLifecycle orderPaymentLifecycle;
@@ -123,20 +121,8 @@ public class AdminOrderServiceImpl implements AdminOrderService {
                 loyaltyService.releaseFor(order);
             }
         }
-        // flushes the payment / installment / stock changes too, before addToTotalSpent clears the persistence context
         orderRepository.saveAndFlush(order);
-
-        if (from != to && to == OrderStatus.DELIVERED) {
-            Long customerId = order.getUser().getId();
-            if (customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount()) == 0) {
-                // An account without a profile gets one, so its spending and points count
-                customerProfileRepository.insertIfMissing(customerId);
-                customerProfileRepository.addToTotalSpent(customerId, order.getTotalAmount());
-            }
-            loyaltyService.onDelivered(orderId);
-        }
         log.info("Staff id={} changed order id={} from {} to {}", staffId, orderId, from, to);
-        // addToTotalSpent clears the persistence context: read the order again for the response
         return toAdminResponse(findWithUser(orderId));
     }
 

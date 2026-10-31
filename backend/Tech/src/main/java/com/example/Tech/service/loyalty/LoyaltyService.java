@@ -143,35 +143,52 @@ public class LoyaltyService {
     }
 
     /**
-     * Order delivered (total_spent already includes it): earns points with the multiplier of the tier the customer
-     * had before this order, then raises the tier if the new total reaches a higher one.
+     * The order's money arrived (transfer confirmed, card paid, installment approved, COD collected on delivery): its
+     * total counts towards total_spent, it earns points with the multiplier of the tier the customer had before this
+     * order, then the tier goes up if the new total reaches a higher one. Called once, when the main payment becomes
+     * PAID, with the order row locked.
      */
     @Transactional
-    public void onDelivered(Long orderId) {
-        Order order = orderRepository.findById(orderId).orElseThrow();
-        Long userId = order.getUser().getId();
-        CustomerProfile profile = profileRepository.findByIdForUpdate(userId).orElse(null);
-        if (profile == null) {
-            profileRepository.insertIfMissing(userId);
-            order = orderRepository.findById(orderId).orElseThrow();
-            profile = profileRepository.findByIdForUpdate(userId).orElseThrow();
-        }
-        if (transactionRepository.existsByOrderIdAndType(orderId, LoyaltyTransactionType.EARN)) {
+    public void onPaid(Order order) {
+        if (transactionRepository.existsByOrderIdAndType(order.getId(), LoyaltyTransactionType.EARN)) {
             return;
         }
+        CustomerProfile profile = lockedProfile(order.getUser());
+        profile.setTotalSpent(profile.getTotalSpent().add(order.getTotalAmount()));
         List<LoyaltyTier> tiers = tierRepository.findAllByOrderBySortOrderAsc();
         LoyaltyTier tier = tierOf(tiers, profile.getTierCode());
         int earned = LoyaltyPolicy.earnedPoints(paidGoods(order), tier.getPointMultiplier());
         if (earned > 0) {
             order.setPointsEarned(earned);
             change(profile, order, null, LoyaltyTransactionType.EARN, earned,
-                    "Tích điểm đơn " + OrderMapper.code(orderId) + " (hạng " + tier.getName() + " x"
+                    "Tích điểm đơn " + OrderMapper.code(order.getId()) + " (hạng " + tier.getName() + " x"
                             + tier.getPointMultiplier().stripTrailingZeros().toPlainString() + ")");
         }
         LoyaltyTier reached = LoyaltyPolicy.tierFor(tiers, profile.getTotalSpent());
         if (reached.getSortOrder() > tier.getSortOrder()) {
             profile.setTierCode(reached.getCode());
-            log.info("User id={} reached tier {}", userId, reached.getCode());
+            log.info("User id={} reached tier {}", profile.getCustomerId(), reached.getCode());
+        }
+    }
+
+    /**
+     * A paid order was cancelled (its money goes back): its total leaves total_spent and the points it earned are
+     * taken back, never below 0. The tier stays (tiers never go down).
+     */
+    @Transactional
+    public void onPaidOrderCancelled(Order order) {
+        if (transactionRepository.existsByOrderIdAndType(order.getId(), LoyaltyTransactionType.REVOKE)) {
+            return;
+        }
+        CustomerProfile profile = profileRepository.findByIdForUpdate(order.getUser().getId()).orElse(null);
+        if (profile == null) {
+            return;
+        }
+        profile.setTotalSpent(profile.getTotalSpent().subtract(order.getTotalAmount()).max(BigDecimal.ZERO));
+        int revoke = Math.min(order.getPointsEarned(), profile.getLoyaltyPoints());
+        if (revoke > 0) {
+            change(profile, order, null, LoyaltyTransactionType.REVOKE, -revoke,
+                    "Trừ điểm đã tích (huỷ đơn " + OrderMapper.code(order.getId()) + ")");
         }
     }
 
@@ -209,6 +226,12 @@ public class LoyaltyService {
         BigDecimal shipping = order.getShippingCost() == null ? BigDecimal.ZERO : order.getShippingCost();
         BigDecimal tax = order.getTaxAmount() == null ? BigDecimal.ZERO : order.getTaxAmount();
         return total.subtract(shipping).subtract(tax).max(BigDecimal.ZERO);
+    }
+
+    /** The customer's profile, row locked; an account created before profiles existed gets one first. */
+    private CustomerProfile lockedProfile(User user) {
+        return profileRepository.findByIdForUpdate(user.getId())
+                .orElseGet(() -> profileRepository.saveAndFlush(new CustomerProfile(user)));
     }
 
     private void change(CustomerProfile profile, Order order, ReturnRequest request, LoyaltyTransactionType type,

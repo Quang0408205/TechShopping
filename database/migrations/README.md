@@ -35,6 +35,7 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 29 | `installment_partners.sql` | Trả góp qua đối tác: bảng `installment_partners`, `installment_fee_rates`; hồ sơ `installment_orders` thêm đối tác, phí / tiền thực nhận, mốc đối soát; hồ sơ cũ còn chờ duyệt chuyển cho đối tác thẻ tín dụng |
 | 30 | `product_base_names.sql` | Tên sản phẩm chỉ còn tên máy: dung lượng / màu / GPU / sạc ở cuối tên chuyển vào phiên bản (chọn ở trang chi tiết); sau đó chạy lại `merge_product_variants.sql` để gộp các tên trùng (sao lưu trước; dọn Redis `cache:*`, chạy lại dữ liệu AI) |
 | 31 | `dedupe_product_images.sql` | Bỏ ảnh trùng sau khi gộp phiên bản: mỗi (sản phẩm, màu) chỉ giữ bộ ảnh của một trang nguồn TGDĐ, không lặp theo bản dung lượng (dọn Redis `cache:*`) |
+| 32 | `loyalty_on_payment.sql` | Tích điểm khi đơn đã thanh toán (không đợi giao): cộng bù điểm / chi tiêu cho đơn đã trả tiền nhưng chưa giao; chạy lại được |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):
