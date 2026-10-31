@@ -13,8 +13,8 @@ import java.util.Optional;
 public interface CustomerProfileRepository extends JpaRepository<CustomerProfile, Long> {
 
     /**
-     * Adds a delivered order's total to the customer's total_spent in one UPDATE (no lost update when two
-     * orders are delivered at the same time). Returns 0 when the user has no customer profile.
+     * Adds an amount (a refunded return: negative) to the customer's total_spent in one UPDATE (no lost update when
+     * two changes happen at the same time). Returns 0 when the user has no customer profile.
      */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(value = "update customer_profiles set total_spent = coalesce(total_spent, 0) + :amount, "
@@ -25,10 +25,4 @@ public interface CustomerProfileRepository extends JpaRepository<CustomerProfile
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from CustomerProfile c where c.customerId = :userId")
     Optional<CustomerProfile> findByIdForUpdate(Long userId);
-
-    /** Accounts created before profiles existed get an empty one (concurrent calls are safe). */
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
-    @Query(value = "insert into customer_profiles (customer_id) values (:userId) on conflict (customer_id) do nothing",
-            nativeQuery = true)
-    int insertIfMissing(Long userId);
 }

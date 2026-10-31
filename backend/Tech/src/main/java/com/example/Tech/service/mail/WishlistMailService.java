@@ -37,6 +37,11 @@ public class WishlistMailService {
             }
             MailMessage message = WishlistMailTemplates.build(user.getFullname(), recipient, drops, properties.siteUrl());
             subject = message.subject();
+            if (ReservedAddresses.isReserved(recipient)) {
+                emailLogRepository.save(new EmailLog(null, KIND, recipient, subject, EmailLog.SKIPPED,
+                        ReservedAddresses.SKIP_REASON));
+                return false;
+            }
             if (!rateLimiter.tryAcquire(recipient)) {
                 emailLogRepository.save(new EmailLog(null, KIND, recipient, subject, EmailLog.SKIPPED,
                         "Too many mails to this address in the current window"));

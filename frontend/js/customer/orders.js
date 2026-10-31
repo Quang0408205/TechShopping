@@ -271,7 +271,7 @@ document.addEventListener(
                         <span class="order-card-total">
                             <span class="order-card-count">${order.totalQuantity} sản phẩm</span>
                             ${payment ? `<span class="payment-badge payment-badge--${escapeHtml(payment.tone)}">${escapeHtml(payment.label)}</span>` : ""}
-                            ${order.pointsEarned > 0 ? `<span class="order-card-points">+${escapeHtml(new Intl.NumberFormat("vi-VN").format(order.pointsEarned))} điểm</span>` : ""}
+                            ${order.pointsEarned > 0 && order.status !== "CANCELLED" ? `<span class="order-card-points">+${escapeHtml(new Intl.NumberFormat("vi-VN").format(order.pointsEarned))} điểm</span>` : ""}
                         </span>
                         <span class="order-card-sum">Tổng cộng <strong>${formatPrice(order.total)}</strong></span>
                         <span class="order-card-actions">

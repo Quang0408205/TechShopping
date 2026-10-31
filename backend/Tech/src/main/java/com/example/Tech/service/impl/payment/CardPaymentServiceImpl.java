@@ -16,6 +16,7 @@ import com.example.Tech.mapper.order.OrderMapper;
 import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
 import com.example.Tech.service.impl.order.OrderViewLoader;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.service.mail.OrderMailPublisher;
 import com.example.Tech.service.payment.CardPaymentService;
 import com.example.Tech.service.payment.StripeCheckoutSession;
@@ -55,14 +56,16 @@ public class CardPaymentServiceImpl implements CardPaymentService {
     private final JsonMapper jsonMapper;
     private final Clock clock;
     private final OrderMailPublisher mailPublisher;
+    private final LoyaltyService loyaltyService;
     /** Stripe may only send the customer back to a page of this shop: an origin the browser may call the API from. */
     private final CorsConfiguration returnOrigins;
 
     public CardPaymentServiceImpl(StripeProperties stripe, StripeGateway gateway, OrderRepository orderRepository,
                                   PaymentRepository paymentRepository, OrderViewLoader orderViewLoader,
                                   CurrentUserLoader currentUserLoader, JsonMapper jsonMapper, Clock clock,
-                                  CorsProperties cors, OrderMailPublisher mailPublisher) {
+                                  CorsProperties cors, OrderMailPublisher mailPublisher, LoyaltyService loyaltyService) {
         this.mailPublisher = mailPublisher;
+        this.loyaltyService = loyaltyService;
         this.stripe = stripe;
         this.gateway = gateway;
         this.orderRepository = orderRepository;
@@ -188,6 +191,7 @@ public class CardPaymentServiceImpl implements CardPaymentService {
             payment.setTransactionId(reference);
             payment.setCheckoutSessionId(session.id());
             log.info("Card payment of order id={} received (Stripe {})", order.getId(), reference);
+            loyaltyService.onPaid(order);
             mailPublisher.paymentReceived(order);
         } else if (payment.getStatus() == PaymentStatus.CANCELLED) {
             payment.setStatus(PaymentStatus.REFUND_PENDING);

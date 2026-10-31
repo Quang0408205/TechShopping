@@ -20,6 +20,7 @@ import com.example.Tech.repository.payment.InstallmentFeeRateRepository;
 import com.example.Tech.repository.payment.InstallmentOrderRepository;
 import com.example.Tech.repository.payment.InstallmentPartnerRepository;
 import com.example.Tech.repository.payment.PaymentRepository;
+import com.example.Tech.service.loyalty.LoyaltyService;
 import com.example.Tech.service.mail.OrderMailPublisher;
 import com.example.Tech.service.payment.StripeGateway;
 import com.example.Tech.service.payment.installment.CreditCardInstallmentProvider;
@@ -50,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,6 +84,9 @@ class OrderPaymentLifecycleTest {
     @Mock
     private OrderMailPublisher mailPublisher;
 
+    @Mock
+    private LoyaltyService loyaltyService;
+
     private final InstallmentPartner card = partner("CREDIT_CARD", InstallmentPartnerType.CREDIT_CARD, "3000000", null);
     private final InstallmentPartner financeB = partner("FINANCE_B", InstallmentPartnerType.FINANCE_COMPANY, "3000000", "15000000");
     private final User staff = new User();
@@ -103,7 +108,8 @@ class OrderPaymentLifecycleTest {
         InstallmentProviderRegistry registry = new InstallmentProviderRegistry(
                 List.of(new CreditCardInstallmentProvider(), new FinanceInstallmentProvider()));
         return new OrderPaymentLifecycle(paymentRepository, installmentOrderRepository, partnerPolicy,
-                new InstallmentFeePolicy(feeRateRepository), registry, autoDecider, stripe, stripeGateway, mailPublisher);
+                new InstallmentFeePolicy(feeRateRepository), registry, autoDecider, stripe, stripeGateway, mailPublisher,
+                loyaltyService);
     }
 
     @Test
@@ -139,11 +145,13 @@ class OrderPaymentLifecycleTest {
         Payment payment = payment(PaymentMethod.COD, PaymentStatus.PENDING);
         when(paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(5L)).thenReturn(Optional.of(payment));
 
-        lifecycle.onOrderDelivered(order(PaymentMethod.COD, "990000"), staff, NOW);
+        Order order = order(PaymentMethod.COD, "990000");
+        lifecycle.onOrderDelivered(order, staff, NOW);
 
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(payment.getPaidAt()).isEqualTo(NOW);
         assertThat(payment.getConfirmedBy()).isSameAs(staff);
+        verify(loyaltyService).onPaid(order);
     }
 
     @Test
@@ -152,6 +160,7 @@ class OrderPaymentLifecycleTest {
 
         verify(paymentRepository, never()).findByOrderIdAndInstallmentPaymentIsNull(any());
         verify(installmentOrderRepository, never()).findByOrderId(any());
+        verify(loyaltyService, never()).onPaid(any());
     }
 
     @Test
@@ -166,6 +175,8 @@ class OrderPaymentLifecycleTest {
         assertThat(payment.getPaidAt()).isEqualTo(NOW);
         assertThat(payment.getConfirmedBy()).isSameAs(staff);
         assertThat(payment.getTransactionId()).isEqualTo("FT1");
+        // the money is in: the order counts for points now, not on delivery
+        verify(loyaltyService).onPaid(order);
         assertThatThrownBy(() -> lifecycle.confirmTransfer(order, staff, null, NOW))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_PAYMENT_STATUS);
@@ -220,6 +231,7 @@ class OrderPaymentLifecycleTest {
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.PAID);
         assertThat(payment.getPaidAt()).isEqualTo(NOW);
         assertThat(payment.getTransactionId()).isEqualTo("CC-1");
+        verify(loyaltyService).onPaid(order);
         verify(mailPublisher).paymentReceived(order);
     }
 
@@ -466,6 +478,8 @@ class OrderPaymentLifecycleTest {
         lifecycle.onOrderCancelled(order);
 
         assertThat(payment.getStatus()).isEqualTo(after);
+        // only a paid order had counted for points / spending
+        verify(loyaltyService, before == PaymentStatus.PAID ? times(1) : never()).onPaidOrderCancelled(order);
     }
 
     @ParameterizedTest
