@@ -98,6 +98,7 @@ class SiteContentApiIntegrationTest {
 
         send(post("/api/v1/admin/banners"), adminToken, withField(good, "title", " ")).andExpect(status().isBadRequest());
         send(post("/api/v1/admin/banners"), adminToken, withField(good, "imageUrl", "javascript:alert(1)")).andExpect(status().isBadRequest());
+        send(post("/api/v1/admin/banners"), adminToken, withField(good, "linkUrl", "//evil.example/x")).andExpect(status().isBadRequest());
         send(post("/api/v1/admin/banners"), adminToken, withField(good, "linkUrl", "javascript:alert(1)")).andExpect(status().isBadRequest());
         send(post("/api/v1/admin/banners"), adminToken, withField(good, "linkUrl", "https://poy.vn/sale")).andExpect(status().isCreated());
         send(post("/api/v1/admin/banners"), adminToken, withField(good, "linkUrl", "customer/products.html?categoryId=3")).andExpect(status().isCreated());

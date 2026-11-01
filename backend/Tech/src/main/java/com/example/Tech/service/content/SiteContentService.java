@@ -31,8 +31,8 @@ public class SiteContentService {
 
     private static final Pattern SLUG = Pattern.compile("[a-z0-9]+(-[a-z0-9]+)*");
 
-    /** A path of this site ("customer/products.html?search=iphone"): no scheme, so nothing like javascript: gets in. */
-    private static final Pattern SITE_PATH = Pattern.compile("[A-Za-z0-9_./?=&%#+-]+");
+    /** A path of this site ("customer/products.html?search=iphone"): no scheme and no leading "//", so nothing like javascript: or another host gets in. */
+    private static final Pattern SITE_PATH = Pattern.compile("(?!//)[A-Za-z0-9_./?=&%#+-]+");
 
     private final BannerRepository bannerRepository;
     private final ContentPageRepository pageRepository;

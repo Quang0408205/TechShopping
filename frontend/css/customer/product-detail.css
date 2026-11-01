@@ -1386,7 +1386,7 @@ body.buy-bar-open .chatbot-widget {
 }
 
 
-/* ================= MUA KÈM TIẾT KIỆM (kế hoạch v5 GĐ10) ================= */
+/* ================= MUA KÈM TIẾT KIỆM ================= */
 
 .combo-zone {
     margin-bottom: var(--space-5);
@@ -1577,7 +1577,7 @@ body.buy-bar-open .chatbot-widget {
 
 }
 
-/* ---- Khung ảnh chính có mũi tên, số ảnh và lightbox (kế hoạch v6 B1) ---- */
+/* ---- Khung ảnh chính có mũi tên, số ảnh và lightbox ---- */
 
 .detail-main-image {
     position: relative;
@@ -1838,7 +1838,7 @@ body.lightbox-open {
 }
 
 
-/* ================= THÔNG SỐ THEO NHÓM (kế hoạch v8; js/core/ui.js renderSpecGroups) ================= */
+/* ================= THÔNG SỐ THEO NHÓM (js/core/ui.js renderSpecGroups) ================= */
 
 .specs-table .spec-group-head th {
     width: auto;
