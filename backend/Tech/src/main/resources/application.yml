@@ -132,6 +132,10 @@ app:
     per-recipient-limit: ${MAIL_LIMIT_PER_RECIPIENT:12}
     window: 1h
     async: true
+  stock-alerts:
+    # Every 10 minutes: mails customers whose "tell me when it is back" variant has stock again
+    enabled: ${STOCK_ALERTS_ENABLED:true}
+    cron: ${STOCK_ALERT_CRON:0 */10 * * * *}
   wishlist:
     # Hourly check that mails customers about price drops of the products they saved
     alerts-enabled: ${WISHLIST_ALERTS_ENABLED:true}

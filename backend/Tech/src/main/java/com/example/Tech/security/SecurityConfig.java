@@ -117,7 +117,8 @@ public class SecurityConfig {
                                 "/api/v1/admin/stock-transfers", "/api/v1/admin/stock-transfers/**",
                                 "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
                                 "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**",
-                                "/api/v1/admin/notifications", "/api/v1/admin/notifications/**")
+                                "/api/v1/admin/notifications", "/api/v1/admin/notifications/**",
+                                "/api/v1/admin/questions", "/api/v1/admin/questions/**")
                         .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/branch/**").hasRole(BRANCH_MANAGER)

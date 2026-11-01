@@ -256,6 +256,8 @@ document.addEventListener(
             });
 
 
+            initProductQuestions(product);
+
             renderImages(images, categorySlug);
 
             /* nút yêu thích / so sánh (compare-wishlist.js đọc data-*; trạng thái bật tắt do script đó cập nhật) */
@@ -1098,6 +1100,8 @@ document.addEventListener(
 
                 stockEl.hidden = true;
 
+                updateStockAlert(null, false);
+
                 return;
 
             }
@@ -1105,6 +1109,8 @@ document.addEventListener(
             stockEl.hidden = false;
 
             stockEl.classList.toggle("is-out", units === 0);
+
+            updateStockAlert(currentVariant ? currentVariant.id : null, units === 0);
 
             stockEl.textContent = units === 0
                 ? "Tạm hết hàng ở tất cả chi nhánh"

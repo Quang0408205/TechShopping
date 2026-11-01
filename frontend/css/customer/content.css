@@ -245,3 +245,100 @@ a.home-banner:focus-visible img {
     }
 
 }
+
+
+/* ---- hỏi đáp sản phẩm + báo khi có hàng (trang chi tiết) ---- */
+
+.qa-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 720px;
+    margin-bottom: 28px;
+}
+
+.qa-form label {
+    font-weight: 700;
+}
+
+.qa-form textarea {
+    padding: 12px 14px;
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    font: inherit;
+    resize: vertical;
+}
+
+.qa-form .btn {
+    align-self: flex-start;
+}
+
+.qa-meta {
+    margin: 0;
+    color: var(--gray-600);
+    font-size: 13px;
+}
+
+.qa-note {
+    margin: 0;
+    color: var(--color-success);
+    font-weight: 600;
+}
+
+.qa-list {
+    display: flex;
+    flex-direction: column;
+    max-width: 720px;
+}
+
+.qa-item {
+    padding: 16px 0;
+    border-top: 1px solid var(--gray-200);
+}
+
+.qa-item p {
+    margin: 0 0 6px;
+    line-height: 1.6;
+}
+
+.qa-answer {
+    padding-left: 14px;
+    border-left: 3px solid var(--gray-300);
+}
+
+.qa-time {
+    color: var(--gray-500);
+    font-size: 12px;
+}
+
+.qa-empty {
+    color: var(--gray-600);
+}
+
+.stock-alert {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 14px;
+    padding: 14px 16px;
+    border: 1px dashed var(--gray-300);
+    border-radius: var(--radius-sm);
+    background: var(--gray-50);
+}
+
+.stock-alert[hidden] {
+    display: none;
+}
+
+.stock-alert-text {
+    flex: 1 1 220px;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.stock-alert-btn {
+    padding: 10px 18px;
+    font-size: 12px;
+}

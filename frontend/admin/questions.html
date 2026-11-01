@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Hỏi đáp sản phẩm - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="admin-body" data-page-title="Hỏi đáp sản phẩm" data-roles="EMPLOYEE,BRANCH_MANAGER,ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="questions"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-subtext">
+                Câu hỏi của khách ở trang sản phẩm. Câu hỏi chỉ hiện công khai sau khi được trả lời; câu bị ẩn không hiện dù đã có trả lời.
+            </p>
+
+            <form class="admin-filter-bar" id="questionFilterForm" role="search">
+
+                <input type="search" id="questionKeyword" placeholder="Câu hỏi, sản phẩm, tên hoặc email khách…" maxlength="100" aria-label="Từ khoá">
+
+                <select id="questionStatus" aria-label="Trạng thái">
+                    <option value="PENDING">Chờ trả lời</option>
+                    <option value="ANSWERED">Đã trả lời</option>
+                    <option value="HIDDEN">Đã ẩn</option>
+                    <option value="">Tất cả</option>
+                </select>
+
+                <button type="submit" class="btn btn-dark">LỌC</button>
+
+            </form>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Câu hỏi</h2>
+                    <span class="admin-row-count" id="questionRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Thời gian</th>
+                                <th>Sản phẩm</th>
+                                <th>Câu hỏi và trả lời</th>
+                                <th>Trạng thái</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="questionTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="admin-pagination" id="questionPagination"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/questions.js"></script>
+
+</body>
+</html>

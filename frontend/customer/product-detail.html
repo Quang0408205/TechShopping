@@ -21,6 +21,7 @@
 
     <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/catalog-extras.css">
+    <link rel="stylesheet" href="../css/customer/content.css">
 
     <link
         rel="stylesheet"
@@ -184,6 +185,9 @@
                 <!-- Còn / hết hàng của phiên bản đang chọn (tồn kho các chi nhánh đang mở) -->
                 <p class="detail-stock" id="detailStock" hidden></p>
 
+                <!-- Nút "Báo tôi khi có hàng" khi phiên bản đang chọn hết hàng (js/customer/stock-alert.js) -->
+                <div class="stock-alert" id="stockAlert" hidden></div>
+
                 <p class="detail-contact-note" id="contactNote" hidden>
                     Sản phẩm chưa có giá bán trực tuyến. Vui lòng
                     <a href="contact.html">liên hệ</a> để được báo giá.
@@ -252,6 +256,7 @@
                 <button type="button" class="tab-btn active" data-tab="specs" role="tab">Thông số kỹ thuật</button>
                 <button type="button" class="tab-btn" data-tab="description" role="tab">Mô tả sản phẩm</button>
                 <button type="button" class="tab-btn" data-tab="reviews" role="tab">Đánh giá (<span id="reviewsTabCount">0</span>)</button>
+                <button type="button" class="tab-btn" data-tab="qa" role="tab">Hỏi đáp (<span id="qaTabCount">0</span>)</button>
             </div>
 
             <div class="tab-panel active" data-tab-panel="specs" role="tabpanel">
@@ -288,6 +293,24 @@
                 <div class="review-list" id="reviewList" aria-live="polite"></div>
 
                 <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>Xem thêm đánh giá</button>
+
+            </div>
+
+            <!-- Hỏi đáp (js/customer/product-qa.js): câu hỏi chỉ hiện sau khi POY trả lời -->
+            <div class="tab-panel qa-panel" data-tab-panel="qa" role="tabpanel">
+
+                <form class="qa-form" id="qaForm" novalidate>
+                    <label for="qaInput">Bạn cần hỏi gì về sản phẩm này?</label>
+                    <textarea id="qaInput" rows="3" maxlength="500" placeholder="Ví dụ: Máy có hỗ trợ sạc nhanh không? Bảo hành bao lâu?"></textarea>
+                    <p class="qa-meta"><span id="qaCounter">0 / 500</span> <span id="qaLoginHint">· Cần đăng nhập để gửi câu hỏi</span></p>
+                    <p class="form-error" id="qaError" role="alert" hidden></p>
+                    <p class="qa-note" id="qaNote" role="status" hidden></p>
+                    <button type="submit" class="btn btn-dark" id="qaSubmit">GỬI CÂU HỎI</button>
+                </form>
+
+                <div class="qa-list" id="qaList" aria-live="polite"></div>
+
+                <button type="button" class="btn btn-outline-dark review-more" id="qaMoreBtn" hidden>Xem thêm câu hỏi</button>
 
             </div>
 
@@ -378,6 +401,8 @@
 <script src="../js/core/layout.js"></script>
 <script src="../js/core/main.js"></script>
 <script src="../js/customer/product-reviews.js"></script>
+<script src="../js/customer/product-qa.js"></script>
+<script src="../js/customer/stock-alert.js"></script>
 <script src="../js/customer/product-extras.js"></script>
 <script src="../js/customer/catalog-extras.js"></script>
 <script src="../js/customer/product-detail.js"></script>

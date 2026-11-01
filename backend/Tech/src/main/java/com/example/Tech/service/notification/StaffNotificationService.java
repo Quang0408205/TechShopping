@@ -35,7 +35,8 @@ public class StaffNotificationService {
         ORDER_CANCELLED,
         LOW_STOCK,
         SERVICE_REQUEST,
-        STOCK_TRANSFER
+        STOCK_TRANSFER,
+        PRODUCT_QUESTION
     }
 
     private final StaffNotificationRepository repository;

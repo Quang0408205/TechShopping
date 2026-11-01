@@ -45,6 +45,8 @@ services:
       - ./database/docker-init/11_sample_costs.sql:/docker-entrypoint-initdb.d/11_sample_costs.sql:ro
       # Banner + trang tĩnh do ADMIN quản lý (tạo bảng nếu chưa có và nạp 8 trang chính sách)
       - ./database/migrations/site_content.sql:/docker-entrypoint-initdb.d/12_site_content.sql:ro
+      # Hỏi đáp sản phẩm + đăng ký báo khi có hàng lại
+      - ./database/migrations/product_questions_stock_alerts.sql:/docker-entrypoint-initdb.d/13_product_questions_stock_alerts.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s

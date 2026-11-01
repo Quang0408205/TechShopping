@@ -201,6 +201,12 @@ public enum ErrorCode {
     BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy banner"),
     CONTENT_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy trang"),
 
+    // Product questions and back-in-stock subscriptions
+    PRODUCT_QUESTION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy câu hỏi"),
+    QUESTION_LIMIT_REACHED(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã gửi đủ 5 câu hỏi trong 24 giờ qua, vui lòng thử lại sau"),
+    VARIANT_IN_STOCK(HttpStatus.CONFLICT, "Phiên bản này đang còn hàng, bạn có thể đặt mua ngay"),
+    STOCK_SUBSCRIPTION_LIMIT(HttpStatus.CONFLICT, "Bạn đang theo dõi tối đa 50 phiên bản, hãy bỏ bớt trước khi thêm"),
+
     // Shipping fee rules
     SHIPPING_FEE_RULE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy phí giao hàng của tỉnh / thành này"),
     DUPLICATE_SHIPPING_FEE_RULE(HttpStatus.CONFLICT, "Tỉnh / thành này đã có phí giao hàng riêng"),

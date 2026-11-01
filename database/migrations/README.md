@@ -44,6 +44,7 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 38 | `invoice_info.sql` | Thông tin xuất hoá đơn công ty trên đơn hàng (`orders.invoice_company`, `invoice_tax_code`, `invoice_address`; tuỳ chọn, chỉ lưu và in) |
 | 39 | `staff_notifications.sql` | Thông báo nội bộ cho nhân sự (`staff_notifications` theo chi nhánh, `staff_notification_reads` đã đọc theo từng người) |
 | 40 | `site_content.sql` | Banner trang chủ (`banners`) và trang tĩnh do ADMIN soạn (`content_pages`), nạp sẵn 8 trang chính sách; chạy lại không ghi đè trang đã sửa |
+| 41 | `product_questions_stock_alerts.sql` | Hỏi đáp sản phẩm (`product_questions`: hiện công khai khi đã trả lời và không bị ẩn) và đăng ký báo khi có hàng lại (`stock_subscriptions`) |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):
