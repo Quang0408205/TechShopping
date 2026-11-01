@@ -36,6 +36,7 @@ import com.example.Tech.repository.order.OrderRepository;
 import com.example.Tech.repository.product.ProductImageRepository;
 import com.example.Tech.service.aftersales.AfterSalesService;
 import com.example.Tech.service.upload.ImageStorageService;
+import com.example.Tech.service.notification.StaffNotificationService;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -86,6 +87,7 @@ public class AfterSalesServiceImpl implements AfterSalesService {
     private final ReturnItemRepository returnItemRepository;
     private final ServiceRequestViewRepository viewRepository;
     private final ServiceRequestLoader loader;
+    private final StaffNotificationService notificationService;
     private final ProductImageRepository productImageRepository;
     private final ImageStorageService imageStorageService;
     private final Clock clock;
@@ -154,6 +156,7 @@ public class AfterSalesServiceImpl implements AfterSalesService {
         saved.setIssueDescription(description);
         imageUrls.forEach(saved::addImage);
         saved = warrantyRequestRepository.saveAndFlush(saved);
+        notifyStaff(line.getOrder(), "bảo hành", saved.getId());
         log.info("User id={} opened warranty request id={} for order line id={}", userId, saved.getId(), line.getId());
         return loader.load(ServiceRequestType.WARRANTY, saved.getId());
     }
@@ -177,6 +180,7 @@ public class AfterSalesServiceImpl implements AfterSalesService {
         saved.setDescription(description);
         imageUrls.forEach(saved::addImage);
         saved = maintenanceRequestRepository.saveAndFlush(saved);
+        notifyStaff(line.getOrder(), "bảo trì", saved.getId());
         log.info("User id={} opened maintenance request id={} for order line id={}", userId, saved.getId(), line.getId());
         return loader.load(ServiceRequestType.MAINTENANCE, saved.getId());
     }
@@ -229,6 +233,7 @@ public class AfterSalesServiceImpl implements AfterSalesService {
         saved.setRefundAmount(total);
         imageUrls.forEach(saved::addImage);
         saved = returnRequestRepository.saveAndFlush(saved);
+        notifyStaff(order, "trả hàng", saved.getId());
         log.info("User id={} opened return request id={} for order id={} ({} lines, refund {})",
                 userId, saved.getId(), order.getId(), request.items().size(), total);
         return loader.load(ServiceRequestType.RETURN, saved.getId());
@@ -307,6 +312,12 @@ public class AfterSalesServiceImpl implements AfterSalesService {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
         requireDelivered(order);
+    }
+
+    private void notifyStaff(Order order, String kind, Long requestId) {
+        notificationService.publish(order.getStore(), StaffNotificationService.Kind.SERVICE_REQUEST,
+                "Yêu cầu " + kind + " mới cho đơn " + OrderMapper.code(order.getId()),
+                "Mã yêu cầu #" + requestId, "service-requests.html");
     }
 
     private static void requireDelivered(Order order) {

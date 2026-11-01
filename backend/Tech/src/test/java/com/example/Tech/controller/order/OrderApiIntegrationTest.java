@@ -99,6 +99,9 @@ class OrderApiIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
     private final List<Long> registeredUserIds = new ArrayList<>();
 
     private Long userId;
@@ -528,6 +531,22 @@ class OrderApiIntegrationTest {
         send(post("/api/v1/orders/" + orderId + "/cancel"), token, null)
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error.code").value("INVALID_ORDER_STATUS"));
+    }
+
+    @Test
+    void newOrderAndCustomerCancellation_notifyTheOrdersStore() throws Exception {
+        jdbcTemplate.update("delete from staff_notifications");
+        addToCart(cover, 1);
+        long orderId = data(send(post("/api/v1/orders"), token, orderBody())).get("id").asLong();
+        send(post("/api/v1/orders/" + orderId + "/cancel"), token, null).andExpect(status().isOk());
+
+        List<Map<String, Object>> rows = jdbcTemplate.queryForList(
+                "select store_id, kind, title, link from staff_notifications order by notification_id");
+        assertThat(rows).extracting(row -> row.get("kind")).containsExactly("NEW_ORDER", "ORDER_CANCELLED");
+        assertThat(rows).extracting(row -> row.get("store_id")).containsOnly(warehouse.getId());
+        assertThat(rows.get(0).get("title").toString()).startsWith("Đơn hàng mới ");
+        assertThat(rows.get(1).get("title").toString()).startsWith("Khách đã huỷ đơn ");
+        assertThat(rows.get(1).get("link").toString()).startsWith("orders.html?keyword=");
     }
 
     @Test

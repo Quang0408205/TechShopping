@@ -194,6 +194,13 @@ public enum ErrorCode {
     STOCK_TRANSFER_INVALID_STATUS(HttpStatus.CONFLICT, "Phiếu chuyển kho không ở trạng thái phù hợp cho thao tác này"),
     STOCK_TRANSFER_INSUFFICIENT_STOCK(HttpStatus.CONFLICT, "Chi nhánh gửi không đủ hàng để chuyển"),
 
+    // Internal notifications
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo"),
+
+    // Home banners and static pages
+    BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy banner"),
+    CONTENT_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy trang"),
+
     // Shipping fee rules
     SHIPPING_FEE_RULE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy phí giao hàng của tỉnh / thành này"),
     DUPLICATE_SHIPPING_FEE_RULE(HttpStatus.CONFLICT, "Tỉnh / thành này đã có phí giao hàng riêng"),

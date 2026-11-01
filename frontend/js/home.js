@@ -6,6 +6,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     setupHeroParallax();
 
+    renderHomeBanners();
+
     renderBrandMarquee();
 
     renderFlashSale();
@@ -248,6 +250,56 @@ function loadHomeBrands() {
     return homeBrandsPromise;
 
 }
+
+/* Banner do ADMIN quản lý (GET /banners): không có banner nào đang hiện thì cả khối ẩn */
+async function renderHomeBanners() {
+
+    const section = document.getElementById("homeBanners");
+    const list = document.getElementById("homeBannerList");
+
+    if (!section || !list) {
+        return;
+    }
+
+    try {
+
+        const banners = await apiRequest("/banners");
+
+        if (!banners || banners.length === 0) {
+            return;
+        }
+
+        list.innerHTML = banners.map(function (banner) {
+
+            const inner = `
+                <img src="${escapeHtml(banner.imageUrl)}" alt="${escapeHtml(banner.title)}" loading="lazy">
+                <span class="home-banner-text">
+                    <strong>${escapeHtml(banner.title)}</strong>
+                    ${banner.subtitle ? `<span>${escapeHtml(banner.subtitle)}</span>` : ""}
+                </span>
+            `;
+
+            return banner.linkUrl
+                ? `<a class="home-banner" href="${escapeHtml(bannerHref(banner.linkUrl))}">${inner}</a>`
+                : `<div class="home-banner">${inner}</div>`;
+
+        }).join("");
+
+        section.hidden = false;
+
+    } catch (error) {
+        section.hidden = true;
+    }
+
+}
+
+
+function bannerHref(link) {
+
+    return /^https?:\/\//i.test(link) ? link : siteUrl(link.replace(/^\/+/, ""));
+
+}
+
 
 async function renderBrandMarquee() {
 

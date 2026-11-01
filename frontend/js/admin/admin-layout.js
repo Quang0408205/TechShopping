@@ -119,6 +119,8 @@ function showShell(staff, readyClass) {
 
     setupPageTitle();
 
+    setupNotificationBell();
+
     document.body.classList.add(readyClass);
 
 }
@@ -504,5 +506,207 @@ function truncateText(text, max) {
     const value = String(text || "");
 
     return value.length > max ? value.slice(0, max - 1) + "…" : value;
+
+}
+
+
+/* ================= CHUÔNG THÔNG BÁO ================= */
+
+/*
+ * API: GET /admin/notifications/unread-count, GET /admin/notifications?size=8,
+ *      POST /admin/notifications/{id}/read, POST /admin/notifications/read-all.
+ * Lỗi của chuông không được làm hỏng trang: chuông chỉ im lặng.
+ */
+
+function setupNotificationBell() {
+
+    const root = document.getElementById("adminBell");
+
+    if (!root || root.dataset.started) {
+        return;
+    }
+
+    root.dataset.started = "1";
+
+    const BELL_POLL_MS = 60000;
+
+    const BELL_ICONS = {
+        NEW_ORDER: "🧾",
+        ORDER_CANCELLED: "✖",
+        LOW_STOCK: "📦",
+        SERVICE_REQUEST: "🛠",
+        STOCK_TRANSFER: "🚚"
+    };
+
+    const button = document.getElementById("adminBellBtn");
+    const panel = document.getElementById("adminBellPanel");
+    const list = document.getElementById("adminBellList");
+    const badge = document.getElementById("adminBellCount");
+
+
+    function setCount(count) {
+
+        badge.hidden = count <= 0;
+
+        badge.textContent = count > 99 ? "99+" : String(count);
+
+        button.setAttribute("aria-label", count > 0 ? "Thông báo, " + count + " chưa đọc" : "Thông báo");
+
+    }
+
+
+    async function refreshCount() {
+
+        try {
+
+            const result = await apiRequest("/admin/notifications/unread-count", { auth: true });
+
+            setCount(Number(result.unread) || 0);
+
+        } catch (error) {
+            /* chuông im lặng */
+        }
+
+    }
+
+
+    function itemHtml(item) {
+
+        return `
+            <li>
+                <button type="button" class="admin-bell-item${item.read ? "" : " is-unread"}"
+                        data-id="${escapeHtml(String(item.id))}" data-link="${escapeHtml(item.link || "")}">
+                    <span class="admin-bell-icon" aria-hidden="true">${BELL_ICONS[item.kind] || "•"}</span>
+                    <span class="admin-bell-text">
+                        <strong>${escapeHtml(item.title)}</strong>
+                        ${item.message ? `<span>${escapeHtml(item.message)}</span>` : ""}
+                        <small>${item.storeName ? escapeHtml(item.storeName) + " · " : ""}${escapeHtml(formatDateTimeVi(item.createdAt))}</small>
+                    </span>
+                </button>
+            </li>
+        `;
+
+    }
+
+
+    async function openPanel() {
+
+        panel.hidden = false;
+
+        button.setAttribute("aria-expanded", "true");
+
+        list.innerHTML = '<li class="admin-bell-empty">Đang tải…</li>';
+
+        try {
+
+            const page = await apiRequest("/admin/notifications?size=8", { auth: true });
+
+            list.innerHTML = page.content.length === 0
+                ? '<li class="admin-bell-empty">Chưa có thông báo nào.</li>'
+                : page.content.map(itemHtml).join("");
+
+        } catch (error) {
+
+            list.innerHTML = '<li class="admin-bell-empty">Không tải được thông báo.</li>';
+
+        }
+
+    }
+
+
+    function closePanel() {
+
+        panel.hidden = true;
+
+        button.setAttribute("aria-expanded", "false");
+
+    }
+
+
+    button.addEventListener("click", function () {
+
+        if (panel.hidden) {
+            openPanel();
+        } else {
+            closePanel();
+        }
+
+    });
+
+    document.addEventListener("click", function (event) {
+
+        if (!panel.hidden && !root.contains(event.target)) {
+            closePanel();
+        }
+
+    });
+
+    document.addEventListener("keydown", function (event) {
+
+        if (event.key === "Escape" && !panel.hidden) {
+            closePanel();
+            button.focus();
+        }
+
+    });
+
+    list.addEventListener("click", async function (event) {
+
+        const item = event.target.closest(".admin-bell-item");
+
+        if (!item) {
+            return;
+        }
+
+        try {
+            await apiRequest("/admin/notifications/" + item.dataset.id + "/read", { method: "POST", auth: true });
+        } catch (error) {
+            /* vẫn mở trang liên quan */
+        }
+
+        if (item.dataset.link) {
+            window.location.href = siteUrl("admin/" + item.dataset.link);
+            return;
+        }
+
+        item.classList.remove("is-unread");
+
+        refreshCount();
+
+    });
+
+    document.getElementById("adminBellReadAll").addEventListener("click", async function () {
+
+        try {
+
+            await apiRequest("/admin/notifications/read-all", { method: "POST", auth: true });
+
+            list.querySelectorAll(".is-unread").forEach(function (item) { item.classList.remove("is-unread"); });
+
+            setCount(0);
+
+        } catch (error) {
+            /* chuông im lặng */
+        }
+
+    });
+
+    refreshCount();
+
+    window.setInterval(function () {
+
+        if (!document.hidden) {
+            refreshCount();
+        }
+
+    }, BELL_POLL_MS);
+
+    document.addEventListener("visibilitychange", function () {
+
+        if (!document.hidden) {
+            refreshCount();
+        }
+
+    });
 
 }

@@ -230,6 +230,8 @@ document.addEventListener(
 
             document.title = product.name + " - POY";
 
+            applySeo(images);
+
             document.getElementById("breadcrumbCurrent").textContent = product.name;
 
             renderBreadcrumbCategory(categorySlug);
@@ -322,6 +324,82 @@ document.addEventListener(
 
 
         /* Thương hiệu · Mã (điểm đánh giá là nút riêng #detailRating, bấm → tab Đánh giá) */
+
+/* Tiêu đề, mô tả, Open Graph, canonical và dữ liệu có cấu trúc (schema.org Product) cho trình tìm kiếm / chia sẻ */
+        function applySeo(images) {
+
+            const description = (product.description && product.description.trim()
+                ? product.description.trim()
+                : product.name + (product.brandName ? " - " + product.brandName : "") + ", chính hãng, bảo hành và trả góp 0% tại POY").slice(0, 160);
+
+            const first = (images || []).find(function (image) { return isSafeImageUrl(image.imageUrl); });
+
+            const image = first ? first.imageUrl.trim() : "";
+
+            const url = window.location.origin + window.location.pathname + "?id=" + encodeURIComponent(product.id);
+
+            setHeadMeta("name", "description", description);
+
+            setHeadMeta("property", "og:type", "product");
+            setHeadMeta("property", "og:title", product.name + " - POY");
+            setHeadMeta("property", "og:description", description);
+            setHeadMeta("property", "og:url", url);
+
+            if (image) {
+                setHeadMeta("property", "og:image", image);
+            }
+
+            let canonical = document.querySelector('link[rel="canonical"]');
+
+            if (!canonical) {
+                canonical = document.createElement("link");
+                canonical.rel = "canonical";
+                document.head.appendChild(canonical);
+            }
+
+            canonical.href = url;
+
+            const price = resolvePrices(product, null).price;
+
+            const data = {
+                "@context": "https://schema.org",
+                "@type": "Product",
+                name: product.name,
+                description: description,
+                sku: product.sku || undefined,
+                brand: product.brandName ? { "@type": "Brand", name: product.brandName } : undefined,
+                image: image || undefined,
+                offers: price > 0 ? { "@type": "Offer", priceCurrency: "VND", price: String(Math.round(price)), url: url } : undefined
+            };
+
+            let script = document.getElementById("productJsonLd");
+
+            if (!script) {
+                script = document.createElement("script");
+                script.type = "application/ld+json";
+                script.id = "productJsonLd";
+                document.head.appendChild(script);
+            }
+
+            script.textContent = JSON.stringify(data);
+
+        }
+
+
+        function setHeadMeta(attribute, key, value) {
+
+            let element = document.querySelector("meta[" + attribute + '="' + key + '"]');
+
+            if (!element) {
+                element = document.createElement("meta");
+                element.setAttribute(attribute, key);
+                document.head.appendChild(element);
+            }
+
+            element.setAttribute("content", value);
+
+        }
+
 
         function buildMetaText() {
 

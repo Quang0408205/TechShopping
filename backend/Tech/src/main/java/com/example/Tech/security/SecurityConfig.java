@@ -86,6 +86,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/google/config").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/shipping-fee").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/banners", "/api/v1/pages", "/api/v1/pages/*", "/api/v1/seo/*").permitAll()
                         .requestMatchers(HttpMethod.GET, CATALOG_PATHS).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/stores").permitAll()
                         // home page blocks: flash sale + featured combos
@@ -115,7 +116,8 @@ public class SecurityConfig {
                                 "/api/v1/admin/stores/*/purchase-receipts", "/api/v1/admin/stores/*/purchase-receipts/**",
                                 "/api/v1/admin/stock-transfers", "/api/v1/admin/stock-transfers/**",
                                 "/api/v1/admin/service-requests/**", "/api/v1/admin/reports/**",
-                                "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**")
+                                "/api/v1/admin/dashboard/**", "/api/v1/admin/contact-requests/**",
+                                "/api/v1/admin/notifications", "/api/v1/admin/notifications/**")
                         .hasAnyRole(STAFF, BRANCH_MANAGER, ADMIN)
                         .requestMatchers("/api/v1/admin/**").hasRole(ADMIN)
                         .requestMatchers("/api/v1/branch/**").hasRole(BRANCH_MANAGER)

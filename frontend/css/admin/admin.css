@@ -2037,3 +2037,183 @@ button.admin-badge {
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+
+/* ================= CHUÔNG THÔNG BÁO (topbar) ================= */
+
+.admin-bell {
+    position: relative;
+}
+
+.admin-bell-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--gray-300);
+    border-radius: 50%;
+    background: var(--color-paper);
+    cursor: pointer;
+}
+
+.admin-bell-btn svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: var(--color-ink);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.admin-bell-count {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--color-danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+}
+
+.admin-bell-panel {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    z-index: 60;
+    width: 360px;
+    max-width: calc(100vw - 24px);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--radius-sm);
+    background: var(--color-paper);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+}
+
+.admin-bell-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--gray-200);
+    font-size: 13px;
+}
+
+.admin-bell-list {
+    max-height: 380px;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    list-style: none;
+}
+
+.admin-bell-item {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    border-bottom: 1px solid var(--gray-100);
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+}
+
+.admin-bell-item:hover,
+.admin-bell-item:focus-visible {
+    background: var(--gray-50);
+}
+
+.admin-bell-item.is-unread {
+    background: var(--gray-100);
+}
+
+.admin-bell-item.is-unread strong::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--color-danger);
+}
+
+.admin-bell-icon {
+    flex: none;
+    width: 24px;
+    text-align: center;
+}
+
+.admin-bell-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    font-size: 12px;
+}
+
+.admin-bell-text strong {
+    font-size: 13px;
+}
+
+.admin-bell-text small {
+    color: var(--gray-600);
+}
+
+.admin-bell-empty {
+    padding: 22px 14px;
+    color: var(--gray-600);
+    font-size: 13px;
+    text-align: center;
+}
+
+.admin-bell-foot {
+    display: block;
+    padding: 11px 14px;
+    border-top: 1px solid var(--gray-200);
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+
+    .admin-bell-panel {
+        position: fixed;
+        top: 64px;
+        right: 12px;
+        left: 12px;
+        width: auto;
+        max-width: none;
+    }
+
+}
+
+
+/* ================= SOẠN TRANG NỘI DUNG (admin/pages.html) ================= */
+
+.admin-editor-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.admin-editor-tools .btn {
+    padding: 8px 14px;
+    font-size: 11px;
+}
+
+#pageBody {
+    width: 100%;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.6;
+}

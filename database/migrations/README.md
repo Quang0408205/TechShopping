@@ -42,6 +42,8 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 36 | `audit_logs.sql` | Nhật ký thao tác của nhân sự (`audit_logs`: ai, vai trò, yêu cầu, đối tượng, IP, dữ liệu gửi lên đã che trường nhạy cảm); chỉ thêm, ADMIN xem |
 | 37 | `shipping_fees.sql` | Phí giao hàng theo tỉnh / thành (`shipping_fee_rules`, ADMIN đặt; tỉnh không có dòng tính phí mặc định 30.000đ, không còn ngưỡng miễn phí) |
 | 38 | `invoice_info.sql` | Thông tin xuất hoá đơn công ty trên đơn hàng (`orders.invoice_company`, `invoice_tax_code`, `invoice_address`; tuỳ chọn, chỉ lưu và in) |
+| 39 | `staff_notifications.sql` | Thông báo nội bộ cho nhân sự (`staff_notifications` theo chi nhánh, `staff_notification_reads` đã đọc theo từng người) |
+| 40 | `site_content.sql` | Banner trang chủ (`banners`) và trang tĩnh do ADMIN soạn (`content_pages`), nạp sẵn 8 trang chính sách; chạy lại không ghi đè trang đã sửa |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

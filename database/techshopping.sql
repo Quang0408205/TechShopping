@@ -734,6 +734,25 @@ create index idx_audit_logs_created on audit_logs (created_at desc);
 create index idx_audit_logs_user on audit_logs (user_id, created_at desc);
 create index idx_audit_logs_entity on audit_logs (entity_type, created_at desc);
 
+-- bảng staff_notifications: thông báo nội bộ (store_id null = mọi nhân sự thấy); staff_notification_reads: ai đã đọc
+create table staff_notifications (
+    notification_id bigserial primary key,
+    store_id int references stores(store_id) on delete cascade,
+    kind varchar(30) not null,
+    title varchar(200) not null,
+    message text,
+    link varchar(200),
+    created_at timestamp not null default current_timestamp
+);
+create index idx_staff_notifications_store on staff_notifications (store_id, created_at desc);
+create index idx_staff_notifications_created on staff_notifications (created_at desc);
+create table staff_notification_reads (
+    notification_id bigint not null references staff_notifications(notification_id) on delete cascade,
+    user_id bigint not null references users(user_id) on delete cascade,
+    read_at timestamp not null default current_timestamp,
+    primary key (notification_id, user_id)
+);
+
 -- bảng shipping_fee_rules: phí giao hàng riêng của từng tỉnh / thành (tỉnh không có dòng tính phí mặc định)
 create table shipping_fee_rules (
     rule_id serial primary key,

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Banner trang chủ - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<body class="admin-body" data-page-title="Banner trang chủ" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="banners"></div>
+
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+
+        <main class="admin-content">
+
+            <p class="admin-subtext">
+                Banner hiện thành dải ảnh ngay dưới phần đầu trang chủ. Chỉ banner đang bật và nằm trong khung thời gian (nếu có) mới hiện cho khách;
+                sắp theo thứ tự nhỏ đến lớn.
+            </p>
+
+            <div class="admin-filter-bar">
+                <button type="button" class="btn btn-dark" id="bannerNewBtn">+ THÊM BANNER</button>
+            </div>
+
+
+            <section class="admin-panel" id="bannerFormPanel" hidden>
+
+                <div class="admin-panel-header">
+                    <h2 id="bannerFormTitle">Thêm banner</h2>
+                </div>
+
+                <form id="bannerForm" novalidate>
+
+                    <p id="bannerFormError" class="form-error" role="alert" hidden></p>
+
+                    <div class="admin-form-grid">
+
+                        <div class="admin-field">
+                            <label for="bannerTitle">Tiêu đề *</label>
+                            <input type="text" id="bannerTitle" maxlength="150" required>
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="bannerOrder">Thứ tự hiển thị</label>
+                            <input type="number" id="bannerOrder" min="0" max="9999" step="1" value="0">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="bannerSubtitle">Mô tả ngắn</label>
+                            <input type="text" id="bannerSubtitle" maxlength="300">
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="bannerImage">Ảnh banner *</label>
+                            <div class="admin-tax-image">
+                                <img id="bannerImagePreview" class="admin-tax-image-preview" alt="" hidden>
+                                <input type="url" id="bannerImage" maxlength="500" placeholder="Dán link https://… hoặc tải ảnh lên">
+                                <label class="btn btn-outline-dark admin-image-file-btn">
+                                    TẢI ẢNH LÊN
+                                    <input type="file" id="bannerImageFile" accept="image/jpeg,image/png,image/webp">
+                                </label>
+                            </div>
+                            <p class="admin-field-hint">Nên dùng ảnh ngang tỉ lệ khoảng 16 : 7.</p>
+                        </div>
+
+                        <div class="admin-field admin-field-wide">
+                            <label for="bannerLink">Liên kết khi bấm</label>
+                            <input type="text" id="bannerLink" maxlength="500" placeholder="customer/products.html?categoryId=3 hoặc https://…">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="bannerStarts">Bắt đầu hiện (tuỳ chọn)</label>
+                            <input type="datetime-local" id="bannerStarts">
+                        </div>
+
+                        <div class="admin-field">
+                            <label for="bannerEnds">Ngừng hiện (tuỳ chọn)</label>
+                            <input type="datetime-local" id="bannerEnds">
+                        </div>
+
+                        <label class="admin-field-check admin-field-wide">
+                            <input type="checkbox" id="bannerActive" checked>
+                            Đang bật
+                        </label>
+
+                    </div>
+
+                    <div class="admin-form-actions">
+                        <button type="submit" class="btn btn-dark" id="bannerSaveBtn">LƯU</button>
+                        <button type="button" class="btn btn-outline-dark" id="bannerCancelBtn">HỦY</button>
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Danh sách banner</h2>
+                    <span class="admin-row-count" id="bannerRowCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-table">
+
+                        <thead>
+                            <tr>
+                                <th>Ảnh</th>
+                                <th>Banner</th>
+                                <th>Thứ tự</th>
+                                <th>Khung thời gian</th>
+                                <th>Trạng thái</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="bannerTableBody"></tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/banners.js"></script>
+
+</body>
+</html>

@@ -20,6 +20,7 @@ import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.service.inventory.StockAvailability;
 import com.example.Tech.service.inventory.StockAvailability.StoreStock;
 import com.example.Tech.service.order.NearestStoreResolver;
+import com.example.Tech.service.notification.StaffNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,6 +47,7 @@ public class OrderStockLifecycle {
     private final StockMovementRepository stockMovementRepository;
     private final OrderItemRepository orderItemRepository;
     private final StockAvailability stockAvailability;
+    private final StaffNotificationService notificationService;
 
     /** Rules bean validation cannot express; runs before the cart is read. */
     public void validateDeliverySelection(DeliveryType deliveryType, Integer pickupStoreId, String shippingAddress) {
@@ -158,9 +160,11 @@ public class OrderStockLifecycle {
 
         needed.forEach((variantId, quantity) -> {
             Inventory row = rows.get(variantId);
-            row.setQuantity(row.getQuantity() - quantity);
+            int before = row.getQuantity();
+            row.setQuantity(before - quantity);
             stockMovementRepository.save(movement(order, store, variants.get(variantId), MovementType.OUT,
                     -quantity, staff));
+            notificationService.lowStock(store, variants.get(variantId), before, row.getQuantity());
         });
     }
 

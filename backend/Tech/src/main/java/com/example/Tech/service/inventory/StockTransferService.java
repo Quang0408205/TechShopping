@@ -20,6 +20,7 @@ import com.example.Tech.repository.inventory.StockTransferItemRepository;
 import com.example.Tech.repository.inventory.StockTransferRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
 import com.example.Tech.repository.store.StoreRepository;
+import com.example.Tech.service.notification.StaffNotificationService;
 import com.example.Tech.service.store.StoreAccessGuard;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,7 @@ public class StockTransferService {
     private final InventoryRepository inventoryRepository;
     private final StockMovementRepository stockMovementRepository;
     private final StoreAccessGuard storeAccessGuard;
+    private final StaffNotificationService notificationService;
     private final Clock clock;
 
     /**
@@ -161,14 +163,19 @@ public class StockTransferService {
         }
         for (StockTransferItem item : items) {
             Inventory row = rows.get(item.getVariant().getId());
+            int before = row.getQuantity();
             row.setQuantity(row.getQuantity() - item.getQuantity());
             record(transfer, transfer.getFromStore(), item, MovementType.TRANSFER_OUT, -item.getQuantity(),
                     "Chuyển tới " + transfer.getToStore().getName(), access.user());
+            notificationService.lowStock(transfer.getFromStore(), item.getVariant(), before, row.getQuantity());
         }
         transfer.setStatus(StockTransferStatus.IN_TRANSIT);
         transfer.setSentBy(access.user());
         transfer.setSentAt(LocalDateTime.now(clock));
         transferRepository.saveAndFlush(transfer);
+        notificationService.publish(transfer.getToStore(), StaffNotificationService.Kind.STOCK_TRANSFER,
+                "Hàng đang chuyển tới chi nhánh bạn: " + code(transferId),
+                "Từ chi nhánh " + transfer.getFromStore().getName(), "stock-transfers.html");
         log.info("User id={} sent stock transfer id={}", userId, transferId);
         return get(userId, transferId);
     }

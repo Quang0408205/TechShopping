@@ -18,6 +18,7 @@ import com.example.Tech.repository.inventory.StockMovementRepository;
 import com.example.Tech.repository.order.OrderItemRepository;
 import com.example.Tech.repository.store.StoreRepository;
 import com.example.Tech.service.inventory.StockAvailability;
+import com.example.Tech.service.notification.StaffNotificationService;
 import com.example.Tech.service.inventory.StockAvailability.StoreStock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,6 +58,9 @@ class OrderStockLifecycleTest {
 
     @Mock
     private StockAvailability stockAvailability;
+
+    @Mock
+    private StaffNotificationService notificationService;
 
     @InjectMocks
     private OrderStockLifecycle lifecycle;

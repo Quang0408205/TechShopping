@@ -35,7 +35,7 @@ public class AuditLogFilter extends OncePerRequestFilter {
     private static final Set<String> WRITE_METHODS = Set.of("POST", "PUT", "PATCH", "DELETE");
 
     private static final List<String> SKIPPED_PREFIXES = List.of("/api/v1/auth/", "/api/v1/chat", "/api/v1/recommendations",
-            "/api/v1/interactions");
+            "/api/v1/interactions", "/api/v1/admin/notifications");
 
     private static final List<String> STAFF_ROLES = List.of("ADMIN", "BRANCH_MANAGER", "STAFF");
 
