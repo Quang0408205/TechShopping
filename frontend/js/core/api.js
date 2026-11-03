@@ -774,12 +774,13 @@ function redirectToLogin(reason) {
 /* ================= GHI NHẬN HÀNH VI CHO HỆ THỐNG KHUYẾN NGHỊ ================= */
 
 /*
- * POST /interactions {productId, type: "VIEW" | "CLICK"}. Chỉ khách đã đăng nhập ở khu mua sắm;
+ * POST /interactions {productId, type: "VIEW" | "CLICK", recommendationType?}. Chỉ khách đã đăng nhập ở khu mua sắm;
  * lỗi bị bỏ qua vì đây là dữ liệu phụ, không được làm hỏng trang.
  * keepalive: request CLICK vẫn được gửi khi trình duyệt chuyển sang trang chi tiết.
+ * recommendationType: CLICK trong một khu gợi ý (renderRecommendationGrid) → backend đánh dấu gợi ý đó đã được bấm.
  */
 
-function trackInteraction(productId, type) {
+function trackInteraction(productId, type, recommendationType) {
 
     if (IS_STAFF_AREA || !isLoggedIn() || !productId) {
         return;
@@ -794,7 +795,11 @@ function trackInteraction(productId, type) {
                 "Content-Type": "application/json",
                 "Authorization": "Bearer " + getAuth().accessToken
             },
-            body: JSON.stringify({ productId: Number(productId), type: type })
+            body: JSON.stringify({
+                productId: Number(productId),
+                type: type,
+                recommendationType: recommendationType || null
+            })
         }).catch(function () {});
 
     } catch (error) {
@@ -816,6 +821,8 @@ document.addEventListener("click", function (event) {
 
     const card = link.closest(".product-card");
 
-    trackInteraction(card && card.dataset.productId, "CLICK");
+    const list = link.closest("[data-recommendation-type]");
+
+    trackInteraction(card && card.dataset.productId, "CLICK", list && list.dataset.recommendationType);
 
 });

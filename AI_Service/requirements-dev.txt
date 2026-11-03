@@ -1,0 +1,5 @@
+# Chỉ dùng khi phát triển (không vào image Docker): unit test các công thức khuyến nghị
+#   pip install -r requirements-dev.txt   (hoặc: uv pip install -r requirements-dev.txt)
+#   python -m pytest
+-r requirements.txt
+pytest==8.4.2

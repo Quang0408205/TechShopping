@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" width="640" height="360" font-family="Arial, sans-serif" font-size="12">
+<rect width="640" height="360" fill="#ffffff"/>
+<line x1="56" y1="312.0" x2="470" y2="312.0" stroke="#e5e7eb"/>
+<text x="48" y="316.0" text-anchor="end" fill="#4b5563">0.00</text>
+<line x1="56" y1="254.4" x2="470" y2="254.4" stroke="#e5e7eb"/>
+<text x="48" y="258.4" text-anchor="end" fill="#4b5563">0.05</text>
+<line x1="56" y1="196.8" x2="470" y2="196.8" stroke="#e5e7eb"/>
+<text x="48" y="200.8" text-anchor="end" fill="#4b5563">0.10</text>
+<line x1="56" y1="139.2" x2="470" y2="139.2" stroke="#e5e7eb"/>
+<text x="48" y="143.2" text-anchor="end" fill="#4b5563">0.15</text>
+<line x1="56" y1="81.6" x2="470" y2="81.6" stroke="#e5e7eb"/>
+<text x="48" y="85.6" text-anchor="end" fill="#4b5563">0.20</text>
+<line x1="56" y1="24.0" x2="470" y2="24.0" stroke="#e5e7eb"/>
+<text x="48" y="28.0" text-anchor="end" fill="#4b5563">0.25</text>
+<text x="56.0" y="330" text-anchor="middle" fill="#4b5563">0.0</text>
+<text x="97.4" y="330" text-anchor="middle" fill="#4b5563">0.1</text>
+<text x="138.8" y="330" text-anchor="middle" fill="#4b5563">0.2</text>
+<text x="180.2" y="330" text-anchor="middle" fill="#4b5563">0.3</text>
+<text x="221.6" y="330" text-anchor="middle" fill="#4b5563">0.4</text>
+<text x="263.0" y="330" text-anchor="middle" fill="#4b5563">0.5</text>
+<text x="304.4" y="330" text-anchor="middle" fill="#4b5563">0.6</text>
+<text x="345.8" y="330" text-anchor="middle" fill="#4b5563">0.7</text>
+<text x="387.2" y="330" text-anchor="middle" fill="#4b5563">0.8</text>
+<text x="428.6" y="330" text-anchor="middle" fill="#4b5563">0.9</text>
+<text x="470.0" y="330" text-anchor="middle" fill="#4b5563">1.0</text>
+<text x="263.0" y="352" text-anchor="middle" fill="#111827">α trên validation (0 = chỉ ALS, 1 = chỉ CBF)</text>
+<path d="M56.0,166.0 L97.4,163.4 L138.8,153.7 L180.2,151.5 L221.6,156.1 L263.0,150.8 L304.4,156.6 L345.8,156.5 L387.2,165.6 L428.6,178.6 L470.0,199.6" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<circle cx="56.0" cy="166.0" r="3.5" fill="#2563eb"/>
+<circle cx="97.4" cy="163.4" r="3.5" fill="#2563eb"/>
+<circle cx="138.8" cy="153.7" r="3.5" fill="#2563eb"/>
+<circle cx="180.2" cy="151.5" r="3.5" fill="#2563eb"/>
+<circle cx="221.6" cy="156.1" r="3.5" fill="#2563eb"/>
+<circle cx="263.0" cy="150.8" r="3.5" fill="#2563eb"/>
+<circle cx="304.4" cy="156.6" r="3.5" fill="#2563eb"/>
+<circle cx="345.8" cy="156.5" r="3.5" fill="#2563eb"/>
+<circle cx="387.2" cy="165.6" r="3.5" fill="#2563eb"/>
+<circle cx="428.6" cy="178.6" r="3.5" fill="#2563eb"/>
+<circle cx="470.0" cy="199.6" r="3.5" fill="#2563eb"/>
+<path d="M56.0,78.5 L97.4,82.5 L138.8,70.1 L180.2,69.8 L221.6,74.2 L263.0,68.4 L304.4,81.0 L345.8,87.5 L387.2,106.3 L428.6,123.2 L470.0,155.6" fill="none" stroke="#d97706" stroke-width="2.5"/>
+<circle cx="56.0" cy="78.5" r="3.5" fill="#d97706"/>
+<circle cx="97.4" cy="82.5" r="3.5" fill="#d97706"/>
+<circle cx="138.8" cy="70.1" r="3.5" fill="#d97706"/>
+<circle cx="180.2" cy="69.8" r="3.5" fill="#d97706"/>
+<circle cx="221.6" cy="74.2" r="3.5" fill="#d97706"/>
+<circle cx="263.0" cy="68.4" r="3.5" fill="#d97706"/>
+<circle cx="304.4" cy="81.0" r="3.5" fill="#d97706"/>
+<circle cx="345.8" cy="87.5" r="3.5" fill="#d97706"/>
+<circle cx="387.2" cy="106.3" r="3.5" fill="#d97706"/>
+<circle cx="428.6" cy="123.2" r="3.5" fill="#d97706"/>
+<circle cx="470.0" cy="155.6" r="3.5" fill="#d97706"/>
+<line x1="56" y1="297.7" x2="470" y2="297.7" stroke="#6b7280" stroke-dasharray="5 4"/>
+<line x1="263.0" y1="24" x2="263.0" y2="312" stroke="#16a34a" stroke-dasharray="3 3"/>
+<line x1="484" y1="34" x2="506" y2="34" stroke="#2563eb" stroke-width="2.5"/>
+<text x="512" y="38" fill="#111827">NDCG@10</text>
+<line x1="484" y1="54" x2="506" y2="54" stroke="#d97706" stroke-width="2.5"/>
+<text x="512" y="58" fill="#111827">Recall@10</text>
+<line x1="484" y1="74" x2="506" y2="74" stroke="#6b7280" stroke-width="2.5" stroke-dasharray="5 4"/>
+<text x="512" y="78" fill="#111827">Phổ biến (NDCG)</text>
+<line x1="484" y1="94" x2="506" y2="94" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="5 4"/>
+<text x="512" y="98" fill="#111827">α chọn</text>
+</svg>

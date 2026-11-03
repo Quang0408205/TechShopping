@@ -43,10 +43,14 @@ services:
       - ./database/migrations/loyalty_on_payment.sql:/docker-entrypoint-initdb.d/10_loyalty_on_payment.sql:ro
       # Giá vốn mẫu: 80-90% giá bán cho mỗi phiên bản + giá vốn trên các dòng đơn đã xác nhận (chạy sau 07-10)
       - ./database/docker-init/11_sample_costs.sql:/docker-entrypoint-initdb.d/11_sample_costs.sql:ro
-      # Banner + trang tĩnh do ADMIN quản lý (tạo bảng nếu chưa có và nạp 8 trang chính sách)
+      # Trang tĩnh chính sách (tạo bảng nếu chưa có và nạp 8 trang)
       - ./database/migrations/site_content.sql:/docker-entrypoint-initdb.d/12_site_content.sql:ro
       # Hỏi đáp sản phẩm + đăng ký báo khi có hàng lại
       - ./database/migrations/product_questions_stock_alerts.sql:/docker-entrypoint-initdb.d/13_product_questions_stock_alerts.sql:ro
+      # Lượt bấm vào sản phẩm được gợi ý (tỉ lệ bấm / chuyển đổi của hệ thống khuyến nghị)
+      - ./database/migrations/recommendation_clicks.sql:/docker-entrypoint-initdb.d/14_recommendation_clicks.sql:ro
+      # Lịch sử đánh giá offline của hệ thống khuyến nghị (AI Service ghi sau mỗi lần đánh giá)
+      - ./database/migrations/recommendation_evaluations.sql:/docker-entrypoint-initdb.d/15_recommendation_evaluations.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s
@@ -134,6 +138,8 @@ services:
         condition: service_healthy
     environment:
       AI_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/techshopping
+      # Giờ Việt Nam như backend (thời điểm huấn luyện / đánh giá hiện trên trang admin)
+      TZ: Asia/Ho_Chi_Minh
       AI_BACKEND_URL: http://backend:8080/api/v1
       AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
       # LLM của chatbot: mặc định Ollama chạy trên máy host (miễn phí); xem AI_Service/README.md mục 8.2

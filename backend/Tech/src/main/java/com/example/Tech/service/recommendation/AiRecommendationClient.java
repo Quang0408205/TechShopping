@@ -26,9 +26,13 @@ public class AiRecommendationClient {
     }
 
     private final RestClient restClient;
+    /** Long read timeout: training takes a few seconds, more than the 3 s allowed for a recommendation list. */
+    private final RestClient slowClient;
 
-    public AiRecommendationClient(@Qualifier("aiRestClient") RestClient restClient) {
+    public AiRecommendationClient(@Qualifier("aiRestClient") RestClient restClient,
+                                  @Qualifier("aiChatRestClient") RestClient slowClient) {
         this.restClient = restClient;
+        this.slowClient = slowClient;
     }
 
     public Optional<List<Item>> fetch(RecommendationType type, Long userId, Long productId, int size,
@@ -57,12 +61,30 @@ public class AiRecommendationClient {
 
     /** POST /train: retrains ALS and the product vectors; returns the training statistics. */
     public Optional<Map<String, Object>> train() {
+        return call(slowClient.post().uri("/train"), "POST /train");
+    }
+
+    /** GET /health: the model in use (trained at, products, users, interactions, features...). */
+    public Optional<Map<String, Object>> status() {
+        return call(restClient.get().uri("/health"), "GET /health");
+    }
+
+    /** GET /evaluation: latest offline evaluation (rows by model / α) and whether one is running. */
+    public Optional<Map<String, Object>> evaluation() {
+        return call(restClient.get().uri("/evaluation"), "GET /evaluation");
+    }
+
+    /** POST /evaluation: starts an offline evaluation in the background (the result is read with GET). */
+    public Optional<Map<String, Object>> startEvaluation() {
+        return call(restClient.post().uri("/evaluation"), "POST /evaluation");
+    }
+
+    @SuppressWarnings("unchecked")
+    private Optional<Map<String, Object>> call(RestClient.RequestHeadersSpec<?> request, String label) {
         try {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> stats = restClient.post().uri("/train").retrieve().body(Map.class);
-            return Optional.ofNullable(stats);
+            return Optional.ofNullable(request.retrieve().body(Map.class));
         } catch (RestClientException exception) {
-            log.warn("AI service /train failed: {}", exception.getMessage());
+            log.warn("AI service {} failed: {}", label, exception.getMessage());
             return Optional.empty();
         }
     }

@@ -11,7 +11,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-/** A static page (about, terms, policies) whose body is HTML already filtered by {@code HtmlSanitizer}. */
+/** A static page (about, terms, policies) whose body is HTML already filtered. */
 @Entity
 @Table(name = "content_pages")
 @Getter

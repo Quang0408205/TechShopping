@@ -100,14 +100,15 @@ Không thêm thư viện. Dùng `fetch` với `keepalive` để ghi hành vi b�
 AI_Service/
 ├── Dockerfile, .dockerignore, requirements.txt
 ├── app/
-│   ├── main.py              FastAPI: /recommend /similar /upsell /cross-sell /train /chat /chat/stream /health
+│   ├── main.py              FastAPI: /recommend /similar /upsell /cross-sell /train /evaluation /chat /chat/stream /health
 │   ├── config.py            Đọc biến môi trường + tham số mô hình (α, k, K, δ, ALS...)
 │   ├── db.py                Kết nối PostgreSQL (mặc định chỉ đọc)
 │   ├── recommender/
 │   │   ├── data.py          Đọc sản phẩm, thông số, tương tác, đơn hàng, quan hệ sản phẩm
 │   │   ├── features.py      Trích thông số (RAM, bộ nhớ, màn hình, camera), Min-Max, One-Hot, điểm r(u,i)
 │   │   ├── als.py           Thuật toán ALS cho phản hồi ngầm định + fold-in
-│   │   └── engine.py        CBF, Hybrid, cold-start, lọc, xếp hạng, Upsell, Cross-sell, lý do đề xuất
+│   │   ├── engine.py        CBF, Hybrid, cold-start, lọc, xếp hạng, Upsell, Cross-sell, lý do đề xuất
+│   │   └── evaluation.py    Đánh giá offline (Precision / Recall / NDCG / HitRate / Coverage theo α), ghi kết quả
 │   └── chatbot/
 │       ├── rag.py           Embedding + tìm kiếm vector trong pgvector (có lọc metadata)
 │       ├── tools.py         11 function cho Function Calling (gọi API Backend bằng token của khách)
@@ -115,14 +116,15 @@ AI_Service/
 ├── evals/
 │   ├── chatbot_cases.json   30 câu hỏi kiểm thử chatbot kèm đáp án mong đợi
 │   ├── retrieval_cases.json 40 câu hỏi có đáp án để đánh giá phần tìm kiếm RAG
-│   └── results/             Kết quả mỗi lần chạy eval_chatbot.py (latest.md để dán vào báo cáo)
+│   └── results/             Kết quả mỗi lần chạy eval_chatbot.py (latest.md để dán vào báo cáo);
+│                            recommender_latest.md / .csv / .json + recommender_alpha.svg: đánh giá khuyến nghị
 ├── knowledge/               Tài liệu chính sách cho RAG (Markdown)
 │   ├── giao-hang.md, thanh-toan.md, bao-hanh-tra-hang.md, ho-tro.md
 └── scripts/
     ├── seed_interactions.py Sinh dữ liệu hành vi MÔ PHỎNG (chỉ dùng local)
     ├── build_relations.py   Tạo quan hệ phụ kiện (ACCESSORY) cho "Mua kèm"
     ├── build_index.py       Xây kho tri thức RAG (chunk → embedding → kb_chunks)
-    ├── evaluate.py          Đánh giá khuyến nghị: Precision / Recall / NDCG / HitRate / Coverage
+    ├── evaluate.py          Đánh giá khuyến nghị (gọi app/recommender/evaluation.py), in bảng + ghi evals/results/
     ├── eval_retrieval.py    Đánh giá tìm kiếm RAG: Hit@K / Recall@K / MRR cho vector, keyword, hybrid
     └── eval_chatbot.py      Đánh giá chatbot tự động: tool, nội dung, thao tác + giám khảo LLM
 ```
@@ -191,7 +193,8 @@ AI_Service/
 
 ### 4.2. Xây đặc trưng (`features.py`)
 
-- **Điểm tương tác:** `r(u,i) = Σ_t w_t · log(1 + n(u,i,t))`. Hàm log làm cho việc xem đi xem lại nhiều lần không lấn át được hành vi mua.
+- **Điểm tương tác:** `r(u,i) = Σ_t w_t · log(1 + n(u,i,t)) · 0,5^(tuổi / h)`. Hàm log làm cho việc xem đi xem lại nhiều lần không lấn át được hành vi mua; hệ số `0,5^(tuổi / h)` giảm dần hành vi cũ (tuổi = số ngày từ lần gần nhất của hành vi đó, nửa đời h = 30 ngày chọn trên validation; `REC_HALF_LIFE_DAYS = 0` tắt).
+- **Lý do chọn trọng số w_t (xem 1, bấm 2, thích 3, thêm giỏ 4, mua 5):** xếp theo mức cam kết của khách: xem chỉ là lướt qua, bấm là chủ động chọn, thích là bày tỏ, thêm giỏ là ý định mua, mua là chắc chắn. Thang tuyến tính 1–5 giữ thứ tự đó mà không để một hành vi lấn át hẳn các hành vi còn lại.
 - **Thông số kỹ thuật:** đọc `ram_gb`, `storage_gb`, `screen_inch`, `camera_mp` theo thứ tự tin cậy:
   1. tên sản phẩm (dữ liệu TGDĐ ghi sẵn, ví dụ `8GB/256GB` hoặc `(Core 5, 16GB, 512GB)`);
   2. bảng `product_specifications`;
@@ -206,7 +209,7 @@ AI_Service/
 |---|---|---|
 | **CBF** (lọc theo nội dung) | Hồ sơ `p_u` = trung bình có trọng số r(u,i) của các v_i; `Score_CBF = cos(p_u, v_i)` | `engine.py` |
 | **CF / ALS** (lọc cộng tác) | Phân rã ma trận người dùng × sản phẩm theo phản hồi ngầm định: `c_ui = 1 + a·r(u,i)`, nghiệm đóng `x_u = (YᵀY + Yᵀ(C_u−I)Y + λI)⁻¹ YᵀC_u p_u`, luân phiên X và Y | `als.py` |
-| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0.4** (chọn bằng đánh giá) | `engine.py` |
+| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0.5** (chọn trên tập validation) | `engine.py` |
 
 - **Fold-in:** khi có request, vector của khách được tính lại từ hành vi *hiện tại*, nên hành vi mới phát sinh sau lần huấn luyện gần nhất vẫn được tính.
 - **Huấn luyện:** khoảng 3 giây (352 người dùng × 4.487 sản phẩm). Tự chạy lại mỗi 24 giờ; mô hình lưu ở volume `ai_models`.
@@ -224,7 +227,7 @@ AI_Service/
 
 | Trường hợp | Cách xử lý |
 |---|---|
-| Khách có ≥ 5 lượt tương tác | Hybrid α = 0.4 |
+| Khách có ≥ 5 lượt tương tác | Hybrid α = 0.5 |
 | Khách có 1–4 lượt tương tác | Chỉ dùng CBF (α = 1) |
 | Khách mới / chưa đăng nhập | Khoảng ¾ sản phẩm phổ biến nhất + ¼ sản phẩm mới nhất |
 | Sản phẩm mới chưa ai tương tác | Chỉ có điểm CBF |
@@ -308,7 +311,7 @@ sequenceDiagram
 |---|---|---|
 | **`vector`** (mặc định) | Embedding câu hỏi rồi lấy Top-K chunk có cosine lớn nhất (toán tử `<=>`, chỉ mục **HNSW**: tìm láng giềng gần đúng, không cần so với cả 4.303 vector) | Hiểu nghĩa ("máy pin trâu"); thực tế cũng tìm đúng mã máy |
 | `keyword` | Full-text search của PostgreSQL trên cột `search_tsv`: bỏ dấu tiếng Việt (`unaccent`), tên sản phẩm trọng số A, nội dung trọng số D, bỏ từ dừng ("giá", "bao", "nhiêu"...), khớp tiền tố | Nhanh (10 ms), nhưng không hiểu từ đồng nghĩa và dễ xếp sai thứ tự |
-| `hybrid` | Chạy cả hai rồi gộp bằng **Reciprocal Rank Fusion** có trọng số: `điểm = 1/(60+hạng_vector) + w/(60+hạng_từ_khoá)` (`RAG_KEYWORD_WEIGHT`) | Thử nghiệm; đo được là kém hơn `vector` (mục 9.4) |
+| `hybrid` | Chạy cả hai rồi gộp bằng **Reciprocal Rank Fusion** có trọng số: `điểm = 1/(60+hạng_vector) + w/(60+hạng_từ_khoá)` (`RAG_KEYWORD_WEIGHT`) | Thử nghiệm; đo được là kém hơn `vector` (mục 9.5) |
 
 - Tách theo loại tài liệu: câu hỏi chính sách chỉ tìm trong `POLICY`, lấy **K = 5** (`RAG_POLICY_K`); tìm sản phẩm chỉ trong `PRODUCT`, tối đa 8.
 - Với sản phẩm: lọc theo danh mục, hãng, khoảng giá **trước** khi xếp hạng. Nhờ vậy "điện thoại chụp ảnh đẹp dưới 10 triệu" vừa hiểu đúng nghĩa vừa đúng điều kiện giá.
@@ -348,7 +351,7 @@ Vòng hội thoại viết một lần, chạy được với hai loại nhà cu
 - Vòng lặp tối đa 6 lượt. Mỗi đoạn chữ thành sự kiện SSE `delta`; trước khi chạy tool phát sự kiện `status` ("Đang tra cứu chính sách...").
 - Nếu LLM dừng vì hết độ dài hoặc bị chặn thì không chạy tool của lượt đó. Nếu LLM sinh tham số tool không phải JSON hợp lệ, tool không chạy mà trả lỗi `INVALID_ARGUMENTS` để LLM thử lại.
 - Qwen3 được gửi `reasoning_effort = none` (`LLM_REASONING_EFFORT`) để tắt bước "suy nghĩ": khoảng 40 giây xuống 2 giây mỗi lượt mà vẫn chọn đúng tool.
-- **Chốt chặn cho mô hình nhỏ** (đo bằng bộ đánh giá, mục 9.3):
+- **Chốt chặn cho mô hình nhỏ** (đo bằng bộ đánh giá, mục 9.4):
   - trạng thái đăng nhập được ghi trong **lời nhắc hệ thống**, không chèn vào tin nhắn khách (chèn vào tin nhắn làm Qwen quên gọi tool);
   - lượt đầu không gọi tool nào thì **nhắc lại một lần** "câu này cần tra cứu thì gọi tool ngay" và gửi sự kiện `reset` để xoá đoạn "để mình tra cứu..." đã hiện (Ollama bỏ qua `tool_choice="required"` nên phải làm bằng code);
   - có thao tác chờ xác nhận mà câu trả lời không nhắc bấm nút thì tự thêm dòng "👉 Bấm nút Xác nhận bên dưới";
@@ -478,7 +481,7 @@ docker compose up -d --build
 docker compose exec ai-service python -m scripts.build_relations                 # quan hệ phụ kiện (~6.000 dòng)
 docker compose exec ai-service python -m scripts.seed_interactions --users 300   # hành vi MÔ PHỎNG (chỉ local)
 docker compose exec ai-service python -m scripts.build_index                     # kho tri thức RAG (~2 phút)
-docker compose exec ai-service python -m scripts.evaluate                        # in bảng đánh giá
+docker compose exec ai-service python -m scripts.evaluate                        # đánh giá → evals/results/recommender_latest.*
 docker compose exec ai-service python -c "from app.recommender.engine import recommender; print(recommender.train())"
 docker compose restart ai-service                                                # nạp mô hình vừa huấn luyện
 ```
@@ -501,8 +504,8 @@ docker compose restart ai-service                                               
 | `ANTHROPIC_MODEL` | `claude-opus-5-5` | Mô hình Claude (rẻ: `claude-haiku-5-5`) |
 | `AI_CHAT_EFFORT` | `low` | Mức suy luận (`low` / `medium` / `high`) |
 | `AI_INTERNAL_KEY` | `dev-internal-key` | Khoá chung Backend ↔ AI Service; **đổi khi triển khai thật** |
-| `REC_ALPHA`, `REC_COLD_START_K` | `0.4`, `5` | α của Hybrid, ngưỡng k cold-start |
-| `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`, `ALS_ITERATIONS` | `32`, `0.1`, `10`, `15` | Siêu tham số ALS |
+| `REC_ALPHA`, `REC_COLD_START_K`, `REC_HALF_LIFE_DAYS` | `0.5`, `5`, `30` | α của Hybrid, ngưỡng k cold-start, nửa đời giảm trọng số hành vi cũ (0 = không giảm) |
+| `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`, `ALS_ITERATIONS` | `32`, `0.1`, `5`, `15` | Siêu tham số ALS (số chiều, λ, a chọn trên validation) |
 
 ### 8.3. Dùng hằng ngày
 
@@ -530,26 +533,105 @@ export AI_BACKEND_URL=http://localhost:8080/api/v1 AI_INTERNAL_KEY=dev-internal-
 
 ### 9.1. Đánh giá offline (`scripts/evaluate.py`)
 
-Cách đánh giá:
+Cách đánh giá (khoảng 3 phút):
 
-- Với mỗi người dùng, 80% hành vi đầu (theo thời gian) dùng để huấn luyện, 20% cuối dùng để kiểm thử.
-- "Đúng" nghĩa là sản phẩm khách tương tác trong phần kiểm thử mà chưa từng gặp khi huấn luyện.
-- Dữ liệu mô phỏng: 285 người dùng, 16.900 hành vi huấn luyện, 4.317 hành vi kiểm thử, N = 10.
+- Hành vi của mỗi người dùng được chia theo thời gian thành 3 phần: **70% đầu để huấn luyện, 10% tiếp theo để tinh
+  chỉnh (validation), 20% cuối để kiểm thử**.
+- Tinh chỉnh trên validation (học trên phần huấn luyện), lần lượt từng bước, mỗi bước giữ giá trị có NDCG@10 cao nhất:
+  1. tham số ALS: số chiều 16 / 32 / 64 × λ 0,1 / 1 × a 5 / 10 / 20 (18 bộ, chấm ALS riêng);
+  2. α = 0; 0,1; …; 1 với ALS đã chỉnh;
+  3. nửa đời giảm trọng số hành vi cũ: không giảm / 30 / 90 ngày, với α đã chọn.
+- Kết quả báo cáo: học lại trên huấn luyện + validation với tham số đã chọn, chấm trên phần kiểm thử. Phần kiểm thử
+  không tham gia chọn tham số nào, nên con số không bị "đẹp" nhờ chọn trên chính nó.
+- Đối chứng: danh sách phổ biến, **item–item kNN** (sim(i, j) = cosine giữa hai cột của ma trận r(u,i); điểm của j =
+  Σ_i r(u,i)·sim(i, j)), chỉ CBF, chỉ ALS.
+- "Đúng" theo hai cách: mọi tương tác trong phần được chấm mà chưa gặp khi học, và chỉ thêm giỏ / mua (tín hiệu mạnh).
+- Thêm độ đa dạng (Diversity = trung bình 1 − cosine giữa các cặp sản phẩm trong cùng danh sách), nhóm khách mới
+  (1–4 lượt, chỉ dùng CBF), mua kèm (đơn 20% cuối theo ngày đặt; luật kết hợp học trên đơn 80% đầu) và nâng cấp.
+- Khoảng tin cậy 95%: bootstrap 1.000 lần theo người dùng (cùng một mẫu cho mọi mô hình); so sánh hai mô hình bằng
+  khoảng tin cậy của hiệu NDCG trên cùng người dùng (không chứa 0 = chênh lệch có ý nghĩa).
+- Dữ liệu mô phỏng (03/11/2026): 14.726 / 2.230 / 4.335 hành vi huấn luyện / validation / kiểm thử; tinh chỉnh trên
+  256 người dùng, kiểm thử 288 người dùng, N = 10.
 
-| Mô hình | Precision@10 | Recall@10 | NDCG@10 | HitRate@10 | Coverage |
-|---|---|---|---|---|---|
-| Phổ biến (đường cơ sở) | 0.0081 | 0.0223 | 0.0153 | 0.0772 | 0.4% |
-| CBF (α = 1) | 0.0491 | 0.1327 | 0.1033 | 0.3684 | 18.1% |
-| CF / ALS (α = 0) | 0.0488 | 0.1360 | 0.1079 | 0.3439 | 14.8% |
-| Hybrid α = 0.3 | 0.0618 | 0.1779 | 0.1374 | 0.4246 | 15.6% |
-| **Hybrid α = 0.4** | **0.0621** | **0.1798** | **0.1389** | **0.4316** | 15.9% |
-| Hybrid α = 0.5 | 0.0611 | 0.1745 | 0.1368 | 0.4211 | 16.3% |
+**Tham số chọn trên validation** (hệ thống dùng đúng các giá trị này từ 03/11/2026): ALS 32 chiều, λ = 0,1, **a = 5**
+(trước là 10; NDCG ALS 0,1267 so với 0,1218); **α = 0,5** (α từ 0,2 đến 0,7 gần như ngang nhau, 0,1349–0,1399);
+**nửa đời 30 ngày** (NDCG 0,1466 so với 0,1399 khi không giảm).
 
-Hybrid tốt hơn từng mô hình riêng lẻ khoảng 30% NDCG, nên chọn **α = 0.4**.
+Kết quả trên tập kiểm thử (đúng = mọi tương tác):
 
-> ⚠️ **Dữ liệu hành vi là mô phỏng.** Hệ thống mới chạy nên chưa có hành vi thật. `seed_interactions.py` tạo 300 khách mô phỏng có "hồ sơ sở thích": danh mục, hãng (35% trung thành với một hệ sinh thái như Apple/Xiaomi), tầm giá, kèm 10% hành vi ngẫu nhiên. Các con số trên chỉ dùng để **so sánh tương đối giữa các mô hình**; báo cáo đã ghi rõ điều này.
+| Mô hình | Precision@10 | Recall@10 | NDCG@10 (KTC 95%) | HitRate@10 | Coverage | Diversity |
+|---|---|---|---|---|---|---|
+| Phổ biến (đối chứng) | 0.0063 | 0.0183 | 0.0122 (0.0069–0.0185) | 0.0625 | 0.4% | 0.666 |
+| Item–item kNN (đối chứng) | 0.0465 | 0.1412 | 0.1130 (0.0897–0.1376) | 0.3438 | 20.2% | 0.632 |
+| CBF (α = 1) | 0.0462 | 0.1314 | 0.0987 (0.0793–0.1197) | 0.3403 | 18.1% | 0.175 |
+| CF / ALS (α = 0) | 0.0635 | 0.1871 | 0.1536 (0.1288–0.1812) | 0.4167 | 12.1% | 0.561 |
+| **Hybrid α = 0.5 (đang dùng)** | **0.0674** | **0.1976** | **0.1609 (0.1349–0.1890)** | **0.4514** | 14.1% | 0.363 |
 
-### 9.2. Test tự động (Backend)
+Chênh lệch NDCG@10 của Hybrid trên cùng người dùng: hơn kNN +0.048 (KTC 95%: +0.030 đến +0.067), hơn CBF +0.062
+(+0.042 đến +0.085), hơn danh sách phổ biến +0.149: đều có ý nghĩa. **Hơn ALS +0.007 (−0.004 đến +0.019): chưa đủ
+chắc chắn.** Sau khi tinh chỉnh (a = 5, giảm trọng số hành vi cũ), ALS một mình đã gần bằng Hybrid về độ chính xác;
+Hybrid vẫn cần vì (1) khách dưới 5 lượt tương tác chỉ dùng được CBF, (2) Coverage cao hơn ALS (14,1% so với 12,1%).
+Đổi lại, CBF làm danh sách ít đa dạng hơn (0,36 so với 0,56 của ALS) vì nó gợi ý các sản phẩm giống nhau.
+
+Chỉ tính thêm giỏ / mua là đúng (138 người dùng): Hybrid NDCG 0.147 (0.104–0.195), ALS 0.130, CBF 0.126, kNN 0.098,
+phổ biến 0.007; Hybrid hơn kNN và phổ biến có ý nghĩa, hơn ALS / CBF chưa đủ chắc chắn.
+
+Phần chưa đánh giá được trên dữ liệu hiện có:
+
+- **Khách mới (49 người dùng):** cả CBF và danh sách phổ biến đều không đoán trúng (NDCG 0). Các khách này chỉ có đúng
+  4 lượt mua ngẫu nhiên trong dữ liệu đơn hàng mẫu (không có quy luật để học).
+- **Mua kèm:** HitRate@4 = 1,8% so với 2,2% của "bán chạy nhất" (276 cặp đơn – sản phẩm): đơn hàng mẫu được sinh ngẫu
+  nhiên nên không có cặp "hay mua cùng nhau" thật.
+- **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%.
+
+Các phép đo này đã sẵn sàng; chỉ có ý nghĩa khi có hành vi và đơn hàng thật.
+
+Mỗi lần chạy ghi vào `evals/results/`: `recommender_latest.md` (bảng dán vào báo cáo), `recommender_latest.csv` (Excel),
+`recommender_latest.json` và `recommender_alpha.svg` (biểu đồ NDCG@10 / Recall@10 theo α, chèn được vào Word).
+Mỗi lần chạy cũng được thêm vào lịch sử trong database (`recommendation_evaluations` + chỉ số từng mô hình
+`recommendation_evaluation_rows`, migration `recommendation_evaluations.sql`): đây là bảng riêng của phần AI và là nơi
+duy nhất AI Service ghi khi đang chạy; mọi truy vấn khác vẫn chỉ đọc.
+Trang admin **Gợi ý sản phẩm** (`admin/recommendations.html`, chỉ ADMIN) hiện mô hình đang dùng, bảng này kèm biểu đồ và
+nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, không ảnh hưởng gợi ý đang phục vụ khách).
+
+### 9.1b. Hiệu quả trên web (tỉ lệ bấm)
+
+- Lượt hiển thị: mỗi sản phẩm backend trả trong một danh sách gợi ý cho khách đã đăng nhập (bảng `recommendations`).
+- Lượt bấm: khách bấm vào chính sản phẩm đó trong khu gợi ý trong vòng 1 ngày (`recommendations.clicked_at`,
+  migration `recommendation_clicks.sql`); tỉ lệ bấm (CTR) = lượt bấm / lượt hiển thị.
+- Chuyển đổi: sau khi bấm, khách thêm sản phẩm vào giỏ hoặc mua trong 7 ngày.
+- Xem theo từng khu (Gợi ý cho bạn, Tương tự, Nâng cấp, Mua kèm) ở trang admin **Gợi ý sản phẩm**, mục "Hiệu quả trên web".
+  Số liệu chỉ có ý nghĩa khi có khách thật dùng web (dữ liệu mô phỏng không bấm).
+
+> ⚠️ **Dữ liệu hành vi là mô phỏng.** Hệ thống mới chạy nên chưa có hành vi thật. `seed_interactions.py` tạo 300 khách mô phỏng có "hồ sơ sở thích": danh mục, hãng (35% trung thành với một hệ sinh thái như Apple/Xiaomi), tầm giá, kèm 10% hành vi ngẫu nhiên. Các con số trên chỉ dùng để **so sánh tương đối giữa các mô hình**; báo cáo đã ghi rõ điều này. Vì khách mô phỏng được tạo theo đúng danh mục, hãng và tầm giá (các thuộc tính CBF dùng), dữ liệu này có thể **thiên vị CBF**; trên khách thật CBF và Hybrid có thể kém hơn số trên.
+>
+> **Trước khi chạy cho khách thật:** xoá hành vi mô phỏng (`docker compose exec ai-service python -m scripts.seed_interactions --reset`) rồi huấn luyện lại, để mô hình đang phục vụ khách không học từ dữ liệu giả.
+
+### 9.2. Unit test các công thức khuyến nghị (`tests/`)
+
+38 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+
+- `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
+  sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
+- `test_als.py`: fold-in bằng đúng nghiệm đóng x_u = (YᵀC_uY + λI)⁻¹YᵀC_u p_u; khách giống nhau được gợi ý sản phẩm
+  của nhau; huấn luyện lặp lại cho cùng kết quả;
+- `test_engine.py`: cosine và Hybrid đúng ví dụ tính tay của báo cáo, khách mới dưới 5 lượt chỉ dùng CBF, khách chưa
+  có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, luật mua kèm (lift > 1, ít nhất
+  2 đơn), nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
+  lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học;
+- `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
+  người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng.
+
+```bash
+cd AI_Service
+uv pip install -r requirements-dev.txt     # hoặc pip install -r requirements-dev.txt
+python -m pytest
+```
+
+Các test này đã bắt một lỗi thật: khách có 1–4 lượt tương tác (chỉ dùng CBF) làm `/recommend` lỗi 500, nên khách mới
+luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đã được sửa trong `engine.py`.
+
+### 9.3. Test tự động (Backend)
 
 - 15 unit test mới:
   - `InteractionRecorderTest`: trọng số, chặn lặp, chặn PURCHASE từ trình duyệt;
@@ -562,7 +644,7 @@ Hybrid tốt hơn từng mô hình riêng lẻ khoảng 30% NDCG, nên chọn **
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
   ```
 
-### 9.3. Đánh giá chatbot tự động (`scripts/eval_chatbot.py`)
+### 9.4. Đánh giá chatbot tự động (`scripts/eval_chatbot.py`)
 
 Bộ **30 câu hỏi** trong `evals/chatbot_cases.json`, chia 7 nhóm: RAG chính sách (9), Sản phẩm (5), Khuyến nghị (2), Dữ liệu cá nhân (6), Thao tác có xác nhận (4), Cửa hàng (1), An toàn (3: câu ngoài phạm vi, prompt injection, chính sách không tồn tại).
 
@@ -599,7 +681,7 @@ Với Qwen3 8B có giám khảo:
 
 Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do), có thể dán thẳng vào mục 4.8.4 của báo cáo. Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
 
-### 9.4. Đánh giá phần tìm kiếm RAG (`scripts/eval_retrieval.py`)
+### 9.5. Đánh giá phần tìm kiếm RAG (`scripts/eval_retrieval.py`)
 
 Đo riêng bước tìm kiếm, **không gọi LLM**, chạy vài giây:
 
@@ -631,7 +713,7 @@ docker compose exec ai-service python -m scripts.eval_retrieval     # kết qu�
 - Điểm yếu còn lại nằm ở câu mô tả theo nhu cầu (Hit@1 = 0,62). Ví dụ "chuột không dây chơi game" ra chuột **có dây**, "đồng hồ Apple cho thể thao mạo hiểm" ra Series 11 thay vì Ultra. Hướng cải thiện tiếp là **xếp hạng lại bằng cross-encoder** (chưa làm).
 - Trong quá trình làm, bộ đánh giá còn phát hiện chính **đáp án của bộ test bị thiếu**: câu "sạc dự phòng 20000mAh" ban đầu chỉ đánh dấu 3 sản phẩm, trong khi catalogue có 6 sản phẩm như vậy. Đáp án đã được bổ sung.
 
-### 9.5. Đã kiểm thử thủ công trên hệ thống chạy thật
+### 9.6. Đã kiểm thử thủ công trên hệ thống chạy thật
 
 | Trường hợp | Kết quả |
 |---|---|

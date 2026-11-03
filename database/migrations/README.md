@@ -43,8 +43,10 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 37 | `shipping_fees.sql` | Phí giao hàng theo tỉnh / thành (`shipping_fee_rules`, ADMIN đặt; tỉnh không có dòng tính phí mặc định 30.000đ, không còn ngưỡng miễn phí) |
 | 38 | `invoice_info.sql` | Thông tin xuất hoá đơn công ty trên đơn hàng (`orders.invoice_company`, `invoice_tax_code`, `invoice_address`; tuỳ chọn, chỉ lưu và in) |
 | 39 | `staff_notifications.sql` | Thông báo nội bộ cho nhân sự (`staff_notifications` theo chi nhánh, `staff_notification_reads` đã đọc theo từng người) |
-| 40 | `site_content.sql` | Banner trang chủ (`banners`) và trang tĩnh do ADMIN soạn (`content_pages`), nạp sẵn 8 trang chính sách; chạy lại không ghi đè trang đã sửa |
+| 40 | `site_content.sql` | Trang tĩnh chính sách (`content_pages`), nạp sẵn 8 trang; chạy lại không ghi đè; bỏ bảng `banners` cũ |
 | 41 | `product_questions_stock_alerts.sql` | Hỏi đáp sản phẩm (`product_questions`: hiện công khai khi đã trả lời và không bị ẩn) và đăng ký báo khi có hàng lại (`stock_subscriptions`) |
+| 42 | `recommendation_clicks.sql` | Đo hiệu quả gợi ý trên web: `recommendations.clicked_at` (khách bấm vào sản phẩm được gợi ý), cho tỉ lệ bấm / chuyển đổi ở trang admin "Gợi ý sản phẩm" |
+| 43 | `recommendation_evaluations.sql` | Lịch sử đánh giá offline của hệ thống khuyến nghị: mỗi lần chạy (tham số chọn trên validation, mua kèm / nâng cấp) trong `recommendation_evaluations`, chỉ số từng mô hình theo phần (validation, kiểm thử, chỉ thêm giỏ / mua, khách mới; khoảng tin cậy NDCG, độ đa dạng) trong `recommendation_evaluation_rows`. AI Service ghi sau mỗi lần đánh giá |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

@@ -53,6 +53,14 @@ class Model:
     relations: pd.DataFrame
     trained_at: datetime
     stats: dict = field(default_factory=dict)
+    params: dict = field(default_factory=dict)  # tham số ALS + half_life_days đã dùng khi học (fold-in dùng lại)
+
+    def param(self, key: str):
+        """Tham số lúc học; mô hình lưu trước khi có `params` → giá trị trong config."""
+        defaults = {"factors": config.ALS_FACTORS, "regularization": config.ALS_REGULARIZATION,
+                    "confidence": config.ALS_CONFIDENCE, "iterations": config.ALS_ITERATIONS,
+                    "half_life_days": config.HALF_LIFE_DAYS}
+        return getattr(self, "params", {}).get(key, defaults[key])
 
     @property
     def valid(self) -> np.ndarray:
@@ -92,8 +100,17 @@ def _co_purchase(baskets: pd.DataFrame, min_pairs: int = 2, min_confidence: floa
     return result
 
 
-def train_model() -> Model:
+def train_model(load_interactions=data.load_interactions, load_baskets=data.load_order_baskets,
+                params: dict | None = None, now=None) -> Model:
+    """
+    load_interactions / load_baskets: nguồn hành vi và đơn hàng (mặc định cả database; đánh giá offline truyền phần
+    huấn luyện). params: factors, regularization, confidence, iterations, half_life_days (thiếu → config).
+    now: mốc tính tuổi hành vi khi giảm dần trọng số (mặc định lúc học).
+    """
     started = datetime.now()
+    params = {"factors": config.ALS_FACTORS, "regularization": config.ALS_REGULARIZATION,
+              "confidence": config.ALS_CONFIDENCE, "iterations": config.ALS_ITERATIONS,
+              "half_life_days": config.HALF_LIFE_DAYS, **(params or {})}
     products = data.load_products()
     specs = data.load_specs()
     items, vectors = build_item_features(products, specs)
@@ -102,7 +119,7 @@ def train_model() -> Model:
         items[feature + "_raw"] = raw[feature]
     index = {int(pid): row for row, pid in enumerate(items.index)}
 
-    scores = interaction_scores(data.load_interactions())
+    scores = interaction_scores(load_interactions(), params["half_life_days"], now)
     scores = scores[scores["product_id"].isin(index.keys())]
     users = {int(u): row for row, u in enumerate(sorted(scores["user_id"].unique()))}
     matrix = csr_matrix(
@@ -110,10 +127,10 @@ def train_model() -> Model:
          (scores["user_id"].map(users).to_numpy(int), scores["product_id"].map(index).to_numpy(int))),
         shape=(len(users), len(index)))
     if matrix.nnz:
-        _, item_factors = als.train(matrix, config.ALS_FACTORS, config.ALS_REGULARIZATION,
-                                    config.ALS_CONFIDENCE, config.ALS_ITERATIONS)
+        _, item_factors = als.train(matrix, params["factors"], params["regularization"], params["confidence"],
+                                    params["iterations"])
     else:
-        item_factors = np.zeros((len(index), config.ALS_FACTORS))
+        item_factors = np.zeros((len(index), params["factors"]))
 
     model = Model(
         items=items,
@@ -121,9 +138,10 @@ def train_model() -> Model:
         index=index,
         item_factors=item_factors,
         popularity=np.asarray(matrix.sum(axis=0)).ravel(),
-        co_purchase=_co_purchase(data.load_order_baskets()),
+        co_purchase=_co_purchase(load_baskets()),
         relations=data.load_relations(),
         trained_at=datetime.now(),
+        params=params,
     )
     model.stats = {
         "products": len(index), "users": len(users), "interactions": int(matrix.nnz),
@@ -137,7 +155,10 @@ def train_model() -> Model:
 class Recommender:
     """Giữ mô hình đã huấn luyện trong bộ nhớ; train() thay mô hình mới một cách an toàn giữa các request."""
 
-    def __init__(self):
+    def __init__(self, load_interactions=data.load_interactions, now=None):
+        """now: mốc tính tuổi hành vi của khách (đánh giá offline: cuối phần học; mặc định: lúc gợi ý)."""
+        self._load_interactions = load_interactions
+        self._now = now
         self._model: Model | None = None
         self._lock = threading.Lock()
 
@@ -174,11 +195,11 @@ class Recommender:
         if user_id is None:
             return None
         m = self.model
-        interactions = data.load_interactions(user_id)
+        interactions = self._load_interactions(user_id)
         interactions = interactions[interactions["product_id"].isin(m.index.keys())]
         if interactions.empty:
             return None
-        scores = interaction_scores(interactions)
+        scores = interaction_scores(interactions, m.param("half_life_days"), self._now)
         rows = scores["product_id"].map(m.index).to_numpy(int)
         return rows, scores["r"].to_numpy(float), int(interactions["n"].sum())
 
@@ -190,7 +211,7 @@ class Recommender:
         cbf = m.vectors @ (profile / (np.linalg.norm(profile) or 1))
         cf = None
         if count >= config.COLD_START_K and np.any(m.item_factors[rows]):
-            x_u = als.fold_in(m.item_factors, rows, r, config.ALS_CONFIDENCE, config.ALS_REGULARIZATION)
+            x_u = als.fold_in(m.item_factors, rows, r, m.param("confidence"), m.param("regularization"))
             cf = m.item_factors @ x_u
         return cbf, cf
 
@@ -212,8 +233,15 @@ class Recommender:
 
     def recommend(self, user_id: int | None, n: int = 8, exclude: list[int] | None = None,
                   alpha: float | None = None) -> list[Recommendation]:
+        return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude)[0]
+
+    def recommend_alphas(self, user_id: int | None, n: int, alphas: list[float],
+                         exclude: list[int] | None = None) -> list[list[Recommendation]]:
+        """
+        Một danh sách Top-N cho mỗi α: hồ sơ khách, điểm CBF / CF và tập ứng viên không phụ thuộc α nên chỉ tính
+        một lần (đánh giá offline thử nhiều α trên cùng khách).
+        """
         m = self.model
-        alpha = config.ALPHA if alpha is None else alpha
         allowed = m.valid.copy()
         for pid in exclude or []:
             if pid in m.index:
@@ -221,14 +249,13 @@ class Recommender:
 
         state = self._user_state(user_id)
         if state is None:
-            return self.popular(n, allowed)
+            popular = self.popular(n, allowed)
+            return [popular for _ in alphas]
 
         rows, r, count = state
         # bỏ sản phẩm đã mua (3.5.5 a) và cả sản phẩm đã xem: danh sách "dành cho bạn" chỉ gồm sản phẩm mới với khách
         allowed[rows] = False
         cbf, cf = self._cbf_cf(state)
-        if cf is None:
-            alpha = 1.0                                     # Bảng 3.21: ít dữ liệu → chỉ CBF
 
         # 3.5.5 a: K ứng viên tốt nhất từ mỗi mô hình (đã bỏ sản phẩm không hợp lệ / đã mua)
         def top_k(scores):
@@ -236,22 +263,27 @@ class Recommender:
             k = min(config.CANDIDATES_K, int(allowed.sum()))
             return np.argpartition(-masked, k - 1)[:k] if k else np.array([], dtype=int)
 
-        candidates = np.union1d(top_k(cbf), top_k(cf) if cf is not None else [])
+        # mảng rỗng phải là số nguyên: union1d với [] (số thực) làm chỉ số thành float → IndexError khi chỉ có CBF
+        candidates = np.union1d(top_k(cbf), top_k(cf) if cf is not None else np.array([], dtype=int))
         candidates = candidates[allowed[candidates]].astype(int)
         if candidates.size == 0:
-            return self.popular(n, allowed)
+            popular = self.popular(n, allowed)
+            return [popular for _ in alphas]
 
-        score, s_cbf, s_cf = self._hybrid(cbf, cf, candidates, alpha)
-        order = self._rank(candidates, score)[:n]
-        result = []
-        for pos in order:
-            row = candidates[pos]
-            from_cf = s_cf is not None and (1 - alpha) * s_cf[pos] > alpha * s_cbf[pos]
-            result.append(Recommendation(
-                m.items.index[row], score[pos], self._reason_personal(row, rows, r, from_cf),
-                s_cbf[pos], None if s_cf is None else s_cf[pos]))
-        log.debug("user %s: %d interactions, alpha=%.2f", user_id, count, alpha)
-        return result
+        lists = []
+        for alpha in alphas:
+            alpha = 1.0 if cf is None else alpha        # Bảng 3.21: ít dữ liệu → chỉ CBF
+            score, s_cbf, s_cf = self._hybrid(cbf, cf, candidates, alpha)
+            result = []
+            for pos in self._rank(candidates, score)[:n]:
+                row = candidates[pos]
+                from_cf = s_cf is not None and (1 - alpha) * s_cf[pos] > alpha * s_cbf[pos]
+                result.append(Recommendation(
+                    m.items.index[row], score[pos], self._reason_personal(row, rows, r, from_cf),
+                    s_cbf[pos], None if s_cf is None else s_cf[pos]))
+            lists.append(result)
+        log.debug("user %s: %d interactions, alphas=%s", user_id, count, alphas)
+        return lists
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
         """Bảng 3.21: người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
@@ -366,6 +398,13 @@ class Recommender:
     def _reason_personal(self, row, rows, r, from_cf) -> str:
         m = self.model
         if from_cf:
+            # sản phẩm đã tương tác có vector ALS gần nhất: "khách quan tâm X cũng quan tâm sản phẩm này"
+            factors = m.item_factors[rows]
+            norms = np.linalg.norm(factors, axis=1) * (np.linalg.norm(m.item_factors[row]) or 1)
+            if np.any(norms > 0):
+                closeness = (factors @ m.item_factors[row]) / np.where(norms > 0, norms, 1)
+                nearest = rows[np.lexsort((-r, -np.round(closeness, 6)))[0]]
+                return "Khách quan tâm " + str(m.items["name"].iloc[nearest]) + " cũng quan tâm sản phẩm này"
             return "Khách hàng có sở thích giống bạn cũng quan tâm"
         # sản phẩm đã tương tác giống nhất (bằng nhau thì lấy cái được quan tâm nhiều hơn)
         nearest = rows[np.lexsort((-r, -np.round(m.vectors[rows] @ m.vectors[row], 6)))[0]]
