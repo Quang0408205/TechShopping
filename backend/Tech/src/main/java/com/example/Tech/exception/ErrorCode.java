@@ -197,8 +197,7 @@ public enum ErrorCode {
     // Internal notifications
     NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy thông báo"),
 
-    // Home banners and static pages
-    BANNER_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy banner"),
+    // Static pages
     CONTENT_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy trang"),
 
     // Product questions and back-in-stock subscriptions

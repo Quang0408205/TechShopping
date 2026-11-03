@@ -35,7 +35,7 @@ CHAT_EFFORT = os.getenv("AI_CHAT_EFFORT") or "low"
 EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "intfloat/multilingual-e5-small")
 
 # Cách tìm trong kho tri thức RAG: vector | keyword | hybrid (vector + từ khoá, gộp bằng RRF).
-# scripts/eval_retrieval.py: vector tốt nhất (MRR 0,896; hybrid 0,82–0,86; keyword 0,75) nên là mặc định
+# scripts/eval_retrieval.py: vector tốt nhất (MRR 0,900; hybrid 0,83–0,87; keyword 0,78) nên là mặc định
 RAG_MODE = (os.getenv("RAG_MODE") or "vector").lower()
 # Số chunk chính sách đưa cho LLM: Hit@3 = 0,87, Hit@5 = 0,93 (chunk ngắn nên K = 5 gần như không tốn thêm)
 RAG_POLICY_K = int(os.getenv("RAG_POLICY_K") or "5")

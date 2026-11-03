@@ -1,23 +1,7 @@
--- Nội dung do ADMIN quản lý: banner trang chủ (ảnh, tiêu đề, liên kết, thứ tự, bật / tắt, khung giờ hiện) và các
--- trang tĩnh (giới thiệu, điều khoản, chính sách...). Nội dung trang là HTML đã được backend lọc theo danh sách
--- thẻ cho phép. Nạp sẵn 8 trang; chạy lại được (không ghi đè trang đã sửa).
+-- Trang tĩnh (giới thiệu, điều khoản, chính sách...): bảng content_pages, nội dung là HTML. Nạp sẵn 8 trang;
+-- chạy lại được (không ghi đè trang đã sửa). Bảng banners của bản cũ không còn dùng nên được bỏ.
 
-create table if not exists banners (
-    banner_id serial primary key,
-    title varchar(150) not null,
-    subtitle varchar(300),
-    image_url varchar(500) not null,
-    link_url varchar(500),
-    display_order int not null default 0,
-    is_active boolean not null default true,
-    starts_at timestamp,
-    ends_at timestamp,
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp,
-    check (ends_at is null or starts_at is null or ends_at > starts_at)
-);
-
-create index if not exists idx_banners_order on banners (display_order, banner_id);
+drop table if exists banners;
 
 create table if not exists content_pages (
     slug varchar(80) primary key,

@@ -74,5 +74,5 @@ def toy_recommender(monkeypatch):
         return events if user_id is None else events[events["user_id"] == user_id]
 
     rec = engine.Recommender(load_interactions=load)
-    rec._model = engine.train_model(load_interactions=load)
+    rec._model = engine.train_model(load_interactions=load, load_baskets=data.load_order_baskets)
     return rec

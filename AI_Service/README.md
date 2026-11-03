@@ -687,7 +687,7 @@ luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đ
   - `RecommendationServiceTest`: giữ thứ tự AI, bỏ sản phẩm ẩn, dự phòng Upsell đắt hơn hẳn;
   - `ChatServiceTest`: lưu tin, chặn phiên người khác, gắn phiên khách sau đăng nhập, cắt lịch sử dài, AI ngừng → 503.
 - `ChatServiceTest` có thêm 2 test cho streaming: chuyển tiếp `delta`/`status`, kết thúc bằng `done` có thao tác; AI ngừng → sự kiện `error`.
-- Toàn bộ **905 test** backend đều đạt (03/11/2026).
+- Toàn bộ **895 test** backend (132 lớp) đều đạt (03/11/2026, sau khi gộp nhánh main).
 - Test tích hợp cần database `techshopping_test`. Nếu máy có Postgres khác chiếm `localhost:5432`, chạy:
   ```bash
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
@@ -728,6 +728,12 @@ Với Qwen3 8B có giám khảo:
   - gợi ý phụ kiện chung chung, không nêu sản phẩm cụ thể;
   - **bịa một màu iPhone 17e không có trong dữ liệu**.
 
+**Lần chạy mới nhất** (03/11/2026, máy có GPU 4 GB, cùng cấu hình Qwen3 8B + giám khảo; đây là số dùng trong báo cáo
+và slide): **26/30 (87%)**, trung bình 30,9 giây và 2,0 lần gọi LLM mỗi câu. Thời gian dài vì mô hình 8 tỷ tham số không
+vừa 4 GB bộ nhớ GPU nên một phần chạy trên CPU. Chính sách, dữ liệu cá nhân, cửa hàng và an toàn vẫn đạt 100%; 4 câu
+trượt đều là câu mô hình phải tự tổng hợp thông tin sản phẩm: hai câu hỏi giá nêu giá của phiên bản khác hoặc chỉ nêu
+giá thấp nhất, một câu gợi ý phụ kiện chung chung, một câu hỏi lại màu thay vì đề xuất thêm vào giỏ.
+
 Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do), có thể dán thẳng vào mục 4.8.4 của báo cáo. Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
 
 ### 9.5. Đánh giá phần tìm kiếm RAG (`scripts/eval_retrieval.py`)
@@ -747,18 +753,20 @@ Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đ�
 docker compose exec ai-service python -m scripts.eval_retrieval     # kết quả: evals/results/retrieval_latest.md
 ```
 
+Kết quả lần chạy 03/11/2026 (số dùng trong báo cáo và slide):
+
 | Cách tìm | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | ms / câu |
 |---|---|---|---|---|---|---|
-| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,896** | 35 |
-| keyword | 0,675 | 0,800 | 0,850 | 0,925 | 0,747 | 10 |
-| hybrid (w = 1) | 0,750 | 0,875 | 0,925 | 0,950 | 0,824 | 37 |
-| hybrid (w = 0,5) | 0,750 | 0,875 | 0,950 | 0,950 | 0,825 | 35 |
-| hybrid (w = 0,25) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 35 |
+| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,900** | 37 |
+| keyword | 0,725 | 0,800 | 0,875 | 0,925 | 0,779 | 10 |
+| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 39 |
+| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 39 |
+| hybrid (w = 0,25) | 0,825 | 0,900 | 0,950 | 0,950 | 0,874 | 38 |
 
 **Kết luận:**
 - **Tìm kiếm lai không tốt hơn**: ở mọi trọng số đều kém `vector`; trọng số từ khoá càng nhỏ thì càng gần `vector`.
 - Lý do: mô hình e5 đã tìm đúng **100% câu gõ đúng tên / mã máy**, nên phần từ khoá chỉ thêm nhiễu (ví dụ "Galaxy S26+" lại xếp bản Ultra lên đầu). Vì vậy mặc định là `vector`, còn `hybrid` được giữ làm tuỳ chọn.
-- **Chọn K:** với câu hỏi chính sách, Hit@3 = 0,867, Hit@5 = 0,933, Hit@8 = 1,0. Chunk chính sách ngắn nên tăng K từ 3 lên **5** gần như không tốn thêm. Chạy lại bộ đánh giá chatbot sau thay đổi này vẫn đạt 9/9 chính sách và 27/30 tổng.
+- **Chọn K:** với câu hỏi chính sách, Hit@3 = 0,867, Hit@5 = 0,933, Hit@8 = 1,0. Chunk chính sách ngắn nên tăng K từ 3 lên **5** gần như không tốn thêm. Chạy lại bộ đánh giá chatbot sau thay đổi này vẫn đạt 9/9 chính sách (27/30 tổng ngày 13/10, 26/30 ngày 03/11).
 - Điểm yếu còn lại nằm ở câu mô tả theo nhu cầu (Hit@1 = 0,62). Ví dụ "chuột không dây chơi game" ra chuột **có dây**, "đồng hồ Apple cho thể thao mạo hiểm" ra Series 11 thay vì Ultra. Hướng cải thiện tiếp là **xếp hạng lại bằng cross-encoder** (chưa làm).
 - Trong quá trình làm, bộ đánh giá còn phát hiện chính **đáp án của bộ test bị thiếu**: câu "sạc dự phòng 20000mAh" ban đầu chỉ đánh dấu 3 sản phẩm, trong khi catalogue có 6 sản phẩm như vậy. Đáp án đã được bổ sung.
 

@@ -2195,25 +2195,3 @@ button.admin-badge {
     }
 
 }
-
-
-/* ================= SOẠN TRANG NỘI DUNG (admin/pages.html) ================= */
-
-.admin-editor-tools {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.admin-editor-tools .btn {
-    padding: 8px 14px;
-    font-size: 11px;
-}
-
-#pageBody {
-    width: 100%;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: 13px;
-    line-height: 1.6;
-}
