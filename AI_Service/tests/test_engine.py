@@ -8,6 +8,7 @@ import pytest
 
 from app import config
 from app.recommender import engine
+from app.recommender.evaluation import intra_list_diversity
 from tests.conftest import interactions_frame
 
 # Ví dụ "khách An": vector [điện thoại, laptop, Apple, giá chuẩn hoá]
@@ -153,3 +154,33 @@ def test_model_keeps_its_training_params_for_fold_in(monkeypatch, toy_recommende
     assert model.param("confidence") == config.ALS_CONFIDENCE
     del model.params                                    # mô hình lưu từ trước khi có params
     assert model.param("regularization") == config.ALS_REGULARIZATION
+
+
+def test_mmr_skips_a_near_duplicate_of_what_is_already_picked(toy_recommender):
+    # 3 ứng viên: A và B giống hệt nhau (cos = 1), C khác hẳn (cos = 0); điểm Hybrid 1,0 / 0,9 / 0,6
+    toy_recommender.model.vectors = np.zeros((9, 2))
+    toy_recommender.model.vectors[[0, 1, 2]] = [[1, 0], [1, 0], [0, 1]]
+    candidates, score = np.array([0, 1, 2]), np.array([1.0, 0.9, 0.6])
+
+    def order(lam):
+        return list(candidates[toy_recommender._mmr(candidates, score, 3, lam)])
+
+    assert order(1.0) == [0, 1, 2]          # không xếp lại: theo điểm
+    # λ = 0,5: chọn A (0,5·1); rồi B = 0,5·0,9 − 0,5·1 = −0,05 < C = 0,5·0,6 − 0 = 0,3 → C trước B
+    assert order(0.5) == [0, 2, 1]
+    # λ = 0,8: B = 0,72 − 0,2 = 0,52 > C = 0,48 → điểm vẫn thắng, giữ nguyên thứ tự
+    assert order(0.8) == [0, 1, 2]
+
+
+def test_mmr_keeps_the_same_top_pick_and_list_length(toy_recommender):
+    plain = toy_recommender.recommend_alphas(200, 4, [0.5], mmr_lambda=1.0)[0]
+    diverse = toy_recommender.recommend_alphas(200, 4, [0.5], mmr_lambda=0.5)[0]
+
+    assert len(diverse) == len(plain)
+    assert diverse[0].product_id == plain[0].product_id
+
+    def diversity(recs):
+        m = toy_recommender.model
+        return intra_list_diversity(m.vectors[[m.index[r.product_id] for r in recs]])
+
+    assert diversity(diverse) >= diversity(plain)

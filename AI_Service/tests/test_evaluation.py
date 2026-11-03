@@ -7,8 +7,8 @@ import pandas as pd
 import pytest
 from scipy.sparse import csr_matrix
 
-from app.recommender.evaluation import (bootstrap_mean_ci, intra_list_diversity, item_knn_scores, metrics, split,
-                                         split3, split_baskets)
+from app.recommender.evaluation import (bootstrap_mean_ci, choose_mmr_lambda, intra_list_diversity, item_knn_scores,
+                                         metrics, split, split3, split_baskets)
 
 
 def test_metrics_match_the_worked_example():
@@ -113,3 +113,13 @@ def test_split_baskets_by_order_date():
 
     assert set(early["order_id"]) == set(range(8)) and set(late["order_id"]) == {8, 9}
     assert len(early) == 16                     # cả hai sản phẩm của mỗi đơn đi cùng nhau
+
+
+def test_mmr_lambda_is_the_most_diverse_one_keeping_95_percent_of_ndcg():
+    rows = [{"lambda": 1.0, "ndcg": 0.200, "diversity": 0.30},
+            {"lambda": 0.8, "ndcg": 0.196, "diversity": 0.38},
+            {"lambda": 0.7, "ndcg": 0.191, "diversity": 0.45},    # 95,5% NDCG: còn được
+            {"lambda": 0.5, "ndcg": 0.170, "diversity": 0.60}]    # 85%: mất quá nhiều
+
+    assert choose_mmr_lambda(rows) == 0.7
+    assert choose_mmr_lambda(rows, max_loss=0.0) == 1.0           # không chấp nhận mất gì → không xếp lại

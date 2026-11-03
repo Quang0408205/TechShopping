@@ -219,7 +219,10 @@ AI_Service/
 1. Lấy **K = 50** ứng viên tốt nhất từ CBF và 50 từ CF, rồi hợp nhất.
 2. **Lọc:** bỏ sản phẩm bị ẩn, đã xoá, giá = 0, và sản phẩm khách **đã tương tác hoặc đã mua**.
 3. Tính điểm Hybrid và sắp xếp giảm dần. Bằng điểm thì ưu tiên sản phẩm phổ biến hơn, rồi sản phẩm cập nhật gần hơn.
-4. Lấy **Top-N** (mặc định 8) kèm **lý do đề xuất**:
+4. **Xếp lại cho đa dạng (MMR, λ = 0,8):** chọn lần lượt từng sản phẩm j có
+   `λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)` lớn nhất. Sản phẩm gần giống món đã chọn (5 chiếc iPhone cùng
+   dòng) bị trừ điểm, nhường chỗ cho sản phẩm khác loại. λ = 1 thì giữ nguyên thứ tự theo điểm (`REC_MMR_LAMBDA`).
+5. Lấy **Top-N** (mặc định 8) kèm **lý do đề xuất**:
    - *"Tương tự iPhone 16 bạn đã xem"* khi điểm chủ yếu đến từ CBF;
    - *"Khách hàng có sở thích giống bạn cũng quan tâm"* khi điểm chủ yếu đến từ CF.
 
@@ -227,8 +230,8 @@ AI_Service/
 
 | Trường hợp | Cách xử lý |
 |---|---|
-| Khách có ≥ 5 lượt tương tác | Hybrid α = 0.5 |
-| Khách có 1–4 lượt tương tác | Chỉ dùng CBF (α = 1) |
+| Khách có ≥ 5 lượt tương tác | Hybrid α = 0.5, xếp lại bằng MMR |
+| Khách có 1–4 lượt tương tác | Chỉ dùng CBF (α = 1), cũng xếp lại bằng MMR |
 | Khách mới / chưa đăng nhập | Khoảng ¾ sản phẩm phổ biến nhất + ¼ sản phẩm mới nhất |
 | Sản phẩm mới chưa ai tương tác | Chỉ có điểm CBF |
 
@@ -504,7 +507,7 @@ docker compose restart ai-service                                               
 | `ANTHROPIC_MODEL` | `claude-opus-5-5` | Mô hình Claude (rẻ: `claude-haiku-5-5`) |
 | `AI_CHAT_EFFORT` | `low` | Mức suy luận (`low` / `medium` / `high`) |
 | `AI_INTERNAL_KEY` | `dev-internal-key` | Khoá chung Backend ↔ AI Service; **đổi khi triển khai thật** |
-| `REC_ALPHA`, `REC_COLD_START_K`, `REC_HALF_LIFE_DAYS` | `0.5`, `5`, `30` | α của Hybrid, ngưỡng k cold-start, nửa đời giảm trọng số hành vi cũ (0 = không giảm) |
+| `REC_ALPHA`, `REC_COLD_START_K`, `REC_HALF_LIFE_DAYS`, `REC_MMR_LAMBDA` | `0.5`, `5`, `30`, `0.8` | α của Hybrid, ngưỡng k cold-start, nửa đời giảm trọng số hành vi cũ (0 = không giảm), λ của MMR (1 = không xếp lại) |
 | `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`, `ALS_ITERATIONS` | `32`, `0.1`, `5`, `15` | Siêu tham số ALS (số chiều, λ, a chọn trên validation) |
 
 ### 8.3. Dùng hằng ngày
@@ -531,6 +534,36 @@ export AI_BACKEND_URL=http://localhost:8080/api/v1 AI_INTERNAL_KEY=dev-internal-
 
 ## 9. Kiểm thử và kết quả đánh giá
 
+### 9.0. Các chỉ số đánh giá gợi ý nghĩa là gì
+
+Mỗi khách được chấm riêng rồi lấy trung bình. Ví dụ một khách: trong phần kiểm thử (bị giấu khi học), khách thật sự
+quan tâm **5 sản phẩm**; hệ thống gợi ý **10 sản phẩm** (N = 10), trúng **2 món** ở vị trí 1 và 6.
+
+| Chỉ số | Trả lời câu hỏi | Ví dụ trên |
+|---|---|---|
+| **Precision@10** | Trong 10 món gợi ý, bao nhiêu phần trăm trúng? | 2 / 10 = 0,2 |
+| **Recall@10** | Trong các món khách thật sự quan tâm, đoán ra được bao nhiêu? | 2 / 5 = 0,4 |
+| **HitRate@10** | Có trúng ít nhất 1 món không? Trung bình trên mọi khách = tỉ lệ khách được đoán trúng | 1 |
+| **NDCG@10** | Như Recall nhưng **thưởng món trúng nằm ở đầu danh sách**: món ở vị trí k được 1 / log2(k + 1) điểm (vị trí 1: 1; vị trí 2: 0,63; vị trí 10: 0,29), chia cho điểm cao nhất có thể (IDCG: mọi món đúng xếp đầu) nên luôn từ 0 đến 1 | (1 + 0,356) / 2,949 = 0,46; nếu 2 món trúng nằm ở vị trí 9 và 10 thì chỉ còn 0,20 |
+
+NDCG@10 là chỉ số chính để chọn tham số và so sánh mô hình, vì khách thường chỉ nhìn vài sản phẩm đầu.
+
+Hai chỉ số sau đo **cả danh sách**, không đo độ trúng:
+
+| Chỉ số | Ý nghĩa |
+|---|---|
+| **Coverage** | Bao nhiêu % trong 4.302 sản phẩm đang bán từng được gợi ý cho ít nhất một khách. Thấp = ai cũng nhận cùng vài món (danh sách phổ biến: 0,4%) |
+| **Diversity** | 10 món gợi ý cho một khách khác nhau đến đâu: trung bình 1 − cosine giữa các cặp vector thuộc tính. 0 = giống hệt, 1 = khác hẳn. MMR (mục 4.4) dùng để tăng chỉ số này |
+
+**Khoảng tin cậy 95% (KTC):** lấy lại ngẫu nhiên tập khách 1.000 lần (bootstrap) để xem con số dao động bao nhiêu.
+Khi so hai mô hình, tính KTC của **hiệu số** trên cùng tập khách: không chứa 0 thì chênh lệch là thật, chứa 0 thì
+chưa đủ chắc chắn (có thể do may rủi).
+
+**Vì sao các con số trông thấp:** chọn 10 trong 4.302 sản phẩm, đoán ngẫu nhiên chỉ được Precision khoảng 0,001.
+Điều cần chứng minh là mô hình hơn các đối chứng một cách có ý nghĩa, không phải đạt số tuyệt đối cao. Với hệ thống
+đang dùng (bảng mục 9.1): HitRate 0,45 = gần một nửa số khách có ít nhất một món trúng; Precision 0,067 = trung bình
+khoảng 0,7 món trúng trong 10; Recall 0,198 = đoán ra khoảng 20% số món khách quan tâm sau đó.
+
 ### 9.1. Đánh giá offline (`scripts/evaluate.py`)
 
 Cách đánh giá (khoảng 3 phút):
@@ -540,7 +573,9 @@ Cách đánh giá (khoảng 3 phút):
 - Tinh chỉnh trên validation (học trên phần huấn luyện), lần lượt từng bước, mỗi bước giữ giá trị có NDCG@10 cao nhất:
   1. tham số ALS: số chiều 16 / 32 / 64 × λ 0,1 / 1 × a 5 / 10 / 20 (18 bộ, chấm ALS riêng);
   2. α = 0; 0,1; …; 1 với ALS đã chỉnh;
-  3. nửa đời giảm trọng số hành vi cũ: không giảm / 30 / 90 ngày, với α đã chọn.
+  3. nửa đời giảm trọng số hành vi cũ: không giảm / 30 / 90 ngày, với α đã chọn;
+  4. λ của MMR: 1 / 0,9 / … / 0,5. Xếp lại gần như luôn làm NDCG giảm một chút, nên bước này **không** lấy NDCG cao
+     nhất mà lấy λ có độ đa dạng cao nhất trong các λ còn giữ được ít nhất 95% NDCG của λ = 1.
 - Kết quả báo cáo: học lại trên huấn luyện + validation với tham số đã chọn, chấm trên phần kiểm thử. Phần kiểm thử
   không tham gia chọn tham số nào, nên con số không bị "đẹp" nhờ chọn trên chính nó.
 - Đối chứng: danh sách phổ biến, **item–item kNN** (sim(i, j) = cosine giữa hai cột của ma trận r(u,i); điểm của j =
@@ -555,7 +590,14 @@ Cách đánh giá (khoảng 3 phút):
 
 **Tham số chọn trên validation** (hệ thống dùng đúng các giá trị này từ 03/11/2026): ALS 32 chiều, λ = 0,1, **a = 5**
 (trước là 10; NDCG ALS 0,1267 so với 0,1218); **α = 0,5** (α từ 0,2 đến 0,7 gần như ngang nhau, 0,1349–0,1399);
-**nửa đời 30 ngày** (NDCG 0,1466 so với 0,1399 khi không giảm).
+**nửa đời 30 ngày** (NDCG 0,1466 so với 0,1399 khi không giảm); **MMR λ = 0,8**:
+
+| λ của MMR (validation) | 1 (không xếp lại) | 0,9 | **0,8** | 0,7 | 0,6 | 0,5 |
+|---|---|---|---|---|---|---|
+| NDCG@10 | 0,1466 | 0,1485 | **0,1452** | 0,1380 | 0,1251 | 0,1022 |
+| Diversity | 0,354 | 0,392 | **0,446** | 0,521 | 0,655 | 0,759 |
+
+λ = 0,7 đa dạng hơn nữa nhưng chỉ còn 94% NDCG nên không được chọn.
 
 Kết quả trên tập kiểm thử (đúng = mọi tương tác):
 
@@ -565,7 +607,8 @@ Kết quả trên tập kiểm thử (đúng = mọi tương tác):
 | Item–item kNN (đối chứng) | 0.0465 | 0.1412 | 0.1130 (0.0897–0.1376) | 0.3438 | 20.2% | 0.632 |
 | CBF (α = 1) | 0.0462 | 0.1314 | 0.0987 (0.0793–0.1197) | 0.3403 | 18.1% | 0.175 |
 | CF / ALS (α = 0) | 0.0635 | 0.1871 | 0.1536 (0.1288–0.1812) | 0.4167 | 12.1% | 0.561 |
-| **Hybrid α = 0.5 (đang dùng)** | **0.0674** | **0.1976** | **0.1609 (0.1349–0.1890)** | **0.4514** | 14.1% | 0.363 |
+| Hybrid α = 0.5 (không xếp lại) | 0.0674 | 0.1976 | 0.1609 (0.1349–0.1890) | 0.4514 | 14.1% | 0.363 |
+| **Hybrid α = 0.5 + MMR λ = 0.8 (đang dùng)** | **0.0670** | **0.1979** | **0.1633 (0.1370–0.1911)** | **0.4479** | 13.3% | **0.452** |
 
 Chênh lệch NDCG@10 của Hybrid trên cùng người dùng: hơn kNN +0.048 (KTC 95%: +0.030 đến +0.067), hơn CBF +0.062
 (+0.042 đến +0.085), hơn danh sách phổ biến +0.149: đều có ý nghĩa. **Hơn ALS +0.007 (−0.004 đến +0.019): chưa đủ
@@ -573,8 +616,12 @@ chắc chắn.** Sau khi tinh chỉnh (a = 5, giảm trọng số hành vi cũ),
 Hybrid vẫn cần vì (1) khách dưới 5 lượt tương tác chỉ dùng được CBF, (2) Coverage cao hơn ALS (14,1% so với 12,1%).
 Đổi lại, CBF làm danh sách ít đa dạng hơn (0,36 so với 0,56 của ALS) vì nó gợi ý các sản phẩm giống nhau.
 
-Chỉ tính thêm giỏ / mua là đúng (138 người dùng): Hybrid NDCG 0.147 (0.104–0.195), ALS 0.130, CBF 0.126, kNN 0.098,
-phổ biến 0.007; Hybrid hơn kNN và phổ biến có ý nghĩa, hơn ALS / CBF chưa đủ chắc chắn.
+**MMR sửa đúng điểm yếu này:** so với Hybrid không xếp lại trên cùng người dùng, độ đa dạng tăng +0,089 (KTC 95%:
++0,080 đến +0,098, có ý nghĩa: 0,36 → 0,45), còn NDCG +0,002 (−0,004 đến +0,009, không khác). Tức là danh sách đa
+dạng hơn rõ rệt mà không mất độ chính xác. Coverage giảm nhẹ (14,1% → 13,3%) vì MMR chỉ xếp lại trong cùng tập ứng viên.
+
+Chỉ tính thêm giỏ / mua là đúng (138 người dùng): Hybrid NDCG 0.147 (0.104–0.195), có MMR 0.146, ALS 0.130, CBF 0.126,
+kNN 0.098, phổ biến 0.007; Hybrid hơn kNN và phổ biến có ý nghĩa, hơn ALS / CBF chưa đủ chắc chắn.
 
 Phần chưa đánh giá được trên dữ liệu hiện có:
 
@@ -609,7 +656,7 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-38 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+41 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -618,9 +665,11 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 - `test_engine.py`: cosine và Hybrid đúng ví dụ tính tay của báo cáo, khách mới dưới 5 lượt chỉ dùng CBF, khách chưa
   có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, luật mua kèm (lift > 1, ít nhất
   2 đơn), nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
-  lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học;
+  lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
+  phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
 - `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
-  người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng.
+  người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng, quy tắc
+  chọn λ của MMR.
 
 ```bash
 cd AI_Service

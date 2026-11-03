@@ -58,4 +58,6 @@ ALS_CONFIDENCE = float(os.getenv("ALS_CONFIDENCE", "5"))             # a trong c
 ALS_ITERATIONS = int(os.getenv("ALS_ITERATIONS", "15"))
 # Giảm dần trọng số hành vi cũ: hành vi cách đây h ngày nặng bằng một nửa hành vi hôm nay; 0 = không giảm
 HALF_LIFE_DAYS = float(os.getenv("REC_HALF_LIFE_DAYS", "30"))
-# Số chiều, λ, a, nửa đời, α: chọn trên validation bằng scripts/evaluate.py (03/11/2026)
+# MMR: xếp lại Top-N cho đa dạng hơn, λ = 1 → chỉ theo điểm Hybrid; λ nhỏ → phạt mạnh sản phẩm giống món đã chọn
+MMR_LAMBDA = float(os.getenv("REC_MMR_LAMBDA", "0.8"))
+# Số chiều, λ, a, nửa đời, α, λ của MMR: chọn trên validation bằng scripts/evaluate.py (03/11/2026)

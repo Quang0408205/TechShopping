@@ -8,9 +8,13 @@ Chia theo thời gian cho từng người dùng thành 3 phần: 70% hành vi đ
      b. α = 0; 0,1; …; 1 với ALS đã chỉnh;
      c. nửa đời giảm dần trọng số hành vi cũ (không giảm / 30 / 90 ngày) với α đã chọn.
      Mỗi bước giữ giá trị có NDCG@N cao nhất.
+     d. λ của MMR (xếp lại Top-N cho đa dạng): xếp lại gần như luôn làm NDCG giảm một chút, nên không chọn theo NDCG
+        cao nhất mà chọn λ có độ đa dạng cao nhất trong các λ giữ được ít nhất 95% NDCG của λ = 1 (không xếp lại).
   2. Báo cáo: học lại trên huấn luyện + validation với tham số đã chọn, chấm trên phần kiểm thử. Phần kiểm thử không
      tham gia chọn tham số nào, nên con số báo cáo không bị "đẹp" nhờ chọn trên chính nó. Trên phần kiểm thử:
      - so với 4 đối chứng: danh sách phổ biến, item–item kNN, chỉ CBF, chỉ ALS;
+     - Hybrid + MMR so với Hybrid không xếp lại: khoảng tin cậy của hiệu NDCG (mất bao nhiêu) và hiệu độ đa dạng
+       (được bao nhiêu);
      - "đúng" theo hai cách: mọi tương tác (xem trở lên) và chỉ thêm giỏ / mua (tín hiệu mạnh);
      - khách mới (1 đến k − 1 lượt, chỉ dùng CBF) so với danh sách phổ biến;
      - mua kèm: đơn hàng 20% cuối (theo ngày đặt), mỗi sản phẩm trong đơn có từ 2 sản phẩm → danh sách mua kèm có chứa
@@ -58,6 +62,8 @@ ALPHAS = (0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
 ALS_GRID = tuple((factors, regularization, confidence)
                  for factors in (16, 32, 64) for regularization in (0.1, 1.0) for confidence in (5.0, 10.0, 20.0))
 HALF_LIVES = (0.0, 30.0, 90.0)
+MMR_LAMBDAS = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
+MMR_MAX_LOSS = 0.05                     # λ được chọn phải giữ ≥ 95% NDCG của danh sách không xếp lại
 STRONG_TYPES = ("ADD_TO_CART", "PURCHASE")
 METRICS = ("precision", "recall", "ndcg", "hitRate")
 CROSS_SELL_N = 4
@@ -155,7 +161,9 @@ def item_knn_scores(r_user: csr_matrix, ratings: csr_matrix) -> np.ndarray:
     return np.asarray((r_user @ similarity).todense()).ravel()
 
 
-def model_name(kind: str, alpha: float | None) -> str:
+def model_name(kind: str, alpha: float | None, mmr_lambda: float | None = None) -> str:
+    if kind == "HYBRID_MMR":
+        return f"Hybrid α={alpha:.1f} + MMR λ={mmr_lambda:.1f}"
     return {"POPULAR": "Phổ biến (baseline)", "KNN": "Item-kNN (baseline)", "CBF": "CBF (α=1)",
             "CF": "CF/ALS (α=0)", "COLD_CBF": "CBF (khách mới)"}.get(kind) or f"Hybrid α={alpha:.1f}"
 
@@ -165,7 +173,16 @@ def _kind(config_key) -> str:
         return "POPULAR"
     if config_key == KNN:
         return "KNN"
+    if isinstance(config_key, tuple):
+        return "HYBRID_MMR"
     return "CBF" if config_key == 1.0 else "CF" if config_key == 0.0 else "HYBRID"
+
+
+def _alpha_lambda(config_key) -> tuple[float | None, float | None]:
+    """Khoá danh sách → (α, λ của MMR): số α = không xếp lại; (α, λ) = Hybrid + MMR; POPULAR / KNN → (None, None)."""
+    if config_key in (POPULAR, KNN):
+        return None, None
+    return config_key if isinstance(config_key, tuple) else (config_key, None)
 
 
 class Session:
@@ -229,13 +246,21 @@ class Session:
         return picked + [p for p in self._popular(user, n) if p not in picked][:n - len(picked)]
 
     def lists(self, users: list[int], keys, n: int) -> dict:
-        """{khoá: {người dùng: [product_id]}}; khoá = α (số), POPULAR hoặc KNN; mọi α của một khách tính một lần."""
-        alphas = [k for k in keys if k not in (POPULAR, KNN)]
+        """
+        {khoá: {người dùng: [product_id]}}; khoá = α (số, không xếp lại), (α, λ) (Hybrid + MMR), POPULAR hoặc KNN;
+        các α cùng λ của một khách tính một lần.
+        """
+        by_lambda: dict[float, list] = {}
+        for key in keys:
+            if key not in (POPULAR, KNN):
+                alpha, lam = _alpha_lambda(key)
+                by_lambda.setdefault(1.0 if lam is None else lam, []).append((key, alpha))
         out = {key: {} for key in keys}
         for user in users:
-            if alphas:
-                for alpha, recs in zip(alphas, self.rec.recommend_alphas(user, n, alphas)):
-                    out[alpha][user] = [r.product_id for r in recs]
+            for lam, group in by_lambda.items():
+                recs = self.rec.recommend_alphas(user, n, [alpha for _, alpha in group], mmr_lambda=lam)
+                for (key, _), items in zip(group, recs):
+                    out[key][user] = [r.product_id for r in items]
             if POPULAR in out:
                 out[POPULAR][user] = self._popular(user, n)
             if KNN in out:
@@ -272,16 +297,16 @@ def _with_ci(row: dict, table: pd.DataFrame, samples) -> dict:
     return row
 
 
-def _compare(tables: dict, best: str, others: list[str], samples) -> list[dict]:
+def _compare(tables: dict, best: str, others: list[str], samples, metric: str = "ndcg") -> list[dict]:
     result = []
     if samples is None:
         return result
     for other in others:
         if other == best or other not in tables:
             continue
-        diff = tables[best]["ndcg"].to_numpy(float) - tables[other]["ndcg"].to_numpy(float)
+        diff = tables[best][metric].to_numpy(float) - tables[other][metric].to_numpy(float)
         low, high = bootstrap_mean_ci(diff, samples)
-        result.append({"model": best, "versus": other, "metric": "ndcg", "diff": round(float(diff.mean()), 4),
+        result.append({"model": best, "versus": other, "metric": metric, "diff": round(float(diff.mean()), 4),
                        "low": round(low, 4), "high": round(high, 4)})
     return result
 
@@ -291,6 +316,13 @@ def _mean_ndcg(session: Session, judge: pd.DataFrame, keys, n: int) -> tuple[dic
     users = session.users(relevant)
     lists = session.lists(users, keys, n)
     return {key: float(_score(lists[key], relevant, users, n)["ndcg"].mean()) if users else 0.0 for key in keys}, len(users)
+
+
+def choose_mmr_lambda(rows: list[dict], max_loss: float = MMR_MAX_LOSS) -> float:
+    """rows: [{lambda, ndcg, diversity}] trên validation; λ đa dạng nhất trong các λ giữ ≥ (1 − max_loss)·NDCG(λ = 1)."""
+    baseline = next(row["ndcg"] for row in rows if row["lambda"] == 1.0)
+    kept = [row for row in rows if row["ndcg"] >= (1 - max_loss) * baseline]
+    return max(kept, key=lambda row: (row["diversity"], row["lambda"]))["lambda"]
 
 
 def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.DataFrame) -> dict:
@@ -374,16 +406,32 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
     best_alpha = max((row for row in validation_rows if row["alpha"] is not None), key=lambda row: row["ndcg"])["alpha"]
 
     # 1c. giảm dần trọng số hành vi cũ, với α đã chọn
+    sessions = {0.0: session}
     decay_rows = [{"halfLifeDays": 0.0, "ndcg": next(r["ndcg"] for r in validation_rows if r["alpha"] == best_alpha)}]
     for half_life in HALF_LIVES[1:]:
-        ndcg, _ = _mean_ndcg(Session(train, {**params, "half_life_days": half_life}), validation, [best_alpha], n)
+        sessions[half_life] = Session(train, {**params, "half_life_days": half_life})
+        ndcg, _ = _mean_ndcg(sessions[half_life], validation, [best_alpha], n)
         decay_rows.append({"halfLifeDays": half_life, "ndcg": round(ndcg[best_alpha], 4)})
     params["half_life_days"] = max(decay_rows, key=lambda row: row["ndcg"])["halfLifeDays"]
+
+    # 1d. λ của MMR, với α và nửa đời đã chọn: NDCG và độ đa dạng của từng λ
+    session = sessions[params["half_life_days"]]
+    mmr_keys = [(best_alpha, lam) for lam in MMR_LAMBDAS]
+    lists = session.lists(validation_users, mmr_keys, n)
+    mmr_rows = []
+    for key in mmr_keys:
+        table = _score(lists[key], relevant, validation_users, n)
+        mmr_rows.append({"lambda": key[1], "ndcg": round(float(table["ndcg"].mean()), 4) if validation_users else 0.0,
+                         "diversity": round(float(np.mean([session.diversity(lists[key][u])
+                                                           for u in validation_users])), 4) if validation_users else 0.0})
+    best_lambda = choose_mmr_lambda(mmr_rows)
 
     # 2. kiểm thử: học lại trên huấn luyện + validation (đơn hàng: 80% đầu theo ngày đặt)
     train_baskets, test_baskets = split_baskets(load_baskets(), train_ratio + validation_ratio)
     session = Session(learn, params, train_baskets[["order_id", "user_id", "product_id"]])
-    keys = list(dict.fromkeys([POPULAR, KNN, 1.0, 0.0, best_alpha, config.ALPHA]))
+    keys = [POPULAR, KNN, 1.0, 0.0, best_alpha, config.ALPHA]
+    keys += [(alpha, lam) for alpha, lam in ((best_alpha, best_lambda), (config.ALPHA, config.MMR_LAMBDA)) if lam < 1]
+    keys = list(dict.fromkeys(keys))
     relevant = session.relevant(test)
     strong = session.relevant(test, strong_only=True)
     users = session.users(relevant)
@@ -395,21 +443,28 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
         rows, tables = [], {}
         for key in keys:
             kind = _kind(key)
-            alpha = None if key in (POPULAR, KNN) else key
-            name = model_name(kind, alpha)
+            alpha, lam = _alpha_lambda(key)
+            name = model_name(kind, alpha, lam)
             table = _score(lists[key], relevance, group, n)
             tables[name] = table
             extras = {}
             if with_extras:
+                table["diversity"] = [session.diversity(lists[key][u]) for u in group]
                 extras = {"shown": {p for u in group for p in lists[key][u]}, "valid_count": session.valid_count,
-                          "diversity": float(np.mean([session.diversity(lists[key][u]) for u in group])) if group else 0.0}
-            rows.append(_with_ci(_row(name, kind, alpha, table, **extras), table, samples))
+                          "diversity": float(table["diversity"].mean()) if group else 0.0}
+            row = _with_ci(_row(name, kind, alpha, table, **extras), table, samples)
+            row["mmrLambda"] = lam
+            rows.append(row)
         best = model_name(_kind(best_alpha), best_alpha)
         others = [model_name(k, a) for k, a in (("CF", 0.0), ("CBF", 1.0), ("KNN", None), ("POPULAR", None))]
-        return rows, _compare(tables, best, others, samples)
+        mmr = model_name("HYBRID_MMR", best_alpha, best_lambda)
+        mmr_comparisons = _compare(tables, mmr, [best], samples) if best_lambda < 1 else []
+        if best_lambda < 1 and with_extras:
+            mmr_comparisons += _compare(tables, mmr, [best], samples, "diversity")
+        return rows, _compare(tables, best, others, samples), mmr_comparisons
 
-    rows, comparisons = score_all(relevant, users, 0, True)
-    strong_rows, strong_comparisons = score_all(strong, strong_users, 1, False)
+    rows, comparisons, mmr_comparisons = score_all(relevant, users, 0, True)
+    strong_rows, strong_comparisons, _ = score_all(strong, strong_users, 1, False)
 
     # khách mới: CBF (hệ thống tự dùng khi dưới k lượt) so với danh sách phổ biến
     cold_users = session.users(relevant, cold=True)
@@ -430,13 +485,15 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
         "products": session.valid_count, "configuredAlpha": config.ALPHA, "bestAlpha": best_alpha,
         "configured": {"alpha": config.ALPHA, "factors": config.ALS_FACTORS,
                        "regularization": config.ALS_REGULARIZATION, "confidence": config.ALS_CONFIDENCE,
-                       "halfLifeDays": config.HALF_LIFE_DAYS},
+                       "halfLifeDays": config.HALF_LIFE_DAYS, "mmrLambda": config.MMR_LAMBDA},
         "chosen": {"alpha": best_alpha, "factors": params["factors"], "regularization": params["regularization"],
-                   "confidence": params["confidence"], "halfLifeDays": params["half_life_days"]},
+                   "confidence": params["confidence"], "halfLifeDays": params["half_life_days"],
+                   "mmrLambda": best_lambda},
         "bootstrapSamples": bootstrap if users else 0,
         "seconds": round((datetime.now() - started).total_seconds(), 1),
-        "tuning": {"als": als_rows, "decay": decay_rows},
+        "tuning": {"als": als_rows, "decay": decay_rows, "mmr": mmr_rows, "mmrMaxLoss": MMR_MAX_LOSS},
         "validationRows": validation_rows, "rows": rows, "comparisons": comparisons,
+        "mmrComparisons": mmr_comparisons,
         "strongRows": strong_rows, "strongComparisons": strong_comparisons,
         "coldStartRows": cold_rows,
         "coldStartComparisons": _compare(cold_tables, model_name("COLD_CBF", None), [model_name("POPULAR", None)],
@@ -498,11 +555,12 @@ def _table_lines(rows: list[dict], n: int, extras: bool) -> list[str]:
 def _comparison_lines(comparisons: list[dict], n: int) -> list[str]:
     if not comparisons:
         return []
-    lines = ["", f"Chênh lệch NDCG@{n} trên cùng người dùng (KTC 95%; không chứa 0 = chênh lệch có ý nghĩa):", ""]
+    lines = ["", "Chênh lệch trên cùng người dùng (KTC 95%; không chứa 0 = chênh lệch có ý nghĩa):", ""]
     for c in comparisons:
         verdict = "có ý nghĩa" if c["low"] > 0 or c["high"] < 0 else "chưa đủ chắc chắn"
-        lines.append(f"- {c['model']} − {c['versus']}: {c['diff']:+.4f} ({c['low']:+.4f} đến {c['high']:+.4f}), "
-                     f"{verdict}")
+        metric = f"NDCG@{n}" if c["metric"] == "ndcg" else "Diversity"
+        lines.append(f"- {metric}: {c['model']} − {c['versus']}: {c['diff']:+.4f} ({c['low']:+.4f} đến "
+                     f"{c['high']:+.4f}), {verdict}")
     return lines
 
 
@@ -517,7 +575,8 @@ def markdown(result: dict) -> str:
         f"kiểm thử ({result['trainEvents']} / {result['validationEvents']} / {result['testEvents']} lượt).",
         f"- Tham số chọn trên validation ({result['validationUsers']} người dùng): ALS {chosen['factors']} chiều, "
         f"λ = {chosen['regularization']}, a = {chosen['confidence']}; α = {chosen['alpha']}; nửa đời giảm trọng số "
-        f"{'không giảm' if not chosen['halfLifeDays'] else str(int(chosen['halfLifeDays'])) + ' ngày'}.",
+        f"{'không giảm' if not chosen['halfLifeDays'] else str(int(chosen['halfLifeDays'])) + ' ngày'}; MMR "
+        f"{_mmr_text(chosen.get('mmrLambda'))}.",
         f"- Kiểm thử: học lại trên huấn luyện + validation, chấm {result['users']} người dùng có ít nhất "
         f"{result['coldStartK']} lượt tương tác và có sản phẩm mới trong phần kiểm thử; {result['products']} sản phẩm "
         f"đang bán. Khoảng tin cậy 95%: bootstrap {result['bootstrapSamples']} lần theo người dùng.",
@@ -526,6 +585,7 @@ def markdown(result: dict) -> str:
         "",
         *_table_lines(result["rows"], n, True),
         *_comparison_lines(result["comparisons"], n),
+        *_comparison_lines(result.get("mmrComparisons") or [], n),
         "",
         f"## Kiểm thử (đúng = chỉ thêm giỏ / mua, {result['strongUsers']} người dùng)",
         "",
@@ -558,11 +618,20 @@ def markdown(result: dict) -> str:
     lines += ["", "Nửa đời giảm trọng số hành vi cũ (α đã chọn):", "", "| Nửa đời | NDCG |", "|---|---|"]
     lines += [f"| {'không giảm' if not r['halfLifeDays'] else str(int(r['halfLifeDays'])) + ' ngày'} | {r['ndcg']:.4f} |"
               for r in result["tuning"]["decay"]]
+    if result["tuning"].get("mmr"):
+        keep = round((1 - result["tuning"]["mmrMaxLoss"]) * 100)
+        lines += ["", f"MMR (α và nửa đời đã chọn; chọn λ đa dạng nhất mà NDCG ≥ {keep}% của λ = 1):", "",
+                  f"| λ | NDCG@{n} | Diversity |", "|---|---|---|"]
+        lines += [f"| {r['lambda']:.1f} | {r['ndcg']:.4f} | {r['diversity']:.4f} |" for r in result["tuning"]["mmr"]]
     configured = result["configured"]
     lines += ["", f"Hệ thống đang dùng: α = {configured['alpha']}, ALS {configured['factors']} chiều, "
                   f"λ = {configured['regularization']}, a = {configured['confidence']}, nửa đời "
-                  f"{configured['halfLifeDays'] or 'không giảm'}."]
+                  f"{configured['halfLifeDays'] or 'không giảm'}, MMR {_mmr_text(configured.get('mmrLambda'))}."]
     return "\n".join(lines) + "\n"
+
+
+def _mmr_text(lam: float | None) -> str:
+    return "không xếp lại" if lam is None or lam >= 1 else f"λ = {lam}"
 
 
 def alpha_chart_svg(result: dict, width: int = 640, height: int = 360) -> str:
@@ -633,16 +702,18 @@ def save_history(result: dict) -> bool:
                                                     users, validation_users, strong_users, cold_users, train_events,
                                                     validation_events, test_events, products, configured_alpha,
                                                     best_alpha, als_factors, als_regularization, als_confidence,
-                                                    half_life_days, cross_sell_hit_rate, cross_sell_baseline_hit_rate,
-                                                    upsell_share, bootstrap_samples, seconds)
-            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                                    half_life_days, mmr_lambda, cross_sell_hit_rate,
+                                                    cross_sell_baseline_hit_rate, upsell_share, bootstrap_samples,
+                                                    seconds)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                    %s)
             on conflict (evaluated_at) do nothing
             returning evaluation_id
         """, (result["evaluatedAt"], result["n"], result["trainRatio"], result["validationRatio"],
               result["coldStartK"], result["users"], result["validationUsers"], result["strongUsers"],
               result["coldUsers"], result["trainEvents"], result["validationEvents"], result["testEvents"],
               result["products"], result["configuredAlpha"], result["bestAlpha"], chosen["factors"],
-              chosen["regularization"], chosen["confidence"], chosen["halfLifeDays"],
+              chosen["regularization"], chosen["confidence"], chosen["halfLifeDays"], chosen.get("mmrLambda", 1.0),
               cross_rows["Mua kèm (luật kết hợp + phụ kiện)"]["hitRate"],
               cross_rows["Bán chạy nhất (baseline)"]["hitRate"], upsell["withSuggestions"],
               result["bootstrapSamples"], result["seconds"])).fetchone()
@@ -653,10 +724,11 @@ def save_history(result: dict) -> bool:
                  + [("VALIDATION", row) for row in result["validationRows"]])
         conn.cursor().executemany("""
             insert into recommendation_evaluation_rows (evaluation_id, position, split, model, kind, alpha,
-                                                        precision_at_n, recall_at_n, ndcg_at_n, ndcg_low, ndcg_high,
-                                                        hit_rate_at_n, coverage, diversity)
-            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, [(created["evaluation_id"], position, part, row["model"], row["kind"], row["alpha"], row["precision"],
+                                                        mmr_lambda, precision_at_n, recall_at_n, ndcg_at_n, ndcg_low,
+                                                        ndcg_high, hit_rate_at_n, coverage, diversity)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, [(created["evaluation_id"], position, part, row["model"], row["kind"], row["alpha"],
+               row.get("mmrLambda"), row["precision"],
                row["recall"], row["ndcg"], *((row.get("ci") or {}).get("ndcg") or (None, None)), row["hitRate"],
                row.get("coverage"), row.get("diversity"))
               for position, (part, row) in enumerate(parts)])
@@ -669,11 +741,16 @@ def load_history(limit: int = 20) -> list[dict]:
         rows = fetch_all("""
             select e.evaluated_at, e.top_n, e.users, e.train_events, e.validation_events, e.test_events,
                    e.configured_alpha, e.best_alpha, e.als_factors, e.als_regularization, e.als_confidence,
-                   e.half_life_days, e.cross_sell_hit_rate, e.upsell_share,
-                   max(r.ndcg_at_n) filter (where r.alpha = e.best_alpha) as best_ndcg,
-                   max(r.ndcg_low) filter (where r.alpha = e.best_alpha) as best_ndcg_low,
-                   max(r.ndcg_high) filter (where r.alpha = e.best_alpha) as best_ndcg_high,
-                   max(r.ndcg_at_n) filter (where r.alpha = e.configured_alpha) as configured_ndcg,
+                   e.half_life_days, e.mmr_lambda, e.cross_sell_hit_rate, e.upsell_share,
+                   max(r.ndcg_at_n) filter (where r.alpha = e.best_alpha and r.mmr_lambda is null) as best_ndcg,
+                   max(r.ndcg_low) filter (where r.alpha = e.best_alpha and r.mmr_lambda is null) as best_ndcg_low,
+                   max(r.ndcg_high) filter (where r.alpha = e.best_alpha and r.mmr_lambda is null) as best_ndcg_high,
+                   max(r.diversity) filter (where r.alpha = e.best_alpha and r.mmr_lambda is null) as best_diversity,
+                   max(r.ndcg_at_n) filter (where r.alpha = e.configured_alpha and r.mmr_lambda is null)
+                       as configured_ndcg,
+                   max(r.ndcg_at_n) filter (where r.alpha = e.best_alpha and r.mmr_lambda = e.mmr_lambda) as mmr_ndcg,
+                   max(r.diversity) filter (where r.alpha = e.best_alpha and r.mmr_lambda = e.mmr_lambda)
+                       as mmr_diversity,
                    max(r.ndcg_at_n) filter (where r.kind = 'CBF') as cbf_ndcg,
                    max(r.ndcg_at_n) filter (where r.kind = 'CF') as cf_ndcg,
                    max(r.ndcg_at_n) filter (where r.kind = 'KNN') as knn_ndcg,
@@ -691,7 +768,8 @@ def load_history(limit: int = 20) -> list[dict]:
             "validation_events": "validationEvents", "test_events": "testEvents",
             "configured_alpha": "configuredAlpha", "best_alpha": "bestAlpha", "als_factors": "alsFactors",
             "als_regularization": "alsRegularization", "als_confidence": "alsConfidence",
-            "half_life_days": "halfLifeDays", "cross_sell_hit_rate": "crossSellHitRate", "upsell_share": "upsellShare",
+            "half_life_days": "halfLifeDays", "mmr_lambda": "mmrLambda", "best_diversity": "bestDiversity",
+            "mmr_ndcg": "mmrNdcg", "mmr_diversity": "mmrDiversity", "cross_sell_hit_rate": "crossSellHitRate", "upsell_share": "upsellShare",
             "best_ndcg": "bestNdcg", "best_ndcg_low": "bestNdcgLow", "best_ndcg_high": "bestNdcgHigh",
             "configured_ndcg": "configuredNdcg", "cbf_ndcg": "cbfNdcg", "cf_ndcg": "cfNdcg", "knn_ndcg": "knnNdcg",
             "popular_ndcg": "popularNdcg"}
