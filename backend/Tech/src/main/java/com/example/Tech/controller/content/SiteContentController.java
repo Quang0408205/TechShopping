@@ -1,7 +1,6 @@
 package com.example.Tech.controller.content;
 
 import com.example.Tech.dto.response.common.ApiResult;
-import com.example.Tech.dto.response.content.BannerResponse;
 import com.example.Tech.dto.response.content.ContentPageResponse;
 import com.example.Tech.service.content.SiteContentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,20 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** What visitors see: the banners showing now and the published static pages. No token needed. */
+/** What visitors see: the published static pages. No token needed. */
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-@Tag(name = "Content", description = "Home banners and static pages (public reads)")
+@Tag(name = "Content", description = "Static pages (public reads)")
 public class SiteContentController {
 
     private final SiteContentService contentService;
-
-    @GetMapping("/banners")
-    @Operation(summary = "Banners that are active and inside their time window, in display order")
-    public ResponseEntity<ApiResult<List<BannerResponse>>> banners() {
-        return ResponseEntity.ok(ApiResult.ok(contentService.showingBanners()));
-    }
 
     @GetMapping("/pages")
     @Operation(summary = "Published pages (slug and title only)")
