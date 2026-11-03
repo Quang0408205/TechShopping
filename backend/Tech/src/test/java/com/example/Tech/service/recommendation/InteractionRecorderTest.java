@@ -7,6 +7,8 @@ import com.example.Tech.entity.recommendation.UserInteraction;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.entity.recommendation.RecommendationType;
+import com.example.Tech.repository.recommendation.RecommendationRepository;
 import com.example.Tech.repository.recommendation.UserInteractionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +28,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,11 +47,14 @@ class InteractionRecorderTest {
     @Mock
     private ProductRepository productRepository;
 
+    @Mock
+    private RecommendationRepository recommendationRepository;
+
     private InteractionRecorder recorder;
 
     @BeforeEach
     void setUp() {
-        recorder = new InteractionRecorder(interactionRepository, productRepository, CLOCK);
+        recorder = new InteractionRecorder(interactionRepository, productRepository, recommendationRepository, CLOCK);
     }
 
     @Test
@@ -84,7 +91,7 @@ class InteractionRecorderTest {
 
     @Test
     void recordFromClient_purchase_isRejected() {
-        assertThatThrownBy(() -> recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.PURCHASE)))
+        assertThatThrownBy(() -> recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.PURCHASE, null)))
                 .isInstanceOf(BusinessException.class);
         verify(interactionRepository, never()).save(any());
         verify(interactionRepository, never()).saveAll(anyIterable());
@@ -94,7 +101,7 @@ class InteractionRecorderTest {
     void recordFromClient_unknownProduct_isNotFound() {
         when(productRepository.findByIdAndDeletedAtIsNull(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> recorder.recordFromClient(USER_ID, new InteractionRequest(99L, InteractionType.VIEW)))
+        assertThatThrownBy(() -> recorder.recordFromClient(USER_ID, new InteractionRequest(99L, InteractionType.VIEW, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -102,8 +109,28 @@ class InteractionRecorderTest {
     void recordFromClient_view_isRecorded() {
         when(productRepository.findByIdAndDeletedAtIsNull(11L)).thenReturn(Optional.of(new Product()));
 
-        recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.VIEW));
+        recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.VIEW, null));
 
         verify(interactionRepository).save(any(UserInteraction.class));
+        verify(recommendationRepository, never()).markClicked(anyLong(), anyLong(), anyString(), any(), any());
+    }
+
+    @Test
+    void recordFromClient_clickInARecommendationList_marksThatRecommendationClicked() {
+        when(productRepository.findByIdAndDeletedAtIsNull(11L)).thenReturn(Optional.of(new Product()));
+
+        recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.CLICK, RecommendationType.SIMILAR));
+
+        verify(interactionRepository).save(any(UserInteraction.class));
+        verify(recommendationRepository).markClicked(USER_ID, 11L, "SIMILAR", NOW.minus(InteractionRecorder.CLICK_WINDOW), NOW);
+    }
+
+    @Test
+    void recordFromClient_clickInAnOrdinaryList_marksNoRecommendation() {
+        when(productRepository.findByIdAndDeletedAtIsNull(11L)).thenReturn(Optional.of(new Product()));
+
+        recorder.recordFromClient(USER_ID, new InteractionRequest(11L, InteractionType.CLICK, null));
+
+        verify(recommendationRepository, never()).markClicked(anyLong(), anyLong(), anyString(), any(), any());
     }
 }

@@ -2,6 +2,7 @@ package com.example.Tech.service.recommendation;
 
 import com.example.Tech.dto.request.product.ProductSearchRequest;
 import com.example.Tech.dto.request.recommendation.RecommendationRequest;
+import com.example.Tech.dto.response.recommendation.RecommendationOverviewResponse;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.dto.response.recommendation.RecommendationResponse;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -110,6 +112,47 @@ class RecommendationServiceTest {
     void productTypeWithoutProduct_isRejected() {
         assertThatThrownBy(() -> service.recommend(null, new RecommendationRequest(RecommendationType.SIMILAR, null, 4)))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void overview_combinesTheModelTheEvaluationAndTheClickRateOfEachList() {
+        when(aiClient.status()).thenReturn(Optional.of(Map.of("users", 357)));
+        when(aiClient.evaluation()).thenReturn(Optional.of(Map.of("running", false)));
+        RecommendationRepository.OnlineStatsRow personal = mock(RecommendationRepository.OnlineStatsRow.class);
+        when(personal.getType()).thenReturn("PERSONAL");
+        when(personal.getImpressions()).thenReturn(200L);
+        when(personal.getClicks()).thenReturn(18L);
+        when(personal.getUsers()).thenReturn(25L);
+        when(personal.getConverted()).thenReturn(4L);
+        when(recommendationRepository.onlineStats(any())).thenReturn(List.of(personal));
+
+        RecommendationOverviewResponse overview = service.overview(900);
+
+        assertThat(overview.aiAvailable()).isTrue();
+        assertThat(overview.model()).containsEntry("users", 357);
+        assertThat(overview.days()).isEqualTo(365);
+        assertThat(overview.online()).extracting(RecommendationOverviewResponse.OnlineStat::type)
+                .containsExactly(RecommendationType.values());
+        RecommendationOverviewResponse.OnlineStat first = overview.online().getFirst();
+        assertThat(first.clickRate()).isEqualByComparingTo("0.09");
+        assertThat(first.conversionRate()).isEqualByComparingTo("0.2222");
+        // a list never shown: no rate rather than 0 %
+        assertThat(overview.online().get(1).impressions()).isZero();
+        assertThat(overview.online().get(1).clickRate()).isNull();
+    }
+
+    @Test
+    void overview_aiDown_stillReturnsTheOnlineFigures() {
+        when(aiClient.status()).thenReturn(Optional.empty());
+        when(recommendationRepository.onlineStats(any())).thenReturn(List.of());
+
+        RecommendationOverviewResponse overview = service.overview(30);
+
+        assertThat(overview.aiAvailable()).isFalse();
+        assertThat(overview.model()).isNull();
+        assertThat(overview.evaluation()).isNull();
+        assertThat(overview.online()).hasSize(RecommendationType.values().length);
+        verify(aiClient, never()).evaluation();
     }
 
     private static ProductResponse product(Long id) {

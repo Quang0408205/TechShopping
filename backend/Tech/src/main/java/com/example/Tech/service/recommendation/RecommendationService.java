@@ -3,6 +3,7 @@ package com.example.Tech.service.recommendation;
 import com.example.Tech.dto.request.product.ProductSearchRequest;
 import com.example.Tech.dto.request.recommendation.RecommendationRequest;
 import com.example.Tech.dto.response.product.ProductResponse;
+import com.example.Tech.dto.response.recommendation.RecommendationOverviewResponse;
 import com.example.Tech.dto.response.recommendation.RecommendationResponse;
 import com.example.Tech.dto.response.recommendation.RecommendedProductResponse;
 import com.example.Tech.entity.recommendation.Recommendation;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -29,6 +31,7 @@ import java.util.stream.Collectors;
  * POST /api/v1/recommendations (report section 3.5.7): asks the AI service, checks the products again
  * (still active, not deleted), logs what a logged-in user was shown in recommendations, and falls back to
  * popular / same-category products when the AI service does not answer so shopping is never blocked.
+ * Admin: retraining, offline evaluation and the click-through rate of the logged lists.
  */
 @Service
 @RequiredArgsConstructor
@@ -61,6 +64,40 @@ public class RecommendationService {
     public Map<String, Object> train() {
         return aiClient.train().orElseThrow(() -> new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE,
                 "The AI service did not answer"));
+    }
+
+    /**
+     * Admin page: the model in use and the latest offline evaluation (from the AI service, null when it is down),
+     * plus impressions / clicks / conversions of each list over the last {@code requestedDays} days (1..365).
+     */
+    public RecommendationOverviewResponse overview(int requestedDays) {
+        int days = Math.clamp(requestedDays, 1, 365);
+        Map<String, Object> model = aiClient.status().orElse(null);
+        Map<String, Object> evaluation = model == null ? null : aiClient.evaluation().orElse(null);
+        Map<String, RecommendationRepository.OnlineStatsRow> rows = recommendationRepository
+                .onlineStats(LocalDateTime.now(clock).minusDays(days)).stream()
+                .collect(Collectors.toMap(RecommendationRepository.OnlineStatsRow::getType, Function.identity()));
+        List<RecommendationOverviewResponse.OnlineStat> online = Arrays.stream(RecommendationType.values())
+                .map(type -> {
+                    RecommendationRepository.OnlineStatsRow row = rows.get(type.name());
+                    long impressions = row == null ? 0 : row.getImpressions();
+                    long clicks = row == null ? 0 : row.getClicks();
+                    long converted = row == null ? 0 : row.getConverted();
+                    return new RecommendationOverviewResponse.OnlineStat(type, impressions, clicks,
+                            row == null ? 0 : row.getUsers(), converted, rate(clicks, impressions), rate(converted, clicks));
+                })
+                .toList();
+        return new RecommendationOverviewResponse(model != null, model, evaluation, days, online);
+    }
+
+    /** Starts the offline evaluation in the AI service; returns its status (running, last result). */
+    public Map<String, Object> startEvaluation() {
+        return aiClient.startEvaluation().orElseThrow(() -> new BusinessException(ErrorCode.AI_SERVICE_UNAVAILABLE,
+                "The AI service did not answer"));
+    }
+
+    private static BigDecimal rate(long part, long whole) {
+        return whole == 0 ? null : BigDecimal.valueOf(part).divide(BigDecimal.valueOf(whole), 4, RoundingMode.HALF_UP);
     }
 
     private RecommendationResponse fromAi(Long userId, RecommendationType type, List<AiRecommendationClient.Item> items) {

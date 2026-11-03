@@ -1,0 +1,725 @@
+{
+  "evaluatedAt": "2026-11-03T12:22:56",
+  "n": 10,
+  "trainRatio": 0.7,
+  "validationRatio": 0.1,
+  "testRatio": 0.2,
+  "coldStartK": 5,
+  "users": 288,
+  "strongUsers": 138,
+  "coldUsers": 49,
+  "validationUsers": 256,
+  "trainEvents": 14726,
+  "validationEvents": 2230,
+  "testEvents": 4335,
+  "products": 4302,
+  "configuredAlpha": 0.5,
+  "bestAlpha": 0.5,
+  "configured": {
+    "alpha": 0.5,
+    "factors": 32,
+    "regularization": 0.1,
+    "confidence": 5.0,
+    "halfLifeDays": 30.0
+  },
+  "chosen": {
+    "alpha": 0.5,
+    "factors": 32,
+    "regularization": 0.1,
+    "confidence": 5.0,
+    "halfLifeDays": 30.0
+  },
+  "bootstrapSamples": 1000,
+  "seconds": 171.8,
+  "tuning": {
+    "als": [
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.1102
+      },
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.0992
+      },
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.0811
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.109
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.0993
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.0789
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.1267
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.1218
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.1124
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.1241
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.12
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.1091
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.1123
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.1063
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.1017
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.1151
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.1065
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.1053
+      }
+    ],
+    "decay": [
+      {
+        "halfLifeDays": 0.0,
+        "ndcg": 0.1399
+      },
+      {
+        "halfLifeDays": 30.0,
+        "ndcg": 0.1466
+      },
+      {
+        "halfLifeDays": 90.0,
+        "ndcg": 0.1394
+      }
+    ]
+  },
+  "validationRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0043,
+      "recall": 0.0167,
+      "ndcg": 0.0124,
+      "hitRate": 0.043,
+      "coverage": 0.0037
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.0387,
+      "recall": 0.2027,
+      "ndcg": 0.1267,
+      "hitRate": 0.3359,
+      "coverage": 0.1376
+    },
+    {
+      "model": "Hybrid α=0.1",
+      "kind": "HYBRID",
+      "alpha": 0.1,
+      "precision": 0.0383,
+      "recall": 0.1992,
+      "ndcg": 0.129,
+      "hitRate": 0.332,
+      "coverage": 0.1355
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "kind": "HYBRID",
+      "alpha": 0.2,
+      "precision": 0.0406,
+      "recall": 0.21,
+      "ndcg": 0.1374,
+      "hitRate": 0.3477,
+      "coverage": 0.1392
+    },
+    {
+      "model": "Hybrid α=0.3",
+      "kind": "HYBRID",
+      "alpha": 0.3,
+      "precision": 0.041,
+      "recall": 0.2102,
+      "ndcg": 0.1393,
+      "hitRate": 0.3477,
+      "coverage": 0.1409
+    },
+    {
+      "model": "Hybrid α=0.4",
+      "kind": "HYBRID",
+      "alpha": 0.4,
+      "precision": 0.0402,
+      "recall": 0.2064,
+      "ndcg": 0.1353,
+      "hitRate": 0.3398,
+      "coverage": 0.1427
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "kind": "HYBRID",
+      "alpha": 0.5,
+      "precision": 0.0414,
+      "recall": 0.2115,
+      "ndcg": 0.1399,
+      "hitRate": 0.3438,
+      "coverage": 0.1506
+    },
+    {
+      "model": "Hybrid α=0.6",
+      "kind": "HYBRID",
+      "alpha": 0.6,
+      "precision": 0.0402,
+      "recall": 0.2005,
+      "ndcg": 0.1349,
+      "hitRate": 0.332,
+      "coverage": 0.1623
+    },
+    {
+      "model": "Hybrid α=0.7",
+      "kind": "HYBRID",
+      "alpha": 0.7,
+      "precision": 0.0391,
+      "recall": 0.1949,
+      "ndcg": 0.135,
+      "hitRate": 0.3281,
+      "coverage": 0.1715
+    },
+    {
+      "model": "Hybrid α=0.8",
+      "kind": "HYBRID",
+      "alpha": 0.8,
+      "precision": 0.0359,
+      "recall": 0.1786,
+      "ndcg": 0.1271,
+      "hitRate": 0.3008,
+      "coverage": 0.1801
+    },
+    {
+      "model": "Hybrid α=0.9",
+      "kind": "HYBRID",
+      "alpha": 0.9,
+      "precision": 0.0336,
+      "recall": 0.1639,
+      "ndcg": 0.1158,
+      "hitRate": 0.2812,
+      "coverage": 0.1855
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0281,
+      "recall": 0.1358,
+      "ndcg": 0.0976,
+      "hitRate": 0.2461,
+      "coverage": 0.1736
+    }
+  ],
+  "rows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0063,
+      "recall": 0.0183,
+      "ndcg": 0.0122,
+      "hitRate": 0.0625,
+      "coverage": 0.004,
+      "diversity": 0.6657,
+      "ci": {
+        "precision": [
+          0.0038,
+          0.0094
+        ],
+        "recall": [
+          0.0095,
+          0.0298
+        ],
+        "ndcg": [
+          0.0069,
+          0.0185
+        ],
+        "hitRate": [
+          0.0382,
+          0.0938
+        ]
+      }
+    },
+    {
+      "model": "Item-kNN (baseline)",
+      "kind": "KNN",
+      "alpha": null,
+      "precision": 0.0465,
+      "recall": 0.1412,
+      "ndcg": 0.113,
+      "hitRate": 0.3438,
+      "coverage": 0.2015,
+      "diversity": 0.6317,
+      "ci": {
+        "precision": [
+          0.0378,
+          0.0556
+        ],
+        "recall": [
+          0.1138,
+          0.1689
+        ],
+        "ndcg": [
+          0.0897,
+          0.1376
+        ],
+        "hitRate": [
+          0.2882,
+          0.3993
+        ]
+      }
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0462,
+      "recall": 0.1314,
+      "ndcg": 0.0987,
+      "hitRate": 0.3403,
+      "coverage": 0.1806,
+      "diversity": 0.1748,
+      "ci": {
+        "precision": [
+          0.0378,
+          0.0552
+        ],
+        "recall": [
+          0.105,
+          0.1603
+        ],
+        "ndcg": [
+          0.0793,
+          0.1197
+        ],
+        "hitRate": [
+          0.2882,
+          0.3958
+        ]
+      }
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.0635,
+      "recall": 0.1871,
+      "ndcg": 0.1536,
+      "hitRate": 0.4167,
+      "coverage": 0.1213,
+      "diversity": 0.5612,
+      "ci": {
+        "precision": [
+          0.0528,
+          0.0743
+        ],
+        "recall": [
+          0.1566,
+          0.2204
+        ],
+        "ndcg": [
+          0.1288,
+          0.1812
+        ],
+        "hitRate": [
+          0.361,
+          0.4792
+        ]
+      }
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "kind": "HYBRID",
+      "alpha": 0.5,
+      "precision": 0.0674,
+      "recall": 0.1976,
+      "ndcg": 0.1609,
+      "hitRate": 0.4514,
+      "coverage": 0.1409,
+      "diversity": 0.3625,
+      "ci": {
+        "precision": [
+          0.0573,
+          0.0781
+        ],
+        "recall": [
+          0.1683,
+          0.2306
+        ],
+        "ndcg": [
+          0.1349,
+          0.189
+        ],
+        "hitRate": [
+          0.3958,
+          0.5104
+        ]
+      }
+    }
+  ],
+  "comparisons": [
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "CF/ALS (α=0)",
+      "metric": "ndcg",
+      "diff": 0.0073,
+      "low": -0.0044,
+      "high": 0.0193
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "CBF (α=1)",
+      "metric": "ndcg",
+      "diff": 0.0622,
+      "low": 0.0419,
+      "high": 0.0846
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "Item-kNN (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0479,
+      "low": 0.0299,
+      "high": 0.0665
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "Phổ biến (baseline)",
+      "metric": "ndcg",
+      "diff": 0.1486,
+      "low": 0.1234,
+      "high": 0.1747
+    }
+  ],
+  "strongRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0022,
+      "recall": 0.0145,
+      "ndcg": 0.0068,
+      "hitRate": 0.0217,
+      "ci": {
+        "precision": [
+          0.0,
+          0.0051
+        ],
+        "recall": [
+          0.0,
+          0.0326
+        ],
+        "ndcg": [
+          0.0,
+          0.0148
+        ],
+        "hitRate": [
+          0.0,
+          0.0507
+        ]
+      }
+    },
+    {
+      "model": "Item-kNN (baseline)",
+      "kind": "KNN",
+      "alpha": null,
+      "precision": 0.0174,
+      "recall": 0.1582,
+      "ndcg": 0.0984,
+      "hitRate": 0.1739,
+      "ci": {
+        "precision": [
+          0.0116,
+          0.0239
+        ],
+        "recall": [
+          0.1014,
+          0.2235
+        ],
+        "ndcg": [
+          0.0608,
+          0.1444
+        ],
+        "hitRate": [
+          0.1159,
+          0.2393
+        ]
+      }
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0254,
+      "recall": 0.2065,
+      "ndcg": 0.1262,
+      "hitRate": 0.2464,
+      "ci": {
+        "precision": [
+          0.0181,
+          0.0333
+        ],
+        "recall": [
+          0.1449,
+          0.2742
+        ],
+        "ndcg": [
+          0.0859,
+          0.1713
+        ],
+        "hitRate": [
+          0.1739,
+          0.3188
+        ]
+      }
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.0261,
+      "recall": 0.2234,
+      "ndcg": 0.1301,
+      "hitRate": 0.2464,
+      "ci": {
+        "precision": [
+          0.0188,
+          0.0341
+        ],
+        "recall": [
+          0.1582,
+          0.2935
+        ],
+        "ndcg": [
+          0.0888,
+          0.1752
+        ],
+        "hitRate": [
+          0.1739,
+          0.3188
+        ]
+      }
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "kind": "HYBRID",
+      "alpha": 0.5,
+      "precision": 0.0275,
+      "recall": 0.2319,
+      "ndcg": 0.1474,
+      "hitRate": 0.2609,
+      "ci": {
+        "precision": [
+          0.0196,
+          0.0355
+        ],
+        "recall": [
+          0.1643,
+          0.2996
+        ],
+        "ndcg": [
+          0.1042,
+          0.1945
+        ],
+        "hitRate": [
+          0.1884,
+          0.3333
+        ]
+      }
+    }
+  ],
+  "strongComparisons": [
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "CF/ALS (α=0)",
+      "metric": "ndcg",
+      "diff": 0.0173,
+      "low": -0.002,
+      "high": 0.038
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "CBF (α=1)",
+      "metric": "ndcg",
+      "diff": 0.0213,
+      "low": -0.0108,
+      "high": 0.0524
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "Item-kNN (baseline)",
+      "metric": "ndcg",
+      "diff": 0.049,
+      "low": 0.0197,
+      "high": 0.0808
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "versus": "Phổ biến (baseline)",
+      "metric": "ndcg",
+      "diff": 0.1406,
+      "low": 0.1006,
+      "high": 0.1845
+    }
+  ],
+  "coldStartRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0,
+      "recall": 0.0,
+      "ndcg": 0.0,
+      "hitRate": 0.0,
+      "ci": {
+        "precision": [
+          0.0,
+          0.0
+        ],
+        "recall": [
+          0.0,
+          0.0
+        ],
+        "ndcg": [
+          0.0,
+          0.0
+        ],
+        "hitRate": [
+          0.0,
+          0.0
+        ]
+      }
+    },
+    {
+      "model": "CBF (khách mới)",
+      "kind": "CBF",
+      "alpha": null,
+      "precision": 0.0,
+      "recall": 0.0,
+      "ndcg": 0.0,
+      "hitRate": 0.0,
+      "ci": {
+        "precision": [
+          0.0,
+          0.0
+        ],
+        "recall": [
+          0.0,
+          0.0
+        ],
+        "ndcg": [
+          0.0,
+          0.0
+        ],
+        "hitRate": [
+          0.0,
+          0.0
+        ]
+      }
+    }
+  ],
+  "coldStartComparisons": [
+    {
+      "model": "CBF (khách mới)",
+      "versus": "Phổ biến (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0,
+      "low": 0.0,
+      "high": 0.0
+    }
+  ],
+  "crossSell": {
+    "n": 4,
+    "pairs": 276,
+    "trainOrders": 2499,
+    "testOrders": 625,
+    "itemsWithRules": 10,
+    "withSuggestions": 0.4275,
+    "rows": [
+      {
+        "model": "Mua kèm (luật kết hợp + phụ kiện)",
+        "hitRate": 0.0181,
+        "precision": 0.0045
+      },
+      {
+        "model": "Bán chạy nhất (baseline)",
+        "hitRate": 0.0217,
+        "precision": 0.0054
+      }
+    ]
+  },
+  "upsell": {
+    "products": 4302,
+    "withSuggestions": 0.9812,
+    "meanPriceIncrease": 0.1025
+  }
+}

@@ -7,6 +7,7 @@
  * Mọi nhãn đi qua escapeHtml (js/core/ui.js).
  *
  * Nạp trước script của trang có gọi renderBarChart / renderLineChart.
+ * options chung: formatValue, color, height, maxValue (đỉnh trục; bỏ trống = giá trị lớn nhất, ít nhất 1).
  */
 
 function cssVar(name, fallback) {
@@ -62,7 +63,8 @@ function renderBarChart(container, data, options) {
 
     const width = Math.max(data.length * slotWidth, measuredWidth, 260);
 
-    const maxValue = Math.max.apply(null, data.map(function (d) { return d.value; }).concat([1]));
+    /* opts.maxValue: đỉnh trục cho giá trị nhỏ (tỉ lệ 0..1); mặc định ít nhất 1 */
+    const maxValue = opts.maxValue || Math.max.apply(null, data.map(function (d) { return d.value; }).concat([1]));
 
     const availableHeight = height - axisHeight - topPadding;
 
@@ -132,7 +134,8 @@ function renderLineChart(container, data, options) {
 
     const width = Math.max((data.length - 1) * minSlotWidth + sidePadding * 2, measuredWidth, 260);
 
-    const maxValue = Math.max.apply(null, data.map(function (d) { return d.value; }).concat([1]));
+    /* opts.maxValue: đỉnh trục cho giá trị nhỏ (tỉ lệ 0..1); mặc định ít nhất 1 */
+    const maxValue = opts.maxValue || Math.max.apply(null, data.map(function (d) { return d.value; }).concat([1]));
 
 
     const points = data.map(function (d, i) {

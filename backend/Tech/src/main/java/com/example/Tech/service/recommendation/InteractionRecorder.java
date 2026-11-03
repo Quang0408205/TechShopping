@@ -7,6 +7,7 @@ import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.repository.product.ProductRepository;
+import com.example.Tech.repository.recommendation.RecommendationRepository;
 import com.example.Tech.repository.recommendation.UserInteractionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,19 +21,23 @@ import java.util.Collection;
 /**
  * Writes user_interactions, the behaviour data the recommendation models learn from (report section 3.5.7).
  * The same behaviour on the same product within {@link #REPEAT_WINDOW} is recorded once, so reloading a
- * page does not inflate the score; purchases are always recorded.
+ * page does not inflate the score; purchases are always recorded. A CLICK picked in a recommendation list also marks
+ * that recommendation as clicked (click-through rate).
  */
 @Service
 @RequiredArgsConstructor
 public class InteractionRecorder {
 
     static final Duration REPEAT_WINDOW = Duration.ofMinutes(30);
+    /** A click counts for a recommendation shown to the user at most this long before. */
+    static final Duration CLICK_WINDOW = Duration.ofDays(1);
 
     private final UserInteractionRepository interactionRepository;
     private final ProductRepository productRepository;
+    private final RecommendationRepository recommendationRepository;
     private final Clock clock;
 
-    /** POST /api/v1/interactions: only VIEW / CLICK, on a product that exists. */
+    /** POST /api/v1/interactions: only VIEW / CLICK, on a product that exists (+ the recommendation list clicked in). */
     @Transactional
     public void recordFromClient(Long userId, InteractionRequest request) {
         if (!request.type().clientReportable()) {
@@ -42,6 +47,11 @@ public class InteractionRecorder {
         productRepository.findByIdAndDeletedAtIsNull(request.productId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PRODUCT_NOT_FOUND, request.productId()));
         record(userId, request.productId(), request.type());
+        if (request.type() == InteractionType.CLICK && request.recommendationType() != null) {
+            LocalDateTime now = LocalDateTime.now(clock);
+            recommendationRepository.markClicked(userId, request.productId(), request.recommendationType().name(),
+                    now.minus(CLICK_WINDOW), now);
+        }
     }
 
     @Transactional
