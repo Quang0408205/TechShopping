@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from app import config
 from app.chatbot import agent
 from app.recommender.engine import recommender
+from app.recommender.evaluation import evaluation_job
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("ai-service")
@@ -108,6 +109,18 @@ def cross_sell(request: ProductRequest):
 async def train():
     """Huấn luyện lại ALS + tính lại vector sản phẩm (chạy tự động mỗi 24 giờ)."""
     return await run_in_threadpool(recommender.train)
+
+
+@app.get("/evaluation", dependencies=[Depends(internal_only)])
+def evaluation():
+    """Đánh giá offline gần nhất (Precision / Recall / NDCG / HitRate / Coverage theo α) + có đang chạy không."""
+    return evaluation_job.status()
+
+
+@app.post("/evaluation", dependencies=[Depends(internal_only)])
+def start_evaluation():
+    """Chạy lại đánh giá offline ở nền (vài chục giây) trên một bản mô hình riêng; xem kết quả bằng GET."""
+    return evaluation_job.start()
 
 
 def _require_llm():

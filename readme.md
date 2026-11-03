@@ -132,7 +132,7 @@ Quy tắc chung:
 
 **Đánh giá.** Đánh giá hiện ngay khi gửi; điểm trung bình và số đánh giá của sản phẩm tính lại sau mỗi thay đổi. "Đã mua hàng" và "Phân loại hàng" suy ra từ đơn **đã giao** của chính người viết. ADMIN có thể ẩn đánh giá vi phạm kèm lý do.
 
-**Khuyến nghị.** Hệ thống ghi hành vi xem, bấm, thêm giỏ, mua. Mô hình lai giữa lọc theo nội dung (đặc trưng sản phẩm) và phân rã ma trận ALS (hành vi), tự huấn luyện lại mỗi ngày; khách chưa đăng nhập nhận sản phẩm phổ biến và mới. Phụ kiện "mua kèm" và "nâng cấp" dựa trên quan hệ sản phẩm.
+**Khuyến nghị.** Hệ thống ghi hành vi xem, bấm, thêm giỏ, mua. Mô hình lai giữa lọc theo nội dung (đặc trưng sản phẩm) và phân rã ma trận ALS (hành vi), tự huấn luyện lại mỗi ngày; khách chưa đăng nhập nhận sản phẩm phổ biến và mới. Phụ kiện "mua kèm" và "nâng cấp" dựa trên quan hệ sản phẩm. Trang admin **Gợi ý sản phẩm** hiện mô hình đang dùng, kết quả đánh giá offline (Precision / Recall / NDCG theo α, chạy lại được) và tỉ lệ bấm / chuyển đổi của từng khu gợi ý trên web.
 
 **Trợ lý AI.** Chatbot dùng RAG: chính sách của cửa hàng được cắt thành đoạn, mã hoá thành vector (mô hình `multilingual-e5-small`) và lưu trong pgvector; mô hình ngôn ngữ truy hồi đoạn liên quan và có thể gọi các công cụ (tìm sản phẩm, xem chi tiết, tra đơn, giỏ hàng, bảo hành, tìm cửa hàng) dưới quyền của chính khách. Việc thêm giỏ hoặc huỷ đơn luôn cần khách bấm xác nhận. Câu trả lời hiện dần; hội thoại được lưu để giữ ngữ cảnh. Chatbot có giới hạn số tin theo tài khoản và theo IP.
 

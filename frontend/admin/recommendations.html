@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Gợi ý sản phẩm - Quản trị POY</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+
+    <link rel="stylesheet" href="../css/admin/admin.css">
+    <link rel="stylesheet" href="../css/admin/admin-shell.css">
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+</head>
+
+<!-- Hệ thống khuyến nghị: mô hình đang dùng, đánh giá offline (chọn α) và tỉ lệ bấm trên web, chỉ ADMIN -->
+<body class="admin-body" data-page-title="Gợi ý sản phẩm" data-roles="ADMIN">
+
+
+<div class="admin-shell">
+
+    <div data-include="admin-sidebar" data-active="recommendations"></div>
+
+    <div class="admin-main">
+
+        <div data-include="admin-topbar"></div>
+
+        <main class="admin-content">
+
+            <p id="recAiDown" class="admin-mock-note" hidden>
+                AI Service chưa chạy hoặc không trả lời: chưa xem được mô hình và đánh giá offline. Số liệu trên web
+                bên dưới vẫn lấy từ database.
+            </p>
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Mô hình đang dùng</h2>
+                    <button type="button" class="btn btn-outline-dark" id="recTrainBtn">HUẤN LUYỆN LẠI</button>
+                </div>
+
+                <p class="admin-field-hint">
+                    Hybrid = α · CBF (thuộc tính sản phẩm, cosine với hồ sơ khách) + (1 − α) · CF (ALS trên hành vi
+                    xem / bấm / thích / thêm giỏ / mua). Khách dưới 5 lượt tương tác chỉ dùng CBF; chưa đăng nhập: sản
+                    phẩm phổ biến. Tự huấn luyện lại mỗi 24 giờ.
+                </p>
+
+                <div class="admin-stat-grid" id="recModelStats"></div>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Đánh giá offline</h2>
+                    <button type="button" class="btn btn-outline-dark" id="recEvaluateBtn">ĐÁNH GIÁ LẠI</button>
+                </div>
+
+                <p class="admin-field-hint" id="recEvalMeta">Đang tải…</p>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Mô hình</th>
+                                <th class="admin-number" id="recColPrecision">Precision</th>
+                                <th class="admin-number" id="recColRecall">Recall</th>
+                                <th class="admin-number" id="recColNdcg">NDCG</th>
+                                <th class="admin-number" id="recColHit">HitRate</th>
+                                <th class="admin-number">Coverage</th>
+                                <th class="admin-number">Đa dạng</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recEvalBody">
+                            <tr><td colspan="7">Đang tải…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- chênh lệch NDCG của Hybrid so với từng mô hình, trên cùng khách (bootstrap; comparisonText) -->
+                <div id="recEvalCompare"></div>
+
+                <!-- đánh giá bổ sung: tín hiệu mạnh, khách mới, mua kèm, nâng cấp, tinh chỉnh (js render) -->
+                <div id="recEvalExtra"></div>
+
+                <div class="admin-panel-header">
+                    <h3 id="recAlphaChartTitle">NDCG theo α</h3>
+                    <span class="admin-row-count">α = 0: chỉ ALS · α = 1: chỉ CBF</span>
+                </div>
+                <div class="admin-chart-wrapper" id="recAlphaChart"></div>
+
+                <div class="admin-panel-header">
+                    <h3>Lịch sử đánh giá</h3>
+                    <span class="admin-row-count" id="recHistoryCount"></span>
+                </div>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Lúc</th>
+                                <th class="admin-number">Số khách</th>
+                                <th class="admin-number">Hybrid (α đang dùng)</th>
+                                <th class="admin-number">Hybrid (α đã chọn, KTC 95%)</th>
+                                <th class="admin-number">Chỉ CBF</th>
+                                <th class="admin-number">Chỉ ALS</th>
+                                <th class="admin-number">Item-kNN</th>
+                                <th class="admin-number">Phổ biến</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recHistoryBody">
+                            <tr><td colspan="7">Đang tải…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+
+
+            <section class="admin-panel">
+
+                <div class="admin-panel-header">
+                    <h2>Hiệu quả trên web</h2>
+                    <div class="admin-filter-bar">
+                        <select id="recDays" aria-label="Khoảng thời gian">
+                            <option value="7">7 ngày qua</option>
+                            <option value="30" selected>30 ngày qua</option>
+                            <option value="90">90 ngày qua</option>
+                        </select>
+                    </div>
+                </div>
+
+                <p class="admin-field-hint">
+                    Chỉ tính khách đã đăng nhập. Lượt hiển thị: mỗi sản phẩm trong một khu gợi ý khách đã xem; lượt bấm:
+                    khách bấm vào chính sản phẩm đó trong khu gợi ý; chuyển đổi: sau khi bấm, khách thêm sản phẩm vào giỏ
+                    hoặc mua trong 7 ngày.
+                </p>
+
+                <div class="admin-table-wrapper">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Khu gợi ý</th>
+                                <th class="admin-number">Lượt hiển thị</th>
+                                <th class="admin-number">Lượt bấm</th>
+                                <th class="admin-number">Tỉ lệ bấm</th>
+                                <th class="admin-number">Thêm giỏ / mua</th>
+                                <th class="admin-number">Tỉ lệ chuyển đổi</th>
+                                <th class="admin-number">Số khách</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recOnlineBody">
+                            <tr><td colspan="7">Đang tải…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="admin-chart-wrapper" id="recClickChart"></div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</div>
+
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/admin/staff-auth.js"></script>
+<script src="../js/admin/admin-layout.js"></script>
+<script src="../js/admin/admin-charts.js"></script>
+<script src="../js/admin/recommendations.js"></script>
+
+</body>
+</html>

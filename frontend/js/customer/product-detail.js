@@ -1666,7 +1666,8 @@ document.addEventListener(
 
             document.getElementById(zoneId).hidden = false;
 
-            renderRecommendationGrid(document.getElementById(gridId), result.items, categoryMaps.byId);
+            renderRecommendationGrid(document.getElementById(gridId), result.items, categoryMaps.byId,
+                result.source === "AI" ? result.type : null);
 
         }
 

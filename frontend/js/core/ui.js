@@ -1375,9 +1375,19 @@ function fetchRecommendations(type, productId, size, options) {
 }
 
 
-/* Lưới thẻ sản phẩm như renderProductGrid, thêm dòng "lý do gợi ý" dưới tên sản phẩm */
+/*
+ * Lưới thẻ sản phẩm như renderProductGrid, thêm dòng "lý do gợi ý" dưới tên sản phẩm.
+ * type (PERSONAL | SIMILAR | UPSELL | CROSS_SELL, chỉ khi danh sách do AI tính): bấm vào thẻ được tính là bấm vào
+ * gợi ý đó (tỉ lệ bấm ở trang admin "Gợi ý sản phẩm"), xem trackInteraction trong api.js.
+ */
 
-function renderRecommendationGrid(container, items, categorySlugById) {
+function renderRecommendationGrid(container, items, categorySlugById, type) {
+
+    if (type) {
+        container.dataset.recommendationType = type;
+    } else {
+        delete container.dataset.recommendationType;
+    }
 
     renderProductGrid(
         container,

@@ -109,10 +109,18 @@ def build_item_features(products: pd.DataFrame, specs: pd.DataFrame) -> tuple[pd
     return items, vectors
 
 
-def interaction_scores(interactions: pd.DataFrame) -> pd.DataFrame:
-    """i. r(u,i) = Σ_t w_t · log(1 + n(u,i,t)); trả về bảng (user_id, product_id, r, last_at)."""
+def interaction_scores(interactions: pd.DataFrame, half_life_days: float = 0.0, now=None) -> pd.DataFrame:
+    """
+    i. r(u,i) = Σ_t w_t · log(1 + n(u,i,t)) · d; trả về bảng (user_id, product_id, r, last_at).
+    d = 0,5^(tuổi / half_life_days) giảm dần trọng số hành vi cũ (tuổi = số ngày từ lần gần nhất của hành vi đó tới
+    `now`); half_life_days = 0 → d = 1 (không giảm).
+    """
     if interactions.empty:
         return pd.DataFrame(columns=["user_id", "product_id", "r", "last_at"])
     frame = interactions.copy()
     frame["r"] = frame["interaction_type"].map(INTERACTION_WEIGHTS).fillna(0) * np.log1p(frame["n"].astype(float))
+    if half_life_days and half_life_days > 0:
+        reference = pd.Timestamp(now) if now is not None else pd.Timestamp.now()
+        age_days = ((reference - pd.to_datetime(frame["last_at"])).dt.total_seconds() / 86400).clip(lower=0)
+        frame["r"] = frame["r"] * np.power(0.5, age_days.to_numpy(float) / half_life_days)
     return frame.groupby(["user_id", "product_id"], as_index=False).agg(r=("r", "sum"), last_at=("last_at", "max"))

@@ -14,7 +14,10 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-/** One product shown to a logged-in user by the recommendation system, with its score and reason (log). */
+/**
+ * One product shown to a logged-in user by the recommendation system, with its score and reason (log of impressions);
+ * clickedAt: the user then picked it in that list (click-through rate on the admin page).
+ */
 @Entity
 @Table(name = "recommendations")
 @Getter
@@ -44,6 +47,9 @@ public class Recommendation {
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
+
+    @Column(name = "clicked_at")
+    private LocalDateTime clickedAt;
 
     public Recommendation(Long userId, Long productId, RecommendationType type, BigDecimal score, String reason,
                           LocalDateTime createdAt) {

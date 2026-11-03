@@ -11,12 +11,13 @@
  * sản phẩm phổ biến nhất. AI_Service ngừng thì backend trả danh sách dự phòng (source = "FALLBACK").
  */
 
+/* type: loại danh sách để tính tỉ lệ bấm (khu "Phổ biến nhất" hỏi như khách nên không được ghi nhận) */
 const RECOMMENDATION_SECTIONS = [
-    { key: "personal", gridId: "personalGrid", size: 8, load: loadPersonalProducts },
-    { key: "similar", gridId: "similarGrid", size: 4, load: loadSimilarProducts },
+    { key: "personal", gridId: "personalGrid", size: 8, load: loadPersonalProducts, type: "PERSONAL" },
+    { key: "similar", gridId: "similarGrid", size: 4, load: loadSimilarProducts, type: "SIMILAR" },
     { key: "popular", gridId: "popularGrid", size: 4, load: loadPopularProducts },
-    { key: "bundle", gridId: "bundleGrid", size: 4, load: loadBundleProducts },
-    { key: "upgrade", gridId: "upgradeGrid", size: 4, load: loadUpgradeProducts, sectionId: "upgradeSection" }
+    { key: "bundle", gridId: "bundleGrid", size: 4, load: loadBundleProducts, type: "CROSS_SELL" },
+    { key: "upgrade", gridId: "upgradeGrid", size: 4, load: loadUpgradeProducts, sectionId: "upgradeSection", type: "UPSELL" }
 ];
 
 
@@ -100,7 +101,7 @@ async function renderRecommendationSection(section, context) {
             return;
         }
 
-        renderRecommendationGrid(grid, items, categories.byId);
+        renderRecommendationGrid(grid, items, categories.byId, section.type);
 
     } catch (error) {
 

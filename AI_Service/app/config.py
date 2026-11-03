@@ -13,6 +13,9 @@ INTERNAL_KEY = os.getenv("AI_INTERNAL_KEY", "")
 
 MODEL_DIR = Path(os.getenv("AI_MODEL_DIR", Path(__file__).resolve().parent.parent / "models"))
 
+# Kết quả đánh giá offline (scripts/evaluate.py, trang admin "Gợi ý sản phẩm"); docker-compose gắn evals/ vào repo
+EVAL_RESULTS_DIR = Path(os.getenv("AI_EVAL_RESULTS_DIR", Path(__file__).resolve().parent.parent / "evals" / "results"))
+
 # ---- LLM của chatbot ----
 # openai: API kiểu OpenAI (Ollama chạy trên máy = MIỄN PHÍ, hoặc Gemini / Groq); anthropic: Claude (trả phí)
 LLM_PROVIDER = (os.getenv("LLM_PROVIDER") or "openai").lower()
@@ -44,12 +47,15 @@ RAG_KEYWORD_WEIGHT = float(os.getenv("RAG_KEYWORD_WEIGHT") or "1.0")
 # w_t của từng hành vi (Bảng 3.19), giống InteractionType.java ở backend
 INTERACTION_WEIGHTS = {"VIEW": 1.0, "CLICK": 2.0, "LIKE": 3.0, "ADD_TO_CART": 4.0, "PURCHASE": 5.0}
 
-ALPHA = float(os.getenv("REC_ALPHA", "0.4"))          # trọng số CBF trong Hybrid: α=0.4 tốt nhất theo scripts/evaluate.py
+ALPHA = float(os.getenv("REC_ALPHA", "0.5"))          # trọng số CBF trong Hybrid: α chọn trên validation (scripts/evaluate.py)
 COLD_START_K = int(os.getenv("REC_COLD_START_K", "5"))  # k của Bảng 3.21
 CANDIDATES_K = 50                                       # K ứng viên lấy từ mỗi mô hình
 UPSELL_DELTA = 0.30                                     # δ: giá cao hơn tối đa 30%
 
 ALS_FACTORS = int(os.getenv("ALS_FACTORS", "32"))
 ALS_REGULARIZATION = float(os.getenv("ALS_REGULARIZATION", "0.1"))   # λ
-ALS_CONFIDENCE = float(os.getenv("ALS_CONFIDENCE", "10"))            # a trong c_ui = 1 + a·r(u,i)
+ALS_CONFIDENCE = float(os.getenv("ALS_CONFIDENCE", "5"))             # a trong c_ui = 1 + a·r(u,i)
 ALS_ITERATIONS = int(os.getenv("ALS_ITERATIONS", "15"))
+# Giảm dần trọng số hành vi cũ: hành vi cách đây h ngày nặng bằng một nửa hành vi hôm nay; 0 = không giảm
+HALF_LIFE_DAYS = float(os.getenv("REC_HALF_LIFE_DAYS", "30"))
+# Số chiều, λ, a, nửa đời, α: chọn trên validation bằng scripts/evaluate.py (03/11/2026)
