@@ -183,7 +183,7 @@ AI_Service/
 |---|---|---|---|
 | `VIEW` | Website → `POST /api/v1/interactions` | Mở trang chi tiết sản phẩm | 1 |
 | `CLICK` | Website → `POST /api/v1/interactions` | Bấm thẻ sản phẩm trong danh sách | 2 |
-| `LIKE` | (chưa dùng) | Dự phòng cho danh sách yêu thích | 3 |
+| `LIKE` | Backend tự ghi | Thêm vào danh sách yêu thích (bấm trái tim); bỏ khỏi danh sách không xoá hành vi đã ghi | 3 |
 | `ADD_TO_CART` | Backend tự ghi | Thêm vào giỏ hàng | 4 |
 | `PURCHASE` | Backend tự ghi | Đặt hàng | 5 |
 
@@ -687,7 +687,7 @@ luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đ
   - `RecommendationServiceTest`: giữ thứ tự AI, bỏ sản phẩm ẩn, dự phòng Upsell đắt hơn hẳn;
   - `ChatServiceTest`: lưu tin, chặn phiên người khác, gắn phiên khách sau đăng nhập, cắt lịch sử dài, AI ngừng → 503.
 - `ChatServiceTest` có thêm 2 test cho streaming: chuyển tiếp `delta`/`status`, kết thúc bằng `done` có thao tác; AI ngừng → sự kiện `error`.
-- Toàn bộ **663 test** backend đều đạt.
+- Toàn bộ **905 test** backend đều đạt (03/11/2026).
 - Test tích hợp cần database `techshopping_test`. Nếu máy có Postgres khác chiếm `localhost:5432`, chạy:
   ```bash
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
@@ -805,7 +805,7 @@ docker compose exec ai-service python -m scripts.eval_retrieval     # kết qu�
 - Sản phẩm thêm mới chỉ được gợi ý sau lần huấn luyện kế tiếp (tối đa 24 giờ, hoặc huấn luyện ngay bằng API ADMIN).
 - Kho tri thức RAG không tự cập nhật khi đổi giá / thêm sản phẩm: cần chạy lại `build_index`. Riêng `get_product_details` luôn lấy giá **hiện tại** từ Backend.
 - "Còn hàng" không được lọc khi gợi ý, vì tồn kho tính theo từng chi nhánh và chỉ kiểm tra khi nhân viên xác nhận đơn.
-- `LIKE` chưa có chức năng tương ứng (chưa có danh sách yêu thích).
+- Hành vi mô phỏng không có `LIKE`, nên kết quả đánh giá offline chưa đo được tác dụng của danh sách yêu thích; `LIKE` chỉ có từ khách thật.
 - Cross-sell "mua chung" (lift) chưa có tác dụng vì đơn mẫu mỗi đơn chỉ 1 sản phẩm; hiện dựa vào quan hệ phụ kiện theo quy tắc.
 
 ---

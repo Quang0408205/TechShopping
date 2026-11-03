@@ -2,12 +2,14 @@ package com.example.Tech.service.wishlist;
 
 import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.dto.response.wishlist.WishlistItemResponse;
+import com.example.Tech.entity.recommendation.InteractionType;
 import com.example.Tech.entity.wishlist.WishlistItem;
 import com.example.Tech.exception.BusinessException;
 import com.example.Tech.exception.ErrorCode;
 import com.example.Tech.exception.ResourceNotFoundException;
 import com.example.Tech.repository.wishlist.WishlistItemRepository;
 import com.example.Tech.service.product.ProductService;
+import com.example.Tech.service.recommendation.InteractionRecorder;
 import com.example.Tech.service.user.CurrentUserLoader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/** A customer's saved products. Products taken off sale stay saved but are not listed. */
+/**
+ * A customer's saved products. Products taken off sale stay saved but are not listed. Saving a product is also
+ * recorded as a LIKE interaction for the recommendation models; removing it keeps that history, like the cart.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,6 +34,7 @@ public class WishlistService {
     private final WishlistItemRepository repository;
     private final ProductService productService;
     private final CurrentUserLoader currentUserLoader;
+    private final InteractionRecorder interactionRecorder;
 
     public List<WishlistItemResponse> list(Long userId) {
         currentUserLoader.load(userId);
@@ -60,6 +66,7 @@ public class WishlistService {
                     "Danh sách yêu thích tối đa %d sản phẩm".formatted(MAX_ITEMS));
         }
         repository.save(new WishlistItem(userId, productId, priceOf(product)));
+        interactionRecorder.record(userId, productId, InteractionType.LIKE);
     }
 
     @Transactional
