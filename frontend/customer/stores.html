@@ -2,85 +2,56 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Hệ thống cửa hàng - POY</title>
-
     <meta name="description" content="Danh sách chi nhánh POY đang mở cửa: địa chỉ, số điện thoại và chỉ đường.">
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/customer-theme.css">
-
     <link rel="stylesheet" href="../css/customer/content.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body>
 
-
 <div data-include="header"></div>
-
 
 <main>
 
     <section class="page-hero">
-
         <div class="container">
-
             <nav class="breadcrumb" aria-label="Đường dẫn">
                 <a href="../index.html">Trang chủ</a>
                 <span aria-hidden="true">/</span>
                 <span aria-current="page">Hệ thống cửa hàng</span>
             </nav>
-
             <h1>Hệ thống cửa hàng</h1>
-
             <p>Đến trực tiếp một chi nhánh để xem sản phẩm, nhận hàng đã đặt hoặc gửi bảo hành.</p>
-
         </div>
-
     </section>
 
-
     <section class="section">
-
         <div class="container">
-
             <form class="store-filter" id="storeFilter" role="search">
-
                 <input type="search" id="storeKeyword" placeholder="Tìm theo tên, quận / huyện, địa chỉ…" maxlength="100" aria-label="Tìm chi nhánh">
-
                 <select id="storeCity" aria-label="Tỉnh / thành">
                     <option value="">Mọi tỉnh / thành</option>
                 </select>
-
                 <span class="store-count" id="storeCount"></span>
-
             </form>
-
             <div class="store-grid" id="storeGrid" aria-live="polite"></div>
-
         </div>
-
     </section>
 
 </main>
 
-
 <div data-include="footer"></div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

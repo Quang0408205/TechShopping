@@ -1046,7 +1046,7 @@ document.addEventListener(
             promoEl.hidden = !prices.promotionName;
 
 
-            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3) */
+            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua */
 
             const canBuy = canBuyCurrent();
 

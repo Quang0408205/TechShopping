@@ -2,98 +2,65 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Phí giao hàng - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="admin-body" data-page-title="Phí giao hàng" data-roles="ADMIN">
-
 
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="shipping-fees"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
             <p class="admin-subtext">
                 Giao tận nhà mặc định tính <strong>30.000đ</strong> cho mọi đơn, không phân biệt giá trị đơn. Tỉnh / thành nào cần phí khác
                 thì thêm ở đây (phí 0đ = miễn phí giao hàng cho tỉnh đó). Nhận tại cửa hàng luôn miễn phí.
             </p>
-
             <div class="admin-filter-bar admin-filter-bar--split">
-
                 <span></span>
-
                 <button type="button" class="btn btn-dark" id="feeNewBtn">+ THÊM PHÍ RIÊNG CHO TỈNH / THÀNH</button>
-
             </div>
-
-
             <section class="admin-panel" id="feeFormPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="feeFormTitle">Thêm phí riêng</h2>
                 </div>
-
                 <form id="feeForm" novalidate>
-
                     <p id="feeFormError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field">
                             <label for="feeProvince">Tỉnh / thành *</label>
                             <input type="text" id="feeProvince" list="feeProvinceList" maxlength="100" autocomplete="off" required>
                             <datalist id="feeProvinceList"></datalist>
                         </div>
-
                         <div class="admin-field">
                             <label for="feeAmount">Phí giao hàng (đ) *</label>
                             <input type="number" id="feeAmount" min="0" max="10000000" step="1000" inputmode="numeric" required>
                         </div>
-
                     </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="feeSaveBtn">LƯU</button>
                         <button type="button" class="btn btn-outline-dark" id="feeCancelBtn">HỦY</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Tỉnh / thành có phí riêng</h2>
                     <span class="admin-row-count" id="feeRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table">
-
                         <thead>
                             <tr>
                                 <th>Tỉnh / thành</th>
@@ -102,21 +69,14 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-
                         <tbody id="feeTableBody"></tbody>
-
                     </table>
-
                 </div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

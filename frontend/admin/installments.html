@@ -2,25 +2,19 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Trả góp - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
@@ -31,15 +25,10 @@
     <div data-include="admin-sidebar" data-active="installments"></div>
 
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
         <main class="admin-content">
-
             <form class="admin-filter-bar" id="installmentFilterForm" role="search">
-
                 <input type="search" id="installmentKeyword" placeholder="Mã đơn, người nhận, SĐT, email khách, CCCD…" maxlength="255" aria-label="Từ khoá">
-
                 <select id="installmentStatusFilter" aria-label="Trạng thái hồ sơ">
                     <option value="">Tất cả trạng thái</option>
                     <option value="PENDING_APPROVAL">Chờ đối tác</option>
@@ -50,25 +39,19 @@
                     <option value="ACTIVE">Hợp đồng cũ: đang trả góp</option>
                     <option value="COMPLETED">Hợp đồng cũ: đã trả đủ</option>
                 </select>
-
                 <select id="installmentPartnerFilter" aria-label="Đối tác">
                     <option value="">Tất cả đối tác</option>
                     <option value="CREDIT_CARD">Thẻ tín dụng</option>
                     <option value="FINANCE_A">Công ty tài chính A</option>
                     <option value="FINANCE_B">Công ty tài chính B</option>
                 </select>
-
                 <button type="submit" class="btn btn-dark">TÌM</button>
-
             </form>
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Hồ sơ trả góp</h2>
                     <span class="admin-row-count" id="installmentRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
                     <table class="admin-table admin-table--wide">
                         <thead>
@@ -85,19 +68,14 @@
                         <tbody id="installmentTableBody"></tbody>
                     </table>
                 </div>
-
                 <div class="admin-pagination" id="installmentPagination"></div>
-
             </section>
-
             <!-- Điều kiện và bảng phí của đối tác: chỉ ADMIN (js/admin/installments.js bỏ hidden) -->
             <section class="admin-panel" id="partnerPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2>Đối tác và phí</h2>
                     <span class="admin-row-count">Phí mới áp dụng cho hồ sơ được duyệt sau khi lưu</span>
                 </div>
-
                 <div class="admin-table-wrapper">
                     <table class="admin-table admin-table--wide">
                         <thead>
@@ -113,11 +91,8 @@
                         <tbody id="partnerTableBody"></tbody>
                     </table>
                 </div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>

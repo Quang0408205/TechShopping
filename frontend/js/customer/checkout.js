@@ -159,7 +159,7 @@ document.addEventListener(
         /* Cửa hàng đang mở (công khai); lỗi → null (khoá "Nhận tại cửa hàng") */
         const storesPromise = loadPickupStores();
 
-        /* Cửa hàng nào có đủ cả giỏ (v3); lỗi → null (không khoá gì, server vẫn kiểm tra) */
+        /* Cửa hàng nào có đủ cả giỏ; lỗi → null (không khoá gì, server vẫn kiểm tra) */
         const stockPromise = loadStoreStock();
 
 

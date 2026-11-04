@@ -10,8 +10,8 @@
  * Mọi hàm trả về đơn đã đổi sang dạng dùng ở giao diện (toOrderView); lỗi API
  * thì ném ApiError (api.js).
  *
- * Đơn mô phỏng cũ trên trình duyệt ("poy_orders_<userId>", F2) được xoá im
- * lặng khi nạp file này (quyết định 2026-10-02).
+ * Đơn mô phỏng cũ trên trình duyệt ("poy_orders_<userId>") được xoá im
+ * lặng khi nạp file này.
  * Cần nạp sau js/core/api.js và js/core/cart-store.js (cartItemImageUrl).
  */
 

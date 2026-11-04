@@ -323,14 +323,12 @@ function getDisplayPrice(product) {
 
 /*
  * productCardHtml(product, categorySlug): product là một phần tử của
- * data.content từ GET /products. Giữ đúng markup thẻ cũ (.product-card >
- * .product-image + .product-info); ảnh và tên link sang trang chi tiết
- * (A2). Nút .add-cart vẫn mang data-name /
- * data-price vì giỏ hàng còn lưu theo tên cho tới.
+ * data.content từ GET /products. Thẻ gồm .product-image + .product-info; ảnh và
+ * tên link sang trang chi tiết.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
  * không cho thêm vào giỏ. availableQuantity = 0 (không chi nhánh đang mở nào
  * còn hàng) → nhãn "Hết hàng", nút bị khoá.
- * Thiếu trường này (API cũ) thì coi như còn hàng.
+ * Thiếu trường này thì coi như còn hàng.
  * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
  * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
  * thay thế (bindProductImageFallbacks).

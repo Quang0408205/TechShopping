@@ -2,26 +2,19 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Người dùng - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
@@ -32,22 +25,14 @@
     <div data-include="admin-sidebar" data-active="users"></div>
 
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
         <main class="admin-content">
-
-
             <div class="admin-tabs" role="tablist" aria-label="Loại tài khoản">
                 <button type="button" role="tab" class="admin-tab is-active" id="userTabCustomer" data-user-tab="CUSTOMER" aria-selected="true">Khách hàng</button>
                 <button type="button" role="tab" class="admin-tab" id="userTabInternal" data-user-tab="INTERNAL" aria-selected="false">Nội bộ</button>
             </div>
-
-
             <form class="admin-filter-bar" id="userFilterForm" role="search">
-
                 <input type="search" id="userKeyword" placeholder="Tìm email, tên đăng nhập, họ tên…" maxlength="255" aria-label="Từ khoá">
-
                 <!-- Chỉ hiện ở tab Nội bộ; tab Khách hàng luôn lọc role=CUSTOMER -->
                 <select id="userRoleFilter" aria-label="Vai trò" hidden>
                     <option value="">Mọi vai trò nội bộ</option>
@@ -55,139 +40,98 @@
                     <option value="BRANCH_MANAGER">Quản lý chi nhánh (BRANCH_MANAGER)</option>
                     <option value="ADMIN">Quản trị viên (ADMIN)</option>
                 </select>
-
                 <select id="userStatusFilter" aria-label="Trạng thái">
                     <option value="">Mọi trạng thái</option>
                     <option value="true">Đang hoạt động</option>
                     <option value="false">Đã khoá</option>
                 </select>
-
                 <div class="admin-quick-dates" id="userQuickDates" role="group" aria-label="Khoảng ngày tạo tài khoản">
                     <button type="button" data-range="today">Hôm nay</button>
                     <button type="button" data-range="7d">7 ngày</button>
                     <button type="button" data-range="month">Tháng này</button>
                     <button type="button" data-range="all">Mọi ngày</button>
                 </div>
-
                 <label class="admin-date-filter">
                     Tạo từ
                     <input type="date" id="userFromDate" aria-label="Tạo từ ngày">
                 </label>
-
                 <label class="admin-date-filter">
                     đến
                     <input type="date" id="userToDate" aria-label="Tạo đến ngày">
                 </label>
-
                 <select id="userSort" aria-label="Sắp xếp">
                     <option value="createdAt,desc">Mới tạo trước</option>
                     <option value="createdAt,asc">Tạo lâu nhất trước</option>
                 </select>
-
                 <button type="submit" class="btn btn-dark">TÌM</button>
-
             </form>
-
             <p id="userFilterError" class="form-error" role="alert" hidden></p>
-
-
             <!-- Tạo tài khoản quản trị viên (chỉ ADMIN, tab Nội bộ); nhân viên / quản lý vẫn tuyển ở trang Nhân viên -->
             <section class="admin-panel" id="adminCreatePanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2>Tạo quản trị viên</h2>
                 </div>
-
                 <form id="adminCreateForm" novalidate>
-
                     <p id="adminCreateError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field">
                             <label for="newAdminFullname">Họ tên *</label>
                             <input type="text" id="newAdminFullname" maxlength="120" autocomplete="off">
                         </div>
-
                         <div class="admin-field">
                             <label for="newAdminEmail">Email *</label>
                             <input type="email" id="newAdminEmail" maxlength="120" autocomplete="off">
                         </div>
-
                         <div class="admin-field">
                             <label for="newAdminUsername">Tên đăng nhập *</label>
                             <input type="text" id="newAdminUsername" minlength="3" maxlength="50" autocomplete="off">
                         </div>
-
                         <div class="admin-field">
                             <label for="newAdminPhone">Số điện thoại</label>
                             <input type="tel" id="newAdminPhone" maxlength="20" autocomplete="off">
                         </div>
-
                         <div class="admin-field admin-field-wide">
                             <label>Mật khẩu tạm</label>
                             <p class="admin-field-hint">Hệ thống tạo mật khẩu ngẫu nhiên và chỉ hiện một lần sau khi tạo. Người đó phải đổi mật khẩu ở lần đăng nhập đầu, quá 7 ngày chưa đổi thì mật khẩu hết hạn. Quản trị viên có toàn quyền hệ thống: chỉ tạo cho người thật sự cần.</p>
                         </div>
-
                     </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="adminCreateSaveBtn">TẠO QUẢN TRỊ VIÊN</button>
                         <button type="button" class="btn btn-outline-dark" id="adminCreateCancelBtn">HỦY</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <!-- Phân quyền một tài khoản (mở từ nút "Phân quyền" trong bảng) -->
             <section class="admin-panel" id="rolePanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="rolePanelTitle">Đổi vai trò</h2>
                 </div>
-
                 <form id="roleForm" novalidate>
-
                     <p id="roleFormError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-role-options">
-
                         <label>
                             <input type="radio" name="role" value="STAFF">
                             <span><strong>Nhân viên chi nhánh</strong> xử lý đơn, trả góp, hậu mãi, tồn kho của chi nhánh được gán</span>
                         </label>
-
                         <label>
                             <input type="radio" name="role" value="BRANCH_MANAGER">
                             <span><strong>Quản lý chi nhánh</strong> như nhân viên, thêm báo cáo và tuyển / quản lý nhân viên chi nhánh mình</span>
                         </label>
-
                     </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="roleSaveBtn">LƯU</button>
                         <button type="button" class="btn btn-outline-dark" id="roleCancelBtn">HỦY</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Tài khoản</h2>
                     <span class="admin-row-count" id="userRowCount"></span>
                     <button type="button" class="btn btn-dark" id="adminCreateBtn" hidden>+ TẠO QUẢN TRỊ VIÊN</button>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table admin-table--wide">
-
                         <thead>
                             <tr>
                                 <th>Tài khoản</th>
@@ -200,23 +144,15 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-
                         <tbody id="userTableBody"></tbody>
-
                     </table>
-
                 </div>
-
                 <div class="admin-pagination" id="userPagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

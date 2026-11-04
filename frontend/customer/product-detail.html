@@ -2,49 +2,37 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Chi tiết sản phẩm - POY</title>
-
     <meta name="description" content="Thông tin, giá, phiên bản và đánh giá sản phẩm tại POY. Chính hãng, trả góp 0%.">
-
     <link
         rel="stylesheet"
         href="../css/style.css"
     >
-
     <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/catalog-extras.css">
     <link rel="stylesheet" href="../css/customer/content.css">
-
     <link
         rel="stylesheet"
         href="../css/customer/product-detail.css"
     >
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body>
 
-
 <div data-include="header" data-active="products"></div>
-
 
 <main class="product-detail-page">
 
     <div class="container">
-
         <nav class="breadcrumb" aria-label="Đường dẫn">
             <a href="../index.html">Trang chủ</a>
             <span>/</span>
@@ -54,18 +42,13 @@
             <span>/</span>
             <span id="breadcrumbCurrent" aria-current="page">Đang tải...</span>
         </nav>
-
     </div>
-
 
     <!-- ================= ĐANG TẢI ================= -->
 
     <section class="container" id="detailSkeleton" aria-hidden="true">
-
         <div class="product-detail-layout">
-
             <div class="skeleton-block detail-skeleton-image"></div>
-
             <div>
                 <div class="skeleton-block skeleton-line" style="width: 30%"></div>
                 <div class="skeleton-block skeleton-line" style="width: 80%; height: 30px; margin-top: 20px"></div>
@@ -73,54 +56,41 @@
                 <div class="skeleton-block skeleton-line" style="width: 90%; margin-top: 30px"></div>
                 <div class="skeleton-block skeleton-line" style="width: 70%; margin-top: 12px"></div>
             </div>
-
         </div>
-
     </section>
-
 
     <!-- ================= KHÔNG TÌM THẤY / LỖI ================= -->
 
     <section class="container detail-state" id="detailNotFound" hidden>
-
         <div class="state-box empty-state">
             <h3>Không tìm thấy sản phẩm</h3>
             <p>Sản phẩm này có thể đã ngừng kinh doanh hoặc đường dẫn không đúng.</p>
             <a href="products.html" class="btn btn-dark">Xem tất cả sản phẩm</a>
         </div>
-
     </section>
 
-
     <section class="container detail-state" id="detailError" hidden></section>
-
 
     <!-- ================= CHI TIẾT SẢN PHẨM ================= -->
 
     <section class="container" id="detailContent" hidden>
-
         <div class="product-detail-layout">
-
             <div class="detail-gallery">
-
                 <div class="detail-main-image" id="detailStage" tabindex="0" aria-label="Ảnh sản phẩm: dùng phím mũi tên để đổi ảnh, Enter để phóng to">
                     <button type="button" class="detail-arrow is-prev" id="mainPrev" aria-label="Ảnh trước" hidden>&#8249;</button>
                     <img id="mainImage" alt="" referrerpolicy="no-referrer">
                     <button type="button" class="detail-arrow is-next" id="mainNext" aria-label="Ảnh sau" hidden>&#8250;</button>
                     <span class="detail-counter" id="imageCounter" hidden></span>
                 </div>
-
                 <!-- Chỉ hiện khi sản phẩm có từ 2 ảnh trở lên; đổi ảnh bằng mũi tên trên ảnh chính -->
                 <div class="detail-thumb-strip">
                     <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
                 </div>
-
                 <!-- điểm nổi bật rút từ thông số + còn hàng ở cửa hàng nào (js/customer/product-extras.js) -->
                 <section class="detail-highlights" id="detailHighlights" hidden>
                     <h2 class="detail-extra-title">Điểm nổi bật</h2>
                     <ul class="highlight-grid" id="detailHighlightGrid"></ul>
                 </section>
-
                 <section class="detail-store-stock" id="detailStoreStock" hidden>
                     <div class="detail-extra-head">
                         <h2 class="detail-extra-title">Còn hàng tại cửa hàng</h2>
@@ -131,29 +101,18 @@
                     <ul class="store-stock-list" id="storeStockList"></ul>
                     <button type="button" class="store-stock-more" id="storeStockMore" hidden></button>
                 </section>
-
             </div>
-
-
             <div class="detail-info">
-
                 <span class="product-category" id="detailCategory"></span>
-
                 <h1 id="detailName"></h1>
-
                 <p class="detail-meta" id="detailMeta"></p>
-
                 <!-- Điểm đánh giá (thật, chưa có thì Thế Giới Di Động); bấm → tab Đánh giá -->
                 <button type="button" class="detail-rating-link" id="detailRating" hidden></button>
-
-
                 <div class="detail-price-box">
                     <span class="detail-price" id="detailPrice"></span>
                     <span class="detail-price-old" id="detailPriceOld" hidden></span>
                     <span class="detail-promo" id="detailPromo" hidden></span>
                 </div>
-
-
                 <!-- Trái = phiên bản (RAM + bộ nhớ), phải = màu của phiên bản đang chọn -->
                 <div class="detail-variants" id="detailVariants" hidden>
                     <div class="variant-picker" id="variantPicker">
@@ -167,44 +126,30 @@
                         </div>
                     </div>
                 </div>
-
-
                 <div class="detail-quantity-row">
-
                     <span class="variant-label">Số lượng</span>
-
                     <div class="quantity-control">
                         <button type="button" id="qtyMinus" aria-label="Giảm số lượng">−</button>
                         <span id="qtyValue" aria-live="polite">1</span>
                         <button type="button" id="qtyPlus" aria-label="Tăng số lượng">+</button>
                     </div>
-
                 </div>
-
-
                 <!-- Còn / hết hàng của phiên bản đang chọn (tồn kho các chi nhánh đang mở) -->
                 <p class="detail-stock" id="detailStock" hidden></p>
-
                 <!-- Nút "Báo tôi khi có hàng" khi phiên bản đang chọn hết hàng (js/customer/stock-alert.js) -->
                 <div class="stock-alert" id="stockAlert" hidden></div>
-
                 <p class="detail-contact-note" id="contactNote" hidden>
                     Sản phẩm chưa có giá bán trực tuyến. Vui lòng
                     <a href="contact.html">liên hệ</a> để được báo giá.
                 </p>
-
-
                 <div class="detail-actions">
-
                     <!-- disabled tới khi tải xong sản phẩm (product-detail.js bật khi có giá) -->
                     <button type="button" id="addToCartBtn" class="btn btn-outline-dark" disabled>
                         Thêm vào giỏ
                     </button>
-
                     <button type="button" id="buyNowBtn" class="btn btn-dark" disabled>
                         Mua ngay
                     </button>
-
                     <!-- Yêu thích + so sánh (js/customer/compare-wishlist.js); product-detail.js điền data-* khi tải xong sản phẩm -->
                     <div class="detail-tools">
                         <button type="button" id="detailWishBtn" class="detail-tool" data-wish data-product-id="" aria-pressed="false" hidden>
@@ -216,10 +161,7 @@
                             <span>So sánh</span>
                         </button>
                     </div>
-
                 </div>
-
-
                 <!-- Bảo hành lấy từ warrantyMonths; các dòng còn lại khớp chính sách ở trang Dịch vụ -->
                 <ul class="detail-policies">
                     <li id="detailWarranty" hidden></li>
@@ -228,50 +170,33 @@
                     <li>Trả góp 0% cho đơn từ 3.000.000đ</li>
                     <li class="detail-policies-link"><a href="services.html">Xem chính sách và dịch vụ hỗ trợ</a></li>
                 </ul>
-
             </div>
-
         </div>
-
-
         <!-- ================= MUA KÈM TIẾT KIỆM: combo đang chạy của sản phẩm này ================= -->
-
         <section class="combo-zone" id="comboZone" hidden>
-
             <div class="section-heading">
                 <span class="section-label">COMBO</span>
                 <h2>Mua kèm tiết kiệm</h2>
             </div>
-
             <div id="comboList"></div>
-
         </section>
-
-
         <!-- ================= TABS: THÔNG SỐ / MÔ TẢ / ĐÁNH GIÁ ================= -->
-
         <div class="detail-tabs">
-
             <div class="tab-buttons" role="tablist">
                 <button type="button" class="tab-btn active" data-tab="specs" role="tab">Thông số kỹ thuật</button>
                 <button type="button" class="tab-btn" data-tab="description" role="tab">Mô tả sản phẩm</button>
                 <button type="button" class="tab-btn" data-tab="reviews" role="tab">Đánh giá (<span id="reviewsTabCount">0</span>)</button>
                 <button type="button" class="tab-btn" data-tab="qa" role="tab">Hỏi đáp (<span id="qaTabCount">0</span>)</button>
             </div>
-
             <div class="tab-panel active" data-tab-panel="specs" role="tabpanel">
                 <table class="specs-table" id="specsTable"></table>
             </div>
-
             <div class="tab-panel" data-tab-panel="description" role="tabpanel">
                 <p id="detailDescription"></p>
             </div>
-
             <!-- Đánh giá của khách (js/customer/product-reviews.js): chỉ số thật, không bịa phân bố sao -->
             <div class="tab-panel reviews-panel" data-tab-panel="reviews" role="tabpanel">
-
                 <div class="review-overview">
-
                     <div class="review-score">
                         <div class="review-score-line">
                             <strong id="reviewAverage">0.0</strong>
@@ -280,25 +205,15 @@
                         <span class="review-stars" id="reviewAverageStars" aria-hidden="true"></span>
                         <span id="reviewTotal">Chưa có đánh giá</span>
                     </div>
-
                     <div class="review-bars" id="reviewBars" aria-label="Phân bố số sao" hidden></div>
-
                     <div class="review-filters" id="reviewFilters" role="group" aria-label="Lọc đánh giá"></div>
-
                 </div>
-
-
                 <div class="review-mine" id="reviewMine"></div>
-
                 <div class="review-list" id="reviewList" aria-live="polite"></div>
-
                 <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>Xem thêm đánh giá</button>
-
             </div>
-
             <!-- Hỏi đáp (js/customer/product-qa.js): câu hỏi chỉ hiện sau khi POY trả lời -->
             <div class="tab-panel qa-panel" data-tab-panel="qa" role="tabpanel">
-
                 <form class="qa-form" id="qaForm" novalidate>
                     <label for="qaInput">Bạn cần hỏi gì về sản phẩm này?</label>
                     <textarea id="qaInput" rows="3" maxlength="500" placeholder="Ví dụ: Máy có hỗ trợ sạc nhanh không? Bảo hành bao lâu?"></textarea>
@@ -307,93 +222,57 @@
                     <p class="qa-note" id="qaNote" role="status" hidden></p>
                     <button type="submit" class="btn btn-dark" id="qaSubmit">GỬI CÂU HỎI</button>
                 </form>
-
                 <div class="qa-list" id="qaList" aria-live="polite"></div>
-
                 <button type="button" class="btn btn-outline-dark review-more" id="qaMoreBtn" hidden>Xem thêm câu hỏi</button>
-
             </div>
-
         </div>
-
-
         <!-- ================= SO SÁNH VỚI… : cùng danh mục, tầm giá gần nhau ================= -->
-
         <section class="related-zone" id="compareZone" hidden>
-
             <div class="section-heading">
                 <span class="section-label">CÂN NHẮC THÊM</span>
                 <h2>So sánh với</h2>
             </div>
-
             <div class="compare-suggest" id="compareSuggestGrid"></div>
-
         </section>
-
-
         <!-- ================= GỢI Ý AI: POST /recommendations (SIMILAR / UPSELL / CROSS_SELL) ================= -->
-
         <section class="related-zone" id="upsellZone" hidden>
-
             <div class="section-heading">
                 <span class="section-label">NÂNG TẦM TRẢI NGHIỆM</span>
                 <h2>Có thể nâng cấp lên</h2>
             </div>
-
             <div class="product-grid" id="upsellProductsGrid"></div>
-
         </section>
-
         <section class="related-zone" id="crossSellZone" hidden>
-
             <div class="section-heading">
                 <span class="section-label">KẾT HỢP HOÀN HẢO</span>
                 <h2>Thường được mua kèm</h2>
             </div>
-
             <div class="product-grid" id="crossSellProductsGrid"></div>
-
         </section>
-
         <section class="related-zone" id="relatedZone" hidden>
-
             <div class="section-heading">
                 <span class="section-label">CÓ THỂ BẠN QUAN TÂM</span>
                 <h2>Sản phẩm tương tự</h2>
             </div>
-
             <div class="product-grid" id="relatedProductsGrid"></div>
-
         </section>
-
-
         <!-- Thanh mua hàng dính khi đã cuộn qua nút mua: chỉ bấm hộ addToCartBtn / buyNowBtn (js/customer/ui-effects.js) -->
         <div class="buy-bar" id="buyBar">
-
             <div class="container buy-bar-inner">
-
                 <img class="buy-bar-image" data-buy-bar-image alt="" width="48" height="48" referrerpolicy="no-referrer">
-
                 <div class="buy-bar-text">
                     <strong data-buy-bar-name></strong>
                     <span data-buy-bar-price></span>
                 </div>
-
                 <button type="button" class="btn btn-outline-dark" data-buy-bar="cart">Thêm vào giỏ</button>
-
                 <button type="button" class="btn btn-dark" data-buy-bar="buy">Mua ngay</button>
-
             </div>
-
         </div>
-
     </section>
 
 </main>
 
-
 <div data-include="footer"></div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

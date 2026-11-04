@@ -2,97 +2,63 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Phiếu nhập kho - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="admin-body" data-page-title="Phiếu nhập kho" data-roles="">
-
 
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="purchase-receipts"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
-
             <div class="admin-filter-bar admin-filter-bar--split">
-
                 <form class="admin-filter-bar" id="receiptFilterForm" role="search">
-
                     <input type="search" id="receiptKeyword" placeholder="Tên nhà cung cấp…" maxlength="100" aria-label="Từ khoá">
-
                     <!-- ADMIN: chọn chi nhánh; nhân viên: khoá vào chi nhánh của mình -->
                     <select id="receiptStoreFilter" aria-label="Chi nhánh"></select>
-
                     <select id="receiptStatusFilter" aria-label="Trạng thái">
                         <option value="">Mọi trạng thái</option>
                         <option value="DRAFT">Nháp</option>
                         <option value="COMPLETED">Đã nhập kho</option>
                         <option value="CANCELLED">Đã huỷ</option>
                     </select>
-
                     <button type="submit" class="btn btn-dark">TÌM</button>
-
                 </form>
-
                 <button type="button" class="btn btn-dark" id="receiptNewBtn">+ LẬP PHIẾU NHẬP</button>
-
             </div>
-
-
             <!-- Lập / sửa phiếu nháp, hoặc xem phiếu đã hoàn tất / đã huỷ -->
             <section class="admin-panel" id="receiptPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="receiptPanelTitle">Phiếu nhập kho</h2>
                     <span class="admin-badge" id="receiptPanelStatus" hidden></span>
                 </div>
-
                 <form id="receiptForm" novalidate>
-
                     <p id="receiptError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field">
                             <label for="receiptSupplier">Nhà cung cấp *</label>
                             <select id="receiptSupplier" required></select>
                         </div>
-
                         <div class="admin-field">
                             <label for="receiptNote">Ghi chú</label>
                             <input type="text" id="receiptNote" maxlength="1000" placeholder="Số hoá đơn, lô hàng…">
                         </div>
-
                     </div>
-
-
                     <div id="receiptAddBox">
-
                         <h3 class="admin-subheading">Thêm sản phẩm vào phiếu</h3>
-
                         <div class="admin-form-grid">
-
                             <div class="admin-field admin-field-wide" id="receiptSearchBox">
                                 <label for="receiptProductKeyword">Tìm sản phẩm</label>
                                 <div class="admin-filter-bar">
@@ -100,41 +66,29 @@
                                     <button type="button" class="btn btn-outline-dark" id="receiptProductSearchBtn">TÌM SẢN PHẨM</button>
                                 </div>
                             </div>
-
                             <p class="admin-field-wide" id="receiptChosenProduct" hidden></p>
-
                             <ul class="admin-promo-results admin-field-wide" id="receiptProductResults" hidden></ul>
-
                             <div class="admin-field">
                                 <label for="receiptVariant">Phiên bản</label>
                                 <select id="receiptVariant" disabled>
                                     <option value="">Chọn sản phẩm trước</option>
                                 </select>
                             </div>
-
                             <div class="admin-field">
                                 <label for="receiptQuantity">Số lượng</label>
                                 <input type="number" id="receiptQuantity" min="1" max="100000" step="1" inputmode="numeric">
                             </div>
-
                             <div class="admin-field">
                                 <label for="receiptUnitCost">Giá nhập (đ / sản phẩm)</label>
                                 <input type="number" id="receiptUnitCost" min="0" step="1000" inputmode="numeric">
                             </div>
-
                             <div class="admin-field admin-field-end">
                                 <button type="button" class="btn btn-outline-dark" id="receiptAddLineBtn">THÊM DÒNG</button>
                             </div>
-
                         </div>
-
                     </div>
-
-
                     <div class="admin-table-wrapper">
-
                         <table class="admin-table">
-
                             <thead>
                                 <tr>
                                     <th>Sản phẩm</th>
@@ -145,9 +99,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-
                             <tbody id="receiptLines"></tbody>
-
                             <tfoot>
                                 <tr>
                                     <td><strong>Tổng</strong></td>
@@ -157,35 +109,23 @@
                                     <td colspan="2"></td>
                                 </tr>
                             </tfoot>
-
                         </table>
-
                     </div>
-
                     <p class="admin-subtext" id="receiptMeta"></p>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="receiptSaveBtn">LƯU NHÁP</button>
                         <button type="button" class="btn btn-dark" id="receiptCompleteBtn">LƯU VÀ NHẬP KHO</button>
                         <button type="button" class="btn btn-outline-dark" id="receiptCloseBtn">ĐÓNG</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2 id="receiptTableTitle">Danh sách phiếu nhập</h2>
                     <span class="admin-row-count" id="receiptRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table">
-
                         <thead>
                             <tr>
                                 <th>Mã phiếu</th>
@@ -197,23 +137,15 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-
                         <tbody id="receiptTableBody"></tbody>
-
                     </table>
-
                 </div>
-
                 <div class="admin-pagination" id="receiptPagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

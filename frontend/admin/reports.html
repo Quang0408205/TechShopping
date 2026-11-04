@@ -2,63 +2,45 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Báo cáo doanh thu - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Báo cáo doanh thu" data-roles="BRANCH_MANAGER,ADMIN">
 
-
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="reports"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
-
             <div class="admin-filter-bar admin-report-filters">
-
                 <label>
                     Chi nhánh
                     <!-- js/admin/reports.js: ADMIN chọn mọi chi nhánh thật; quản lý chi nhánh bị khoá vào chi nhánh mình -->
                     <select id="storeFilter" aria-label="Chi nhánh"></select>
                 </label>
-
                 <label>
                     Từ ngày
                     <input type="date" id="fromDateFilter" aria-label="Từ ngày">
                 </label>
-
                 <label>
                     Đến ngày
                     <input type="date" id="toDateFilter" aria-label="Đến ngày">
                 </label>
-
                 <label>
                     Nhóm theo
                     <select id="groupByFilter" aria-label="Nhóm theo">
@@ -67,20 +49,12 @@
                         <option value="MONTH">Tháng</option>
                     </select>
                 </label>
-
                 <button type="button" class="btn btn-outline-dark" id="clearReportFiltersBtn">Xoá lọc</button>
-
                 <button type="button" class="btn btn-dark admin-export-btn" id="exportExcelBtn">Xuất Excel</button>
-
             </div>
-
             <p id="reportDateError" class="form-error admin-notice" role="alert" hidden></p>
-
             <p id="reportEmpty" class="admin-mock-note" hidden>Chưa có đơn đã giao trong khoảng này.</p>
-
             <div class="admin-stat-grid" id="reportStatGrid"></div>
-
-
             <section class="admin-panel">
                 <div class="admin-panel-header">
                     <h2>Doanh thu thuần theo thời gian</h2>
@@ -88,27 +62,20 @@
                 </div>
                 <div class="admin-chart-wrapper" id="reportRevenueChart"></div>
             </section>
-
-
             <div class="admin-panel-grid">
-
                 <section class="admin-panel">
                     <div class="admin-panel-header">
                         <h2>Theo danh mục</h2>
                     </div>
                     <div class="admin-chart-wrapper" id="reportCategoryChart"></div>
                 </section>
-
                 <section class="admin-panel">
                     <div class="admin-panel-header">
                         <h2>Theo phương thức thanh toán</h2>
                     </div>
                     <div class="admin-chart-wrapper" id="reportPaymentChart"></div>
                 </section>
-
             </div>
-
-
             <!-- Chỉ ADMIN, khi đang xem tất cả chi nhánh -->
             <section class="admin-panel" id="reportStoreChartPanel" hidden>
                 <div class="admin-panel-header">
@@ -124,8 +91,6 @@
                     </table>
                 </div>
             </section>
-
-
             <section class="admin-panel">
                 <div class="admin-panel-header">
                     <h2>Doanh số theo nhân viên</h2>
@@ -141,8 +106,6 @@
                     </table>
                 </div>
             </section>
-
-
             <section class="admin-panel">
                 <div class="admin-panel-header">
                     <h2>Top 10 sản phẩm theo doanh thu</h2>
@@ -156,8 +119,6 @@
                     </table>
                 </div>
             </section>
-
-
             <!-- Combo đã áp trên các đơn đã giao -->
             <section class="admin-panel">
                 <div class="admin-panel-header">
@@ -172,43 +133,29 @@
                     </table>
                 </div>
             </section>
-
-
             <!-- Hàng nhập kho theo chi nhánh, dữ liệu THẬT, chỉ ADMIN (js/admin/reports.js bỏ hidden) -->
             <section class="admin-panel" id="stockInPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2>Hàng nhập kho theo chi nhánh</h2>
                     <span class="admin-row-count" id="stockInPeriod"></span>
                 </div>
-
-
                 <div class="admin-filter-bar">
-
                     <select id="stockInStoreFilter" aria-label="Chi nhánh (hàng nhập)"></select>
-
                     <label class="admin-date-filter">
                         Từ
                         <input type="date" id="stockInFromDate" aria-label="Nhập từ ngày">
                     </label>
-
                     <label class="admin-date-filter">
                         đến
                         <input type="date" id="stockInToDate" aria-label="Nhập đến ngày">
                     </label>
-
                     <button type="button" class="btn btn-outline-dark" id="clearStockInFiltersBtn">
                         XÓA LỌC
                     </button>
-
                 </div>
-
                 <p id="stockInError" class="form-error admin-notice" role="alert" hidden></p>
-
                 <div class="admin-stat-grid admin-stat-grid--compact" id="stockInStatGrid"></div>
-
                 <div class="admin-chart-wrapper" id="stockInStoreChart"></div>
-
                 <div class="admin-table-wrapper">
                     <table class="admin-table" id="stockInStoreTable">
                         <thead>
@@ -223,15 +170,11 @@
                         <tbody></tbody>
                     </table>
                 </div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

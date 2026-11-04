@@ -153,7 +153,7 @@ function siteUrl(path) {
 
 /*
  * Khu nội bộ (admin/) dùng phiên riêng, nên cùng một trình duyệt vẫn đăng
- * nhập song song được một tài khoản khách và một tài khoản nhân viên (B2).
+ * nhập song song được một tài khoản khách và một tài khoản nhân viên.
  */
 
 const IS_STAFF_AREA =
@@ -171,8 +171,8 @@ const AUTH_STORAGE_KEY =
     IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
 
 /*
- * Giỏ hàng nằm trên server từ. Hai khoá cũ chỉ còn để dọn một lần
- * (js/core/cart-store.js): "poy_cart_<userId>" (F2, chuyển lên server) và
+ * Giỏ hàng nằm trên server. Hai khoá cũ chỉ còn để dọn một lần
+ * (js/core/cart-store.js): "poy_cart_<userId>" (chuyển lên server) và
  * "poy_cart" (kiểu cũ theo tên sản phẩm, bỏ đi).
  */
 const CART_STORAGE_KEY = "poy_cart";
@@ -266,7 +266,7 @@ const API_ERROR_MESSAGES = {
     INTERNAL_ERROR:
         "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
 
-    /* Khu nội bộ (B2): quản lý người dùng */
+    /* Khu nội bộ: quản lý người dùng */
 
     USER_NOT_FOUND:
         "Không tìm thấy người dùng.",
@@ -283,7 +283,7 @@ const API_ERROR_MESSAGES = {
     USER_DELETED:
         "Tài khoản này đã bị xoá, không thể thay đổi.",
 
-    /* Khu nội bộ (B2): quản lý sản phẩm */
+    /* Khu nội bộ: quản lý sản phẩm */
 
     PRODUCT_NOT_FOUND:
         "Không tìm thấy sản phẩm (có thể đã bị xoá).",

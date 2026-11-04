@@ -2,65 +2,44 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Thông báo - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="admin-body" data-page-title="Thông báo">
-
 
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="notifications"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
             <p class="admin-subtext">
                 Việc mới của chi nhánh: đơn hàng mới, khách huỷ đơn, hàng sắp hết, yêu cầu bảo hành / trả hàng và hàng được chuyển tới.
                 Quản trị viên thấy thông báo của mọi chi nhánh.
             </p>
-
             <form class="admin-filter-bar" id="notifFilterForm">
-
                 <label class="admin-check-filter">
                     <input type="checkbox" id="notifUnreadOnly"> Chỉ hiện chưa đọc
                 </label>
-
                 <button type="button" class="btn btn-outline-dark" id="notifReadAllBtn">ĐÁNH DẤU ĐÃ ĐỌC TẤT CẢ</button>
-
             </form>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Danh sách</h2>
                     <span class="admin-row-count" id="notifRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table">
-
                         <thead>
                             <tr>
                                 <th>Thời gian</th>
@@ -69,23 +48,15 @@
                                 <th></th>
                             </tr>
                         </thead>
-
                         <tbody id="notifTableBody"></tbody>
-
                     </table>
-
                 </div>
-
                 <div class="admin-pagination" id="notifPagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

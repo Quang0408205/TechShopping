@@ -2,145 +2,101 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Chi nhánh - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Chi nhánh" data-roles="ADMIN">
 
-
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="stores"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
-
             <div class="admin-filter-bar admin-filter-bar--split">
-
                 <form class="admin-filter-bar" id="storeFilterForm" role="search">
-
                     <input type="search" id="storeKeyword" placeholder="Tên, địa chỉ, quận, tỉnh, SĐT…" maxlength="255" aria-label="Từ khoá">
-
                     <select id="storeStatusFilter" aria-label="Trạng thái">
                         <option value="">Mọi trạng thái</option>
                         <option value="true">Đang mở</option>
                         <option value="false">Tạm đóng</option>
                     </select>
-
                     <button type="submit" class="btn btn-dark">TÌM</button>
-
                 </form>
-
                 <button type="button" class="btn btn-dark" id="newStoreBtn">
                     + THÊM CHI NHÁNH
                 </button>
-
             </div>
-
-
             <!-- Thêm / sửa chi nhánh -->
             <section class="admin-panel" id="storeFormPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="storeFormTitle">Thêm chi nhánh mới</h2>
                 </div>
-
                 <form id="storeForm" novalidate>
-
                     <p id="storeFormError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field">
                             <label for="stName">Tên chi nhánh *</label>
                             <input type="text" id="stName" maxlength="120" required>
                         </div>
-
                         <div class="admin-field admin-field-wide">
                             <label for="stAddress">Số nhà, đường, phường *</label>
                             <input type="text" id="stAddress" maxlength="255" required placeholder="vd. 12 Nguyễn Trãi, Phường 3">
                         </div>
-
                         <div class="admin-field">
                             <label for="stDistrict">Quận / huyện *</label>
                             <input type="text" id="stDistrict" maxlength="100" required placeholder="vd. Quận 5">
                         </div>
-
                         <div class="admin-field">
                             <label for="stCity">Tỉnh / thành phố *</label>
                             <input type="text" id="stCity" maxlength="100" required placeholder="vd. Hồ Chí Minh">
                         </div>
-
                         <div class="admin-field">
                             <label for="stPhone">Số điện thoại</label>
                             <input type="tel" id="stPhone" maxlength="20">
                         </div>
-
                         <div class="admin-field">
                             <label for="stEmail">Email</label>
                             <input type="email" id="stEmail" maxlength="120">
                         </div>
-
                         <div class="admin-field">
                             <label for="stLatitude">Vĩ độ</label>
                             <input type="number" id="stLatitude" step="any" min="-90" max="90" placeholder="vd. 10.7546">
                         </div>
-
                         <div class="admin-field">
                             <label for="stLongitude">Kinh độ</label>
                             <input type="number" id="stLongitude" step="any" min="-180" max="180" placeholder="vd. 106.6665">
                         </div>
-
                         <label class="admin-field-check">
                             <input type="checkbox" id="stActive" checked>
                             Đang mở (bỏ chọn = tạm đóng)
                         </label>
-
                     </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="storeSaveBtn">LƯU</button>
                         <button type="button" class="btn btn-outline-dark" id="storeCancelBtn">HỦY</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Danh sách chi nhánh</h2>
                     <span class="admin-row-count" id="storeRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
                     <table class="admin-table admin-table--wide">
                         <thead>
@@ -156,17 +112,12 @@
                         <tbody id="storeTableBody"></tbody>
                     </table>
                 </div>
-
                 <div class="admin-pagination" id="storePagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

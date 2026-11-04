@@ -2,48 +2,34 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Tổng quan - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Tổng quan" data-roles="">
 
-
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="dashboard"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
             <p id="deniedNotice" class="form-error admin-notice" role="alert" hidden>
                 Bạn không có quyền truy cập trang vừa chọn.
             </p>
-
             <!-- js/admin/dashboard.js dựng 1 trong 3 bố cục theo vai trò: Toàn hệ thống / Chi nhánh / Việc của tôi -->
             <div class="admin-dashboard-head">
                 <div>
@@ -52,17 +38,13 @@
                 </div>
                 <nav class="admin-shortcuts" id="dashboardShortcuts" aria-label="Lối tắt"></nav>
             </div>
-
             <!-- Nhân viên chưa được gán chi nhánh -->
             <section class="admin-waiting" id="dashboardWaiting" hidden>
                 <h2>Bạn chưa được phân công chi nhánh</h2>
                 <p>Liên hệ quản trị viên để được gán vào một chi nhánh. Khi đó bạn sẽ thấy đơn hàng, trả góp và tồn kho của chi nhánh.</p>
             </section>
-
             <p id="dashboardError" class="form-error admin-notice" role="alert" hidden></p>
-
             <div class="admin-stat-grid" id="statGrid"></div>
-
             <!-- Nhân viên: việc cần làm (không có doanh thu) -->
             <section class="admin-panel" id="taskPanel" hidden>
                 <div class="admin-panel-header">
@@ -71,10 +53,8 @@
                 </div>
                 <ul class="admin-task-list" id="taskList"></ul>
             </section>
-
             <!-- ADMIN + quản lý chi nhánh -->
             <div class="admin-panel-grid" id="chartGrid" hidden>
-
                 <section class="admin-panel">
                     <div class="admin-panel-header">
                         <h2>Doanh thu thuần 30 ngày gần nhất</h2>
@@ -82,16 +62,13 @@
                     </div>
                     <div class="admin-chart-wrapper" id="revenueChart"></div>
                 </section>
-
                 <section class="admin-panel" id="categoryPanel">
                     <div class="admin-panel-header">
                         <h2>Doanh thu theo danh mục</h2>
                     </div>
                     <div class="admin-chart-wrapper" id="categoryChart"></div>
                 </section>
-
             </div>
-
             <!-- Chỉ ADMIN -->
             <section class="admin-panel" id="storeBreakdownPanel" hidden>
                 <div class="admin-panel-header">
@@ -106,7 +83,6 @@
                     </table>
                 </div>
             </section>
-
             <!-- Chỉ quản lý chi nhánh -->
             <section class="admin-panel" id="teamPanel" hidden>
                 <div class="admin-panel-header">
@@ -115,7 +91,6 @@
                 </div>
                 <ul class="admin-team-list" id="teamList"></ul>
             </section>
-
             <section class="admin-panel" id="topProductsPanel" hidden>
                 <div class="admin-panel-header">
                     <h2>Sản phẩm bán chạy (30 ngày)</h2>
@@ -129,13 +104,10 @@
                     </table>
                 </div>
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

@@ -2,26 +2,19 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Đăng nhập nội bộ - POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="admin-body admin-ready admin-login-page">
@@ -47,45 +40,29 @@
 
 </aside>
 
-
 <main class="admin-login-main">
 
     <div class="admin-login-card">
-
         <h1>Đăng nhập nội bộ</h1>
-
         <p class="login-intro">
             Dành cho nhân viên, quản lý chi nhánh và quản trị viên. Khách hàng đăng nhập ở
             <a href="../auth/login.html">trang mua hàng</a>.
         </p>
-
-
         <form id="staffLoginForm" novalidate>
-
             <p id="staffLoginError" class="form-error" role="alert" hidden></p>
-
             <label for="staffEmail">Email hoặc tên đăng nhập</label>
-
             <input type="text" id="staffEmail" placeholder="Nhập email hoặc tên đăng nhập" autocomplete="username" required>
-
             <label for="staffPassword">Mật khẩu</label>
-
             <input type="password" id="staffPassword" placeholder="Nhập mật khẩu" autocomplete="current-password" required>
-
             <button type="submit" id="staffLoginButton" class="btn btn-dark">Đăng nhập</button>
-
         </form>
-
-
         <div class="admin-demo-accounts">
             Tài khoản nội bộ do quản trị viên hoặc quản lý chi nhánh tạo khi tuyển dụng; mật khẩu tạm được gửi cho bạn
             một lần, phải đổi ở lần đăng nhập đầu và hết hạn sau 7 ngày nếu chưa đổi. Tài khoản quản trị viên đầu tiên được tạo từ file .env (xem readme.md).
         </div>
-
     </div>
 
 </main>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

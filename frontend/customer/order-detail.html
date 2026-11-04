@@ -2,104 +2,72 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title id="pageTitle">Chi tiết đơn hàng - POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/customer/account.css">
     <link rel="stylesheet" href="../css/customer/orders.css">
     <link rel="stylesheet" href="../css/customer/after-sales.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body data-account-page="orders">
 
-
 <div data-include="header" data-active="account"></div>
-
 
 <main>
 
     <section class="page-hero">
-
         <div class="container">
-
             <span class="section-label">POY</span>
-
             <h1>CHI TIẾT ĐƠN HÀNG</h1>
-
         </div>
-
     </section>
 
-
     <section class="section">
-
         <div class="container account-layout">
-
             <div id="accountSidebarRoot"></div>
-
-
             <div class="account-main">
-
                 <!-- Vừa đặt xong (?justPlaced=1; chỉ đơn không chờ thanh toán trực tuyến): lời cảm ơn + các bước tiếp theo -->
                 <section id="justPlacedBanner" class="placed-hero" role="status" hidden>
-
                     <span class="placed-confetti" aria-hidden="true">
                         <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
                     </span>
-
                     <svg class="placed-check" viewBox="0 0 52 52" width="64" height="64" aria-hidden="true">
                         <circle class="placed-check-ring" cx="26" cy="26" r="24" fill="none" stroke-width="3"/>
                         <path class="placed-check-tick" d="M15 27l8 8 15-17" fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
-
                     <h2>Đặt hàng thành công!</h2>
-
                     <p class="placed-lead">Cảm ơn bạn đã mua sắm tại POY. Đơn hàng của bạn đang được xử lý, chúng tôi đã gửi email xác nhận tới hộp thư của bạn.</p>
-
                     <ol class="placed-steps" aria-label="Các bước tiếp theo">
                         <li class="is-done"><span aria-hidden="true">✓</span>Đặt hàng</li>
                         <li class="is-current"><span aria-hidden="true">2</span>Xác nhận đơn</li>
                         <li><span aria-hidden="true">3</span>Giao hàng</li>
                         <li><span aria-hidden="true">4</span>Hoàn tất</li>
                     </ol>
-
                     <div class="placed-actions">
                         <a href="products.html" class="btn btn-dark">TIẾP TỤC MUA SẮM</a>
                         <a href="orders.html" class="btn btn-outline-dark">XEM ĐƠN CỦA TÔI</a>
                     </div>
-
                 </section>
-
                 <div id="orderNotFound" class="state-box empty-state" hidden>
                     <h3>Không tìm thấy đơn hàng</h3>
                     <p>Đơn hàng này không tồn tại hoặc không thuộc tài khoản của bạn.</p>
                     <a href="orders.html" class="btn btn-dark">VỀ DANH SÁCH ĐƠN HÀNG</a>
                 </div>
-
                 <div id="orderLoading" class="state-box">
                     <p>Đang tải đơn hàng…</p>
                 </div>
-
                 <div id="orderError" hidden></div>
-
                 <div id="orderDetailBox" hidden>
-
                     <div class="order-detail-header">
                         <div>
                             <h2 id="orderId"></h2>
@@ -107,25 +75,16 @@
                         </div>
                         <span id="orderStatusBadge" class="order-status-badge"></span>
                     </div>
-
-
                     <p id="orderCancelledNote" class="order-cancelled-note" hidden></p>
-
                     <div class="order-status-timeline" id="orderTimeline"></div>
-
                     <!-- Việc khách cần làm / đang chờ (chuyển khoản, duyệt trả góp) -->
                     <p id="orderPaymentNotice" class="order-payment-notice" hidden></p>
-
-
                     <div class="order-detail-grid">
-
                         <div class="order-detail-main">
-
                             <div class="order-items-card">
                                 <h3 class="order-items-title">Sản phẩm <span id="orderItemCount"></span></h3>
                                 <div class="order-detail-items" id="orderItemsList"></div>
                             </div>
-
                             <!-- Hợp đồng trả góp + lịch các kỳ -->
                             <div class="order-installment" id="orderInstallmentBlock" hidden>
                                 <h4>Trả góp</h4>
@@ -135,11 +94,8 @@
                             </div>
                             <!-- Bảo hành / bảo trì / trả hàng của đơn đã giao (js/customer/order-after-sales.js) -->
                             <div class="after-sales-block" id="orderAfterSales" hidden></div>
-
                         </div>
-
                         <div class="order-detail-side">
-
                             <!-- Chỉ khi đơn chuyển khoản / thẻ đang chờ tiền -->
                             <div class="order-detail-block order-transfer" id="orderTransferBlock" hidden>
                                 <h4 id="orderTransferTitle">Chờ chuyển khoản</h4>
@@ -147,13 +103,11 @@
                                 <p id="orderTransferDeadline" class="order-transfer-deadline"></p>
                                 <a id="orderTransferPayLink" href="payment.html" class="btn btn-dark order-transfer-pay">XEM MÃ QR VÀ THANH TOÁN</a>
                             </div>
-
                             <div class="order-detail-block">
                                 <h4 id="orderShippingTitle">Giao tận nhà</h4>
                                 <p id="orderShippingInfo"></p>
                                 <p id="orderPickupStore" class="order-pickup-store" hidden></p>
                             </div>
-
                             <div class="order-detail-block">
                                 <h4>Thanh toán</h4>
                                 <p id="orderPaymentMethod"></p>
@@ -162,17 +116,14 @@
                                 </p>
                                 <p id="orderPaymentInfo" class="order-payment-info" hidden></p>
                             </div>
-
                             <div class="order-detail-block" id="orderTrackingBlock" hidden>
                                 <h4>Mã vận đơn</h4>
                                 <p id="orderTracking"></p>
                             </div>
-
                             <div class="order-detail-block" id="orderNoteBlock" hidden>
                                 <h4>Ghi chú</h4>
                                 <p id="orderNote"></p>
                             </div>
-
                             <div class="order-detail-block order-detail-totals">
                                 <div class="checkout-total-row">
                                     <span>Tạm tính</span>
@@ -201,42 +152,31 @@
                                 </div>
                                 <p class="order-points-earned" id="orderPointsEarned" hidden></p>
                             </div>
-
                             <!-- đơn đã giao / đã huỷ mua lại được -->
                             <div class="order-detail-actions" id="orderBuyAgain" hidden>
                                 <button type="button" class="btn btn-dark" id="orderBuyAgainBtn">MUA LẠI</button>
                                 <p>Thêm các sản phẩm của đơn này vào giỏ với giá hiện tại.</p>
                             </div>
-
                             <!-- hoá đơn để in: mọi đơn chưa huỷ -->
                             <div class="order-detail-actions" id="orderInvoice" hidden>
                                 <a class="btn btn-outline-dark" id="orderInvoiceLink" href="invoice.html" target="_blank" rel="noopener">XEM / IN HOÁ ĐƠN</a>
                                 <p>Hoá đơn bán hàng của đơn này, in được từ trình duyệt.</p>
                             </div>
-
                             <!-- Chỉ hiện khi đơn còn "Chờ xác nhận" (cancellable) -->
                             <div class="order-detail-actions" id="orderActions" hidden>
                                 <button type="button" class="btn btn-outline-dark" id="orderCancelBtn">HỦY ĐƠN HÀNG</button>
                                 <p>Bạn có thể hủy khi đơn còn chờ xác nhận.</p>
                             </div>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </section>
 
 </main>
 
-
 <div data-include="footer"></div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

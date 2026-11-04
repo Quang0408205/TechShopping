@@ -2,90 +2,61 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Đăng nhập - POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/customer-theme.css">
     <link rel="stylesheet" href="../css/auth/login.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="login-page auth-page">
 
-
 <div class="login-wrapper auth-layout">
-
 
     <!-- Cột giới thiệu (chỉ giao diện) -->
     <aside class="auth-aside">
-
         <a href="../index.html" class="logo auth-aside-logo">
             <span class="logo-main">POY</span>
             <span class="logo-sub">ĐỈNH CAO CÔNG NGHỆ</span>
         </a>
-
         <div class="auth-aside-text">
-
             <h2>Đăng nhập để mua sắm nhanh hơn</h2>
-
             <ul class="auth-perks">
             <li><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Theo dõi đơn hàng và lịch sử mua sắm</li>
             <li><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Gửi yêu cầu bảo hành, trả hàng ngay trên đơn</li>
             <li><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Trả góp 0% cho đơn từ 3.000.000đ</li>
             </ul>
-
         </div>
-
         <img src="../assets/images/hero-macbook-air.webp" alt="" width="598" height="373" class="auth-aside-image">
-
     </aside>
 
-
     <div class="login-box">
-
-
         <a
             href="../index.html"
             class="logo login-logo"
         >
-
             <span class="logo-main">
                 POY
             </span>
-
             <span class="logo-sub">
                 ĐỈNH CAO CÔNG NGHỆ
             </span>
-
         </a>
-
-
         <h1>
             Đăng nhập
         </h1>
-
         <p class="auth-intro">
             Chào mừng bạn quay lại POY.
         </p>
-
-
         <form id="loginForm" novalidate>
-
-
             <!-- Lý do bị chuyển tới đây (?reason=cart...), xem js/auth/login.js -->
             <p
                 id="loginNotice"
@@ -93,20 +64,15 @@
                 role="status"
                 hidden
             ></p>
-
-
             <p
                 id="loginError"
                 class="form-error"
                 role="alert"
                 hidden
             ></p>
-
-
             <label for="identifier">
                 Email hoặc tên đăng nhập
             </label>
-
             <input
                 type="text"
                 id="identifier"
@@ -114,14 +80,10 @@
                 autocomplete="username"
                 required
             >
-
-
             <label for="password">
                 Mật khẩu
             </label>
-
             <div class="password-field">
-
                 <input
                     type="password"
                     id="password"
@@ -129,14 +91,10 @@
                     autocomplete="current-password"
                     required
                 >
-
                 <button type="button" class="password-toggle" aria-label="Hiện mật khẩu" aria-pressed="false">
                     <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
                 </button>
-
             </div>
-
-
             <button
                 type="submit"
                 id="loginButton"
@@ -144,46 +102,31 @@
             >
                 Đăng nhập
             </button>
-
-
         </form>
-
         <div class="google-signin" id="googleSignIn" data-error-target="loginError" hidden>
             <div class="google-signin-divider"><span>hoặc</span></div>
             <div id="googleSignInButton" class="google-signin-button"></div>
         </div>
-
-
         <div class="login-links">
-
             <a href="forgot-password.html">
                 Quên mật khẩu?
             </a>
-
             <span>
                 Chưa có tài khoản?
             </span>
-
             <a href="register.html" id="registerLink">
                 Đăng ký
             </a>
-
         </div>
-
-
         <a
             href="../index.html"
             class="back-home"
         >
             ← Quay lại trang chủ
         </a>
-
-
     </div>
 
-
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/auth/login.js"></script>
