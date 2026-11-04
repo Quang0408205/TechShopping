@@ -13,7 +13,7 @@
 
 /* type: loại danh sách để tính tỉ lệ bấm (khu "Phổ biến nhất" hỏi như khách nên không được ghi nhận) */
 const RECOMMENDATION_SECTIONS = [
-    { key: "personal", gridId: "personalGrid", size: 8, load: loadPersonalProducts, type: "PERSONAL" },
+    { key: "personal", gridId: "personalGrid", size: 16, load: loadPersonalProducts, type: "PERSONAL" },
     { key: "similar", gridId: "similarGrid", size: 4, load: loadSimilarProducts, type: "SIMILAR" },
     { key: "popular", gridId: "popularGrid", size: 4, load: loadPopularProducts },
     { key: "bundle", gridId: "bundleGrid", size: 4, load: loadBundleProducts, type: "CROSS_SELL" },
@@ -72,7 +72,7 @@ async function renderRecommendationSection(section, context) {
 
 
     if (!section.sectionId) {
-        grid.innerHTML = skeletonProductGrid(4);
+        grid.innerHTML = skeletonProductGrid(section.size);
     }
 
 

@@ -274,6 +274,31 @@
 </section>
 
 
+<!-- ================= 3b. GỢI Ý SẢN PHẨM (js/home.js, POST /recommendations PERSONAL; lỗi / rỗng → ẩn) ================= -->
+
+<section class="section recommendation-preview" id="homeRecommendations" aria-labelledby="homeRecommendationTitle">
+
+    <div class="container">
+
+        <div class="section-heading section-heading--row">
+
+            <div>
+                <span class="section-label" id="homeRecommendationLabel">DÀNH RIÊNG CHO BẠN</span>
+                <h2 id="homeRecommendationTitle">Gợi ý dành cho bạn</h2>
+                <p id="homeRecommendationNote">Chọn theo những sản phẩm bạn đã xem, thêm vào giỏ và đã mua.</p>
+            </div>
+
+            <a href="customer/recommendation.html" class="link-arrow">Xem tất cả gợi ý</a>
+
+        </div>
+
+        <div class="product-grid" id="personalRecommendationGrid"></div>
+
+    </div>
+
+</section>
+
+
 <!-- ================= 4. DANH MỤC DẠNG BENTO (js/home.js; số sản phẩm: GET /categories/product-counts) ================= -->
 
 <section class="categories section">
@@ -459,36 +484,6 @@
             <img src="assets/images/hero-airpods-max.webp" alt="" width="438" height="479" loading="lazy">
 
         </a>
-
-    </div>
-
-</section>
-
-
-<!-- ================= 10. KHUYẾN NGHỊ CÁ NHÂN HÓA ================= -->
-
-<section class="section recommendation-preview">
-
-    <div class="container">
-
-        <div class="section-heading section-heading--row">
-
-            <div>
-                <span class="section-label">DÀNH RIÊNG CHO BẠN</span>
-                <h2>Gợi ý dành cho bạn</h2>
-                <p>Những sản phẩm mới nhất tại POY, được chọn cho bạn.</p>
-            </div>
-
-            <a href="customer/recommendation.html" class="link-arrow">Xem tất cả gợi ý</a>
-
-        </div>
-
-
-        <div class="product-grid" id="personalRecommendationGrid">
-
-            <!-- js/home.js: 4 sản phẩm mới nhất từ GET /api/v1/products -->
-
-        </div>
 
     </div>
 

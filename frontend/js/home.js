@@ -16,6 +16,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     renderHomeProductGrids();
 
+    renderHomeRecommendations();
+
     setupHomeTabs();
 
     renderFeaturedCombos();
@@ -1074,16 +1076,13 @@ async function renderRecentViewed() {
 /* ================= LƯỚI SẢN PHẨM TRANG CHỦ (API thật) ================= */
 
 /*
- * Hai lưới 4 sản phẩm từ GET /products (công khai, không gửi token), vẽ bằng
- * renderProductGrid() dùng chung với trang Sản phẩm (js/core/ui.js):
- *   - "Lựa chọn hàng đầu": tab Nổi bật / Mới về / Giá tốt = sort id,asc / id,desc / basePrice,asc;
- *   - "Gợi ý dành cho bạn": 4 sản phẩm mới nhất.
+ * "Lựa chọn hàng đầu": 4 sản phẩm từ GET /products (công khai, không gửi token), vẽ bằng renderProductGrid() dùng chung
+ * với trang Sản phẩm (js/core/ui.js); tab Nổi bật / Mới về / Giá tốt = sort id,asc / id,desc / basePrice,asc.
  * Danh mục chỉ dùng để chọn ảnh thay thế, nên lỗi tải danh mục không chặn việc hiển thị sản phẩm.
  */
 
 const HOME_PRODUCT_GRIDS = [
-    { gridId: "featuredProductGrid", sort: "id,asc", retryId: "featuredRetryBtn" },
-    { gridId: "personalRecommendationGrid", sort: "id,desc", retryId: "newestRetryBtn" }
+    { gridId: "featuredProductGrid", sort: "id,asc", retryId: "featuredRetryBtn" }
 ];
 
 let homeCategoriesPromise = null;
@@ -1110,6 +1109,83 @@ function getHomeCategories() {
 function renderHomeProductGrids() {
 
     HOME_PRODUCT_GRIDS.forEach(renderHomeProductGrid);
+
+}
+
+
+/* ================= GỢI Ý SẢN PHẨM ================= */
+
+/*
+ * POST /recommendations PERSONAL, 8 sản phẩm (2 hàng). Đã đăng nhập: gợi ý theo hành vi của khách, bấm thẻ được tính vào
+ * tỉ lệ bấm. Chưa đăng nhập hoặc AI_Service ngừng: backend trả danh sách phổ biến + mới, nên đổi tiêu đề cho đúng.
+ * Chỉ gọi khi khu này sắp vào màn hình; lỗi hoặc rỗng thì ẩn cả khu.
+ */
+
+const HOME_RECOMMENDATION_SIZE = 8;
+
+function renderHomeRecommendations() {
+
+    const section = document.getElementById("homeRecommendations");
+
+    const grid = document.getElementById("personalRecommendationGrid");
+
+    if (!section || !grid) {
+        return;
+    }
+
+    grid.innerHTML = skeletonProductGrid(HOME_RECOMMENDATION_SIZE);
+
+    async function load() {
+
+        try {
+
+            const [result, categories] = await Promise.all([
+                fetchRecommendations("PERSONAL", null, HOME_RECOMMENDATION_SIZE),
+                getHomeCategories()
+            ]);
+
+            const items = (result && result.items) || [];
+
+            if (!items.length) {
+                section.hidden = true;
+                return;
+            }
+
+            const personal = isLoggedIn() && result.source === "AI";
+
+            if (!personal) {
+                document.getElementById("homeRecommendationLabel").textContent = "ĐƯỢC QUAN TÂM";
+                document.getElementById("homeRecommendationTitle").textContent = "Được quan tâm nhiều";
+                document.getElementById("homeRecommendationNote").textContent = isLoggedIn()
+                    ? "Sản phẩm nhiều khách xem và mua gần đây."
+                    : "Sản phẩm nhiều khách xem và mua gần đây. Đăng nhập để nhận gợi ý theo sở thích của bạn.";
+            }
+
+            renderRecommendationGrid(grid, items, categories.byId, personal ? "PERSONAL" : null);
+
+        } catch (error) {
+
+            section.hidden = true;
+
+        }
+
+    }
+
+    if (typeof IntersectionObserver === "undefined") {
+        load();
+        return;
+    }
+
+    const observer = new IntersectionObserver(function (entries) {
+
+        if (entries.some(function (entry) { return entry.isIntersecting; })) {
+            observer.disconnect();
+            load();
+        }
+
+    }, { rootMargin: "400px 0px" });
+
+    observer.observe(section);
 
 }
 
