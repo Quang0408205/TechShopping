@@ -194,17 +194,31 @@ document.addEventListener("DOMContentLoaded", async function () {
             : "Lúc " + (formatDateTimeVi(result.evaluatedAt) || result.evaluatedAt) + ": " + formatNumber(result.users) +
               " khách, danh sách " + n + " sản phẩm (cách đánh giá cũ, bấm \"Đánh giá lại\")." + failed;
 
+        /* λ của MMR: 1 (hoặc lần đánh giá cũ chưa có MMR) = không xếp lại, dòng tương ứng có mmrLambda null */
+        const mmrOf = function (params) {
+            return params && params.mmrLambda != null && params.mmrLambda < 1 ? Number(params.mmrLambda) : null;
+        };
+
+        const matches = function (row, alpha, mmrLambda) {
+            return row.alpha !== null && Number(row.alpha) === Number(alpha) &&
+                (row.mmrLambda == null ? null : Number(row.mmrLambda)) === mmrLambda;
+        };
+
         body.innerHTML = result.rows.map(function (row) {
 
             const tags = [];
 
             const ci = row.ci && row.ci.ndcg;
 
-            if (row.alpha !== null && row.alpha === result.bestAlpha) {
+            if (matches(row, result.bestAlpha, null)) {
                 tags.push('<span class="admin-badge admin-badge-success">α đã chọn</span>');
             }
 
-            if (row.alpha !== null && Number(row.alpha) === Number(result.configuredAlpha)) {
+            if (row.mmrLambda != null && matches(row, result.bestAlpha, mmrOf(result.chosen))) {
+                tags.push('<span class="admin-badge admin-badge-success">λ đã chọn</span>');
+            }
+
+            if (matches(row, result.configuredAlpha, mmrOf(result.configured))) {
                 tags.push('<span class="admin-badge admin-badge-neutral">Đang dùng</span>');
             }
 
@@ -224,7 +238,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         renderExtra(result);
 
-        document.getElementById("recEvalCompare").innerHTML = comparisonText(result.comparisons);
+        document.getElementById("recEvalCompare").innerHTML =
+            comparisonText(result.comparisons) + comparisonText(result.mmrComparisons);
 
         const byAlpha = validationRows
             .filter(function (row) { return row.alpha !== null; })
@@ -241,7 +256,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     /*
      * Phần bổ sung của lần đánh giá: tham số chọn trên validation, chỉ tính thêm giỏ / mua, khách mới, mua kèm,
-     * nâng cấp, tinh chỉnh ALS và nửa đời giảm trọng số. Lần đánh giá cũ chưa có các phần này thì để trống.
+     * nâng cấp, tinh chỉnh ALS, nửa đời giảm trọng số và λ của MMR. Lần đánh giá cũ chưa có các phần này thì để trống.
      */
 
     function renderExtra(result) {
@@ -257,9 +272,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const halfLife = function (days) { return days ? Math.round(days) + " ngày" : "không giảm"; };
 
+        const mmrText = function (lambda) {
+            return lambda == null || lambda >= 1 ? "không xếp lại" : formatAlpha(lambda);
+        };
+
         const paramRow = function (label, p) {
             return [label, formatAlpha(p.alpha), String(p.factors), String(p.regularization).replace(".", ","),
-                String(p.confidence).replace(".", ","), halfLife(p.halfLifeDays)];
+                String(p.confidence).replace(".", ","), halfLife(p.halfLifeDays), mmrText(p.mmrLambda)];
         };
 
         const metricRows = function (rows) {
@@ -283,9 +302,13 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const tuning = (result.tuning.als || []).slice().sort(function (a, b) { return b.ndcg - a.ndcg; }).slice(0, 5);
 
+        const mmrTuning = result.tuning.mmr || [];
+
+        const keepShare = 1 - (result.tuning.mmrMaxLoss || 0);
+
         box.innerHTML =
             subHeading("Tham số") +
-            miniTable(["", "α", "Số chiều ALS", "λ", "a", "Nửa đời"],
+            miniTable(["", "α", "Số chiều ALS", "λ", "a", "Nửa đời", "λ của MMR"],
                 [paramRow("Chọn trên validation", result.chosen), paramRow("Đang dùng", result.configured)]) +
 
             subHeading("Chỉ tính thêm giỏ / mua là đúng", formatNumber(result.strongUsers) + " khách") +
@@ -316,7 +339,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             })) +
             miniTable(["Nửa đời giảm trọng số", "NDCG@" + n + " (α đã chọn)"], (result.tuning.decay || []).map(function (row) {
                 return [halfLife(row.halfLifeDays), formatMetric(row.ndcg)];
-            }));
+            })) +
+
+            (mmrTuning.length === 0 ? "" :
+                subHeading("Xếp lại cho đa dạng (MMR) trên validation", "λ = 1: không xếp lại") +
+                '<p class="admin-field-hint">Chọn λ có độ đa dạng cao nhất mà NDCG vẫn giữ được ít nhất ' +
+                formatPercent(keepShare) + " so với không xếp lại.</p>" +
+                miniTable(["λ", "NDCG@" + n, "Đa dạng"], mmrTuning.map(function (row) {
+                    return [formatAlpha(row.lambda) + (row.lambda === result.chosen.mmrLambda ? " (đã chọn)" : ""),
+                        formatMetric(row.ndcg), formatMetric(row.diversity)];
+                })));
 
     }
 
@@ -344,7 +376,8 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
         return '<p class="admin-field-hint">' + comparisons.map(function (c) {
             const sure = c.low > 0 || c.high < 0;
-            return `${escapeHtml(c.model)} so với ${escapeHtml(c.versus)}: NDCG ${formatSigned(c.diff)} ` +
+            const metric = c.metric === "diversity" ? "độ đa dạng" : "NDCG";
+            return `${escapeHtml(c.model)} so với ${escapeHtml(c.versus)}: ${metric} ${formatSigned(c.diff)} ` +
                 `(KTC 95%: ${formatSigned(c.low)} đến ${formatSigned(c.high)}) · ` +
                 (sure ? "<strong>chênh lệch có ý nghĩa</strong>" : "chưa đủ chắc chắn");
         }).join("<br>") + "</p>";
@@ -360,7 +393,7 @@ document.addEventListener("DOMContentLoaded", async function () {
         document.getElementById("recHistoryCount").textContent = history.length ? history.length + " lần gần nhất · NDCG" : "";
 
         if (history.length === 0) {
-            body.innerHTML = '<tr><td colspan="8">Chưa có lần đánh giá nào được lưu.</td></tr>';
+            body.innerHTML = '<tr><td colspan="9">Chưa có lần đánh giá nào được lưu.</td></tr>';
             return;
         }
 
@@ -369,12 +402,16 @@ document.addEventListener("DOMContentLoaded", async function () {
             const best = run.bestAlpha === null ? "—" : formatMetric(run.bestNdcg) + " (α = " + formatAlpha(run.bestAlpha) + ")" +
                 (run.bestNdcgLow === null ? "" : " · " + formatMetric(run.bestNdcgLow) + "–" + formatMetric(run.bestNdcgHigh));
 
+            const mmr = run.mmrNdcg == null ? "—" : formatMetric(run.mmrNdcg) + " (λ = " + formatAlpha(run.mmrLambda) + ")" +
+                (run.mmrDiversity == null ? "" : " · đa dạng " + formatMetric(run.bestDiversity) + " → " + formatMetric(run.mmrDiversity));
+
             return `
                 <tr>
                     <td>${escapeHtml(formatDateTimeVi(run.evaluatedAt) || run.evaluatedAt)}</td>
                     <td class="admin-number">${formatNumber(run.users)}</td>
                     <td class="admin-number">${run.configuredNdcg === null ? "—" : formatMetric(run.configuredNdcg) + " (α = " + formatAlpha(run.configuredAlpha) + ")"}</td>
                     <td class="admin-number">${escapeHtml(best)}</td>
+                    <td class="admin-number">${escapeHtml(mmr)}</td>
                     <td class="admin-number">${formatMetric(run.cbfNdcg)}</td>
                     <td class="admin-number">${formatMetric(run.cfNdcg)}</td>
                     <td class="admin-number">${run.knnNdcg == null ? "—" : formatMetric(run.knnNdcg)}</td>

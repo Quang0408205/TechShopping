@@ -148,7 +148,7 @@ Quy tắc chung:
 
 ## 5. Dữ liệu
 
-- **Cấu trúc:** `database/techshopping.sql` gồm khoảng 50 bảng chia theo nhóm: sản phẩm (danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thông số), người dùng và vai trò, giỏ hàng, đơn hàng (kèm lịch sử trạng thái), thanh toán và trả góp, chuyển khoản, chi nhánh / nhân viên / tồn kho, khuyến mãi, voucher, combo, hậu mãi, đánh giá, liên hệ, hành vi và chatbot. Các thay đổi sau này nằm ở `database/migrations/` (thứ tự chạy ghi trong `database/migrations/README.md`).
+- **Cấu trúc:** cơ sở dữ liệu có 77 bảng nghiệp vụ và 4 view (`database/techshopping.sql` tạo 72 bảng, phần còn lại do các migration thêm), chia theo nhóm: sản phẩm (danh mục, thương hiệu, sản phẩm, phiên bản, ảnh, thông số), người dùng và vai trò, giỏ hàng, đơn hàng (kèm lịch sử trạng thái), thanh toán và trả góp, chuyển khoản, chi nhánh / nhân viên / tồn kho, khuyến mãi, voucher, combo, hậu mãi, đánh giá, liên hệ, hành vi và chatbot. Các thay đổi sau này nằm ở `database/migrations/` (thứ tự chạy ghi trong `database/migrations/README.md`).
 - **Catalogue thật:** sản phẩm crawl từ Thế Giới Di Động (`Raw_data/`), làm sạch rồi nạp vào database; mã sản phẩm dạng `TGDD-<id nguồn>`, nên nạp lại chỉ cập nhật. Các sản phẩm chỉ khác RAM / bộ nhớ được gộp thành một sản phẩm nhiều phiên bản. Với các danh mục cào theo từng trang sản phẩm (màn hình, máy tính để bàn, máy tính bảng, đồng hồ), mỗi sản phẩm có đủ tổ hợp phiên bản × màu và ảnh riêng theo màu (`product_images.color`, rỗng = ảnh chung).
 - **Dữ liệu mẫu:** khi database Docker được tạo lần đầu, hệ thống nạp thêm dữ liệu minh hoạ (`database/docker-init/`, chỉ dùng tài khoản `@example.test`): 6 chi nhánh và nhân viên, tồn kho, khuyến mãi / voucher / combo, 2.400 khách và khoảng 3.000 đơn 05–10/2026 (giao, huỷ, trả hàng, hoa hồng, điểm thưởng), voucher trên đơn, phiếu bảo hành, đánh giá kèm lượt thích, danh sách yêu thích, tin nhắn liên hệ, yêu cầu bảo hành / bảo trì; bộ lọc thông số và nhu cầu của catalogue. Backend không gửi email tới địa chỉ thử nghiệm (`.test`, `.invalid`…). Hành vi người dùng cho phần khuyến nghị có thể được **mô phỏng** (khách mang họ tên người Việt, email `…5NNN@example.test`, không đăng nhập được) để mô hình học được; dữ liệu này được ghi rõ trong báo cáo và xoá được.
 - **Ảnh tải lên** (sản phẩm, danh mục, đánh giá, ảnh đại diện, ảnh hậu mãi) lưu trên đĩa của backend; đường dẫn lưu trong database.
@@ -190,7 +190,7 @@ Có sẵn khi database Docker được tạo lần đầu (`database/docker-init
 
 ## 7. Kiểm thử
 
-- **Backend:** hơn 890 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
+- **Backend:** 895 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
 - **Giao diện:** các kịch bản chạy trên trình duyệt Edge không giao diện (điều khiển qua Chrome DevTools Protocol) cho từng khu vực: trang khách, giỏ hàng và thanh toán (kể cả thẻ quốc tế với một Stripe giả chạy cục bộ), từng trang quản trị, bố cục ở nhiều kích thước màn hình, an toàn trước chèn mã độc.
 - **Ma trận quyền:** một kịch bản gọi hàng chục hành động quan trọng bằng năm kiểu người gọi (chưa đăng nhập, khách, nhân viên, quản lý, ADMIN) và so với luật phân quyền.
 - **Chatbot và khuyến nghị:** có bộ câu hỏi đánh giá chatbot và đo Precision / Recall / NDCG cho khuyến nghị.

@@ -35,7 +35,7 @@ CHAT_EFFORT = os.getenv("AI_CHAT_EFFORT") or "low"
 EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "intfloat/multilingual-e5-small")
 
 # Cách tìm trong kho tri thức RAG: vector | keyword | hybrid (vector + từ khoá, gộp bằng RRF).
-# scripts/eval_retrieval.py: vector tốt nhất (MRR 0,896; hybrid 0,82–0,86; keyword 0,75) nên là mặc định
+# scripts/eval_retrieval.py: vector tốt nhất (MRR 0,900; hybrid 0,83–0,87; keyword 0,78) nên là mặc định
 RAG_MODE = (os.getenv("RAG_MODE") or "vector").lower()
 # Số chunk chính sách đưa cho LLM: Hit@3 = 0,87, Hit@5 = 0,93 (chunk ngắn nên K = 5 gần như không tốn thêm)
 RAG_POLICY_K = int(os.getenv("RAG_POLICY_K") or "5")
@@ -58,4 +58,6 @@ ALS_CONFIDENCE = float(os.getenv("ALS_CONFIDENCE", "5"))             # a trong c
 ALS_ITERATIONS = int(os.getenv("ALS_ITERATIONS", "15"))
 # Giảm dần trọng số hành vi cũ: hành vi cách đây h ngày nặng bằng một nửa hành vi hôm nay; 0 = không giảm
 HALF_LIFE_DAYS = float(os.getenv("REC_HALF_LIFE_DAYS", "30"))
-# Số chiều, λ, a, nửa đời, α: chọn trên validation bằng scripts/evaluate.py (03/11/2026)
+# MMR: xếp lại Top-N cho đa dạng hơn, λ = 1 → chỉ theo điểm Hybrid; λ nhỏ → phạt mạnh sản phẩm giống món đã chọn
+MMR_LAMBDA = float(os.getenv("REC_MMR_LAMBDA", "0.8"))
+# Số chiều, λ, a, nửa đời, α, λ của MMR: chọn trên validation bằng scripts/evaluate.py (03/11/2026)

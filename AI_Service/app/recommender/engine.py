@@ -229,6 +229,27 @@ class Recommender:
         updated = m.items["updated_at"].to_numpy("datetime64[s]")[candidates].astype(float)
         return np.lexsort((-updated, -m.popularity[candidates], -np.round(score, 6)))
 
+    def _mmr(self, candidates: np.ndarray, score: np.ndarray, n: int, lam: float) -> np.ndarray:
+        """
+        Maximal Marginal Relevance: chọn lần lượt j = argmax [λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)].
+        Score (Hybrid, trong [0, 1]) và cosine (vector thuộc tính không âm, trong [0, 1]) cùng thang. λ = 1 → giống
+        _rank; bằng nhau thì giữ thứ tự của _rank. Trả về vị trí trong `candidates` như _rank.
+        """
+        order = self._rank(candidates, score)
+        if lam >= 1 or len(order) <= 1:
+            return order[:n]
+        vectors = self.model.vectors[candidates[order]]
+        relevance = score[order]
+        closest = np.zeros(len(order))              # max cosine tới các sản phẩm đã chọn
+        available = np.ones(len(order), bool)
+        picked = []
+        for _ in range(min(n, len(order))):
+            best = int(np.argmax(np.where(available, lam * relevance - (1 - lam) * closest, -np.inf)))
+            picked.append(best)
+            available[best] = False
+            closest = np.maximum(closest, vectors @ vectors[best])
+        return order[picked]
+
     # ---------- khuyến nghị cá nhân hoá ----------
 
     def recommend(self, user_id: int | None, n: int = 8, exclude: list[int] | None = None,
@@ -236,11 +257,12 @@ class Recommender:
         return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude)[0]
 
     def recommend_alphas(self, user_id: int | None, n: int, alphas: list[float],
-                         exclude: list[int] | None = None) -> list[list[Recommendation]]:
+                         exclude: list[int] | None = None, mmr_lambda: float | None = None) -> list[list[Recommendation]]:
         """
         Một danh sách Top-N cho mỗi α: hồ sơ khách, điểm CBF / CF và tập ứng viên không phụ thuộc α nên chỉ tính
-        một lần (đánh giá offline thử nhiều α trên cùng khách).
+        một lần (đánh giá offline thử nhiều α trên cùng khách). mmr_lambda: λ của MMR (mặc định config.MMR_LAMBDA).
         """
+        mmr_lambda = config.MMR_LAMBDA if mmr_lambda is None else mmr_lambda
         m = self.model
         allowed = m.valid.copy()
         for pid in exclude or []:
@@ -275,7 +297,7 @@ class Recommender:
             alpha = 1.0 if cf is None else alpha        # Bảng 3.21: ít dữ liệu → chỉ CBF
             score, s_cbf, s_cf = self._hybrid(cbf, cf, candidates, alpha)
             result = []
-            for pos in self._rank(candidates, score)[:n]:
+            for pos in self._mmr(candidates, score, n, mmr_lambda):
                 row = candidates[pos]
                 from_cf = s_cf is not None and (1 - alpha) * s_cf[pos] > alpha * s_cbf[pos]
                 result.append(Recommendation(

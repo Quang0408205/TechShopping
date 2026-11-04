@@ -22,7 +22,7 @@ public enum InteractionType {
         return weight;
     }
 
-    /** Only these may be sent by the browser; ADD_TO_CART and PURCHASE are recorded by the cart and order services. */
+    /** Only these may be sent by the browser; LIKE, ADD_TO_CART and PURCHASE are recorded by the wishlist, cart and order services. */
     public boolean clientReportable() {
         return this == VIEW || this == CLICK;
     }

@@ -3,12 +3,15 @@ package com.example.Tech.controller.wishlist;
 import com.example.Tech.entity.product.Category;
 import com.example.Tech.entity.product.Product;
 import com.example.Tech.entity.product.ProductVariant;
+import com.example.Tech.entity.recommendation.InteractionType;
+import com.example.Tech.entity.recommendation.UserInteraction;
 import com.example.Tech.entity.user.UserRole;
 import com.example.Tech.entity.wishlist.WishlistItem;
 import com.example.Tech.repository.mail.EmailLogRepository;
 import com.example.Tech.repository.product.CategoryRepository;
 import com.example.Tech.repository.product.ProductRepository;
 import com.example.Tech.repository.product.ProductVariantRepository;
+import com.example.Tech.repository.recommendation.UserInteractionRepository;
 import com.example.Tech.repository.user.RoleRepository;
 import com.example.Tech.repository.user.UserRepository;
 import com.example.Tech.repository.user.UserRoleRepository;
@@ -71,6 +74,7 @@ class WishlistApiIntegrationTest {
     @Autowired private RoleRepository roleRepository;
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private WishlistItemRepository wishlistRepository;
+    @Autowired private UserInteractionRepository interactionRepository;
     @Autowired private EmailLogRepository emailLogRepository;
     @Autowired private EntityManager entityManager;
     @MockitoBean private MailTransport mailTransport;
@@ -122,6 +126,10 @@ class WishlistApiIntegrationTest {
         send(post("/api/v1/wishlist/" + phone.getId()), customer, null).andExpect(status().isOk());   // again: no duplicate
         send(post("/api/v1/wishlist/" + tablet.getId()), customer, null).andExpect(status().isOk());
         assertThat(wishlistRepository.countByUserId(customerId)).isEqualTo(2);
+        assertThat(interactionRepository.findAll().stream()
+                .filter(i -> i.getUserId().equals(customerId) && i.getType() == InteractionType.LIKE)
+                .map(UserInteraction::getProductId))
+                .containsExactlyInAnyOrder(phone.getId(), tablet.getId());   // one LIKE each, the repeat save adds none
 
         send(get("/api/v1/wishlist/ids"), customer, null)
                 .andExpect(jsonPath("$.data.length()").value(2))
