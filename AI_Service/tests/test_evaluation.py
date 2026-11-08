@@ -123,3 +123,12 @@ def test_mmr_lambda_is_the_most_diverse_one_keeping_95_percent_of_ndcg():
 
     assert choose_mmr_lambda(rows) == 0.7
     assert choose_mmr_lambda(rows, max_loss=0.0) == 1.0           # không chấp nhận mất gì → không xếp lại
+
+
+def test_cold_start_k_is_first_step_from_which_hybrid_never_loses():
+    from app.recommender.evaluation import choose_cold_start_k
+    rows = [{"events": 1, "cbf": 0.10, "hybrid": 0.05}, {"events": 3, "cbf": 0.10, "hybrid": 0.11},
+            {"events": 5, "cbf": 0.12, "hybrid": 0.11}, {"events": 8, "cbf": 0.12, "hybrid": 0.15},
+            {"events": 12, "cbf": 0.13, "hybrid": 0.18}]
+    assert choose_cold_start_k(rows, default=5) == 8          # m = 3 thắng nhưng m = 5 lại thua
+    assert choose_cold_start_k([{"events": 1, "cbf": 0.2, "hybrid": 0.1}], default=5) == 5

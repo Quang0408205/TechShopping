@@ -10,13 +10,17 @@ Chia theo thời gian cho từng người dùng thành 3 phần: 70% hành vi đ
      Mỗi bước giữ giá trị có NDCG@N cao nhất.
      d. λ của MMR (xếp lại Top-N cho đa dạng): xếp lại gần như luôn làm NDCG giảm một chút, nên không chọn theo NDCG
         cao nhất mà chọn λ có độ đa dạng cao nhất trong các λ giữ được ít nhất 95% NDCG của λ = 1 (không xếp lại).
+     e. ngưỡng cold-start k: khách mô phỏng nào cũng có ≥ 12 lượt, nên giả lập khách mới bằng cách chỉ giữ m lượt đầu
+        của 30% khách (m = 1, 2, 3, 5, 8, 12; 70% còn lại giữ đủ để ALS vẫn học được), rồi so NDCG của phổ biến / chỉ CBF
+        / Hybrid trên chính các khách đó. k = m nhỏ nhất mà từ đó trở đi Hybrid không kém CBF.
   2. Báo cáo: học lại trên huấn luyện + validation với tham số đã chọn, chấm trên phần kiểm thử. Phần kiểm thử không
      tham gia chọn tham số nào, nên con số báo cáo không bị "đẹp" nhờ chọn trên chính nó. Trên phần kiểm thử:
      - so với 4 đối chứng: danh sách phổ biến, item–item kNN, chỉ CBF, chỉ ALS;
      - Hybrid + MMR so với Hybrid không xếp lại: khoảng tin cậy của hiệu NDCG (mất bao nhiêu) và hiệu độ đa dạng
        (được bao nhiêu);
      - "đúng" theo hai cách: mọi tương tác (xem trở lên) và chỉ thêm giỏ / mua (tín hiệu mạnh);
-     - khách mới (1 đến k − 1 lượt, chỉ dùng CBF) so với danh sách phổ biến;
+     - khách mới (1 đến k − 1 lượt, chỉ dùng CBF) so với danh sách phổ biến; đường cong cold-start như bước 1e;
+     - có / không có hành vi LIKE (danh sách yêu thích): học lại khi bỏ LIKE, so NDCG trên cùng người dùng;
      - mua kèm: đơn hàng 20% cuối (theo ngày đặt), mỗi sản phẩm trong đơn có từ 2 sản phẩm → danh sách mua kèm có chứa
        sản phẩm khác của cùng đơn không (luật kết hợp chỉ học trên đơn 80% đầu);
      - nâng cấp: bao nhiêu sản phẩm có gợi ý nâng cấp và đắt hơn bao nhiêu.
@@ -64,6 +68,8 @@ ALS_GRID = tuple((factors, regularization, confidence)
 HALF_LIVES = (0.0, 30.0, 90.0)
 MMR_LAMBDAS = (1.0, 0.9, 0.8, 0.7, 0.6, 0.5)
 MMR_MAX_LOSS = 0.05                     # λ được chọn phải giữ ≥ 95% NDCG của danh sách không xếp lại
+COLD_START_STEPS = (1, 2, 3, 5, 8, 12)  # số lượt giữ lại khi giả lập khách mới
+COLD_START_SHARE = 0.3                  # tỉ lệ khách bị cắt lịch sử trong mỗi lần giả lập
 STRONG_TYPES = ("ADD_TO_CART", "PURCHASE")
 METRICS = ("precision", "recall", "ndcg", "hitRate")
 CROSS_SELL_N = 4
@@ -245,7 +251,7 @@ class Session:
         picked = [self.model.items.index[row] for row in ranked]
         return picked + [p for p in self._popular(user, n) if p not in picked][:n - len(picked)]
 
-    def lists(self, users: list[int], keys, n: int) -> dict:
+    def lists(self, users: list[int], keys, n: int, cold_start_k: int | None = None) -> dict:
         """
         {khoá: {người dùng: [product_id]}}; khoá = α (số, không xếp lại), (α, λ) (Hybrid + MMR), POPULAR hoặc KNN;
         các α cùng λ của một khách tính một lần.
@@ -258,7 +264,8 @@ class Session:
         out = {key: {} for key in keys}
         for user in users:
             for lam, group in by_lambda.items():
-                recs = self.rec.recommend_alphas(user, n, [alpha for _, alpha in group], mmr_lambda=lam)
+                recs = self.rec.recommend_alphas(user, n, [alpha for _, alpha in group], mmr_lambda=lam,
+                                                 cold_start_k=cold_start_k)
                 for (key, _), items in zip(group, recs):
                     out[key][user] = [r.product_id for r in items]
             if POPULAR in out:
@@ -323,6 +330,47 @@ def choose_mmr_lambda(rows: list[dict], max_loss: float = MMR_MAX_LOSS) -> float
     baseline = next(row["ndcg"] for row in rows if row["lambda"] == 1.0)
     kept = [row for row in rows if row["ndcg"] >= (1 - max_loss) * baseline]
     return max(kept, key=lambda row: (row["diversity"], row["lambda"]))["lambda"]
+
+
+def _key(alpha: float, lam: float):
+    """Khoá danh sách: α (không xếp lại) hoặc (α, λ) khi có MMR."""
+    return (alpha, lam) if lam < 1 else alpha
+
+
+def cold_start_curve(learn: pd.DataFrame, judge: pd.DataFrame, params: dict, alpha: float, lam: float, n: int,
+                     seed: int, steps=COLD_START_STEPS, share: float = COLD_START_SHARE) -> list[dict]:
+    """
+    NDCG@N theo số lượt m mà khách mới có: cắt lịch sử của `share` khách (đủ max(steps) lượt, có sản phẩm mới trong
+    `judge`) còn m lượt đầu rồi học lại. Hybrid được ép dùng ALS từ lượt đầu (cold_start_k = 1) để so với chỉ CBF.
+    Sản phẩm khách đã gặp ở phần lịch sử bị cắt có thể nằm trong "liên quan"; ảnh hưởng như nhau cho mọi cách gợi ý.
+    """
+    ordered = learn.sort_values("timestamp", kind="stable")
+    counts = ordered.groupby("user_id").size()
+    judged = set(judge["user_id"])
+    pool = sorted(int(u) for u, c in counts.items() if c >= max(steps) and u in judged)
+    rng = np.random.default_rng(seed)
+    sample = set(rng.choice(pool, size=int(len(pool) * share), replace=False).tolist()) if pool else set()
+    rest, cut = ordered[~ordered["user_id"].isin(sample)], ordered[ordered["user_id"].isin(sample)]
+    keys = {"popular": POPULAR, "cbf": _key(1.0, lam), "hybrid": _key(alpha, lam)}
+    rows = []
+    for m in steps:
+        session = Session(pd.concat([rest, cut.groupby("user_id").head(m)]), params)
+        relevant = session.relevant(judge)
+        users = sorted(u for u in sample if relevant.get(u))
+        lists = session.lists(users, list(keys.values()), n, cold_start_k=1)
+        row = {"events": m, "users": len(users)}
+        for name, key in keys.items():
+            row[name] = round(float(_score(lists[key], relevant, users, n)["ndcg"].mean()), 4) if users else 0.0
+        rows.append(row)
+    return rows
+
+
+def choose_cold_start_k(rows: list[dict], default: int) -> int:
+    """m nhỏ nhất mà ở m đó và mọi m lớn hơn, Hybrid ≥ CBF; không có thì giữ `default`."""
+    for i, row in enumerate(rows):
+        if all(r["hybrid"] >= r["cbf"] for r in rows[i:]):
+            return int(row["events"])
+    return default
 
 
 def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.DataFrame) -> dict:
@@ -426,6 +474,10 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
                                                            for u in validation_users])), 4) if validation_users else 0.0})
     best_lambda = choose_mmr_lambda(mmr_rows)
 
+    # 1e. ngưỡng cold-start k
+    cold_curve_validation = cold_start_curve(train, validation, params, best_alpha, best_lambda, n, seed)
+    best_k = choose_cold_start_k(cold_curve_validation, config.COLD_START_K)
+
     # 2. kiểm thử: học lại trên huấn luyện + validation (đơn hàng: 80% đầu theo ngày đặt)
     train_baskets, test_baskets = split_baskets(load_baskets(), train_ratio + validation_ratio)
     session = Session(learn, params, train_baskets[["order_id", "user_id", "product_id"]])
@@ -474,24 +526,49 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
                    model_name("COLD_CBF", None): _score(cold_lists[config.ALPHA], relevant, cold_users, n)}
     cold_rows = [_with_ci(_row(name, kind, None, table), table, cold_samples)
                  for (name, table), kind in zip(cold_tables.items(), ("POPULAR", "CBF"))]
+    cold_curve_test = cold_start_curve(learn, test, params, best_alpha, best_lambda, n, seed + 3)
+
+    # có / không có LIKE (danh sách yêu thích), cùng tham số, cùng người dùng kiểm thử
+    like_rows, like_comparisons = [], []
+    likes = int((learn["interaction_type"] == "LIKE").sum())
+    if likes:
+        no_like = Session(learn[learn["interaction_type"] != "LIKE"], params, train_baskets[["order_id", "user_id", "product_id"]])
+        key = _key(best_alpha, best_lambda)
+        like_users = [u for u in users if strong.get(u)]
+        like_tables = {}
+        for label, sess in (("Có LIKE", session), ("Bỏ LIKE", no_like)):
+            for target, rel in (("mọi tương tác", relevant), ("thêm giỏ / mua", strong)):
+                group = users if target == "mọi tương tác" else like_users
+                like_tables[(label, target)] = _score(sess.lists(group, [key], n)[key], rel, group, n)
+        for target in ("mọi tương tác", "thêm giỏ / mua"):
+            group = users if target == "mọi tương tác" else like_users
+            samples = _samples(len(group), bootstrap, seed + (4 if target == "mọi tương tác" else 5))
+            pair = {f"{label} ({target})": like_tables[(label, target)] for label in ("Có LIKE", "Bỏ LIKE")}
+            like_rows += [_with_ci(_row(name, "HYBRID", best_alpha, table), table, samples) for name, table in pair.items()]
+            like_comparisons += _compare(pair, f"Có LIKE ({target})", [f"Bỏ LIKE ({target})"], samples)
 
     return {
         "evaluatedAt": datetime.now().isoformat(timespec="seconds"),
         "n": n, "trainRatio": train_ratio, "validationRatio": validation_ratio,
         "testRatio": round(1 - train_ratio - validation_ratio, 2), "coldStartK": config.COLD_START_K,
+        "likeEvents": likes,
         "users": len(users), "strongUsers": len(strong_users), "coldUsers": len(cold_users),
         "validationUsers": len(validation_users),
         "trainEvents": len(train), "validationEvents": len(validation), "testEvents": len(test),
         "products": session.valid_count, "configuredAlpha": config.ALPHA, "bestAlpha": best_alpha,
         "configured": {"alpha": config.ALPHA, "factors": config.ALS_FACTORS,
                        "regularization": config.ALS_REGULARIZATION, "confidence": config.ALS_CONFIDENCE,
-                       "halfLifeDays": config.HALF_LIFE_DAYS, "mmrLambda": config.MMR_LAMBDA},
+                       "halfLifeDays": config.HALF_LIFE_DAYS, "mmrLambda": config.MMR_LAMBDA,
+                       "coldStartK": config.COLD_START_K},
         "chosen": {"alpha": best_alpha, "factors": params["factors"], "regularization": params["regularization"],
                    "confidence": params["confidence"], "halfLifeDays": params["half_life_days"],
-                   "mmrLambda": best_lambda},
+                   "mmrLambda": best_lambda, "coldStartK": best_k},
         "bootstrapSamples": bootstrap if users else 0,
         "seconds": round((datetime.now() - started).total_seconds(), 1),
-        "tuning": {"als": als_rows, "decay": decay_rows, "mmr": mmr_rows, "mmrMaxLoss": MMR_MAX_LOSS},
+        "tuning": {"als": als_rows, "decay": decay_rows, "mmr": mmr_rows, "mmrMaxLoss": MMR_MAX_LOSS,
+                   "coldStart": cold_curve_validation},
+        "coldStartCurve": cold_curve_test,
+        "likeRows": like_rows, "likeComparisons": like_comparisons,
         "validationRows": validation_rows, "rows": rows, "comparisons": comparisons,
         "mmrComparisons": mmr_comparisons,
         "strongRows": strong_rows, "strongComparisons": strong_comparisons,
@@ -514,7 +591,8 @@ def save(result: dict, directory: Path = config.EVAL_RESULTS_DIR) -> None:
         writer.writerow(["Phần", "Mô hình", "alpha", f"Precision@{n}", f"Recall@{n}", f"NDCG@{n}", f"NDCG@{n} thấp",
                          f"NDCG@{n} cao", f"HitRate@{n}", "Coverage", "Diversity"])
         for part, rows in (("Kiểm thử", result["rows"]), ("Kiểm thử (thêm giỏ / mua)", result["strongRows"]),
-                           ("Khách mới", result["coldStartRows"]), ("Validation", result["validationRows"])):
+                           ("Khách mới", result["coldStartRows"]), ("LIKE: có / bỏ", result.get("likeRows", [])),
+                           ("Validation", result["validationRows"])):
             for row in rows:
                 ci = (row.get("ci") or {}).get("ndcg") or ["", ""]
                 writer.writerow([part, row["model"], "" if row["alpha"] is None else row["alpha"], row["precision"],
@@ -576,7 +654,7 @@ def markdown(result: dict) -> str:
         f"- Tham số chọn trên validation ({result['validationUsers']} người dùng): ALS {chosen['factors']} chiều, "
         f"λ = {chosen['regularization']}, a = {chosen['confidence']}; α = {chosen['alpha']}; nửa đời giảm trọng số "
         f"{'không giảm' if not chosen['halfLifeDays'] else str(int(chosen['halfLifeDays'])) + ' ngày'}; MMR "
-        f"{_mmr_text(chosen.get('mmrLambda'))}.",
+        f"{_mmr_text(chosen.get('mmrLambda'))}; ngưỡng cold-start k = {chosen.get('coldStartK')}.",
         f"- Kiểm thử: học lại trên huấn luyện + validation, chấm {result['users']} người dùng có ít nhất "
         f"{result['coldStartK']} lượt tương tác và có sản phẩm mới trong phần kiểm thử; {result['products']} sản phẩm "
         f"đang bán. Khoảng tin cậy 95%: bootstrap {result['bootstrapSamples']} lần theo người dùng.",
@@ -597,6 +675,13 @@ def markdown(result: dict) -> str:
         *_table_lines(result["coldStartRows"], n, False),
         *_comparison_lines(result["coldStartComparisons"], n),
     ]
+    if result.get("coldStartCurve"):
+        lines += ["", f"## Cold-start: NDCG@{n} theo số lượt của khách mới (kiểm thử)", "",
+                  f"Cắt lịch sử của {_pct(COLD_START_SHARE)} khách còn m lượt đầu rồi học lại; Hybrid được dùng ALS ngay "
+                  f"từ lượt đầu để so với chỉ CBF.", "", *_cold_lines(result["coldStartCurve"])]
+    if result.get("likeRows"):
+        lines += ["", f"## Danh sách yêu thích (LIKE): có so với bỏ ({result['likeEvents']} lượt LIKE trong phần học)", "",
+                  *_table_lines(result["likeRows"], n, False), *_comparison_lines(result["likeComparisons"], n)]
     cross = result["crossSell"]
     lines += ["", f"## Mua kèm ({cross['testOrders']} đơn kiểm thử, {cross['pairs']} cặp đơn – sản phẩm)", "",
               f"Luật kết hợp học trên {cross['trainOrders']} đơn đặt trước; {_pct(cross['withSuggestions'])} sản phẩm "
@@ -623,11 +708,20 @@ def markdown(result: dict) -> str:
         lines += ["", f"MMR (α và nửa đời đã chọn; chọn λ đa dạng nhất mà NDCG ≥ {keep}% của λ = 1):", "",
                   f"| λ | NDCG@{n} | Diversity |", "|---|---|---|"]
         lines += [f"| {r['lambda']:.1f} | {r['ndcg']:.4f} | {r['diversity']:.4f} |" for r in result["tuning"]["mmr"]]
+    if result["tuning"].get("coldStart"):
+        lines += ["", f"Ngưỡng cold-start (chọn k = m nhỏ nhất mà từ đó Hybrid ≥ CBF; được k = "
+                      f"{chosen.get('coldStartK')}):", "", *_cold_lines(result["tuning"]["coldStart"])]
     configured = result["configured"]
     lines += ["", f"Hệ thống đang dùng: α = {configured['alpha']}, ALS {configured['factors']} chiều, "
                   f"λ = {configured['regularization']}, a = {configured['confidence']}, nửa đời "
-                  f"{configured['halfLifeDays'] or 'không giảm'}, MMR {_mmr_text(configured.get('mmrLambda'))}."]
+                  f"{configured['halfLifeDays'] or 'không giảm'}, MMR {_mmr_text(configured.get('mmrLambda'))}, "
+                  f"k = {configured.get('coldStartK')}."]
     return "\n".join(lines) + "\n"
+
+
+def _cold_lines(rows: list[dict]) -> list[str]:
+    return (["| Số lượt m | Người dùng | Phổ biến | Chỉ CBF | Hybrid |", "|---|---|---|---|---|"]
+            + [f"| {r['events']} | {r['users']} | {r['popular']:.4f} | {r['cbf']:.4f} | {r['hybrid']:.4f} |" for r in rows])
 
 
 def _mmr_text(lam: float | None) -> str:
