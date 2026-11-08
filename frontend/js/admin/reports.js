@@ -1,17 +1,4 @@
-/* ================= BÁO CÁO DOANH THU (admin/reports.html) ================= */
-
-/*
- * Dữ liệu THẬT. Quản lý chi nhánh (khoá vào chi nhánh mình) và ADMIN (mọi chi nhánh, chọn từ /admin/stores):
- *   GET /admin/reports/sales?storeId&fromDate&toDate&groupBy           số tổng, chuỗi theo ngày / tháng, danh mục,
- *                                                                      thanh toán, chi nhánh, nhân viên, top sản phẩm
- *   GET /admin/reports/sales/export?… (cùng bộ lọc)                    file Excel .xlsx (tải bằng fetch có token)
- * Doanh thu = đơn đã giao (theo ngày giao, gồm phí giao hàng); tiền hoàn = trả hàng đã hoàn tiền (theo ngày hoàn).
- * Mặc định 30 ngày gần nhất; tối đa 366 ngày; theo ngày tối đa 62 ngày (lỗi 400 hiện dưới bộ lọc).
- *
- * Chỉ ADMIN, bộ lọc riêng (chi nhánh thật + khoảng ngày):
- *   GET /admin/inventory/stock-in-stats?storeId&fromDate&toDate
- *   → tổng số lượng / số lần nhập / số phiên bản / số nhà cung cấp + từng chi nhánh.
- */
+/* Báo cáo doanh thu (admin/reports.html) */
 
 const PAYMENT_METHOD_LABELS = {
     COD: "Thanh toán khi nhận hàng",

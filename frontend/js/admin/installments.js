@@ -1,14 +1,6 @@
-/* ================= TRẢ GÓP (admin/installments.html) ================= */
-
 /*
+ * Trả góp (admin/installments.html).
  * Hồ sơ trả góp do đối tác (thẻ tín dụng, công ty tài chính) xét và thu tiền; cửa hàng chỉ theo dõi và đối soát.
- * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET  /admin/installments?keyword=&status=&partner=&page=&size=   mới nhất trước
- *   POST /admin/installments/{id}/settle     đối tác đã chuyển tiền (hồ sơ đã duyệt, đơn đã giao)
- *   GET  /admin/installment-partners         (ADMIN) điều kiện + bảng phí của đối tác
- *   PUT  /admin/installment-partners/{code}  (ADMIN) { active, minOrderTotal, maxOrderTotal, rates: [{ numMonths, feePercent }] }
- * Hợp đồng cũ (trước khi có đối tác) vẫn xem được cùng lịch kỳ nhưng không thao tác.
- * ?keyword= và ?status= trên URL (link ở trang Đơn hàng và Tổng quan) được điền sẵn vào bộ lọc.
  */
 
 const INSTALLMENT_PAGE_SIZE = 20;

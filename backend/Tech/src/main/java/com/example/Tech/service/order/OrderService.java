@@ -2,6 +2,7 @@ package com.example.Tech.service.order;
 
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
+import com.example.Tech.dto.request.order.RefundAccountRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.order.OrderResponse;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,7 @@ public interface OrderService {
     OrderResponse getMyOrder(Long userId, Long orderId);
 
     /** Only a PENDING order (else 409 INVALID_ORDER_STATUS). */
-    OrderResponse cancelMyOrder(Long userId, Long orderId);
+    OrderResponse cancelMyOrder(Long userId, Long orderId, RefundAccountRequest refundAccount);
 
     /**
      * "Huỷ thanh toán": cancels my PENDING bank-transfer / card order whose money has not arrived

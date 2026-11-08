@@ -1,11 +1,8 @@
-/* ================= NHẬP EXCEL (dùng chung: Sản phẩm + Tồn kho) ================= */
-
 /*
+ * Nhập Excel (dùng chung: Sản phẩm + Tồn kho).
  * mountExcelImport(container, options) vẽ khối: TẢI FILE MẪU, chọn file .xlsx, KIỂM TRA (dryRun=true, không ghi gì),
  * NHẬP VÀO HỆ THỐNG (dryRun=false, chỉ bật khi lần kiểm tra không có lỗi). Backend kiểm tra hết mọi dòng; có lỗi thì
  * không ghi gì, trả danh sách lỗi theo sheet / dòng / cột.
- * options: { hint, templatePath, templateName, importPath() → path hoặc null (+ options.missingTarget),
- *            labels: { key: "nhãn" } cho summary, onApplied() }
  */
 
 function mountExcelImport(container, options) {

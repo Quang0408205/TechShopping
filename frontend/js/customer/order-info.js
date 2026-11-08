@@ -1,12 +1,4 @@
-/* ================= THÔNG TIN NHẬN HÀNG (popup ở giỏ hàng) ================= */
-
-/*
- * Khách nhập hình thức nhận hàng + người nhận trong một popup ngay ở giỏ hàng; thông tin lưu ở
- * sessionStorage theo tài khoản (đóng tab là mất), trang thanh toán đọc lại và cho sửa bằng chính
- * popup này. Quy tắc kiểm tra giống checkout.js / server. Dữ liệu từ API đều escape khi đưa vào HTML.
- * Giao tận nhà: Tỉnh / Thành + Phường / Xã (vn-address.js) + Số nhà; nhận tại cửa hàng: chọn 1 cửa hàng đang mở (GET /stores), cửa hàng không đủ
- * hàng cho cả giỏ (GET /cart/store-availability) bị khoá.
- */
+/* Thông tin nhận hàng (popup ở giỏ hàng) */
 
 const ORDER_INFO_KEY_PREFIX = "poy_order_info:";
 

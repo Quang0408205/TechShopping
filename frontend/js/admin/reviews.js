@@ -1,13 +1,4 @@
-/* ================= ĐÁNH GIÁ SẢN PHẨM (admin/reviews.html) — R5 ================= */
-
-/*
- * API thật (chỉ ADMIN, backend kiểm tra lại quyền ở mọi request):
- *   GET   /admin/reviews?keyword=&rating=&hidden=&productId=&page=&size=   mọi đánh giá (kể cả đã ẩn), mới nhất trước
- *   PATCH /admin/reviews/{id}/visibility { hidden, reason }               ẩn (bắt buộc lý do) / hiện lại
- * Ẩn / hiện lại đều tính lại điểm sản phẩm ở backend. Lý do ẩn được hiện cho người viết.
- * Lọc theo một sản phẩm: nút "Lọc SP này" trong bảng hoặc link admin/reviews.html?productId=.
- * Mọi chữ qua escapeHtml, mọi ảnh qua isSafeImageUrl.
- */
+/* Đánh giá sản phẩm (admin/reviews.html) */
 
 const REVIEW_PAGE_SIZE = 20;
 

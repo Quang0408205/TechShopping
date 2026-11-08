@@ -32,7 +32,6 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -160,8 +159,19 @@ class AdminPaymentApiIntegrationTest {
         send(post(orderUrl(orderId, "payment/confirm")), staffToken, null).andExpect(status().isOk());
 
         send(post("/api/v1/orders/" + orderId + "/cancel"), customerToken, null)
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("REFUND_ACCOUNT_REQUIRED"));
+        send(post("/api/v1/orders/" + orderId + "/cancel"), customerToken,
+                Map.of("bankName", "Vietcombank", "accountNumber", "12ab", "accountHolder", "NGUYEN VAN A"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.details.accountNumber").exists());
+        send(post("/api/v1/orders/" + orderId + "/cancel"), customerToken,
+                Map.of("bankName", "Vietcombank", "accountNumber", "0123456789", "accountHolder", "NGUYEN VAN A"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.payment.status").value("REFUND_PENDING"));
+                .andExpect(jsonPath("$.data.payment.status").value("REFUND_PENDING"))
+                .andExpect(jsonPath("$.data.payment.refundAccount.bankName").value("Vietcombank"))
+                .andExpect(jsonPath("$.data.payment.refundAccount.accountNumber").value("0123456789"))
+                .andExpect(jsonPath("$.data.payment.refundAccount.accountHolder").value("NGUYEN VAN A"));
         send(post(orderUrl(orderId, "payment/refund")), staffToken, null)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.order.payment.status").value("REFUNDED"))

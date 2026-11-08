@@ -14,6 +14,7 @@ public record PaymentResponse(
         String transactionId,
         LocalDateTime paidAt,
         LocalDateTime refundedAt,
+        RefundAccountResponse refundAccount,
         BankTransferResponse bankTransfer,
         @Schema(description = "CARD only, while the payment is awaited")
         CardPaymentResponse card

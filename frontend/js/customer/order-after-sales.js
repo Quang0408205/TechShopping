@@ -1,11 +1,4 @@
-/* ================= "Bảo hành & đổi trả" ở chi tiết đơn đã giao (customer/order-detail.html) ================= */
-
-/*
- * GET  /orders/{id}/after-sales            hạn bảo hành từng sản phẩm, yêu cầu đang mở, số lượng còn trả được
- * POST /uploads/service-images (multipart) → { url }   ảnh JPG / PNG / WebP ≤ 5 MB
- * POST /warranty-requests | /maintenance-requests | /return-requests
- * Server kiểm tra lại mọi điều kiện (còn bảo hành, 7 ngày, số lượng, trả góp…); lỗi theo trường hiện dưới ô.
- */
+/* "Bảo hành & đổi trả" ở chi tiết đơn đã giao (customer/order-detail.html) */
 
 const AFTER_SALES_MAX_IMAGES = 5;
 const AFTER_SALES_IMAGE_MAX_BYTES = 5 * 1024 * 1024;

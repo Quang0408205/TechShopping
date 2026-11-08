@@ -1,10 +1,4 @@
-/* ================= TRANG CHỦ ================= */
-
-/* Nhịp section: hero tối toàn màn hình → dải hãng → flash sale tối → bento → trưng bày ghim (kem)
-   → lưới sản phẩm → combo → số liệu tối → banner đôi → gợi ý tối → đã xem → đánh giá (kem) → lợi ích → dịch vụ */
-
-
-/* ---- Tiêu đề section dạng hàng (tiêu đề trái, thao tác phải) ---- */
+/* Trang chủ */
 
 .section-heading--row {
     display: flex;

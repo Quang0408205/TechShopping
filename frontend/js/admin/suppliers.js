@@ -1,9 +1,4 @@
-/* ================= NHÀ CUNG CẤP (admin/suppliers.html) ================= */
-
-/*
- * API: GET /admin/suppliers?keyword&active&page&size, POST /admin/suppliers, PUT /admin/suppliers/{id},
- * DELETE /admin/suppliers/{id} (409 khi nhà cung cấp đã có phiếu nhập: chuyển sang "ngừng hợp tác").
- */
+/* Nhà cung cấp (admin/suppliers.html) */
 
 const SUPPLIER_PAGE_SIZE = 20;
 

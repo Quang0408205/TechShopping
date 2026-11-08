@@ -18,7 +18,6 @@
 
 <body>
 
-<!-- Màn hình mở đầu: lần đầu mỗi phiên, ~2,5 giây; bỏ qua khi giảm chuyển động. Điều khiển ở js/home.js -->
 <script>
     (function () {
         try {
@@ -68,7 +67,6 @@
 
 <main>
 
-<!-- ================= 1. HERO TOÀN MÀN HÌNH (carousel: js/customer/ui-effects.js, dịch theo chuột: js/home.js) ================= -->
 
 <section class="hero" aria-roledescription="carousel" aria-label="Sản phẩm nổi bật">
 
@@ -153,13 +151,11 @@
 
 </section>
 
-<!-- ================= 2. DẢI THƯƠNG HIỆU CHẠY NGANG (js/home.js, GET /brands; lỗi → ẩn) ================= -->
 
 <section class="brand-marquee" id="brandMarquee" aria-label="Thương hiệu" hidden>
     <div class="brand-marquee-track" id="brandMarqueeTrack"></div>
 </section>
 
-<!-- ================= 3. SẢN PHẨM ĐÃ XEM (js/home.js, localStorage; ẩn khi chưa xem gì) ================= -->
 
 <section class="section recent-viewed" id="recentViewed" aria-label="Sản phẩm đã xem" hidden>
 
@@ -176,7 +172,6 @@
 
 </section>
 
-<!-- ================= 3. FLASH SALE (js/home.js, GET /promotions/flash-sale; ẩn khi không có khuyến mãi đang chạy) ================= -->
 
 <section class="section flash-sale" id="flashSale" aria-label="Flash sale" hidden>
 
@@ -206,7 +201,6 @@
 
 </section>
 
-<!-- ================= 3b. GỢI Ý SẢN PHẨM (js/home.js, POST /recommendations PERSONAL; lỗi / rỗng → ẩn) ================= -->
 
 <section class="section recommendation-preview" id="homeRecommendations" aria-labelledby="homeRecommendationTitle">
 
@@ -224,7 +218,6 @@
 
 </section>
 
-<!-- ================= 4. DANH MỤC DẠNG BENTO (js/home.js; số sản phẩm: GET /categories/product-counts) ================= -->
 
 <section class="categories section">
 
@@ -236,14 +229,12 @@
             </div>
             <a href="customer/products.html" class="link-arrow">Tất cả sản phẩm</a>
         </div>
-        <!-- js/home.js: một thẻ cho mỗi danh mục đang hiển thị; ảnh = ảnh ADMIN tải lên ở trang Danh mục (không có thì biểu tượng) -->
         <div class="category-grid" aria-busy="true">
         </div>
     </div>
 
 </section>
 
-<!-- ================= 4b. MUA THEO NHU CẦU (js/home.js; số sản phẩm thật từ GET /categories/{id}/filters; lỗi → ẩn) ================= -->
 
 <section class="needs section" id="homeNeeds" aria-label="Mua theo nhu cầu" hidden>
 
@@ -257,7 +248,6 @@
 
 </section>
 
-<!-- ================= 5. TRƯNG BÀY: DẢI CUỘN NGANG (nút ← →, kéo chuột, vuốt; js/home.js) ================= -->
 
 <section class="showcase" id="showcase" aria-label="Tâm điểm công nghệ" hidden>
 
@@ -281,7 +271,6 @@
 
 </section>
 
-<!-- ================= 6. SẢN PHẨM NỔI BẬT (tab: js/home.js) ================= -->
 
 <section class="products-preview section">
 
@@ -298,7 +287,6 @@
             </div>
         </div>
         <div class="product-grid" id="featuredProductGrid" role="tabpanel" aria-live="polite">
-            <!-- js/home.js: 4 sản phẩm từ GET /api/v1/products theo tab đang chọn -->
         </div>
         <div class="view-all">
             <a href="customer/products.html" class="btn btn-dark">
@@ -309,7 +297,6 @@
 
 </section>
 
-<!-- ================= 7. COMBO NỔI BẬT (js/home.js, GET /combos/featured; ẩn khi không có combo đang chạy) ================= -->
 
 <section class="section featured-combos" id="featuredCombos" aria-label="Combo nổi bật" hidden>
 
@@ -324,7 +311,6 @@
 
 </section>
 
-<!-- ================= 8. SỐ LIỆU ĐẾM TĂNG (js/home.js, số thật từ API; mục nào lỗi thì ẩn) ================= -->
 
 <section class="stats" id="homeStats" aria-label="POY qua những con số" hidden>
 
@@ -351,7 +337,6 @@
             </div>
             <img src="assets/images/banner-macbook-pro.webp" alt="" width="600" height="383" loading="lazy">
         </a>
-        <!-- Lối tắt tới Flash sale (js/home.js): có khuyến mãi thật thì hiện số sản phẩm đang giảm, không thì chữ tĩnh -->
         <a href="customer/products.html" class="promo-card promo-card--dark" id="promoFlash">
             <div class="promo-text">
                 <span class="promo-label">Ưu đãi</span>
@@ -365,7 +350,6 @@
 
 </section>
 
-<!-- ================= 11. ĐÁNH GIÁ THẬT (js/home.js, GET /reviews/highlights; ẩn khi chưa có) ================= -->
 
 <section class="reviews section" id="homeReviews" aria-label="Khách hàng nói gì" hidden>
 

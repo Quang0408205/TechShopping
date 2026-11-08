@@ -120,7 +120,6 @@ public class OrderStockLifecycle {
     }
 
 
-
     /**
      * PENDING → CONFIRMED: takes the order's quantities from its store. Locks the inventory rows of the store (by
      * variant id, like stock-in) after the caller has locked the order, checks every line first and only then deducts,

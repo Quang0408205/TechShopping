@@ -1,25 +1,4 @@
-/* ================= NHÂN VIÊN (admin/employees.html) ================= */
-
-/*
- * Dữ liệu thật. Hai vai trò dùng cùng một trang, khác API:
- *
- * ADMIN (mọi chi nhánh):
- *   GET    /admin/employees?keyword&storeId&active&page&size   danh sách (mới nhất trước)
- *   POST   /admin/employees/hire                               TUYỂN: tạo tài khoản mới + hồ sơ + chi nhánh (201),
- *                                                              vai trò STAFF hoặc BRANCH_MANAGER; trả mật khẩu tạm một lần
- *   PUT    /admin/employees/{id}                               sửa toàn bộ; active=false = đã nghỉ (kết thúc phân công)
- *   POST   /admin/employees/{id}/assignment                    gán / chuyển chi nhánh (giữ lịch sử)
- *   DELETE /admin/employees/{id}/assignment                    rút khỏi chi nhánh
- *
- * BRANCH_MANAGER (chỉ chi nhánh của mình, không có ô / cột chi nhánh):
- *   GET    /branch/employees?keyword&active&page&size          nhân viên đang làm và đã nghỉ của chi nhánh
- *   POST   /branch/employees/hire                              tuyển STAFF vào chi nhánh của mình
- *   PUT    /branch/employees/{id}                              sửa hồ sơ
- *   POST   /branch/employees/{id}/deactivate                   cho nghỉ (khoá tài khoản)
- *
- * Tuyển nhân sự luôn tạo tài khoản MỚI, không chọn tài khoản khách có sẵn. Vị trí tại chi nhánh do backend
- * đặt theo vai trò: "Nhân viên chi nhánh" hoặc "Quản lý chi nhánh"; form không gửi vị trí.
- */
+/* Nhân viên (admin/employees.html) */
 
 const EMPLOYEE_PAGE_SIZE = 20;
 

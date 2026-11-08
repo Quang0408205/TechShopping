@@ -1,16 +1,4 @@
-/* ================= PHIẾU NHẬP KHO (admin/purchase-receipts.html) ================= */
-
-/*
- * API (backend kiểm tra vai trò + chi nhánh trong DB ở mọi request):
- *   GET  /admin/stores/{storeId}/purchase-receipts?status&keyword&page&size
- *   GET  /admin/stores/{storeId}/purchase-receipts/{id}                 phiếu + các dòng
- *   POST /admin/stores/{storeId}/purchase-receipts                      tạo phiếu nháp
- *   PUT  /admin/stores/{storeId}/purchase-receipts/{id}                 thay nội dung phiếu nháp
- *   POST /admin/stores/{storeId}/purchase-receipts/{id}/complete        cộng tồn kho + cập nhật giá vốn bình quân
- *   POST /admin/stores/{storeId}/purchase-receipts/{id}/cancel          huỷ phiếu nháp
- *   GET  /admin/suppliers?active=true, GET /products?keyword, GET /products/{id}/variants
- * Chỉ phiếu hoàn tất mới làm thay đổi tồn kho; phiếu nháp sửa / huỷ tự do.
- */
+/* Phiếu nhập kho (admin/purchase-receipts.html) */
 
 const RECEIPT_PAGE_SIZE = 20;
 

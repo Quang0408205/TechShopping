@@ -1,12 +1,14 @@
 """
-Function Calling (báo cáo mục 3.6.3, Bảng 3.24). Mỗi tool là một chức năng nghiệp vụ; tool cần dữ liệu riêng của
+Function Calling. Mỗi tool là một chức năng nghiệp vụ; tool cần dữ liệu riêng của
 khách gọi API Spring Boot KÈM access token của chính khách đó, nên Backend vẫn tự xác thực và kiểm tra quyền
 (đơn hàng phải thuộc tài khoản đang đăng nhập). Chatbot Service không truy cập bảng nghiệp vụ trực tiếp;
 nó chỉ đọc kho tri thức kb_chunks của riêng nó.
 """
 
+import inspect
 import json
 import logging
+import re
 from typing import Any
 
 import httpx
@@ -70,15 +72,17 @@ TOOLS: list[dict] = [
             "type": "object",
             "properties": {
                 "type": {"type": "string", "enum": ["PERSONAL", "SIMILAR", "UPSELL", "CROSS_SELL"]},
-                "product_id": {"type": "integer", "description": "Bắt buộc với SIMILAR, UPSELL, CROSS_SELL"},
+                "product_id": {"type": "integer", "description": "Với SIMILAR, UPSELL, CROSS_SELL"},
+                "product_name": {"type": "string", "description": "Tên sản phẩm khi chưa có product_id, vd. 'iPhone 17e'"},
             },
             "required": ["type"],
         },
     },
     {
         "name": "get_my_orders",
-        "description": "Danh sách đơn hàng gần đây của khách đang đăng nhập (mã đơn, trạng thái, tổng tiền, sản "
-                       "phẩm). Gọi NGAY khi khách hỏi về đơn hàng của họ mà không nêu mã đơn (vd. 'đơn của tôi tới "
+        "description": "Đơn hàng gần đây của khách đang đăng nhập (mã đơn, trạng thái, tổng tiền, sản phẩm): "
+                       "active_orders = các đơn chưa giao xong, recent_completed_orders = tối đa 3 đơn đã giao / đã "
+                       "huỷ gần nhất. Gọi NGAY khi khách hỏi về đơn hàng của họ mà không nêu mã đơn (vd. 'đơn của tôi tới "
                        "đâu rồi'); không cần hỏi mã đơn. Cần đăng nhập.",
         "input_schema": {"type": "object", "properties": {}},
     },
@@ -168,6 +172,10 @@ class BackendError(Exception):
         self.code = code
 
 
+ORDER_STATUS_VI = {"PENDING": "Chờ xác nhận", "CONFIRMED": "Đã xác nhận", "SHIPPING": "Đang giao",
+                   "DELIVERED": "Đã giao", "CANCELLED": "Đã huỷ"}
+
+
 class ToolRunner:
     """
     Chạy tool cho MỘT lượt hội thoại; ghi lại product_id đã trả về để giao diện hiện thẻ sản phẩm, và các thao tác
@@ -210,6 +218,9 @@ class ToolRunner:
                                "propose_add_to_cart", "propose_cancel_order")
         if needs_login and not self.access_token:
             return json.dumps(LOGIN_REQUIRED, ensure_ascii=False)
+        # mô hình nhỏ đôi khi thêm tham số không có trong schema (vd. city cho search_products): bỏ đi thay vì lỗi
+        accepted = inspect.signature(handler).parameters
+        args = {k: v for k, v in args.items() if k in accepted}
         try:
             result = handler(**args)
         except BackendError as error:
@@ -232,15 +243,65 @@ class ToolRunner:
             return {"results": [], "note": "Không tìm thấy chính sách liên quan trong kho tri thức."}
         return {"results": [{"title": h["title"], "content": h["content"], "similarity": h["similarity"]} for h in hits]}
 
+    @staticmethod
+    def _brief(content: str, variants_chars: int = 120, limit: int = 500) -> str:
+        """
+        Tóm tắt chunk cho LLM. Danh sách phiên bản (màu × dung lượng) có khi dài 300 ký tự và trước đây chiếm gần hết
+        400 ký tự, đẩy camera / pin ra ngoài; gửi cả chunk (~800) thì 8 sản phẩm làm prompt vượt context 4.096 token của
+        Ollama (đo 08/11: 19/30 so với 24/30). Nên rút gọn phần phiên bản (get_product_details có đủ) rồi cắt ở 500.
+        """
+        def shorten(match):
+            text = match.group(1)
+            return f" Phiên bản: {text if len(text) <= variants_chars else text[:variants_chars].rstrip(', -') + '…'}."
+        return re.sub(r" Phiên bản: (.*?)\.(?= Thông số:|$)", shorten, content, count=1)[:limit]
+
     def _search_products(self, query: str, category: str | None = None, brand: str | None = None,
                          min_price: int | None = None, max_price: int | None = None, limit: int = 5):
         hits = rag.search(query, k=max(1, min(int(limit or 5), 8)), doc_type="PRODUCT", min_similarity=0.78,
                           category=category, brand=brand, min_price=min_price, max_price=max_price)
         products = [{"product_id": h["product_id"], "name": h["title"], "category": h["metadata"].get("category"),
                      "brand": h["metadata"].get("brand"), "price_from": int(h["metadata"].get("price", 0)),
-                     "summary": h["content"][:400]} for h in hits]
+                     "summary": self._brief(h["content"])} for h in hits]
+        # Giá từng dung lượng (lấy trực tiếp từ Backend) cho 2 sản phẩm đầu: price_from chỉ là giá thấp nhất nên hỏi
+        # "bản 256GB giá bao nhiêu" thì mô hình chỉ nói được "giá từ ...".
+        for product in products[:2]:
+            prices = self._prices_by_version(product["product_id"])
+            if len(prices) > 1:
+                product["prices_by_version"] = prices
         self._remember(products)
         return {"products": products} if products else {"products": [], "note": "Không có sản phẩm phù hợp."}
+
+    def _prices_by_version(self, product_id: int) -> dict[str, int]:
+        """{"256 GB": giá thấp nhất của các màu bản 256 GB, ...}; lỗi Backend thì bỏ qua (tìm kiếm vẫn trả kết quả)."""
+        try:
+            variants = self._call("GET", f"/products/{int(product_id)}/variants") or []
+        except (BackendError, httpx.HTTPError):
+            return {}
+        prices: dict[str, int] = {}
+        for v in variants:
+            version = str(v.get("variantName") or "").split(" - ")[0].strip()
+            price = v.get("discountPrice") or v.get("price")
+            if version and price:
+                prices[version] = min(prices.get(version, int(float(price))), int(float(price)))
+        return prices
+
+    def _resolve_product(self, product_id: int | None, product_name: str | None) -> int | None:
+        """product_id có sẵn, hoặc tìm sản phẩm khớp nhất với tên (mô hình hay chỉ biết tên, không biết id)."""
+        if product_id:
+            return int(product_id)
+        if not product_name:
+            return None
+        hits = rag.search(product_name, k=1, doc_type="PRODUCT", min_similarity=0.85)
+        return hits[0]["product_id"] if hits else None
+
+    @staticmethod
+    def _match_variants(variants: list[dict], wanted: str) -> list[dict]:
+        """Phiên bản có đủ mọi từ khách nêu: "256GB màu Đen" khớp "256 GB - Đen" (trước đây so nguyên chuỗi)."""
+        def words(text: str) -> set[str]:
+            text = re.sub(r"(\d)\s+(gb|tb|mb)\b", r"\1\2", text.lower())
+            return set(re.findall(r"\w+", text)) - {"màu", "bản", "phiên", "loại", "dung", "lượng"}
+        need = words(wanted)
+        return [v for v in variants if need and need <= words(str(v.get("variantName", "")))]
 
     def _get_product_details(self, product_id: int):
         base = f"/products/{int(product_id)}"
@@ -258,7 +319,10 @@ class ToolRunner:
             "specifications": {s["specName"]: s["specValue"][:120] for s in specs[:20]},
         }
 
-    def _recommend_products(self, type: str, product_id: int | None = None):
+    def _recommend_products(self, type: str, product_id: int | None = None, product_name: str | None = None):
+        product_id = self._resolve_product(product_id, product_name)
+        if type != "PERSONAL" and not product_id:
+            return {"error": "MISSING_PRODUCT", "message": "Cần biết sản phẩm: gọi search_products trước hoặc hỏi khách."}
         body = {"type": type, "productId": product_id, "size": 5}
         data = self._call("POST", "/recommendations", auth=bool(self.access_token), json=body)
         products = [{"product_id": item["product"]["id"], "name": item["product"]["name"],
@@ -268,8 +332,18 @@ class ToolRunner:
         return {"products": products, "source": data.get("source")}
 
     def _get_my_orders(self):
-        page = self._call("GET", "/orders?page=0&size=10", auth=True)
-        return {"orders": [self._order_summary(o) for o in page.get("content", [])]}
+        # Đơn chưa xong tách riêng + chỉ 3 đơn đã xong gần nhất: trước đây trả 10 đơn và mô hình liệt kê hết
+        # (~500 token, ~30 giây với qwen3:8b), có lịch sử thì còn vượt context 4.096 token của Ollama.
+        orders = [self._order_summary(o) for o in self._call("GET", "/orders?page=0&size=10", auth=True)
+                  .get("content", [])]
+        active = [o for o in orders if o["status"] not in ("DELIVERED", "CANCELLED")]
+        done = [o for o in orders if o["status"] in ("DELIVERED", "CANCELLED")][:3]
+        # Dòng trả lời dựng sẵn: tự tổng hợp thì qwen3:8b gộp 4 đơn "chờ xác nhận" thành một câu và chỉ nêu 1 mã
+        # (5/5 lần); chép dòng có sẵn thì nêu đủ 4/4 (đo 08/11).
+        line = lambda o: " – ".join(filter(None, [o["code"], ORDER_STATUS_VI.get(o["status"], o["status"]),
+                                                  ", ".join(o["items"])]))
+        return {"active_orders": active, "recent_completed_orders": done,
+                "answer_lines": [line(o) for o in active] or [line(o) for o in done[:1]]}
 
     def _get_order_detail(self, order: str):
         key = str(order).strip().lstrip("#")
@@ -312,13 +386,11 @@ class ToolRunner:
 
     def _propose_add_to_cart(self, product_id: int | None = None, product_name: str | None = None,
                              variant_name: str | None = None, quantity: int = 1):
+        if not product_id and not product_name:
+            return {"error": "MISSING_PRODUCT", "message": "Hỏi khách muốn thêm sản phẩm nào."}
+        product_id = self._resolve_product(product_id, product_name)
         if not product_id:
-            if not product_name:
-                return {"error": "MISSING_PRODUCT", "message": "Hỏi khách muốn thêm sản phẩm nào."}
-            hits = rag.search(product_name, k=1, doc_type="PRODUCT", min_similarity=0.85)
-            if not hits:
-                return {"error": "NOT_FOUND", "message": f"Không tìm thấy sản phẩm '{product_name}'."}
-            product_id = hits[0]["product_id"]
+            return {"error": "NOT_FOUND", "message": f"Không tìm thấy sản phẩm '{product_name}'."}
         product = self._call("GET", f"/products/{int(product_id)}")
         if product.get("isActive") is False or not product.get("effectivePrice"):
             return {"error": "NOT_AVAILABLE", "message": "Sản phẩm này hiện không bán."}
@@ -326,9 +398,10 @@ class ToolRunner:
         if not variants:
             return {"error": "NOT_AVAILABLE", "message": "Sản phẩm chưa có phiên bản để đặt mua."}
         chosen = variants[0] if len(variants) == 1 else None
-        if chosen is None and variant_name:
-            wanted = variant_name.strip().lower()
-            matches = [v for v in variants if wanted in str(v.get("variantName", "")).lower()]
+        # mô hình hay ghi cả phiên bản vào tên ("iPhone 17e 256GB Đen"): phần còn lại sau tên sản phẩm là phiên bản
+        wanted = variant_name or (product_name or "").lower().replace(str(product["name"]).lower(), " ")
+        if chosen is None and wanted.strip():
+            matches = self._match_variants(variants, wanted)
             chosen = matches[0] if len(matches) == 1 else None
         if chosen is None:
             return {"status": "NEED_VARIANT", "message": "Hỏi khách chọn một phiên bản.",

@@ -1,15 +1,7 @@
 /*
- * TRỢ LÝ MUA SẮM AI NỔI Ở GÓC TRANG (báo cáo mục 3.6): tự chèn HTML vào <body> trên mọi trang khách.
- *
- * POST /chat/stream {sessionToken, message} → Backend → AI_Service (Claude + RAG + Function Calling); câu trả lời
- * hiện dần theo luồng (Server-Sent Events), thao tác đề xuất (thêm giỏ, huỷ đơn) hiện thành nút Xác nhận.
- * Gửi kèm token khi đã đăng nhập để trợ lý xem được đơn hàng, giỏ hàng, yêu cầu bảo hành của chính khách.
- * sessionToken lưu ở localStorage để giữ cuộc trò chuyện khi chuyển trang (GET /chat/{token}/messages).
- *
- * Dự phòng khi AI_Service ngừng (503) hoặc mất mạng: trả lời theo từ khoá như bản cũ
- *   - chính sách: viết theo đúng backend (ShippingPolicy, AfterSalesServiceImpl 7 ngày, InstallmentPolicy);
- *   - đơn hàng: link "Đơn hàng của tôi" (chưa đăng nhập → đăng nhập rồi quay lại);
- *   - còn lại: tìm sản phẩm thật GET /products?isActive=true&keyword=…&size=3.
+ * Trợ lý mua sắm AI nổi ở góc trang, tự chèn vào <body> trên mọi trang khách. Gọi POST /chat/stream: câu trả lời hiện
+ * dần theo luồng, thao tác đề xuất (thêm giỏ, huỷ đơn) hiện thành nút Xác nhận. Khi AI Service ngừng hoặc mất mạng
+ * thì trả lời theo từ khoá.
  */
 
 document.addEventListener(

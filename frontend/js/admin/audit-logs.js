@@ -1,10 +1,4 @@
-/* ================= NHẬT KÝ THAO TÁC (admin/audit-logs.html) ================= */
-
-/*
- * API (chỉ ADMIN, chỉ đọc):
- *   GET /admin/audit-logs?keyword&entityType&method&fromDate&toDate&page&size
- *   GET /admin/audit-logs/entity-types      các loại đối tượng đã có trong nhật ký (để lọc)
- */
+/* Nhật ký thao tác (admin/audit-logs.html) */
 
 const AUDIT_PAGE_SIZE = 20;
 

@@ -1,15 +1,4 @@
-/* ================= TỔNG QUAN (admin/dashboard.html) ================= */
-
-/*
- * Một trang, ba bố cục theo vai trò (dữ liệu thật):
- *   ADMIN           "Toàn hệ thống": thẻ số GET /admin/dashboard/summary (doanh thu hôm nay / tháng này so với
- *                   cùng kỳ tháng trước, đơn chờ xác nhận / đang giao, yêu cầu dịch vụ mở, hàng sắp hết, chi nhánh,
- *                   nhân viên) + 30 ngày từ GET /admin/reports/sales (doanh thu thuần, danh mục, so sánh chi nhánh,
- *                   sản phẩm bán chạy) + lối tắt.
- *   BRANCH_MANAGER  "Chi nhánh <tên>": cùng các số của chi nhánh mình + đội ngũ (GET /branch/employees).
- *   EMPLOYEE        "Việc của tôi hôm nay": KHÔNG có doanh thu; danh sách việc có số đếm và link lọc sẵn.
- * Nhân viên chưa có chi nhánh: màn hình chờ, không gọi API nào (backend sẽ trả 403).
- */
+/* Tổng quan (admin/dashboard.html) */
 
 document.addEventListener("DOMContentLoaded", async function () {
 
@@ -121,32 +110,46 @@ document.addEventListener("DOMContentLoaded", async function () {
             {
                 label: "Doanh thu thuần hôm nay",
                 money: s.revenueToday || 0,
-                sub: s.deliveredToday + " đơn đã giao"
+                sub: s.deliveredToday + " đơn đã giao",
+                tone: "info"
             },
             {
                 label: "Doanh thu thuần tháng này",
                 money: s.revenueThisMonth || 0,
-                sub: trendText(s.revenueThisMonth, s.revenuePreviousMonthSamePeriod)
+                sub: trendText(s.revenueThisMonth, s.revenuePreviousMonthSamePeriod),
+                subTone: trendTone(s.revenueThisMonth, s.revenuePreviousMonthSamePeriod),
+                tone: "info"
             },
             {
                 label: "Đơn cần xử lý",
                 value: String(s.pendingOrders + s.confirmedOrders),
-                sub: s.pendingOrders + " chờ xác nhận · " + s.confirmedOrders + " chờ giao · " + s.shippingOrders + " đang giao"
+                details: [
+                    { value: String(s.pendingOrders), label: "Chờ xác nhận" },
+                    { value: String(s.confirmedOrders), label: "Chờ giao" },
+                    { value: String(s.shippingOrders), label: "Đang giao" }
+                ],
+                tone: s.pendingOrders > 0 ? "warning" : "success"
             },
             {
                 label: "Yêu cầu dịch vụ đang mở",
                 value: String(s.openServiceRequests),
-                sub: "Bảo hành / bảo trì / đổi trả"
+                sub: "Bảo hành, bảo trì, đổi trả",
+                tone: s.openServiceRequests > 0 ? "warning" : "success"
             },
             {
                 label: "Liên hệ chờ xử lý",
                 value: String(s.openContactRequests || 0),
-                sub: "Tin nhắn từ trang Liên hệ (mọi chi nhánh)"
+                sub: "Tin nhắn từ trang Liên hệ",
+                tone: s.openContactRequests > 0 ? "warning" : "success"
             },
             {
-                label: "Hàng sắp hết / hết hàng",
-                value: s.lowStockVariants + " / " + s.outOfStockVariants,
-                sub: "Phiên bản còn 1–5 cái / còn 0"
+                label: "Cảnh báo tồn kho",
+                value: String(s.lowStockVariants + s.outOfStockVariants),
+                details: [
+                    { value: String(s.lowStockVariants), label: "Sắp hết (còn 1–5)" },
+                    { value: String(s.outOfStockVariants), label: "Hết hàng" }
+                ],
+                tone: s.outOfStockVariants > 0 ? "danger" : s.lowStockVariants > 0 ? "warning" : "success"
             }
         ];
 
@@ -154,7 +157,10 @@ document.addEventListener("DOMContentLoaded", async function () {
             cards.push({
                 label: "Chi nhánh đang mở",
                 value: String(s.openStores != null ? s.openStores : "—"),
-                sub: (s.activeEmployees != null ? s.activeEmployees : "—") + " nhân viên đang làm việc"
+                details: [
+                    { value: String(s.activeEmployees != null ? s.activeEmployees : "—"), label: "Nhân viên đang làm" }
+                ],
+                tone: "success"
             });
         }
 
@@ -178,6 +184,21 @@ document.addEventListener("DOMContentLoaded", async function () {
         const change = (now - before) * 100 / before;
 
         return (change >= 0 ? "+" : "") + change.toFixed(1).replace(".", ",") + "% so với cùng kỳ tháng trước";
+
+    }
+
+
+    function trendTone(current, previous) {
+
+        const now = Number(current || 0);
+
+        const before = Number(previous || 0);
+
+        if (before === 0) {
+            return "";
+        }
+
+        return now >= before ? "up" : "down";
 
     }
 

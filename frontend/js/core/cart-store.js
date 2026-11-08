@@ -1,24 +1,5 @@
-/* ================= GIỎ HÀNG: GIỎ TRÊN SERVER ================= */
+/* Giỏ hàng: giỏ trên server */
 
-/*
- * Giỏ hàng lưu ở backend theo tài khoản: /api/v1/cart (cần đăng nhập).
- * Mỗi dòng xác định bằng variantId; giá, tên, ảnh luôn lấy từ server lúc đọc
- * (không tin giá do trình duyệt gửi lên). Mọi hàm đều async và trả về giỏ đã
- * đổi sang dạng dùng cho trang giỏ / thanh toán:
- *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
- *               image, quantity, lineTotal, available }],
- *     totalQuantity, subtotal, comboDiscount (tiền giảm combo), shippingFee, total, hasUnavailableItems }
- * availableQuantity: số còn ở các chi nhánh đang mở (null = API cũ).
- * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá) hoặc không đủ hàng,
- * không tính vào tạm tính, chỉ còn nút xoá.
- *
- * Giỏ cũ lưu trên trình duyệt ("poy_cart_<userId>") được chuyển lên
- * server một lần (migrateLocalCart); lỗi API thì hàm ném ApiError (api.js).
- *
- * Thứ tự nạp: api.js → ui.js → cart-store.js → layout.js → main.js.
- */
-
-/* Tối đa mỗi dòng, giống CartService.MAX_LINE_QUANTITY ở backend */
 const MAX_CART_LINE_QUANTITY = 10;
 
 

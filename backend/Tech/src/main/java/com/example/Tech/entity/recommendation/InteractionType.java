@@ -2,7 +2,7 @@ package com.example.Tech.entity.recommendation;
 
 /**
  * Behaviour recorded in user_interactions (DB CHECK chk_user_interactions_type). The weight is w_t of the
- * interaction score r(u,i) = Σ w_t · log(1 + n(u,i,t)) (report section 3.5.3 i, table 3.19); it is stored in
+ * interaction score r(u,i) = Σ w_t · log(1 + n(u,i,t)); it is stored in
  * interaction_score so the AI service and reports read the same value.
  */
 public enum InteractionType {

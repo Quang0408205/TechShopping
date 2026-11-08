@@ -385,7 +385,7 @@ class OrderServiceImplTest {
         when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order));
         when(orderRepository.saveAndFlush(order)).thenReturn(order);
 
-        orderService.cancelMyOrder(USER_ID, 5L);
+        orderService.cancelMyOrder(USER_ID, 5L, null);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(order.getCancelledAt()).isEqualTo(NOW);
@@ -399,7 +399,7 @@ class OrderServiceImplTest {
         Order order = order(5L, user, OrderStatus.CONFIRMED);
         when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L))
+        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L, null))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
@@ -413,7 +413,7 @@ class OrderServiceImplTest {
         other.setId(8L);
         when(orderRepository.findByIdForUpdate(5L)).thenReturn(Optional.of(order(5L, other, OrderStatus.PENDING)));
 
-        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L))
+        assertThatThrownBy(() -> orderService.cancelMyOrder(USER_ID, 5L, null))
                 .extracting(ex -> ((BusinessException) ex).getErrorCode())
                 .isEqualTo(ErrorCode.ORDER_NOT_FOUND);
     }

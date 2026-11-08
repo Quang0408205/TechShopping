@@ -2,13 +2,18 @@
 Sinh dữ liệu hành vi MÔ PHỎNG cho Recommendation (chỉ dùng ở môi trường local / demo / đánh giá).
 
 Hệ thống mới chạy nên user_interactions gần như trống, ALS không học được gì. Script này:
-  1. ghi PURCHASE cho các đơn hàng thật đã có (đơn đặt trước khi backend ghi nhận hành vi);
+  1. ghi PURCHASE cho các đơn hàng mẫu đã có của khách @example.test (đơn đặt trước khi backend ghi nhận hành vi;
+     tài khoản thật không bị đụng tới);
   2. tạo N khách hàng mô phỏng (họ tên người Việt, email <tên><họ>5NNN@example.test, không đăng nhập được) và
      sinh chuỗi hành vi VIEW → CLICK → ADD_TO_CART → PURCHASE có cấu trúc:
        - mỗi khách có "hồ sơ": 1–2 danh mục quan tâm, 1–2 thương hiệu ưa thích, một tầm giá;
        - khách trung thành với hệ sinh thái (vd. Apple) xem cả điện thoại, máy tính bảng, phụ kiện cùng hãng,
          đây là mẫu hành vi chéo danh mục mà CF học được còn CBF thì không;
-       - 10% hành vi ngẫu nhiên (nhiễu), sản phẩm nhiều đánh giá TGDĐ được xem nhiều hơn (phân phối lệch).
+       - 10% hành vi ngẫu nhiên (nhiễu), sản phẩm nhiều đánh giá TGDĐ được xem nhiều hơn (phân phối lệch);
+       - LIKE (thêm vào danh sách yêu thích): 15% lượt xem sản phẩm hợp hồ sơ (đúng danh mục + hãng ưa thích), 2% với
+         sản phẩm khác; mỗi bước có 20% khả năng khách quay lại xem một sản phẩm đã thích, khi đó thêm giỏ 35% thay vì
+         18%. Đây là GIẢ ĐỊNH của mô phỏng (thích = dấu hiệu sẽ mua), để đánh giá offline đo được tác dụng của LIKE;
+         chưa kiểm chứng trên khách thật.
 Báo cáo phải ghi rõ đây là dữ liệu mô phỏng.
 
     python -m scripts.seed_interactions --users 300 --seed 42
@@ -20,6 +25,8 @@ import math
 import random
 import unicodedata
 from datetime import datetime, timedelta
+
+import psycopg
 
 from app.db import connect
 
@@ -102,18 +109,29 @@ def reset(conn):
     deleted = conn.execute("""
         delete from user_interactions where user_id in (select user_id from users where password_hash = %s)
     """, (UNUSABLE_PASSWORD,)).rowcount
-    # khách mô phỏng đã có đơn (dữ liệu doanh thu mẫu) thì giữ lại, lần tạo sau dùng lại đúng tài khoản đó
-    users = conn.execute("""
-        delete from users u where u.password_hash = %s and not exists (select 1 from orders o where o.user_id = u.user_id)
-    """, (UNUSABLE_PASSWORD,)).rowcount
-    print(f"Removed {deleted} simulated interactions and {users} simulated users")
+    # khách mô phỏng còn được bảng khác dùng tới (đơn hàng, yêu cầu liên hệ, đánh giá... của dữ liệu mẫu) thì giữ lại,
+    # lần tạo sau dùng lại đúng tài khoản đó; mỗi khách xoá trong một savepoint để một khách bị giữ không chặn cả lần reset
+    users = kept = 0
+    for row in conn.execute("select user_id from users where password_hash = %s", (UNUSABLE_PASSWORD,)).fetchall():
+        try:
+            with conn.transaction():
+                conn.execute("delete from users where user_id = %s", (row["user_id"],))
+            users += 1
+        except psycopg.errors.IntegrityError:
+            kept += 1
+    print(f"Removed {deleted} simulated interactions and {users} simulated users ({kept} kept: still referenced)")
 
 
 def backfill_real_orders(conn) -> int:
+    """
+    PURCHASE cho đơn hàng của khách mẫu (@example.test) đặt trước khi backend ghi hành vi. Tài khoản thật không được
+    đụng tới: backend đã tự ghi PURCHASE lúc họ đặt hàng (thời điểm khác order_date), backfill sẽ ghi trùng.
+    """
     return conn.execute("""
         insert into user_interactions (user_id, product_id, interaction_type, interaction_score, timestamp)
         select distinct o.user_id, v.product_id, 'PURCHASE', 5, o.order_date
         from orders o
+        join users u on u.user_id = o.user_id and u.email like '%%@example.test'
         join order_items oi on oi.order_id = o.order_id
         join product_variants v on v.variant_id = oi.variant_id
         where upper(o.status) <> 'CANCELLED'
@@ -182,17 +200,26 @@ def simulate(conn, user_ids, rng: random.Random, days: int = 90) -> int:
     rows = []
     for user_id in user_ids:
         persona = make_persona(rng, catalog)
+        liked: list[int] = []
         moment = now - timedelta(days=days) + timedelta(minutes=rng.randint(0, 60 * 24 * 10))
         for _ in range(rng.randint(12, 60)):
             moment += timedelta(minutes=rng.randint(5, 60 * 30))
             if moment >= now:
                 break
-            product = pick_product(rng, catalog, persona)
-            pid = product["product_id"]
+            revisit = bool(liked) and rng.random() < 0.2          # quay lại sản phẩm đã thích
+            if revisit:
+                pid = rng.choice(liked)
+            else:
+                product = pick_product(rng, catalog, persona)
+                pid = product["product_id"]
+                fits = product["brand"] in persona["brands"] and product["category"] in persona["categories"]
             if rng.random() < 0.6:
                 rows.append((user_id, pid, "CLICK", 2, moment))
             rows.append((user_id, pid, "VIEW", 1, moment + timedelta(seconds=5)))
-            if rng.random() < 0.18:
+            if not revisit and pid not in liked and rng.random() < (0.15 if fits else 0.02):
+                liked.append(pid)
+                rows.append((user_id, pid, "LIKE", 3, moment + timedelta(minutes=1)))
+            if rng.random() < (0.35 if revisit else 0.18):
                 rows.append((user_id, pid, "ADD_TO_CART", 4, moment + timedelta(minutes=2)))
                 if rng.random() < 0.35:
                     rows.append((user_id, pid, "PURCHASE", 5, moment + timedelta(minutes=10)))

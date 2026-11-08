@@ -1,5 +1,5 @@
 """
-RAG (báo cáo mục 3.6.2): tìm Top-K chunk liên quan nhất trong kho tri thức kb_chunks.
+RAG: tìm Top-K chunk liên quan nhất trong kho tri thức kb_chunks.
 
 Ba cách tìm (RAG_MODE trong app/config.py, mặc định "hybrid"):
   vector   Embedding câu hỏi → K chunk có cosine lớn nhất (pgvector, chỉ mục HNSW). Hiểu nghĩa ("máy pin trâu"),

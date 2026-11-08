@@ -210,6 +210,9 @@ public enum ErrorCode {
     SHIPPING_FEE_RULE_NOT_FOUND(HttpStatus.NOT_FOUND, "Không tìm thấy phí giao hàng của tỉnh / thành này"),
     DUPLICATE_SHIPPING_FEE_RULE(HttpStatus.CONFLICT, "Tỉnh / thành này đã có phí giao hàng riêng"),
 
+    // Refund account
+    REFUND_ACCOUNT_REQUIRED(HttpStatus.BAD_REQUEST, "Đơn đã thanh toán, vui lòng nhập ngân hàng, số tài khoản và tên chủ tài khoản để nhận hoàn tiền"),
+
     // Login lock
     TOO_MANY_LOGIN_ATTEMPTS(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mật khẩu quá nhiều lần, vui lòng thử lại sau");
 

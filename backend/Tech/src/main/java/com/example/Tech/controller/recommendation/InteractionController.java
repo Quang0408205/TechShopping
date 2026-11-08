@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Behaviour reported by the browser for the recommendation models. Requires a valid access token: guests
- * are not tracked (they get popular products, report table 3.21).
+ * are not tracked (they get popular products).
  */
 @RestController
 @RequestMapping("/api/v1/interactions")

@@ -1,14 +1,4 @@
-/* ================= CHI TIẾT ĐƠN HÀNG ================= */
-
-/*
- * customer/order-detail.html?id=<id đơn>[&justPlaced=1]: GET /api/v1/orders/{id}
- * (fetchMyOrder, js/core/order-store.js). Đơn của tài khoản khác, id sai hoặc
- * không tồn tại → "Không tìm thấy đơn hàng" (API trả 404). Lỗi khác → hộp lỗi
- * + "Thử lại". Đơn còn "Chờ xác nhận" có nút "Hủy đơn hàng" (POST /cancel).
- * Trạng thái thanh toán, thông tin chuyển khoản + mã QR (khi đang chờ
- * tiền), hợp đồng trả góp + lịch các kỳ, lý do từ chối trả góp.
- * Mọi dữ liệu đưa vào innerHTML đều escape.
- */
+/* Chi tiết đơn hàng */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -130,6 +120,55 @@ document.addEventListener(
         }
 
 
+        const REFUND_BANKS = [
+            "Vietcombank", "VietinBank", "BIDV", "Agribank", "Techcombank", "MB Bank", "ACB", "VPBank", "TPBank",
+            "Sacombank", "HDBank", "VIB", "SHB", "OCB", "MSB", "SeABank", "Eximbank", "LPBank", "Nam A Bank", "Khác"
+        ];
+
+        function refundFormValid(values) {
+
+            if (!values.bankName) {
+                return "Vui lòng chọn ngân hàng nhận hoàn tiền.";
+            }
+
+            if (!/^[0-9]{6,20}$/.test(values.accountNumber)) {
+                return "Số tài khoản gồm 6 đến 20 chữ số.";
+            }
+
+            if (values.accountHolder.length < 2) {
+                return "Vui lòng nhập tên chủ tài khoản.";
+            }
+
+            return "";
+
+        }
+
+        function submitCancel(refundAccount) {
+
+            cancelButton.disabled = true;
+
+            cancelMyOrder(currentOrder.id, refundAccount).then(function (order) {
+
+                currentOrder = order;
+
+                renderOrder(currentOrder);
+
+                showToast("Đã hủy đơn hàng " + currentOrder.code + ".", "success");
+
+            }).catch(async function (error) {
+
+                showToast(getErrorMessage(error), "error");
+
+                await loadOrder();
+
+            }).finally(function () {
+
+                cancelButton.disabled = false;
+
+            });
+
+        }
+
         function confirmCancel() {
 
             if (!currentOrder || !currentOrder.cancellable) {
@@ -137,6 +176,26 @@ document.addEventListener(
             }
 
             const paid = currentOrder.payment && currentOrder.payment.status === "PAID";
+
+            if (paid && currentOrder.paymentMethod === "BANK_TRANSFER") {
+
+                openConfirmModal({
+                    title: "Hủy đơn hàng " + currentOrder.code + "?",
+                    message: "Đơn đã được thanh toán nên cần thông tin tài khoản để cửa hàng hoàn lại "
+                        + formatPrice(currentOrder.payment.amount) + ". Đơn hủy rồi không khôi phục được.",
+                    confirmLabel: "HỦY ĐƠN VÀ NHẬN HOÀN TIỀN",
+                    fields: [
+                        { name: "bankName", label: "Ngân hàng", options: REFUND_BANKS, placeholder: "Chọn ngân hàng" },
+                        { name: "accountNumber", label: "Số tài khoản", maxLength: 20, inputMode: "numeric", placeholder: "Ví dụ 0123456789" },
+                        { name: "accountHolder", label: "Tên chủ tài khoản", maxLength: 100, value: currentOrder.recipientName, placeholder: "Họ tên in trên tài khoản" }
+                    ],
+                    validate: refundFormValid,
+                    onConfirm: submitCancel
+                });
+
+                return;
+
+            }
 
             openConfirmModal({
                 title: "Hủy đơn hàng?",
@@ -365,7 +424,12 @@ function paymentInfoText(payment) {
     }
 
     if (payment.status === "REFUND_PENDING") {
-        return "Cửa hàng đã nhận " + formatPrice(payment.amount) + reference + " và sẽ hoàn lại cho bạn.";
+        const account = payment.refundAccount
+            ? " Hoàn về " + payment.refundAccount.bankName + " · " + payment.refundAccount.accountNumber
+                + " · " + payment.refundAccount.accountHolder + "."
+            : "";
+
+        return "Cửa hàng đã nhận " + formatPrice(payment.amount) + reference + " và sẽ hoàn lại cho bạn." + account;
     }
 
     if (payment.status === "REFUNDED") {

@@ -17,7 +17,6 @@
     >
 </head>
 
-<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Đơn hàng" data-roles="">
 
 <div class="admin-shell">
@@ -27,7 +26,6 @@
     <div class="admin-main">
         <div data-include="admin-topbar"></div>
         <main class="admin-content">
-            <!-- Tab trạng thái: js/admin/orders.js đồng bộ với #orderStatusFilter (ẩn) và điền số đơn -->
             <div class="admin-tabs admin-order-tabs" id="orderStatusTabs" role="tablist" aria-label="Trạng thái đơn">
                 <button type="button" role="tab" class="admin-tab" data-status="">Tất cả <span class="admin-tab-count"></span></button>
                 <button type="button" role="tab" class="admin-tab" data-status="PENDING">Chờ xác nhận <span class="admin-tab-count"></span></button>

@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-/** Calls POST /chat of the Chatbot Service (report table 3.25). Empty when it does not answer. */
+/** Calls POST /chat of the Chatbot Service. Empty when it does not answer. */
 @Slf4j
 @Component
 public class AiChatClient {

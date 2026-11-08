@@ -14,8 +14,7 @@ import lombok.Setter;
 
 /**
  * Which attributes a category uses (to generate the product form and the catalogue filter), whether each
- * is required and filterable, and in what order to show it. Schema only for now (v3 survey, 2026-10-05);
- * no API reads/writes this yet.
+ * is required and filterable, and in what order to show it.
  */
 @Entity
 @Table(name = "category_attributes")

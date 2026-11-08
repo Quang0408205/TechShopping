@@ -1,10 +1,4 @@
-/* ================= TRANG SẢN PHẨM YÊU THÍCH ================= */
-
-/*
- * customer/wishlist.html (cần đăng nhập): GET /wishlist → thẻ sản phẩm kèm giá hiện tại; nếu giá thấp hơn lúc khách lưu
- * thì hiện "Giảm X so với lúc bạn lưu". Bỏ yêu thích: DELETE /wishlist/{id} rồi gỡ thẻ ngay. Mọi dữ liệu escape khi
- * đưa vào HTML.
- */
+/* Trang sản phẩm yêu thích */
 
 document.addEventListener("DOMContentLoaded", async function () {
 

@@ -1,7 +1,6 @@
 package com.example.Tech.controller.payment;
 
 import com.example.Tech.dto.request.payment.AdminInstallmentSearchRequest;
-import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.payment.AdminInstallmentResponse;
@@ -24,7 +23,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

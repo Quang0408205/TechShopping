@@ -19,8 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * Full filter chain against the test database: CORS, bearer token handling and the JSON error format.
- * The /api/v1/** role rules are not active yet (Checkpoint 2.4).
+ * Full filter chain against the test database: CORS, bearer token handling and the JSON error format.
  */
 @SpringBootTest(properties = {
         "app.cors.allowed-origins=http://localhost:5500",

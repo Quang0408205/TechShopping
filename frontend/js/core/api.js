@@ -1,17 +1,7 @@
-/* ================= KẾT NỐI SPRING BOOT API ================= */
-
 /*
+ * Gọi API của Backend Spring Boot.
  * Dùng chung cho mọi trang. Phải được nạp ĐẦU TIÊN,
  * trước layout.js, main.js và các file JS của từng trang.
- *
- * Mọi response của backend có dạng:
- *   { success, timestamp, data, error: { code, message, details } }
- */
-
-/*
- * Trên máy lập trình (localhost / 127.0.0.1) gọi thẳng backend :8080 (CORS dev cho mọi cổng localhost).
- * Khi triển khai (tên miền khác, vd. ngrok) nginx chuyển tiếp /api sang backend nên dùng đường dẫn tương đối:
- * cùng một nguồn, không cần CORS (docker/nginx/default.conf).
  */
 
 const API_BASE_URL =
@@ -20,7 +10,7 @@ const API_BASE_URL =
         : "/api/v1";
 
 /*
- * Ảnh tải lên (/uploads/...) được backend ghi kèm địa chỉ công khai lúc tải (localhost:8080, tên miền ngrok…), nên
+ * Ảnh tải lên (/uploads/...) được backend ghi kèm địa chỉ công khai lúc tải (localhost:8080, tên miền công khai…), nên
  * khi đổi nơi chạy web thì link cũ trỏ sai máy. Đọc dữ liệu: đổi phần địa chỉ của mọi link /uploads/ sang máy chủ đang
  * phục vụ API (localhost:8080 ở máy lập trình, chính tên miền khi triển khai — nginx chuyển tiếp /uploads/).
  * Gửi dữ liệu: trả lại đúng link gốc (backend chỉ nhận link ảnh của chính nó theo địa chỉ đã ghi).

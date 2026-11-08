@@ -2,6 +2,7 @@ package com.example.Tech.controller.order;
 
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
+import com.example.Tech.dto.request.order.RefundAccountRequest;
 import com.example.Tech.dto.request.payment.CardCheckoutRequest;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.common.PageResponse;
@@ -135,8 +136,9 @@ public class OrderController {
             @ApiResponse(responseCode = "409", description = "INVALID_ORDER_STATUS")
     })
     public ResponseEntity<ApiResult<OrderResponse>> cancelMyOrder(@Parameter(hidden = true) @AuthenticationPrincipal Jwt jwt,
-                                                                  @PathVariable Long id) {
-        return ResponseEntity.ok(ApiResult.ok(orderService.cancelMyOrder(userId(jwt), id)));
+                                                                  @PathVariable Long id,
+                                                                  @Valid @RequestBody(required = false) RefundAccountRequest refundAccount) {
+        return ResponseEntity.ok(ApiResult.ok(orderService.cancelMyOrder(userId(jwt), id, refundAccount)));
     }
 
     @PostMapping("/{id}/cancel-payment")

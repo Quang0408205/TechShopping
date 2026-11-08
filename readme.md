@@ -142,7 +142,7 @@ Quy tắc chung:
 
 **Bảo mật và hiệu năng.** Đăng nhập bằng JWT ngắn hạn kèm refresh token có thể thu hồi; mật khẩu băm; nhập sai 5 lần trong 15 phút thì khoá 15 phút; đăng ký và làm mới token bị giới hạn theo IP; mọi dữ liệu người dùng đưa vào giao diện đều được escape. Redis cache các dữ liệu đọc nhiều (danh mục, thương hiệu, trang chi tiết sản phẩm, báo cáo) và tự xoá khi dữ liệu đổi; tồn kho luôn đọc mới; Redis lỗi thì hệ thống đọc thẳng database.
 
-**Chạy cho nhiều người dùng thử.** nginx là cổng vào duy nhất: phục vụ giao diện và chuyển tiếp `/api`, `/uploads` sang backend, nên trình duyệt chỉ thấy một địa chỉ và không cần CORS. Có thể mở riêng cổng này ra internet bằng một đường hầm (ngrok) trong khi cơ sở dữ liệu, Redis, AI Service và Ollama vẫn nằm trên máy chủ. Địa chỉ công khai được cấu hình cho backend để các link ảnh tải lên đúng địa chỉ.
+**Chạy cho nhiều người dùng thử.** nginx là cổng vào duy nhất: phục vụ giao diện và chuyển tiếp `/api`, `/uploads` sang backend, nên trình duyệt chỉ thấy một địa chỉ và không cần CORS. Có thể mở riêng cổng này ra internet (qua tên miền hoặc đường hầm) trong khi cơ sở dữ liệu, Redis, AI Service và Ollama vẫn nằm trên máy chủ. Địa chỉ công khai được cấu hình cho backend để các link ảnh tải lên đúng địa chỉ.
 
 ---
 

@@ -1,5 +1,5 @@
 """
-Collaborative Filtering bằng ALS cho phản hồi ngầm định (báo cáo mục 3.5.4 b; Hu, Koren & Volinsky 2008).
+Collaborative Filtering bằng ALS cho phản hồi ngầm định (Hu, Koren & Volinsky 2008).
 
     p_ui = 1 nếu r(u,i) > 0, ngược lại 0;      c_ui = 1 + a·r(u,i)
     min Σ c_ui (p_ui − x_uᵀ y_i)² + λ (Σ‖x_u‖² + Σ‖y_i‖²)

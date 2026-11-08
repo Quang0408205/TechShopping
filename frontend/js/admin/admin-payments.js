@@ -1,9 +1,6 @@
-/* ================= THANH TOÁN / TRẢ GÓP: DÙNG CHUNG KHU ADMIN ================= */
-
 /*
+ * Thanh toán / trả góp: dùng chung khu admin.
  * Nhãn, huy hiệu và bảng lịch trả góp cho admin/orders.html và admin/installments.html.
- * Dữ liệu là PaymentResponse / InstallmentResponse thô của API (số tiền là chuỗi / số).
- * Mọi dữ liệu đưa vào innerHTML đều escape. Cần nạp sau js/core/ui.js và js/admin/admin-layout.js.
  */
 
 const TRANSACTION_ID_MAX_LENGTH = 100;

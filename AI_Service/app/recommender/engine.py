@@ -1,5 +1,5 @@
 """
-Recommendation Engine (báo cáo mục 3.5.1–3.5.6): CBF + CF (ALS) → Hybrid → lọc → xếp hạng → Top-N,
+Recommendation Engine: CBF + CF (ALS) → Hybrid → lọc → xếp hạng → Top-N,
 cùng Upselling / Cross-selling. Huấn luyện offline (train) → lưu models/; khi có request chỉ tính điểm.
 """
 
@@ -203,14 +203,19 @@ class Recommender:
         rows = scores["product_id"].map(m.index).to_numpy(int)
         return rows, scores["r"].to_numpy(float), int(interactions["n"].sum())
 
-    def _cbf_cf(self, state):
-        """Score_CBF = cos(p_u, v_i); Score_CF = x_uᵀ y_i (None khi chưa đủ k tương tác hoặc ALS chưa có dữ liệu)."""
+    def _cbf_cf(self, state, cold_start_k: int | None = None):
+        """
+        Score_CBF = cos(p_u, v_i); Score_CF = x_uᵀ y_i (None khi chưa đủ k tương tác hoặc ALS chưa có dữ liệu).
+        cold_start_k: ngưỡng k (mặc định config.COLD_START_K); đánh giá offline truyền giá trị khác để thử nhiều ngưỡng
+        mà không đổi cấu hình chung đang phục vụ khách.
+        """
         m = self.model
         rows, r, count = state
+        k = config.COLD_START_K if cold_start_k is None else cold_start_k
         profile = (r[:, None] * m.vectors[rows]).sum(axis=0) / r.sum()
         cbf = m.vectors @ (profile / (np.linalg.norm(profile) or 1))
         cf = None
-        if count >= config.COLD_START_K and np.any(m.item_factors[rows]):
+        if count >= k and np.any(m.item_factors[rows]):
             x_u = als.fold_in(m.item_factors, rows, r, m.param("confidence"), m.param("regularization"))
             cf = m.item_factors @ x_u
         return cbf, cf
@@ -257,7 +262,8 @@ class Recommender:
         return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude)[0]
 
     def recommend_alphas(self, user_id: int | None, n: int, alphas: list[float],
-                         exclude: list[int] | None = None, mmr_lambda: float | None = None) -> list[list[Recommendation]]:
+                         exclude: list[int] | None = None, mmr_lambda: float | None = None,
+                         cold_start_k: int | None = None) -> list[list[Recommendation]]:
         """
         Một danh sách Top-N cho mỗi α: hồ sơ khách, điểm CBF / CF và tập ứng viên không phụ thuộc α nên chỉ tính
         một lần (đánh giá offline thử nhiều α trên cùng khách). mmr_lambda: λ của MMR (mặc định config.MMR_LAMBDA).
@@ -277,7 +283,7 @@ class Recommender:
         rows, r, count = state
         # bỏ sản phẩm đã mua (3.5.5 a) và cả sản phẩm đã xem: danh sách "dành cho bạn" chỉ gồm sản phẩm mới với khách
         allowed[rows] = False
-        cbf, cf = self._cbf_cf(state)
+        cbf, cf = self._cbf_cf(state, cold_start_k)
 
         # 3.5.5 a: K ứng viên tốt nhất từ mỗi mô hình (đã bỏ sản phẩm không hợp lệ / đã mua)
         def top_k(scores):
@@ -294,7 +300,7 @@ class Recommender:
 
         lists = []
         for alpha in alphas:
-            alpha = 1.0 if cf is None else alpha        # Bảng 3.21: ít dữ liệu → chỉ CBF
+            alpha = 1.0 if cf is None else alpha        # ít dữ liệu → chỉ CBF
             score, s_cbf, s_cf = self._hybrid(cbf, cf, candidates, alpha)
             result = []
             for pos in self._mmr(candidates, score, n, mmr_lambda):
@@ -308,7 +314,7 @@ class Recommender:
         return lists
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
-        """Bảng 3.21: người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
+        """người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
         m = self.model
         allowed = m.valid if allowed is None else allowed
         # model files trained before 2026-10-17 still have the old TGDĐ column name

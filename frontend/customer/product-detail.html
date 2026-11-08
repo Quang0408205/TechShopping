@@ -86,7 +86,6 @@
                 <div class="detail-thumb-strip">
                     <div class="detail-thumbnails" id="detailThumbnails" hidden></div>
                 </div>
-                <!-- điểm nổi bật rút từ thông số + còn hàng ở cửa hàng nào (js/customer/product-extras.js) -->
                 <section class="detail-highlights" id="detailHighlights" hidden>
                     <h2 class="detail-extra-title">Điểm nổi bật</h2>
                     <ul class="highlight-grid" id="detailHighlightGrid"></ul>
@@ -136,21 +135,18 @@
                 </div>
                 <!-- Còn / hết hàng của phiên bản đang chọn (tồn kho các chi nhánh đang mở) -->
                 <p class="detail-stock" id="detailStock" hidden></p>
-                <!-- Nút "Báo tôi khi có hàng" khi phiên bản đang chọn hết hàng (js/customer/stock-alert.js) -->
                 <div class="stock-alert" id="stockAlert" hidden></div>
                 <p class="detail-contact-note" id="contactNote" hidden>
                     Sản phẩm chưa có giá bán trực tuyến. Vui lòng
                     <a href="contact.html">liên hệ</a> để được báo giá.
                 </p>
                 <div class="detail-actions">
-                    <!-- disabled tới khi tải xong sản phẩm (product-detail.js bật khi có giá) -->
                     <button type="button" id="addToCartBtn" class="btn btn-outline-dark" disabled>
                         Thêm vào giỏ
                     </button>
                     <button type="button" id="buyNowBtn" class="btn btn-dark" disabled>
                         Mua ngay
                     </button>
-                    <!-- Yêu thích + so sánh (js/customer/compare-wishlist.js); product-detail.js điền data-* khi tải xong sản phẩm -->
                     <div class="detail-tools">
                         <button type="button" id="detailWishBtn" class="detail-tool" data-wish data-product-id="" aria-pressed="false" hidden>
                             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2Z"/></svg>
@@ -194,7 +190,6 @@
             <div class="tab-panel" data-tab-panel="description" role="tabpanel">
                 <p id="detailDescription"></p>
             </div>
-            <!-- Đánh giá của khách (js/customer/product-reviews.js): chỉ số thật, không bịa phân bố sao -->
             <div class="tab-panel reviews-panel" data-tab-panel="reviews" role="tabpanel">
                 <div class="review-overview">
                     <div class="review-score">
@@ -212,7 +207,6 @@
                 <div class="review-list" id="reviewList" aria-live="polite"></div>
                 <button type="button" class="btn btn-outline-dark review-more" id="reviewMoreBtn" hidden>Xem thêm đánh giá</button>
             </div>
-            <!-- Hỏi đáp (js/customer/product-qa.js): câu hỏi chỉ hiện sau khi POY trả lời -->
             <div class="tab-panel qa-panel" data-tab-panel="qa" role="tabpanel">
                 <form class="qa-form" id="qaForm" novalidate>
                     <label for="qaInput">Bạn cần hỏi gì về sản phẩm này?</label>
@@ -256,7 +250,6 @@
             </div>
             <div class="product-grid" id="relatedProductsGrid"></div>
         </section>
-        <!-- Thanh mua hàng dính khi đã cuộn qua nút mua: chỉ bấm hộ addToCartBtn / buyNowBtn (js/customer/ui-effects.js) -->
         <div class="buy-bar" id="buyBar">
             <div class="container buy-bar-inner">
                 <img class="buy-bar-image" data-buy-bar-image alt="" width="48" height="48" referrerpolicy="no-referrer">

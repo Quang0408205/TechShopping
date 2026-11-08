@@ -51,6 +51,8 @@ services:
       - ./database/migrations/recommendation_clicks.sql:/docker-entrypoint-initdb.d/14_recommendation_clicks.sql:ro
       # Lịch sử đánh giá offline của hệ thống khuyến nghị (AI Service ghi sau mỗi lần đánh giá)
       - ./database/migrations/recommendation_evaluations.sql:/docker-entrypoint-initdb.d/15_recommendation_evaluations.sql:ro
+      # Nhà cung cấp, phiếu nhập kho, phiếu chuyển kho, nhật ký chuyển khoản / đối soát mẫu (chạy sau 05c-11)
+      - ./database/docker-init/16_sample_receipts_transfers_bank.sql:/docker-entrypoint-initdb.d/16_sample_receipts_transfers_bank.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d techshopping"]
       interval: 5s
@@ -115,7 +117,7 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
-      # Địa chỉ web công khai (vd. https://ten-cua-ban.ngrok-free.app): được ghi vào link ảnh tải lên
+      # Địa chỉ web công khai (vd. https://ten-mien-cua-ban.example): được ghi vào link ảnh tải lên
       APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
       # Cho trình duyệt gọi API từ địa chỉ công khai (POST kèm Origin: https://<tên-miền>), không thì 403 Invalid CORS request
       CORS_ALLOWED_ORIGINS: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
@@ -142,7 +144,7 @@ services:
       TZ: Asia/Ho_Chi_Minh
       AI_BACKEND_URL: http://backend:8080/api/v1
       AI_INTERNAL_KEY: ${AI_INTERNAL_KEY:-dev-internal-key}
-      # LLM của chatbot: mặc định Ollama chạy trên máy host (miễn phí); xem AI_Service/README.md mục 8.2
+      # LLM của chatbot: mặc định Ollama chạy trên máy host (miễn phí)
       LLM_PROVIDER: ${LLM_PROVIDER:-openai}
       LLM_BASE_URL: ${LLM_BASE_URL:-http://host.docker.internal:11434/v1}
       LLM_API_KEY: ${LLM_API_KEY:-ollama}

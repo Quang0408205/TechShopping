@@ -25,7 +25,7 @@ create index if not exists idx_recommendations_user_created on recommendations(u
 create unique index if not exists uq_product_relations_pair_type
     on product_relations(product_id, related_product_id, relation_type);
 
--- chat_sessions: khách chưa đăng nhập vẫn được hỏi câu chung (mục 3.6.5 d), nên user_id được phép null;
+-- chat_sessions: khách chưa đăng nhập vẫn được hỏi câu chung, nên user_id được phép null;
 -- trình duyệt giữ session_token ngẫu nhiên (không đoán được) thay cho session_id tăng dần
 alter table chat_sessions alter column user_id drop not null;
 alter table chat_sessions add column if not exists session_token varchar(64);
@@ -33,7 +33,7 @@ alter table chat_sessions add column if not exists last_message_at timestamp;
 create unique index if not exists uq_chat_sessions_token on chat_sessions(session_token);
 create index if not exists idx_chat_sessions_last_message on chat_sessions(last_message_at);
 
--- kho tri thức RAG (mục 3.6.2): mỗi dòng là một chunk + vector của nó
+-- kho tri thức RAG: mỗi dòng là một chunk + vector của nó
 create extension if not exists vector;
 
 create table if not exists kb_chunks (

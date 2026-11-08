@@ -1,10 +1,6 @@
 -- đánh giá sản phẩm: sao (1-5) + bình luận, admin ẩn/hiện có lý do, tối đa 5 ảnh/đánh giá.
--- Schema theo đúng thiết kế đã
--- chốt ở docs/TechShopping_v2.sql nhóm 10, đối chiếu lại với docs/techshopping_v3.sql nhóm 11 (thêm 2 CHECK
--- biên + unique(review_id, display_order) mà v2 chưa có, do nhóm rà soát phát hiện thêm). Giới hạn 5 ảnh /
--- đánh giá và tính lại products.rating / total_reviews do CODE JAVA kiểm tra lúc ghi (bước sau), KHÔNG dùng
--- trigger Postgres như v3 — dự án không dùng trigger ở migration nào khác. Bước này chỉ thêm bảng (schema +
--- entity + repository); API / giao diện (R2-R6) làm sau.
+-- Giới hạn 5 ảnh / đánh giá và việc tính lại products.rating / total_reviews do code Java kiểm tra lúc ghi, không dùng
+-- trigger Postgres.
 -- db tạo mới từ database/techshopping.sql đã có sẵn 2 bảng này; file này chỉ dành cho db tạo từ bản schema cũ
 -- (volume postgres_data đã có từ trước). Chạy lại nhiều lần vẫn an toàn.
 --   docker exec -i techshopping-postgres psql -U postgres -d techshopping < database/migrations/reviews.sql

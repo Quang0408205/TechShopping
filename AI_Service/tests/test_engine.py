@@ -1,4 +1,4 @@
-"""CBF, Hybrid, khách mới, mua kèm, nâng cấp (báo cáo mục 3.5.4–3.5.6); số liệu trùng ví dụ tính tay của báo cáo."""
+"""CBF, Hybrid, khách mới, mua kèm, nâng cấp; số liệu là ví dụ tính tay."""
 
 from datetime import datetime
 
@@ -33,7 +33,8 @@ def hand_model() -> engine.Model:
                         relations=pd.DataFrame(), trained_at=created)
 
 
-def test_cbf_profile_and_cosine_match_the_worked_example():
+def test_cbf_profile_and_cosine_match_the_worked_example(monkeypatch):
+    monkeypatch.setattr(config, "COLD_START_K", 5)       # ví dụ tính tay dùng k = 5
     # An: iPhone 17 thêm giỏ + bấm (r = 4,159), laptop Lenovo mua (r = 3,466)
     events = interactions_frame([(1, 1, "ADD_TO_CART", 1), (1, 1, "CLICK", 1), (1, 2, "PURCHASE", 1)])
     rec = engine.Recommender(load_interactions=lambda user_id=None: events)
@@ -100,10 +101,21 @@ def test_user_with_enough_interactions_gets_hybrid_without_seen_or_inactive_prod
     assert [r.score for r in recs] == sorted([r.score for r in recs], reverse=True)
 
 
-def test_new_user_below_k_gets_cbf_only(toy_recommender):
+def test_new_user_below_k_gets_cbf_only(toy_recommender, monkeypatch):
+    monkeypatch.setattr(config, "COLD_START_K", 5)
     recs = toy_recommender.recommend(201, n=3)
 
     assert recs and all(r.cf_score is None for r in recs)
+
+
+def test_cold_start_k_can_be_passed_without_changing_config(toy_recommender, monkeypatch):
+    # đánh giá offline thử nhiều ngưỡng k: truyền tham số, không sửa config.COLD_START_K đang phục vụ khách
+    monkeypatch.setattr(config, "COLD_START_K", 5)
+    forced = toy_recommender.recommend_alphas(201, 3, [0.5], cold_start_k=1)[0]
+    default = toy_recommender.recommend_alphas(201, 3, [0.5])[0]
+
+    assert forced and any(r.cf_score is not None for r in forced)
+    assert all(r.cf_score is None for r in default)
     assert config.COLD_START_K == 5
 
 
