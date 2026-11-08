@@ -301,10 +301,18 @@ sequenceDiagram
 | Loại chunk | Nguồn | Số lượng | Nội dung |
 |---|---|---|---|
 | `POLICY` | `knowledge/*.md`, mỗi mục `##` là một chunk | 15 | Giao hàng, thanh toán, trả góp, bảo hành, bảo trì, trả hàng, hỗ trợ |
-| `PRODUCT` | Bảng `products` + thông số + phiên bản | 4.288 | Tên, danh mục, hãng, giá, bảo hành, phiên bản, tối đa 12 thông số |
+| `PRODUCT` | Bảng `products` + thông số + phiên bản | 4.302 | Tên, danh mục, hãng, giá, bảo hành, phiên bản, tối đa 12 thông số (thông số chính của danh mục trước) |
 
 - Nội dung chính sách viết **đúng theo code Backend**: phí giao hàng mặc định 30.000đ (một số tỉnh có phí riêng), không có ngưỡng miễn phí; trả góp 0% cho đơn từ 3.000.000đ, kỳ hạn 3/6/9/12 tháng; trả hàng trong 7 ngày…
 - **Không đưa mô tả sản phẩm crawl vào chunk.** Phần mô tả toàn câu quảng cáo ("thu cũ đổi mới, trả góp 0%…"). Khi còn để mô tả, câu hỏi "đổi trả trong bao nhiêu ngày" trả về… đồng hồ Casio.
+- **Thông số chính trước** (`KEY_SPECS` trong `build_index.py`): điện thoại lấy chip, RAM, bộ nhớ, camera sau / trước,
+  pin, sạc, màn hình, chống nước…; laptop lấy CPU, RAM, ổ cứng, card đồ hoạ, màn hình, pin, khối lượng…; còn chỗ
+  mới lấy các thông số khác theo thứ tự gốc. Trước đây chỉ lấy 12 thông số đầu theo thứ tự crawl nên 79/166 chunk điện
+  thoại có độ phân giải camera và **không chunk nào có dung lượng pin** (nay 161/169 và 145/169, bằng số máy có thông số
+  đó trong database). Hệ quả cũ: hỏi "điện thoại chụp ảnh đẹp" ra máy ghi "camera sau: Không có".
+- **Embedding vẫn tính trên văn bản cũ** (12 thông số đầu theo thứ tự gốc), còn `content` (LLM đọc, tìm theo từ khoá)
+  là bản có thông số chính. Đã thử đưa thông số chính vào embedding: các chunk cùng loại giống nhau hơn và vector Hit@1
+  giảm 0,850 → 0,775 (nhầm Redmi Note 14 Pro+ với 15 Pro+, tai nghe không chống ồn), nên giữ cách cũ.
 - Mỗi chunk lưu `metadata` (danh mục, hãng, giá) để lọc.
 - Mô hình E5 cần tiền tố `"passage: "` cho tài liệu và `"query: "` cho câu hỏi.
 
@@ -326,10 +334,10 @@ sequenceDiagram
 | Tool | Cần đăng nhập | Lấy dữ liệu từ |
 |---|---|---|
 | `search_policies(query)` | | RAG, tài liệu `POLICY` |
-| `search_products(query, category, brand, min_price, max_price, limit)` | | RAG, tài liệu `PRODUCT` + lọc metadata |
+| `search_products(query, category, brand, min_price, max_price, limit)` | | RAG, tài liệu `PRODUCT` + lọc metadata; 2 sản phẩm đầu kèm giá theo dung lượng (`GET /products/{id}/variants`) |
 | `get_product_details(product_id)` | | `GET /products/{id}`, `/variants`, `/specifications` (giá **hiện tại**) |
-| `recommend_products(type, product_id)` | | `POST /recommendations` (dùng lại hệ khuyến nghị) |
-| `get_my_orders()` | ✅ | `GET /orders` |
+| `recommend_products(type, product_id \| product_name)` | | `POST /recommendations` (dùng lại hệ khuyến nghị); chỉ có tên thì tool tự tìm sản phẩm |
+| `get_my_orders()` | ✅ | `GET /orders`: đơn chưa xong, tối đa 3 đơn đã xong gần nhất và các dòng trả lời dựng sẵn `answer_lines` |
 | `get_order_detail(order)` | ✅ | `GET /orders/{id}` hoặc tìm theo mã `DH...` |
 | `get_my_cart()` | ✅ | `GET /cart` |
 | `get_my_service_requests()` | ✅ | `GET /service-requests/mine` |
@@ -463,6 +471,20 @@ File `database/migrations/ai_recommendation.sql` (chạy lại nhiều lần v�
   ollama pull qwen3:8b
   ```
 - Kiểm tra: mở http://localhost:11434 thấy chữ *Ollama is running*.
+- **Đặt context 8.192 token.** Ollama mặc định chỉ 4.096 (máy ít VRAM), mà một câu hỏi đơn hàng sau 6 lượt hội thoại đã
+  cần khoảng 5.000 token; vượt giới hạn thì Ollama cắt phần đầu prompt (lời nhắc hệ thống) và mô hình bỏ quy tắc.
+  - **Windows:** System Properties → Environment Variables → thêm biến người dùng `OLLAMA_CONTEXT_LENGTH` = `8192`,
+    rồi thoát hẳn Ollama ở khay hệ thống và mở lại.
+  - **macOS (brew):** thêm vào `EnvironmentVariables` của dịch vụ rồi khởi động lại:
+    ```bash
+    plutil -replace EnvironmentVariables.OLLAMA_CONTEXT_LENGTH -string 8192 ~/Library/LaunchAgents/sh.brew.ollama.plist
+    launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/sh.brew.ollama.plist
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/sh.brew.ollama.plist
+    ```
+    (`brew services restart` có thể chép lại plist gốc của brew; sửa cả `/opt/homebrew/opt/ollama/sh.brew.ollama.plist`
+    nếu dùng lệnh đó.)
+  - Kiểm tra: hỏi chatbot một câu rồi chạy `ollama ps`, cột `CONTEXT` phải là `8192`. `qwen3:8b` khi đó chiếm khoảng
+    6,0 GB (4.096 token: 5,3 GB).
 - Cần máy RAM ≥ 16 GB (hoặc GPU ≥ 8 GB). Máy yếu hơn dùng `qwen3:4b` (nhẹ hơn, trả lời kém hơn): `ollama pull qwen3:4b` và đặt `LLM_MODEL=qwen3:4b` trong `.env`.
 - Không cần sửa `.env`: docker-compose đã mặc định gọi Ollama ở `http://host.docker.internal:11434/v1`.
 
@@ -656,7 +678,7 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-41 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+52 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -669,7 +691,11 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
   phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
 - `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
   người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng, quy tắc
-  chọn λ của MMR.
+  chọn λ của MMR;
+- `test_chat_tools.py`: chunk sản phẩm lấy thông số chính của danh mục trước, tóm tắt cho LLM rút gọn danh sách
+  phiên bản mà vẫn giữ camera / pin, tool bỏ tham số lạ thay vì lỗi, `get_my_orders` tách đơn chưa xong và dựng dòng
+  trả lời, bỏ câu nhắc nút Xác nhận khi không có thao tác, chọn phiên bản theo từng từ (kể cả khi phiên bản nằm trong
+  tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên.
 
 ```bash
 cd AI_Service
@@ -734,6 +760,49 @@ vừa 4 GB bộ nhớ GPU nên một phần chạy trên CPU. Chính sách, dữ
 trượt đều là câu mô hình phải tự tổng hợp thông tin sản phẩm: hai câu hỏi giá nêu giá của phiên bản khác hoặc chỉ nêu
 giá thấp nhất, một câu gợi ý phụ kiện chung chung, một câu hỏi lại màu thay vì đề xuất thêm vào giỏ.
 
+**Lần chạy 08/11/2026** (Apple M1 Pro 16 GB, Ollama, cùng Qwen3 8B + giám khảo). Số 26/30 ở trên đo trên máy khác với
+database khác, nên lần này so **trên cùng máy, cùng database**:
+
+| Phiên bản | Đạt | Thời gian / câu |
+|---|---|---|
+| Code trước khi sửa | 24/30 (80%) | 10,5 s |
+| Sau khi sửa: thông số chính trong chunk, tool đơn hàng mới, chốt chặn | **24/30 (80%)** | 12,5 s |
+
+- 6 câu trượt **giống nhau ở cả hai phiên bản**:
+  - 3 câu do bộ câu hỏi không còn khớp dữ liệu: `pol-shipping-fee` vẫn đòi ngưỡng miễn phí giao hàng 10 triệu (chính sách
+    đã bỏ ngưỡng này); `acc-order-code`, `act-cancel` dùng đơn 1271 / 159, trên database này không thuộc tài khoản kiểm thử;
+  - 3 câu là điểm yếu có sẵn: hỏi giá bản 256GB nhưng nêu giá thấp nhất (`prod-followup`), không gợi ý được phụ kiện
+    (`rec-accessory`), hỏi lại màu thay vì đề xuất thêm vào giỏ (`act-add-cart`).
+- Thời gian tăng 2 giây vì câu trả lời sản phẩm có thêm thông số và câu đơn hàng nêu đủ các đơn.
+- Thay đổi mà 30 câu không đo, kiểm tra riêng:
+  - "Điện thoại chụp ảnh đẹp dưới 10 triệu" không còn gợi ý máy ghi "camera sau: Không có", có kèm camera và pin.
+  - "Đơn hàng của tôi tới đâu rồi?": trước đây tool trả 10 đơn, mô hình liệt kê hết (~500 token, 36–43 giây; có lịch sử
+    thì prompt + trả lời 4.345 token, vượt context 4.096 của Ollama) và còn nói nhầm "đã giao xong" khi khách có đơn đang
+    chờ. Nay: tài khoản 1 đơn đang chờ 6,6–8,2 giây; tài khoản 4 đơn đang chờ nêu đủ 4/4 mã ở 5/5 lần (trước: 1/4), 16 giây.
+  - Mô hình thêm tham số lạ (`city`) không còn làm tool lỗi; câu nhắc "bấm nút Xác nhận" khi không có nút bị bỏ.
+- Bài học khi sửa (đo trên cùng máy):
+  - gửi cả chunk (~800 ký tự) cho LLM thay vì 400: 8 sản phẩm làm prompt vượt 4.096 token, mô hình bỏ quy tắc (kẻ bảng,
+    trả lời lan man), **19/30**; rút gọn danh sách phiên bản rồi cắt ở 500 ký tự thì giữ được thông số mà không vượt;
+  - thêm khoảng 800 ký tự vào lời nhắc hệ thống: tỉ lệ từ chối câu ngoài phạm vi giảm từ 5/5 xuống 2/5 lần thử; viết gọn
+    lại và đưa quy tắc phạm vi lên đầu thì về 5/5;
+  - viết lại quy tắc đơn hàng không giúp (1/4 mã ở cả hai cách viết); dựng sẵn dòng trả lời trong kết quả tool mới giúp.
+- Sau đó tăng context của Ollama lên 8.192 (mục 8.1, bước 1) và chạy lại: vẫn **24/30**, 11,8 giây / câu, cùng 6 câu
+  trượt. Bộ 30 câu là câu hỏi một lượt nên không chạm giới hạn 4.096; khác biệt nằm ở hội thoại dài: câu hỏi đơn hàng
+  sau 6 lượt cần 5.023 token và vẫn nêu đủ 4/4 đơn đang chờ (18,5 giây).
+- Cuối cùng sửa 6 câu trượt còn lại, rồi chạy lại cả bộ: **30/30 (100%)**, 12,6 giây / câu
+  (`evals/results/20261108-1253.json`; lần so sánh với code cũ: `20261108-1053.json`).
+  - **Sửa bộ câu hỏi (4 câu)**: `pol-shipping-fee` kiểm theo chính sách hiện tại (30.000đ, phí riêng theo tỉnh; không được
+    nêu ngưỡng miễn phí cũ); `acc-order-code`, `act-cancel` dùng đơn của chính tài khoản kiểm thử (DH00003119,
+    DH00000221); `act-add-cart` nêu rõ màu ("256GB màu Đen"), vì bản 256GB có 3 màu nên hỏi lại là đúng. Các mã đơn
+    phụ thuộc dữ liệu mẫu: trên database khác phải đổi theo đơn của `EVAL_LOGIN`.
+  - **Sửa code (2 câu)**: `recommend_products` nhận thêm `product_name` (mô hình không biết id của iPhone 17e nên gọi với
+    id rỗng và nhận danh sách trống); `search_products` trả thêm `prices_by_version` cho 2 sản phẩm đầu (trước chỉ có giá
+    thấp nhất nên hỏi "bản Pro 256GB" chỉ nói được "giá từ…"). Kèm theo: chọn phiên bản theo từng từ ("256GB màu Đen" khớp
+    "256 GB - Đen", trước so nguyên chuỗi nên không khớp) và đọc phiên bản trong tên sản phẩm khi mô hình không điền
+    `variant_name`.
+  - 30/30 là **một lần chạy**; mô hình 8B trả lời khác nhau giữa các lần, các lần chạy trước trên cùng máy dao động
+    23–24/30 với cùng bộ câu hỏi cũ.
+
 Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do), có thể dán thẳng vào mục 4.8.4 của báo cáo. Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
 
 ### 9.5. Đánh giá phần tìm kiếm RAG (`scripts/eval_retrieval.py`)
@@ -753,15 +822,19 @@ Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đ�
 docker compose exec ai-service python -m scripts.eval_retrieval     # kết quả: evals/results/retrieval_latest.md
 ```
 
-Kết quả lần chạy 03/11/2026 (số dùng trong báo cáo và slide):
+Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số chính trong `content` (mục 5.2):
 
 | Cách tìm | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | ms / câu |
 |---|---|---|---|---|---|---|
-| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,900** | 37 |
-| keyword | 0,725 | 0,800 | 0,875 | 0,925 | 0,779 | 10 |
-| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 39 |
-| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 39 |
-| hybrid (w = 0,25) | 0,825 | 0,900 | 0,950 | 0,950 | 0,874 | 38 |
+| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,899** | 62 |
+| keyword | 0,650 | 0,800 | 0,875 | 0,900 | 0,734 | 12 |
+| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 74 |
+| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,856 | 70 |
+| hybrid (w = 0,25) | 0,800 | 0,900 | 0,925 | 0,950 | 0,854 | 83 |
+
+- `vector` gần như không đổi so với lần chạy 03/11 (MRR 0,900): embedding vẫn tính trên văn bản cũ; chênh 0,001 là do
+  catalogue đổi (kho cũ đo lại ngày 08/11 cũng ra 0,896).
+- `keyword` giảm (Hit@1 0,725 → 0,650) vì cột `search_tsv` sinh từ `content` mới; chế độ này không dùng khi chạy thật.
 
 **Kết luận:**
 - **Tìm kiếm lai không tốt hơn**: ở mọi trọng số đều kém `vector`; trọng số từ khoá càng nhỏ thì càng gần `vector`.
