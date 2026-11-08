@@ -278,7 +278,8 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const paramRow = function (label, p) {
             return [label, formatAlpha(p.alpha), String(p.factors), String(p.regularization).replace(".", ","),
-                String(p.confidence).replace(".", ","), halfLife(p.halfLifeDays), mmrText(p.mmrLambda)];
+                String(p.confidence).replace(".", ","), halfLife(p.halfLifeDays), mmrText(p.mmrLambda),
+                p.coldStartK == null ? "–" : String(p.coldStartK)];
         };
 
         const metricRows = function (rows) {
@@ -298,6 +299,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const cross = result.crossSell;
 
+        const coldCurve = result.coldStartCurve || [];
+
+        const likeRows = result.likeRows || [];
+
         const upsell = result.upsell;
 
         const tuning = (result.tuning.als || []).slice().sort(function (a, b) { return b.ndcg - a.ndcg; }).slice(0, 5);
@@ -308,7 +313,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         box.innerHTML =
             subHeading("Tham số") +
-            miniTable(["", "α", "Số chiều ALS", "λ", "a", "Nửa đời", "λ của MMR"],
+            miniTable(["", "α", "Số chiều ALS", "λ", "a", "Nửa đời", "λ của MMR", "Ngưỡng k"],
                 [paramRow("Chọn trên validation", result.chosen), paramRow("Đang dùng", result.configured)]) +
 
             subHeading("Chỉ tính thêm giỏ / mua là đúng", formatNumber(result.strongUsers) + " khách") +
@@ -319,6 +324,21 @@ document.addEventListener("DOMContentLoaded", async function () {
             miniTable(metricHead, metricRows(cold)) +
             (coldAllZero ? '<p class="admin-field-hint">Không mô hình nào đoán trúng: các khách này chỉ có vài lượt mua ' +
                 "ngẫu nhiên trong dữ liệu mẫu, nên chưa đánh giá được trên dữ liệu hiện có.</p>" : comparisonText(result.coldStartComparisons)) +
+
+            (coldCurve.length === 0 ? "" :
+                subHeading("Cold-start: NDCG theo số lượt của khách mới", "kiểm thử") +
+                '<p class="admin-field-hint">Cắt lịch sử của một phần khách còn m lượt đầu rồi học lại; Hybrid được ' +
+                "dùng ALS ngay từ lượt đầu để so với chỉ CBF. Ngưỡng k chọn trên validation: " +
+                escapeHtml(String(result.chosen.coldStartK)) + " lượt.</p>" +
+                miniTable(["Số lượt", "Khách", "Phổ biến", "Chỉ CBF", "Hybrid"], coldCurve.map(function (row) {
+                    return [String(row.events), formatNumber(row.users), formatMetric(row.popular),
+                        formatMetric(row.cbf), formatMetric(row.hybrid)];
+                }))) +
+
+            (likeRows.length === 0 ? "" :
+                subHeading("Danh sách yêu thích (LIKE): có so với bỏ", formatNumber(result.likeEvents) + " lượt LIKE") +
+                miniTable(metricHead, metricRows(likeRows)) +
+                comparisonText(result.likeComparisons)) +
 
             subHeading("Mua kèm", formatNumber(cross.pairs) + " cặp đơn – sản phẩm") +
             '<p class="admin-field-hint">Luật kết hợp học trên ' + formatNumber(cross.trainOrders) + " đơn đặt trước, chấm trên " +

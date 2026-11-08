@@ -209,17 +209,17 @@ AI_Service/
 |---|---|---|
 | **CBF** (lọc theo nội dung) | Hồ sơ `p_u` = trung bình có trọng số r(u,i) của các v_i; `Score_CBF = cos(p_u, v_i)` | `engine.py` |
 | **CF / ALS** (lọc cộng tác) | Phân rã ma trận người dùng × sản phẩm theo phản hồi ngầm định: `c_ui = 1 + a·r(u,i)`, nghiệm đóng `x_u = (YᵀY + Yᵀ(C_u−I)Y + λI)⁻¹ YᵀC_u p_u`, luân phiên X và Y | `als.py` |
-| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0.5** (chọn trên tập validation) | `engine.py` |
+| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0,6** (chọn trên tập validation, mục 9.1) | `engine.py` |
 
 - **Fold-in:** khi có request, vector của khách được tính lại từ hành vi *hiện tại*, nên hành vi mới phát sinh sau lần huấn luyện gần nhất vẫn được tính.
-- **Huấn luyện:** khoảng 3 giây (352 người dùng × 4.487 sản phẩm). Tự chạy lại mỗi 24 giờ; mô hình lưu ở volume `ai_models`.
+- **Huấn luyện:** khoảng 3–4 giây (2.302 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại mỗi 24 giờ; mô hình lưu ở volume `ai_models`.
 
 ### 4.4. Các bước tạo danh sách "Gợi ý dành cho bạn"
 
 1. Lấy **K = 50** ứng viên tốt nhất từ CBF và 50 từ CF, rồi hợp nhất.
 2. **Lọc:** bỏ sản phẩm bị ẩn, đã xoá, giá = 0, và sản phẩm khách **đã tương tác hoặc đã mua**.
 3. Tính điểm Hybrid và sắp xếp giảm dần. Bằng điểm thì ưu tiên sản phẩm phổ biến hơn, rồi sản phẩm cập nhật gần hơn.
-4. **Xếp lại cho đa dạng (MMR, λ = 0,8):** chọn lần lượt từng sản phẩm j có
+4. **Xếp lại cho đa dạng (MMR, λ = 0,7):** chọn lần lượt từng sản phẩm j có
    `λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)` lớn nhất. Sản phẩm gần giống món đã chọn (5 chiếc iPhone cùng
    dòng) bị trừ điểm, nhường chỗ cho sản phẩm khác loại. λ = 1 thì giữ nguyên thứ tự theo điểm (`REC_MMR_LAMBDA`).
 5. Lấy **Top-N** (mặc định 8) kèm **lý do đề xuất**:
@@ -230,10 +230,13 @@ AI_Service/
 
 | Trường hợp | Cách xử lý |
 |---|---|
-| Khách có ≥ 5 lượt tương tác | Hybrid α = 0.5, xếp lại bằng MMR |
-| Khách có 1–4 lượt tương tác | Chỉ dùng CBF (α = 1), cũng xếp lại bằng MMR |
+| Khách có ≥ 2 lượt tương tác | Hybrid α = 0,6, xếp lại bằng MMR |
+| Khách có đúng 1 lượt tương tác | Chỉ dùng CBF (α = 1), cũng xếp lại bằng MMR |
 | Khách mới / chưa đăng nhập | Khoảng ¾ sản phẩm phổ biến nhất + ¼ sản phẩm mới nhất |
 | Sản phẩm mới chưa ai tương tác | Chỉ có điểm CBF |
+
+Ngưỡng **k = 2** (`REC_COLD_START_K`) được chọn trên validation (mục 9.1, bước 5): trước 08/11/2026 cố định k = 5 theo
+thiết kế, nhưng đo theo số lượt thì Hybrid đã tốt hơn chỉ CBF từ lượt thứ 2.
 
 ### 4.5. Tương tự, Upsell, Cross-sell
 
@@ -243,7 +246,7 @@ AI_Service/
 | **UPSELL** | Cùng danh mục, giá cao hơn tối đa **δ = 30%**, có ít nhất 1 thông số (RAM / bộ nhớ / camera) tốt hơn. Danh mục không có thông số (đồng hồ thời trang) chỉ xét giá | Hybrid nếu khách có dữ liệu, ngược lại theo độ giống sản phẩm đang xem | "Nâng cấp camera 50MP, chỉ thêm 3.000.000đ" |
 | **CROSS_SELL** | Quan hệ `ACCESSORY / COMPATIBLE / BOUGHT_TOGETHER` trong `product_relations` + cặp mua chung có **lift > 1** | 0.6 × mức liên quan + 0.4 × Hybrid (khi đã đăng nhập) | "Phụ kiện phù hợp với sản phẩm này" |
 
-Đơn hàng hiện còn ít nên chưa tính được "mua chung" đáng tin. Vì vậy `build_relations.py` tạo **6.086 quan hệ phụ kiện** theo quy tắc:
+Đơn hàng hiện còn ít nên chưa tính được "mua chung" đáng tin. Vì vậy `build_relations.py` tạo **6.229 quan hệ phụ kiện** theo quy tắc:
 
 - **Điện thoại:** ốp lưng, kính cường lực, sạc, cáp, tai nghe.
 - **Laptop:** chuột, bàn phím, balo, túi chống sốc.
@@ -251,6 +254,14 @@ AI_Service/
 - **Đồng hồ thông minh:** sạc, tai nghe…
 
 Mỗi thiết bị có tối đa 8 phụ kiện (tối đa 2 mỗi nhóm). Phụ kiện cùng hãng được ưu tiên. Phụ kiện chỉ dành cho iPhone (Lightning, MagSafe iPhone, Magic Mouse…) chỉ gắn với sản phẩm Apple.
+
+Phụ kiện chỉ vừa một số máy (`fits`, từ 08/11/2026; trước đó iPhone 17e được gợi ý ốp lưng iPhone 15 Pro):
+
+- **Ốp lưng, kính cường lực, miếng dán ghi tên đời máy** chỉ gắn với đúng đời đó: "Ốp lưng iPhone 16" gắn với iPhone 16,
+  không gắn với iPhone 16e, 16 Plus hay 17e. Catalogue hiện chỉ có ốp iPhone 15 Pro và iPhone 16, nên đa số điện thoại
+  không có ốp trong danh sách mua kèm (đúng hơn là gợi ý ốp không vừa).
+- **Apple Pencil Pro** chỉ gắn với iPad Pro, iPad Air, iPad mini (iPad thường không dùng được).
+- **Balo / túi laptop ghi cỡ inch** chỉ gắn với laptop có màn hình không lớn hơn cỡ đó (đọc từ thông số "Kích thước màn hình").
 
 ### 4.6. Khi AI Service không trả lời (dự phòng)
 
@@ -583,8 +594,8 @@ chưa đủ chắc chắn (có thể do may rủi).
 
 **Vì sao các con số trông thấp:** chọn 10 trong 4.302 sản phẩm, đoán ngẫu nhiên chỉ được Precision khoảng 0,001.
 Điều cần chứng minh là mô hình hơn các đối chứng một cách có ý nghĩa, không phải đạt số tuyệt đối cao. Với hệ thống
-đang dùng (bảng mục 9.1): HitRate 0,45 = gần một nửa số khách có ít nhất một món trúng; Precision 0,067 = trung bình
-khoảng 0,7 món trúng trong 10; Recall 0,198 = đoán ra khoảng 20% số món khách quan tâm sau đó.
+đang dùng (bảng mục 9.1): HitRate 0,24 = khoảng một phần tư số khách có ít nhất một món trúng; Precision 0,031 = trung
+bình khoảng 0,3 món trúng trong 10; Recall 0,098 = đoán ra khoảng 10% số món khách quan tâm sau đó.
 
 ### 9.1. Đánh giá offline (`scripts/evaluate.py`)
 
@@ -597,60 +608,103 @@ Cách đánh giá (khoảng 3 phút):
   2. α = 0; 0,1; …; 1 với ALS đã chỉnh;
   3. nửa đời giảm trọng số hành vi cũ: không giảm / 30 / 90 ngày, với α đã chọn;
   4. λ của MMR: 1 / 0,9 / … / 0,5. Xếp lại gần như luôn làm NDCG giảm một chút, nên bước này **không** lấy NDCG cao
-     nhất mà lấy λ có độ đa dạng cao nhất trong các λ còn giữ được ít nhất 95% NDCG của λ = 1.
+     nhất mà lấy λ có độ đa dạng cao nhất trong các λ còn giữ được ít nhất 95% NDCG của λ = 1;
+  5. ngưỡng cold-start k: khách mô phỏng nào cũng có ≥ 12 lượt, nên giả lập khách mới bằng cách **chỉ giữ m lượt đầu
+     của 30% khách** (m = 1, 2, 3, 5, 8, 12; 70% còn lại giữ nguyên để ALS vẫn học được), học lại rồi so NDCG@10 của
+     phổ biến / chỉ CBF / Hybrid trên chính các khách đó. k = m nhỏ nhất mà từ đó trở đi Hybrid không kém CBF.
 - Kết quả báo cáo: học lại trên huấn luyện + validation với tham số đã chọn, chấm trên phần kiểm thử. Phần kiểm thử
   không tham gia chọn tham số nào, nên con số không bị "đẹp" nhờ chọn trên chính nó.
 - Đối chứng: danh sách phổ biến, **item–item kNN** (sim(i, j) = cosine giữa hai cột của ma trận r(u,i); điểm của j =
   Σ_i r(u,i)·sim(i, j)), chỉ CBF, chỉ ALS.
 - "Đúng" theo hai cách: mọi tương tác trong phần được chấm mà chưa gặp khi học, và chỉ thêm giỏ / mua (tín hiệu mạnh).
-- Thêm độ đa dạng (Diversity = trung bình 1 − cosine giữa các cặp sản phẩm trong cùng danh sách), nhóm khách mới
-  (1–4 lượt, chỉ dùng CBF), mua kèm (đơn 20% cuối theo ngày đặt; luật kết hợp học trên đơn 80% đầu) và nâng cấp.
+- Thêm độ đa dạng (Diversity = trung bình 1 − cosine giữa các cặp sản phẩm trong cùng danh sách), đường cong
+  cold-start trên kiểm thử, có / bỏ hành vi LIKE, khách thật sự chỉ có 1 lượt, mua kèm (đơn 20% cuối theo ngày đặt;
+  luật kết hợp học trên đơn 80% đầu) và nâng cấp.
 - Khoảng tin cậy 95%: bootstrap 1.000 lần theo người dùng (cùng một mẫu cho mọi mô hình); so sánh hai mô hình bằng
   khoảng tin cậy của hiệu NDCG trên cùng người dùng (không chứa 0 = chênh lệch có ý nghĩa).
-- Dữ liệu mô phỏng (03/11/2026): 14.726 / 2.230 / 4.335 hành vi huấn luyện / validation / kiểm thử; tinh chỉnh trên
-  256 người dùng, kiểm thử 288 người dùng, N = 10.
+- Dữ liệu mô phỏng (08/11/2026, có LIKE và PURCHASE từ đơn của khách mẫu): 16.429 / 2.456 / 5.713 hành vi huấn luyện /
+  validation / kiểm thử; tinh chỉnh trên 347 người dùng, kiểm thử 499 người dùng có ≥ 2 lượt, N = 10. Khoảng 5 phút.
 
-**Tham số chọn trên validation** (hệ thống dùng đúng các giá trị này từ 03/11/2026): ALS 32 chiều, λ = 0,1, **a = 5**
-(trước là 10; NDCG ALS 0,1267 so với 0,1218); **α = 0,5** (α từ 0,2 đến 0,7 gần như ngang nhau, 0,1349–0,1399);
-**nửa đời 30 ngày** (NDCG 0,1466 so với 0,1399 khi không giảm); **MMR λ = 0,8**:
+**Tham số chọn trên validation** (hệ thống dùng đúng các giá trị này từ 08/11/2026):
 
-| λ của MMR (validation) | 1 (không xếp lại) | 0,9 | **0,8** | 0,7 | 0,6 | 0,5 |
+| Tham số | Chọn | Ghi chú (NDCG@10 validation) |
+|---|---|---|
+| ALS | 16 chiều, λ = 1, a = 5 | 0,0827 (16 chiều λ 0,1: 0,0821; 32 chiều λ 1: 0,0775) |
+| α | 0,6 | α 0,4–0,7 gần như ngang nhau (0,1026–0,1038); ALS riêng 0,0827, CBF riêng 0,0793 |
+| Nửa đời | 90 ngày | 0,1082 (30 ngày: 0,1067; không giảm: 0,1038) |
+| MMR λ | 0,7 | NDCG 0,1032 = 95,4% của λ = 1, Diversity 0,514 (λ = 1: 0,282) |
+| Ngưỡng k | 2 lượt | xem bảng cold-start dưới |
+
+Lần 03/11 (dữ liệu mô phỏng chưa có LIKE và đơn mẫu) chọn ALS 32 chiều λ 0,1, α 0,5, nửa đời 30 ngày, MMR 0,8 và k cố
+định 5; dữ liệu đổi nên các tham số tốt nhất cũng đổi.
+
+| λ của MMR (validation) | 1 (không xếp lại) | 0,9 | 0,8 | **0,7** | 0,6 | 0,5 |
 |---|---|---|---|---|---|---|
-| NDCG@10 | 0,1466 | 0,1485 | **0,1452** | 0,1380 | 0,1251 | 0,1022 |
-| Diversity | 0,354 | 0,392 | **0,446** | 0,521 | 0,655 | 0,759 |
+| NDCG@10 | 0,1082 | 0,1048 | 0,1076 | **0,1032** | 0,0932 | 0,0776 |
+| Diversity | 0,282 | 0,330 | 0,407 | **0,514** | 0,645 | 0,755 |
 
-λ = 0,7 đa dạng hơn nữa nhưng chỉ còn 94% NDCG nên không được chọn.
-
-Kết quả trên tập kiểm thử (đúng = mọi tương tác):
+Kết quả trên tập kiểm thử (đúng = mọi tương tác, 499 người dùng):
 
 | Mô hình | Precision@10 | Recall@10 | NDCG@10 (KTC 95%) | HitRate@10 | Coverage | Diversity |
 |---|---|---|---|---|---|---|
-| Phổ biến (đối chứng) | 0.0063 | 0.0183 | 0.0122 (0.0069–0.0185) | 0.0625 | 0.4% | 0.666 |
-| Item–item kNN (đối chứng) | 0.0465 | 0.1412 | 0.1130 (0.0897–0.1376) | 0.3438 | 20.2% | 0.632 |
-| CBF (α = 1) | 0.0462 | 0.1314 | 0.0987 (0.0793–0.1197) | 0.3403 | 18.1% | 0.175 |
-| CF / ALS (α = 0) | 0.0635 | 0.1871 | 0.1536 (0.1288–0.1812) | 0.4167 | 12.1% | 0.561 |
-| Hybrid α = 0.5 (không xếp lại) | 0.0674 | 0.1976 | 0.1609 (0.1349–0.1890) | 0.4514 | 14.1% | 0.363 |
-| **Hybrid α = 0.5 + MMR λ = 0.8 (đang dùng)** | **0.0670** | **0.1979** | **0.1633 (0.1370–0.1911)** | **0.4479** | 13.3% | **0.452** |
+| Phổ biến (đối chứng) | 0.0066 | 0.0292 | 0.0174 (0.0112–0.0249) | 0.0621 | 0.4% | 0.720 |
+| Item–item kNN (đối chứng) | 0.0220 | 0.0689 | 0.0528 (0.0406–0.0661) | 0.1764 | 28.4% | 0.624 |
+| CBF (α = 1) | 0.0327 | 0.1034 | 0.0789 (0.0652–0.0941) | 0.2485 | 27.4% | 0.166 |
+| CF / ALS (α = 0) | 0.0267 | 0.0889 | 0.0609 (0.0494–0.0743) | 0.2084 | 8.8% | 0.613 |
+| Hybrid α = 0,6 (không xếp lại) | 0.0345 | 0.1065 | 0.0853 (0.0709–0.1006) | 0.2645 | 23.8% | 0.296 |
+| **Hybrid α = 0,6 + MMR λ = 0,7 (đang dùng)** | **0.0313** | **0.0984** | **0.0769 (0.0635–0.0922)** | **0.2445** | 17.4% | **0.518** |
 
-Chênh lệch NDCG@10 của Hybrid trên cùng người dùng: hơn kNN +0.048 (KTC 95%: +0.030 đến +0.067), hơn CBF +0.062
-(+0.042 đến +0.085), hơn danh sách phổ biến +0.149: đều có ý nghĩa. **Hơn ALS +0.007 (−0.004 đến +0.019): chưa đủ
-chắc chắn.** Sau khi tinh chỉnh (a = 5, giảm trọng số hành vi cũ), ALS một mình đã gần bằng Hybrid về độ chính xác;
-Hybrid vẫn cần vì (1) khách dưới 5 lượt tương tác chỉ dùng được CBF, (2) Coverage cao hơn ALS (14,1% so với 12,1%).
-Đổi lại, CBF làm danh sách ít đa dạng hơn (0,36 so với 0,56 của ALS) vì nó gợi ý các sản phẩm giống nhau.
+Chênh lệch NDCG@10 của Hybrid (không xếp lại) trên cùng người dùng: hơn ALS +0.024 (KTC 95%: +0.015 đến +0.034), hơn
+kNN +0.033 (+0.021 đến +0.045), hơn danh sách phổ biến +0.068: đều có ý nghĩa. **Hơn CBF +0.007 (−0.004 đến +0.017):
+chưa đủ chắc chắn.** Trên dữ liệu này ALS yếu hơn CBF (0,061 so với 0,079): nhiều khách chỉ có vài lượt mua từ đơn mẫu,
+nên hành vi chung ít; CBF kéo Hybrid lên, ALS thêm phần CBF không thấy (Hybrid hơn ALS rõ, hơn CBF một chút). Đổi lại,
+CBF làm danh sách ít đa dạng (0,17).
 
-**MMR sửa đúng điểm yếu này:** so với Hybrid không xếp lại trên cùng người dùng, độ đa dạng tăng +0,089 (KTC 95%:
-+0,080 đến +0,098, có ý nghĩa: 0,36 → 0,45), còn NDCG +0,002 (−0,004 đến +0,009, không khác). Tức là danh sách đa
-dạng hơn rõ rệt mà không mất độ chính xác. Coverage giảm nhẹ (14,1% → 13,3%) vì MMR chỉ xếp lại trong cùng tập ứng viên.
+**MMR đánh đổi độ chính xác lấy độ đa dạng:** so với Hybrid không xếp lại trên cùng người dùng, độ đa dạng tăng +0,222
+(KTC 95%: +0,209 đến +0,235; 0,30 → 0,52), còn NDCG giảm 0,0085 (−0,0135 đến −0,0033, **có ý nghĩa**, khoảng 10%).
+λ = 0,7 vẫn đạt quy tắc "giữ ≥ 95% NDCG trên validation" nên được chọn; muốn ít mất độ chính xác hơn thì đặt
+`REC_MMR_LAMBDA=0.8` (validation: NDCG 99%, Diversity 0,41).
 
-Chỉ tính thêm giỏ / mua là đúng (138 người dùng): Hybrid NDCG 0.147 (0.104–0.195), có MMR 0.146, ALS 0.130, CBF 0.126,
-kNN 0.098, phổ biến 0.007; Hybrid hơn kNN và phổ biến có ý nghĩa, hơn ALS / CBF chưa đủ chắc chắn.
+Chỉ tính thêm giỏ / mua là đúng (385 người dùng): Hybrid NDCG 0.042 (0.028–0.057), có MMR 0.036, CBF 0.039, ALS 0.033,
+kNN 0.025, phổ biến 0.014; Hybrid hơn kNN và phổ biến có ý nghĩa, hơn ALS / CBF chưa đủ chắc chắn.
+
+**Cold-start: NDCG@10 theo số lượt của khách mới** (kiểm thử, cắt lịch sử của 90 khách còn m lượt đầu; bảng validation
+dùng để chọn k nằm trong `recommender_latest.md`):
+
+| Số lượt m | Phổ biến | Chỉ CBF | Hybrid (ALS từ lượt đầu) |
+|---|---|---|---|
+| 1 | 0,049 | 0,065 | 0,071 |
+| 2 | 0,050 | 0,082 | 0,093 |
+| 3 | 0,044 | 0,093 | 0,110 |
+| 5 | 0,044 | 0,109 | 0,127 |
+| 8 | 0,041 | 0,120 | 0,147 |
+| 12 | 0,034 | 0,118 | 0,147 |
+
+- Validation: lượt 1 CBF nhỉnh hơn (0,084 so với 0,082), từ lượt 2 Hybrid luôn hơn → **k = 2**. Kiểm thử xác nhận Hybrid
+  hơn CBF từ lượt 2 (và cả lượt 1). Với k = 5 cũ, khách có 2–4 lượt nhận gợi ý kém hơn mức có thể.
+- Cả CBF và Hybrid đều hơn danh sách phổ biến ngay từ lượt đầu, và càng nhiều lượt càng chính xác.
+- Khác biệt: 136 khách **thật sự chỉ có 1 lượt** (khách mẫu chỉ có 1 đơn hàng) thì danh sách phổ biến lại hơn CBF có ý
+  nghĩa (NDCG 0,027 so với 0,005; KTC hiệu −0,042 đến −0,005). Đơn hàng mẫu không theo sở thích từng khách nên món mua
+  sau không giống món mua trước; khách mô phỏng có hồ sơ sở thích thì ngược lại. Hai nguồn dữ liệu đều là giả nên chưa
+  kết luận được cho khách thật; cần đo lại khi có hành vi thật.
+
+**Danh sách yêu thích (LIKE): có so với bỏ** (học lại khi bỏ 709 lượt LIKE, cùng tham số, cùng người dùng):
+
+| | NDCG@10 mọi tương tác | NDCG@10 thêm giỏ / mua |
+|---|---|---|
+| Có LIKE | 0,0769 | 0,0362 |
+| Bỏ LIKE | 0,0742 | 0,0362 |
+| Chênh lệch (KTC 95%) | +0,0027 (−0,0006 đến +0,0065), chưa đủ chắc chắn | +0,0000 (−0,0032 đến +0,0034) |
+
+LIKE trong mô phỏng theo giả định "thích = dấu hiệu sẽ mua" (`seed_interactions.py`): 15% lượt xem sản phẩm hợp hồ sơ,
+quay lại xem món đã thích thì thêm giỏ 35% thay vì 18%. Kết quả cho thấy LIKE được ghi và dùng đúng (r(u,i) có thêm
+trọng số 3) nhưng chưa làm gợi ý tốt hơn một cách chắc chắn; tác dụng thật chỉ đo được khi có khách thật dùng trái tim.
 
 Phần chưa đánh giá được trên dữ liệu hiện có:
 
-- **Khách mới (49 người dùng):** cả CBF và danh sách phổ biến đều không đoán trúng (NDCG 0). Các khách này chỉ có đúng
-  4 lượt mua ngẫu nhiên trong dữ liệu đơn hàng mẫu (không có quy luật để học).
-- **Mua kèm:** HitRate@4 = 1,8% so với 2,2% của "bán chạy nhất" (276 cặp đơn – sản phẩm): đơn hàng mẫu được sinh ngẫu
-  nhiên nên không có cặp "hay mua cùng nhau" thật.
+- **Mua kèm:** HitRate@4 = 1,5% so với 2,2% của "bán chạy nhất" (276 cặp đơn – sản phẩm): đơn hàng mẫu được sinh ngẫu
+  nhiên nên không có cặp "hay mua cùng nhau" thật. Luật phụ kiện mới (`fits`) bỏ các phụ kiện không vừa máy, nên điểm
+  này không phản ánh việc gợi ý đúng đời máy.
 - **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%.
 
 Các phép đo này đã sẵn sàng; chỉ có ý nghĩa khi có hành vi và đơn hàng thật.
@@ -672,13 +726,13 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 - Xem theo từng khu (Gợi ý cho bạn, Tương tự, Nâng cấp, Mua kèm) ở trang admin **Gợi ý sản phẩm**, mục "Hiệu quả trên web".
   Số liệu chỉ có ý nghĩa khi có khách thật dùng web (dữ liệu mô phỏng không bấm).
 
-> ⚠️ **Dữ liệu hành vi là mô phỏng.** Hệ thống mới chạy nên chưa có hành vi thật. `seed_interactions.py` tạo 300 khách mô phỏng có "hồ sơ sở thích": danh mục, hãng (35% trung thành với một hệ sinh thái như Apple/Xiaomi), tầm giá, kèm 10% hành vi ngẫu nhiên. Các con số trên chỉ dùng để **so sánh tương đối giữa các mô hình**; báo cáo đã ghi rõ điều này. Vì khách mô phỏng được tạo theo đúng danh mục, hãng và tầm giá (các thuộc tính CBF dùng), dữ liệu này có thể **thiên vị CBF**; trên khách thật CBF và Hybrid có thể kém hơn số trên.
+> ⚠️ **Dữ liệu hành vi là mô phỏng.** Hệ thống mới chạy nên chưa có hành vi thật. `seed_interactions.py` tạo 300 khách mô phỏng có "hồ sơ sở thích": danh mục, hãng (35% trung thành với một hệ sinh thái như Apple/Xiaomi), tầm giá, kèm 10% hành vi ngẫu nhiên và LIKE theo giả định "thích = dấu hiệu sẽ mua"; ngoài ra ghi PURCHASE cho đơn hàng của khách mẫu `@example.test` (tài khoản thật không bị đụng tới: backend đã tự ghi PURCHASE lúc họ đặt hàng). Các con số trên chỉ dùng để **so sánh tương đối giữa các mô hình**; báo cáo đã ghi rõ điều này. Vì khách mô phỏng được tạo theo đúng danh mục, hãng và tầm giá (các thuộc tính CBF dùng), dữ liệu này có thể **thiên vị CBF**; trên khách thật CBF và Hybrid có thể kém hơn số trên.
 >
 > **Trước khi chạy cho khách thật:** xoá hành vi mô phỏng (`docker compose exec ai-service python -m scripts.seed_interactions --reset`) rồi huấn luyện lại, để mô hình đang phục vụ khách không học từ dữ liệu giả.
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-52 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+59 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -695,7 +749,11 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 - `test_chat_tools.py`: chunk sản phẩm lấy thông số chính của danh mục trước, tóm tắt cho LLM rút gọn danh sách
   phiên bản mà vẫn giữ camera / pin, tool bỏ tham số lạ thay vì lỗi, `get_my_orders` tách đơn chưa xong và dựng dòng
   trả lời, bỏ câu nhắc nút Xác nhận khi không có thao tác, chọn phiên bản theo từng từ (kể cả khi phiên bản nằm trong
-  tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên.
+  tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên;
+- `test_relations.py`: ốp lưng ghi đời máy chỉ gắn đúng đời đó (iPhone 16 ≠ 16e / 16 Plus / 17e), Apple Pencil Pro chỉ
+  với iPad Pro / Air / mini, túi laptop phải vừa cỡ màn hình;
+- cold-start: truyền ngưỡng k cho từng lần gợi ý mà không đổi cấu hình chung, quy tắc chọn k (m nhỏ nhất mà từ đó Hybrid
+  không kém CBF).
 
 ```bash
 cd AI_Service
@@ -886,7 +944,7 @@ Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số ch
 - Sản phẩm thêm mới chỉ được gợi ý sau lần huấn luyện kế tiếp (tối đa 24 giờ, hoặc huấn luyện ngay bằng API ADMIN).
 - Kho tri thức RAG không tự cập nhật khi đổi giá / thêm sản phẩm: cần chạy lại `build_index`. Riêng `get_product_details` luôn lấy giá **hiện tại** từ Backend.
 - "Còn hàng" không được lọc khi gợi ý, vì tồn kho tính theo từng chi nhánh và chỉ kiểm tra khi nhân viên xác nhận đơn.
-- Hành vi mô phỏng không có `LIKE`, nên kết quả đánh giá offline chưa đo được tác dụng của danh sách yêu thích; `LIKE` chỉ có từ khách thật.
+- `LIKE` trong dữ liệu mô phỏng theo giả định "thích = dấu hiệu sẽ mua" (mục 9.1): đo được cơ chế chạy đúng, chưa phải tác dụng trên khách thật.
 - Cross-sell "mua chung" (lift) chưa có tác dụng vì đơn mẫu mỗi đơn chỉ 1 sản phẩm; hiện dựa vào quan hệ phụ kiện theo quy tắc.
 
 ---
