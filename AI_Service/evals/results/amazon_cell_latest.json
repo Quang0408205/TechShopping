@@ -1,0 +1,1025 @@
+{
+  "evaluatedAt": "2026-11-08T20:08:53",
+  "n": 10,
+  "trainRatio": 0.7,
+  "validationRatio": 0.1,
+  "testRatio": 0.2,
+  "coldStartK": 2,
+  "likeEvents": 0,
+  "users": 20000,
+  "strongUsers": 20000,
+  "coldUsers": 0,
+  "validationUsers": 19998,
+  "trainEvents": 79168,
+  "validationEvents": 20465,
+  "testEvents": 26464,
+  "products": 4999,
+  "configuredAlpha": 0.6,
+  "bestAlpha": 0.2,
+  "configured": {
+    "alpha": 0.6,
+    "factors": 16,
+    "regularization": 1.0,
+    "confidence": 5.0,
+    "halfLifeDays": 90.0,
+    "mmrLambda": 0.7,
+    "coldStartK": 2
+  },
+  "chosen": {
+    "alpha": 0.2,
+    "factors": 64,
+    "regularization": 0.1,
+    "confidence": 10.0,
+    "halfLifeDays": 0.0,
+    "mmrLambda": 0.9,
+    "coldStartK": 2
+  },
+  "bootstrapSamples": 1000,
+  "seconds": 3753.7,
+  "tuning": {
+    "als": [
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.0276
+      },
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.0272
+      },
+      {
+        "factors": 16,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.0263
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.0275
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.0272
+      },
+      {
+        "factors": 16,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.0262
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.0317
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.0307
+      },
+      {
+        "factors": 32,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.0289
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.0317
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.0308
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.0291
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.0324
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.0325
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 20.0,
+        "ndcg": 0.0314
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.0324
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.0322
+      },
+      {
+        "factors": 64,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.0312
+      }
+    ],
+    "decay": [
+      {
+        "halfLifeDays": 0.0,
+        "ndcg": 0.0341
+      },
+      {
+        "halfLifeDays": 30.0,
+        "ndcg": 0.0224
+      },
+      {
+        "halfLifeDays": 90.0,
+        "ndcg": 0.0232
+      }
+    ],
+    "mmr": [
+      {
+        "lambda": 1.0,
+        "ndcg": 0.0341,
+        "diversity": 0.5953
+      },
+      {
+        "lambda": 0.9,
+        "ndcg": 0.0335,
+        "diversity": 0.6526
+      },
+      {
+        "lambda": 0.8,
+        "ndcg": 0.0321,
+        "diversity": 0.715
+      },
+      {
+        "lambda": 0.7,
+        "ndcg": 0.0301,
+        "diversity": 0.7712
+      },
+      {
+        "lambda": 0.6,
+        "ndcg": 0.0277,
+        "diversity": 0.8061
+      },
+      {
+        "lambda": 0.5,
+        "ndcg": 0.0255,
+        "diversity": 0.8246
+      }
+    ],
+    "mmrMaxLoss": 0.05,
+    "coldStart": [
+      {
+        "events": 1,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0174,
+        "hybrid": 0.0
+      },
+      {
+        "events": 2,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0068,
+        "hybrid": 0.0174
+      },
+      {
+        "events": 3,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0,
+        "hybrid": 0.0197
+      },
+      {
+        "events": 5,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0066,
+        "hybrid": 0.0174
+      },
+      {
+        "events": 8,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0,
+        "hybrid": 0.0067
+      },
+      {
+        "events": 12,
+        "users": 27,
+        "popular": 0.0088,
+        "cbf": 0.0076,
+        "hybrid": 0.0
+      }
+    ]
+  },
+  "coldStartCurve": [
+    {
+      "events": 1,
+      "users": 63,
+      "popular": 0.028,
+      "cbf": 0.0,
+      "hybrid": 0.0
+    },
+    {
+      "events": 2,
+      "users": 63,
+      "popular": 0.028,
+      "cbf": 0.0017,
+      "hybrid": 0.002
+    },
+    {
+      "events": 3,
+      "users": 63,
+      "popular": 0.028,
+      "cbf": 0.0,
+      "hybrid": 0.0
+    },
+    {
+      "events": 5,
+      "users": 63,
+      "popular": 0.028,
+      "cbf": 0.0,
+      "hybrid": 0.0024
+    },
+    {
+      "events": 8,
+      "users": 63,
+      "popular": 0.0281,
+      "cbf": 0.0,
+      "hybrid": 0.0084
+    },
+    {
+      "events": 12,
+      "users": 63,
+      "popular": 0.0281,
+      "cbf": 0.0,
+      "hybrid": 0.0142
+    }
+  ],
+  "likeRows": [],
+  "likeComparisons": [],
+  "validationRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0022,
+      "recall": 0.0219,
+      "ndcg": 0.0125,
+      "hitRate": 0.0223,
+      "coverage": 0.0028
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.006,
+      "recall": 0.0589,
+      "ndcg": 0.0325,
+      "hitRate": 0.0594,
+      "coverage": 0.3725
+    },
+    {
+      "model": "Hybrid α=0.1",
+      "kind": "HYBRID",
+      "alpha": 0.1,
+      "precision": 0.0061,
+      "recall": 0.0608,
+      "ndcg": 0.0335,
+      "hitRate": 0.0614,
+      "coverage": 0.4015
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "kind": "HYBRID",
+      "alpha": 0.2,
+      "precision": 0.0063,
+      "recall": 0.0622,
+      "ndcg": 0.0341,
+      "hitRate": 0.0627,
+      "coverage": 0.4555
+    },
+    {
+      "model": "Hybrid α=0.3",
+      "kind": "HYBRID",
+      "alpha": 0.3,
+      "precision": 0.0062,
+      "recall": 0.061,
+      "ndcg": 0.0335,
+      "hitRate": 0.0616,
+      "coverage": 0.5183
+    },
+    {
+      "model": "Hybrid α=0.4",
+      "kind": "HYBRID",
+      "alpha": 0.4,
+      "precision": 0.0059,
+      "recall": 0.0587,
+      "ndcg": 0.0322,
+      "hitRate": 0.0593,
+      "coverage": 0.6179
+    },
+    {
+      "model": "Hybrid α=0.5",
+      "kind": "HYBRID",
+      "alpha": 0.5,
+      "precision": 0.0055,
+      "recall": 0.0541,
+      "ndcg": 0.0299,
+      "hitRate": 0.0547,
+      "coverage": 0.7393
+    },
+    {
+      "model": "Hybrid α=0.6",
+      "kind": "HYBRID",
+      "alpha": 0.6,
+      "precision": 0.0048,
+      "recall": 0.0469,
+      "ndcg": 0.0266,
+      "hitRate": 0.0476,
+      "coverage": 0.8296
+    },
+    {
+      "model": "Hybrid α=0.7",
+      "kind": "HYBRID",
+      "alpha": 0.7,
+      "precision": 0.0041,
+      "recall": 0.0402,
+      "ndcg": 0.0227,
+      "hitRate": 0.0407,
+      "coverage": 0.871
+    },
+    {
+      "model": "Hybrid α=0.8",
+      "kind": "HYBRID",
+      "alpha": 0.8,
+      "precision": 0.0034,
+      "recall": 0.0339,
+      "ndcg": 0.0197,
+      "hitRate": 0.0343,
+      "coverage": 0.8858
+    },
+    {
+      "model": "Hybrid α=0.9",
+      "kind": "HYBRID",
+      "alpha": 0.9,
+      "precision": 0.0032,
+      "recall": 0.0311,
+      "ndcg": 0.0183,
+      "hitRate": 0.0316,
+      "coverage": 0.8894
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0012,
+      "recall": 0.0115,
+      "ndcg": 0.0056,
+      "hitRate": 0.0117,
+      "coverage": 0.759
+    }
+  ],
+  "rows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0026,
+      "recall": 0.02,
+      "ndcg": 0.0118,
+      "hitRate": 0.0259,
+      "coverage": 0.003,
+      "diversity": 0.7111,
+      "ci": {
+        "precision": [
+          0.0024,
+          0.0028
+        ],
+        "recall": [
+          0.0183,
+          0.0219
+        ],
+        "ndcg": [
+          0.0106,
+          0.0129
+        ],
+        "hitRate": [
+          0.0238,
+          0.0282
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Item-kNN (baseline)",
+      "kind": "KNN",
+      "alpha": null,
+      "precision": 0.0043,
+      "recall": 0.0346,
+      "ndcg": 0.0208,
+      "hitRate": 0.0423,
+      "coverage": 0.9972,
+      "diversity": 0.6718,
+      "ci": {
+        "precision": [
+          0.0041,
+          0.0046
+        ],
+        "recall": [
+          0.0323,
+          0.0368
+        ],
+        "ndcg": [
+          0.0193,
+          0.0224
+        ],
+        "hitRate": [
+          0.0398,
+          0.0449
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0014,
+      "recall": 0.011,
+      "ndcg": 0.0062,
+      "hitRate": 0.0137,
+      "coverage": 0.7063,
+      "diversity": 0.0523,
+      "ci": {
+        "precision": [
+          0.0012,
+          0.0015
+        ],
+        "recall": [
+          0.0096,
+          0.0123
+        ],
+        "ndcg": [
+          0.0053,
+          0.007
+        ],
+        "hitRate": [
+          0.012,
+          0.0153
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.0058,
+      "recall": 0.0462,
+      "ndcg": 0.0274,
+      "hitRate": 0.0563,
+      "coverage": 0.3621,
+      "diversity": 0.6905,
+      "ci": {
+        "precision": [
+          0.0054,
+          0.0061
+        ],
+        "recall": [
+          0.0434,
+          0.0488
+        ],
+        "ndcg": [
+          0.0257,
+          0.0291
+        ],
+        "hitRate": [
+          0.053,
+          0.0595
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "kind": "HYBRID",
+      "alpha": 0.2,
+      "precision": 0.006,
+      "recall": 0.0476,
+      "ndcg": 0.028,
+      "hitRate": 0.0583,
+      "coverage": 0.4405,
+      "diversity": 0.5877,
+      "ci": {
+        "precision": [
+          0.0056,
+          0.0063
+        ],
+        "recall": [
+          0.0448,
+          0.0503
+        ],
+        "ndcg": [
+          0.0262,
+          0.0297
+        ],
+        "hitRate": [
+          0.0549,
+          0.0614
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.6",
+      "kind": "HYBRID",
+      "alpha": 0.6,
+      "precision": 0.0047,
+      "recall": 0.0371,
+      "ndcg": 0.0213,
+      "hitRate": 0.0459,
+      "coverage": 0.8174,
+      "diversity": 0.2693,
+      "ci": {
+        "precision": [
+          0.0044,
+          0.005
+        ],
+        "recall": [
+          0.0347,
+          0.0396
+        ],
+        "ndcg": [
+          0.0198,
+          0.0229
+        ],
+        "hitRate": [
+          0.043,
+          0.0488
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.2 + MMR λ=0.9",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.2,
+      "precision": 0.0059,
+      "recall": 0.0472,
+      "ndcg": 0.0277,
+      "hitRate": 0.0576,
+      "coverage": 0.4285,
+      "diversity": 0.6454,
+      "ci": {
+        "precision": [
+          0.0056,
+          0.0063
+        ],
+        "recall": [
+          0.0444,
+          0.05
+        ],
+        "ndcg": [
+          0.026,
+          0.0295
+        ],
+        "hitRate": [
+          0.0543,
+          0.061
+        ]
+      },
+      "mmrLambda": 0.9
+    },
+    {
+      "model": "Hybrid α=0.6 + MMR λ=0.7",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.6,
+      "precision": 0.0056,
+      "recall": 0.0437,
+      "ndcg": 0.0244,
+      "hitRate": 0.0544,
+      "coverage": 0.7095,
+      "diversity": 0.5371,
+      "ci": {
+        "precision": [
+          0.0052,
+          0.0059
+        ],
+        "recall": [
+          0.041,
+          0.0462
+        ],
+        "ndcg": [
+          0.0228,
+          0.0259
+        ],
+        "hitRate": [
+          0.051,
+          0.0573
+        ]
+      },
+      "mmrLambda": 0.7
+    }
+  ],
+  "comparisons": [
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "CF/ALS (α=0)",
+      "metric": "ndcg",
+      "diff": 0.0006,
+      "low": -0.0,
+      "high": 0.0012
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "CBF (α=1)",
+      "metric": "ndcg",
+      "diff": 0.0218,
+      "low": 0.0199,
+      "high": 0.0237
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "Item-kNN (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0072,
+      "low": 0.0056,
+      "high": 0.0088
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "Phổ biến (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0162,
+      "low": 0.0143,
+      "high": 0.0182
+    }
+  ],
+  "mmrComparisons": [
+    {
+      "model": "Hybrid α=0.2 + MMR λ=0.9",
+      "versus": "Hybrid α=0.2",
+      "metric": "ndcg",
+      "diff": -0.0002,
+      "low": -0.0006,
+      "high": 0.0001
+    },
+    {
+      "model": "Hybrid α=0.2 + MMR λ=0.9",
+      "versus": "Hybrid α=0.2",
+      "metric": "diversity",
+      "diff": 0.0577,
+      "low": 0.0569,
+      "high": 0.0585
+    }
+  ],
+  "strongRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0026,
+      "recall": 0.02,
+      "ndcg": 0.0118,
+      "hitRate": 0.0259,
+      "ci": {
+        "precision": [
+          0.0024,
+          0.0028
+        ],
+        "recall": [
+          0.018,
+          0.0219
+        ],
+        "ndcg": [
+          0.0106,
+          0.0129
+        ],
+        "hitRate": [
+          0.0236,
+          0.028
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Item-kNN (baseline)",
+      "kind": "KNN",
+      "alpha": null,
+      "precision": 0.0043,
+      "recall": 0.0346,
+      "ndcg": 0.0208,
+      "hitRate": 0.0423,
+      "ci": {
+        "precision": [
+          0.0041,
+          0.0046
+        ],
+        "recall": [
+          0.0321,
+          0.037
+        ],
+        "ndcg": [
+          0.0192,
+          0.0224
+        ],
+        "hitRate": [
+          0.0395,
+          0.045
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "CBF (α=1)",
+      "kind": "CBF",
+      "alpha": 1.0,
+      "precision": 0.0014,
+      "recall": 0.011,
+      "ndcg": 0.0062,
+      "hitRate": 0.0137,
+      "ci": {
+        "precision": [
+          0.0012,
+          0.0015
+        ],
+        "recall": [
+          0.0097,
+          0.0122
+        ],
+        "ndcg": [
+          0.0054,
+          0.0069
+        ],
+        "hitRate": [
+          0.0121,
+          0.0152
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "CF/ALS (α=0)",
+      "kind": "CF",
+      "alpha": 0.0,
+      "precision": 0.0058,
+      "recall": 0.0462,
+      "ndcg": 0.0274,
+      "hitRate": 0.0563,
+      "ci": {
+        "precision": [
+          0.0054,
+          0.0061
+        ],
+        "recall": [
+          0.0434,
+          0.0488
+        ],
+        "ndcg": [
+          0.0256,
+          0.0292
+        ],
+        "hitRate": [
+          0.0532,
+          0.0595
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "kind": "HYBRID",
+      "alpha": 0.2,
+      "precision": 0.006,
+      "recall": 0.0476,
+      "ndcg": 0.028,
+      "hitRate": 0.0583,
+      "ci": {
+        "precision": [
+          0.0056,
+          0.0063
+        ],
+        "recall": [
+          0.0449,
+          0.0504
+        ],
+        "ndcg": [
+          0.0262,
+          0.0297
+        ],
+        "hitRate": [
+          0.0551,
+          0.0613
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.6",
+      "kind": "HYBRID",
+      "alpha": 0.6,
+      "precision": 0.0047,
+      "recall": 0.0371,
+      "ndcg": 0.0213,
+      "hitRate": 0.0459,
+      "ci": {
+        "precision": [
+          0.0044,
+          0.005
+        ],
+        "recall": [
+          0.0348,
+          0.0394
+        ],
+        "ndcg": [
+          0.0199,
+          0.0228
+        ],
+        "hitRate": [
+          0.0431,
+          0.0486
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.2 + MMR λ=0.9",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.2,
+      "precision": 0.0059,
+      "recall": 0.0472,
+      "ndcg": 0.0277,
+      "hitRate": 0.0576,
+      "ci": {
+        "precision": [
+          0.0056,
+          0.0063
+        ],
+        "recall": [
+          0.0444,
+          0.0501
+        ],
+        "ndcg": [
+          0.026,
+          0.0295
+        ],
+        "hitRate": [
+          0.0544,
+          0.0609
+        ]
+      },
+      "mmrLambda": 0.9
+    },
+    {
+      "model": "Hybrid α=0.6 + MMR λ=0.7",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.6,
+      "precision": 0.0056,
+      "recall": 0.0437,
+      "ndcg": 0.0244,
+      "hitRate": 0.0544,
+      "ci": {
+        "precision": [
+          0.0053,
+          0.0059
+        ],
+        "recall": [
+          0.0413,
+          0.0464
+        ],
+        "ndcg": [
+          0.0229,
+          0.0259
+        ],
+        "hitRate": [
+          0.0515,
+          0.0574
+        ]
+      },
+      "mmrLambda": 0.7
+    }
+  ],
+  "strongComparisons": [
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "CF/ALS (α=0)",
+      "metric": "ndcg",
+      "diff": 0.0006,
+      "low": 0.0,
+      "high": 0.0013
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "CBF (α=1)",
+      "metric": "ndcg",
+      "diff": 0.0218,
+      "low": 0.0201,
+      "high": 0.0237
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "Item-kNN (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0072,
+      "low": 0.0056,
+      "high": 0.0089
+    },
+    {
+      "model": "Hybrid α=0.2",
+      "versus": "Phổ biến (baseline)",
+      "metric": "ndcg",
+      "diff": 0.0162,
+      "low": 0.0144,
+      "high": 0.0182
+    }
+  ],
+  "coldStartRows": [
+    {
+      "model": "Phổ biến (baseline)",
+      "kind": "POPULAR",
+      "alpha": null,
+      "precision": 0.0,
+      "recall": 0.0,
+      "ndcg": 0.0,
+      "hitRate": 0.0,
+      "ci": null
+    },
+    {
+      "model": "CBF (khách mới)",
+      "kind": "CBF",
+      "alpha": null,
+      "precision": 0.0,
+      "recall": 0.0,
+      "ndcg": 0.0,
+      "hitRate": 0.0,
+      "ci": null
+    }
+  ],
+  "coldStartComparisons": [],
+  "crossSell": {
+    "n": 4,
+    "pairs": 6447,
+    "trainOrders": 79654,
+    "testOrders": 19890,
+    "itemsWithRules": 1235,
+    "withSuggestions": 0.139,
+    "rows": [
+      {
+        "model": "Mua kèm (luật kết hợp + phụ kiện)",
+        "hitRate": 0.0104,
+        "precision": 0.0026
+      },
+      {
+        "model": "Bán chạy nhất (baseline)",
+        "hitRate": 0.0155,
+        "precision": 0.0041
+      }
+    ]
+  },
+  "upsell": {
+    "products": 4999,
+    "withSuggestions": 0.949,
+    "meanPriceIncrease": 0.1183
+  },
+  "dataset": {
+    "name": "Amazon Reviews 2023 – Cell Phones & Accessories (5-core)",
+    "sampling": "top 5000 sản phẩm, 5-core, 20000 người dùng ngẫu nhiên (seed 42)",
+    "products": 4999,
+    "users": 20000,
+    "events": 126097,
+    "categories": 51,
+    "brands": 101,
+    "from": "2009-09-01",
+    "to": "2023-08-25",
+    "baskets": 99544,
+    "multiItemBaskets": 16788
+  }
+}

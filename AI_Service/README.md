@@ -125,6 +125,7 @@ AI_Service/
     ├── build_relations.py   Tạo quan hệ phụ kiện (ACCESSORY) cho "Mua kèm"
     ├── build_index.py       Xây kho tri thức RAG (chunk → embedding → kb_chunks)
     ├── evaluate.py          Đánh giá khuyến nghị (gọi app/recommender/evaluation.py), in bảng + ghi evals/results/
+    ├── eval_amazon.py       Cùng quy trình đánh giá, chạy trên dữ liệu mua hàng thật Amazon Reviews 2023 (mục 9.1c)
     ├── eval_retrieval.py    Đánh giá tìm kiếm RAG: Hit@K / Recall@K / MRR cho vector, keyword, hybrid
     └── eval_chatbot.py      Đánh giá chatbot tự động: tool, nội dung, thao tác + giám khảo LLM
 ```
@@ -540,8 +541,8 @@ docker compose restart ai-service                                               
 | `ANTHROPIC_MODEL` | `claude-opus-5-5` | Mô hình Claude (rẻ: `claude-haiku-5-5`) |
 | `AI_CHAT_EFFORT` | `low` | Mức suy luận (`low` / `medium` / `high`) |
 | `AI_INTERNAL_KEY` | `dev-internal-key` | Khoá chung Backend ↔ AI Service; **đổi khi triển khai thật** |
-| `REC_ALPHA`, `REC_COLD_START_K`, `REC_HALF_LIFE_DAYS`, `REC_MMR_LAMBDA` | `0.5`, `5`, `30`, `0.8` | α của Hybrid, ngưỡng k cold-start, nửa đời giảm trọng số hành vi cũ (0 = không giảm), λ của MMR (1 = không xếp lại) |
-| `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`, `ALS_ITERATIONS` | `32`, `0.1`, `5`, `15` | Siêu tham số ALS (số chiều, λ, a chọn trên validation) |
+| `REC_ALPHA`, `REC_COLD_START_K`, `REC_HALF_LIFE_DAYS`, `REC_MMR_LAMBDA` | `0.6`, `2`, `90`, `0.7` | α của Hybrid, ngưỡng k cold-start, nửa đời giảm trọng số hành vi cũ (0 = không giảm), λ của MMR (1 = không xếp lại) |
+| `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`, `ALS_ITERATIONS` | `16`, `1.0`, `5`, `15` | Siêu tham số ALS (số chiều, λ, a chọn trên validation) |
 
 ### 8.3. Dùng hằng ngày
 
@@ -729,6 +730,49 @@ nút "Đánh giá lại" (chạy nền trên một bản mô hình riêng, khôn
 > ⚠️ **Dữ liệu hành vi là mô phỏng.** Hệ thống mới chạy nên chưa có hành vi thật. `seed_interactions.py` tạo 300 khách mô phỏng có "hồ sơ sở thích": danh mục, hãng (35% trung thành với một hệ sinh thái như Apple/Xiaomi), tầm giá, kèm 10% hành vi ngẫu nhiên và LIKE theo giả định "thích = dấu hiệu sẽ mua"; ngoài ra ghi PURCHASE cho đơn hàng của khách mẫu `@example.test` (tài khoản thật không bị đụng tới: backend đã tự ghi PURCHASE lúc họ đặt hàng). Các con số trên chỉ dùng để **so sánh tương đối giữa các mô hình**; báo cáo đã ghi rõ điều này. Vì khách mô phỏng được tạo theo đúng danh mục, hãng và tầm giá (các thuộc tính CBF dùng), dữ liệu này có thể **thiên vị CBF**; trên khách thật CBF và Hybrid có thể kém hơn số trên.
 >
 > **Trước khi chạy cho khách thật:** xoá hành vi mô phỏng (`docker compose exec ai-service python -m scripts.seed_interactions --reset`) rồi huấn luyện lại, để mô hình đang phục vụ khách không học từ dữ liệu giả.
+
+### 9.1c. Kiểm chứng trên dữ liệu mua hàng thật (Amazon Reviews 2023, `scripts/eval_amazon.py`)
+
+Vì hành vi trong hệ thống là mô phỏng (và có thể thiên vị CBF), quy trình ở mục 9.1 được chạy **nguyên vẹn** trên dữ liệu
+công khai có hành vi thật: Amazon Reviews 2023 (McAuley Lab), nhóm **Cell Phones & Accessories**, cùng ngành hàng với đề tài.
+Script chỉ thay nguồn dữ liệu (hàm đọc sản phẩm, thông số, hành vi, đơn hàng), không sửa thuật toán và không ghi vào database.
+
+- **Lấy mẫu** (giữ quy mô gần hệ thống): 5.000 sản phẩm nhiều đánh giá nhất của tập 5-core → lọc lặp 5-core → 20.000 người
+  dùng ngẫu nhiên (seed 42). Kết quả: 4.999 sản phẩm, 41 danh mục, 126.097 lượt (09/2009 → 08/2023).
+- **Ánh xạ**: mỗi đánh giá = một lượt PURCHASE (Amazon không công bố xem / thêm giỏ); đơn hàng cho mua kèm = sản phẩm cùng
+  người, cùng ngày; danh mục = cấp 3 cây danh mục; thương hiệu = 100 hãng nhiều sản phẩm nhất, còn lại "Khác"; giá thiếu =
+  trung vị danh mục; RAM / bộ nhớ / màn hình lấy từ `details` (bỏ giá trị nhập sai).
+
+```bash
+cd AI_Service
+curl -LO https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/benchmark/5core/rating_only/Cell_Phones_and_Accessories.csv
+python scripts/eval_amazon.py sample Cell_Phones_and_Accessories.csv amazon/
+curl -L https://huggingface.co/datasets/McAuley-Lab/Amazon-Reviews-2023/resolve/main/raw/meta_categories/meta_Cell_Phones_and_Accessories.jsonl \
+  | python scripts/eval_amazon.py filter-meta amazon/asins.txt amazon/meta.jsonl   # đọc luồng 4 GB, giữ 4.999 dòng
+python scripts/eval_amazon.py run amazon/      # ~65 phút CPU → evals/results/amazon_cell_latest.md / .json
+```
+
+Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95%):
+
+| Mô hình | NDCG@10 | HitRate@10 | Coverage |
+|---|---|---|---|
+| Phổ biến | 0,0118 (0,0106–0,0129) | 0,0259 | 0,3% |
+| Item-kNN | 0,0208 (0,0193–0,0224) | 0,0423 | 99,7% |
+| CBF (α = 1) | 0,0062 (0,0053–0,0070) | 0,0137 | 70,6% |
+| CF/ALS (α = 0) | 0,0274 (0,0257–0,0291) | 0,0563 | 36,2% |
+| **Hybrid α = 0,2** (chọn trên validation) | **0,0280** (0,0262–0,0297) | **0,0583** | 44,1% |
+| Hybrid α = 0,2 + MMR λ = 0,9 | 0,0277 (0,0260–0,0295) | 0,0576 | 42,9% |
+| Hybrid α = 0,6 (cấu hình đang dùng) | 0,0213 (0,0198–0,0229) | 0,0459 | 81,7% |
+
+Đọc kết quả:
+- Hybrid (α chọn trên validation) cao nhất; hơn **có ý nghĩa** CBF (+0,0218), Item-kNN (+0,0072), phổ biến (+0,0162);
+  hơn ALS +0,0006 nhưng KTC (−0,0000 → +0,0012) chạm 0 → **ngang ALS**, độ phủ cao hơn (44% so với 36%).
+- Trên hành vi thật, validation chọn **α = 0,2** (nghiêng về hành vi), khác α = 0,6 trên dữ liệu mô phỏng: CBF ở đây yếu
+  (người mua phụ kiện cần đồ bổ trợ cho máy, không cần thêm món giống món đã mua). Trọng số α phụ thuộc dữ liệu → khi có
+  khách thật phải **chọn lại α** bằng chính quy trình đánh giá (nút "Đánh giá lại" ở trang admin rồi đổi biến môi trường `REC_ALPHA`).
+- MMR λ = 0,9: đa dạng +0,058 (có ý nghĩa), NDCG không giảm có ý nghĩa. Nửa đời tốt nhất: không giảm (dữ liệu trải 14 năm).
+- Chưa tốt: mua kèm (luật kết hợp trên đơn cùng ngày) HitRate@4 0,0104 < bán chạy 0,0155; giả lập khách mới chỉ có 27–63
+  người đủ 12 lượt nên **không dùng** để kết luận ngưỡng k.
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
