@@ -1074,16 +1074,18 @@ async function renderRecentViewed() {
 /* ================= LƯỚI SẢN PHẨM TRANG CHỦ (API thật) ================= */
 
 /*
- * Hai lưới 4 sản phẩm từ GET /products (công khai, không gửi token), vẽ bằng
- * renderProductGrid() dùng chung với trang Sản phẩm (js/core/ui.js):
- *   - "Lựa chọn hàng đầu": tab Nổi bật / Mới về / Giá tốt = sort id,asc / id,desc / basePrice,asc;
- *   - "Gợi ý dành cho bạn": 4 sản phẩm mới nhất.
+ * Hai lưới 4 sản phẩm, vẽ bằng renderProductGrid() dùng chung với trang Sản phẩm (js/core/ui.js):
+ *   - "Lựa chọn hàng đầu": GET /products (công khai), tab Nổi bật / Mới về / Giá tốt = sort id,asc / id,desc /
+ *     basePrice,asc;
+ *   - "Gợi ý dành cho bạn": hệ thống khuyến nghị AI, POST /recommendations PERSONAL như trang Gợi ý (đã đăng nhập →
+ *     Hybrid CBF + ALS theo lịch sử của khách, kèm lý do; khách chưa đăng nhập → sản phẩm phổ biến). Danh sách rỗng
+ *     thì hiện 4 sản phẩm mới nhất.
  * Danh mục chỉ dùng để chọn ảnh thay thế, nên lỗi tải danh mục không chặn việc hiển thị sản phẩm.
  */
 
 const HOME_PRODUCT_GRIDS = [
     { gridId: "featuredProductGrid", sort: "id,asc", retryId: "featuredRetryBtn" },
-    { gridId: "personalRecommendationGrid", sort: "id,desc", retryId: "newestRetryBtn" }
+    { gridId: "personalRecommendationGrid", sort: "id,desc", retryId: "newestRetryBtn", recommendation: "PERSONAL" }
 ];
 
 let homeCategoriesPromise = null;
@@ -1132,9 +1134,13 @@ async function renderHomeProductGrid(config) {
 
     try {
 
-        const page = await apiRequest(
-            "/products?isActive=true&page=0&size=4&sort=" + encodeURIComponent(config.sort)
-        );
+        const recommended = config.recommendation
+            ? (await fetchRecommendations(config.recommendation, null, 4)).items
+            : [];
+
+        const page = recommended.length
+            ? null
+            : await apiRequest("/products?isActive=true&page=0&size=4&sort=" + encodeURIComponent(config.sort));
 
         const categories = await getHomeCategories();
 
@@ -1143,7 +1149,11 @@ async function renderHomeProductGrid(config) {
             return;
         }
 
-        renderProductGrid(grid, page.content, categories.byId);
+        if (recommended.length) {
+            renderRecommendationGrid(grid, recommended, categories.byId, config.recommendation);
+        } else {
+            renderProductGrid(grid, page.content, categories.byId);
+        }
 
     } catch (error) {
 

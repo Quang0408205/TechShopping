@@ -161,6 +161,7 @@ AI_Service/
 | `js/core/api.js` | `trackInteraction()` + tự gửi `CLICK` khi bấm vào thẻ sản phẩm bất kỳ |
 | `js/core/ui.js` | `fetchRecommendations()`, `renderRecommendationGrid()` (thẻ sản phẩm + dòng **lý do gợi ý**) |
 | `js/customer/recommendation.js` | 5 khu của trang Khuyến nghị lấy dữ liệu từ AI thay cho quy tắc tạm |
+| `js/home.js`, `index.html` | Khu "Gợi ý dành cho bạn" ở trang chủ lấy 4 gợi ý PERSONAL từ AI (đã đăng nhập: theo lịch sử, kèm lý do; chưa đăng nhập: phổ biến); trước 09/11/2026 chỉ là 4 sản phẩm mới nhất |
 | `js/customer/product-detail.js`, `customer/product-detail.html` | Gửi `VIEW`; thêm 3 khu Nâng cấp / Mua kèm / Tương tự; nhớ sản phẩm xem gần nhất |
 | `js/customer/chatbot.js` | Widget gọi chatbot AI: **chữ hiện dần** (đọc luồng SSE), dòng "Đang tra cứu…", **nút Xác nhận** cho thao tác đề xuất, giữ cuộc trò chuyện khi chuyển trang, **tự quay về chế độ từ khoá** khi AI ngừng |
 | `js/admin/chat-history.js`, `admin/chat-history.html`, `partials/admin-sidebar.html` | Trang Lịch sử chatbot đọc dữ liệu thật, hiện trong menu ADMIN |
@@ -225,8 +226,9 @@ AI_Service/
    `λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)` lớn nhất. Sản phẩm gần giống món đã chọn (5 chiếc iPhone cùng
    dòng) bị trừ điểm, nhường chỗ cho sản phẩm khác loại. λ = 1 thì giữ nguyên thứ tự theo điểm (`REC_MMR_LAMBDA`).
 5. Lấy **Top-N** (mặc định 8) kèm **lý do đề xuất**:
-   - *"Tương tự iPhone 16 bạn đã xem"* khi điểm chủ yếu đến từ CBF;
-   - *"Khách hàng có sở thích giống bạn cũng quan tâm"* khi điểm chủ yếu đến từ CF.
+   - *"Tương tự iPhone 16 bạn đã quan tâm"* khi điểm chủ yếu đến từ CBF (sản phẩm khách đã xem, thích, thêm giỏ hoặc mua);
+   - *"Khách quan tâm Samsung Galaxy S26 Ultra cũng quan tâm sản phẩm này"* khi điểm chủ yếu đến từ CF (sản phẩm khách
+     đã tương tác có vector ALS gần nhất); không xác định được thì *"Khách hàng có sở thích giống bạn cũng quan tâm"*.
 
 **Cold-start** (Bảng 3.21 trong báo cáo):
 
@@ -808,7 +810,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-68 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+69 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -823,7 +825,8 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng, quy tắc
   chọn λ của MMR;
 - `test_chat_tools.py`: chunk sản phẩm lấy thông số chính của danh mục trước, tóm tắt cho LLM rút gọn danh sách
-  phiên bản mà vẫn giữ camera / pin, tool bỏ tham số lạ thay vì lỗi, `get_my_orders` tách đơn chưa xong và dựng dòng
+  phiên bản mà vẫn giữ camera / pin, tool bỏ tham số lạ thay vì lỗi, Backend trả thiếu dữ liệu thì tool báo lỗi
+  thay vì làm hỏng cả lượt chat, `get_my_orders` tách đơn chưa xong và dựng dòng
   trả lời, bỏ câu nhắc nút Xác nhận khi không có thao tác, chọn phiên bản theo từng từ (kể cả khi phiên bản nằm trong
   tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên;
 - `test_relations.py`: ốp lưng ghi đời máy chỉ gắn đúng đời đó (iPhone 16 ≠ 16e / 16 Plus / 17e), Apple Pencil Pro chỉ

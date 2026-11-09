@@ -468,7 +468,7 @@ class Recommender:
         thiết bị gợi ý thiết bị khác chỉ khi cùng hãng (compat.compatible)."""
         items = self.model.items
         device, accessory = items.iloc[device_row], items.iloc[accessory_row]
-        screen = device.get("screen_inch")
+        screen = device.get("screen_inch_raw")          # thông số gốc như build_relations, không điền trung vị
         return compatible(str(device.get("name", "")), str(device.get("category", "")), str(device.get("brand", "")),
                           str(accessory.get("name", "")), str(accessory.get("category", "")),
                           f"{screen} inch" if pd.notna(screen) else None, str(accessory.get("brand", "")))
@@ -499,7 +499,7 @@ class Recommender:
             return "Khách hàng có sở thích giống bạn cũng quan tâm"
         # sản phẩm đã tương tác giống nhất (bằng nhau thì lấy cái được quan tâm nhiều hơn)
         nearest = rows[np.lexsort((-r, -np.round(m.vectors[rows] @ m.vectors[row], 6)))[0]]
-        return "Tương tự " + str(m.items["name"].iloc[nearest]) + " bạn đã xem"
+        return "Tương tự " + str(m.items["name"].iloc[nearest]) + " bạn đã quan tâm"   # đã xem, thích, thêm giỏ hoặc mua
 
     def _reason_similar(self, row, anchor) -> str:
         items = self.model.items
