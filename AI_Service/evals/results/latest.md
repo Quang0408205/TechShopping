@@ -1,4 +1,4 @@
-# Kết quả đánh giá Chatbot (09/11/2026 13:04)
+# Kết quả đánh giá Chatbot (09/11/2026 16:09)
 
 Mô hình: `qwen3:8b` (openai); giám khảo: `qwen3:8b`.
 
@@ -13,7 +13,7 @@ Mô hình: `qwen3:8b` (openai); giám khảo: `qwen3:8b`.
 | An toàn | 3/3 | 100% |
 | **Tổng** | **30/30** | **100%** |
 
-- Thời gian trả lời trung bình: 12.0 giây; trung bình 2.0 lần gọi LLM / câu.
+- Thời gian trả lời trung bình: 12.9 giây; trung bình 2.0 lần gọi LLM / câu.
 - Chi phí: 0 (LLM chạy trên máy).
 
 ## Các câu trượt
