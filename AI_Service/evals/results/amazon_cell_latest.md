@@ -2,7 +2,7 @@
 
 Lấy mẫu: top 5000 sản phẩm, 5-core, 20000 người dùng ngẫu nhiên (seed 42). 4999 sản phẩm, 20000 người dùng, 126097 lượt (2009-09-01 → 2023-08-25). Mỗi đánh giá là một lượt mua; đơn hàng = sản phẩm cùng người, cùng ngày.
 
-# Đánh giá offline hệ thống khuyến nghị (2026-11-08 20:08:53)
+# Đánh giá offline hệ thống khuyến nghị (2026-11-09 14:18:25)
 
 - Chia theo thời gian từng người dùng: 70% hành vi đầu để huấn luyện, 10% tiếp theo để tinh chỉnh (validation), 20% cuối để kiểm thử (79168 / 20465 / 26464 lượt).
 - Tham số chọn trên validation (19998 người dùng): ALS 64 chiều, λ = 0.1, a = 10.0; α = 0.2; nửa đời giảm trọng số không giảm; MMR λ = 0.9; ngưỡng cold-start k = 2.
