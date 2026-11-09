@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from app import config
 from app.chatbot import agent
-from app.recommender.engine import recommender
+from app.recommender.engine import Preferences, recommender
 from app.recommender.evaluation import evaluation_job
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -50,10 +50,23 @@ def internal_only(x_internal_key: str | None = Header(default=None)):
         raise HTTPException(status_code=401, detail="Missing or wrong X-Internal-Key")
 
 
+class PreferencesBody(BaseModel):
+    """Câu trả lời bảng hỏi (khách đăng nhập: Backend đọc từ user_preferences; khách vãng lai: trình duyệt gửi)."""
+    category_ids: list[int] = Field(default_factory=list, alias="categoryIds", max_length=20)
+    brand_ids: list[int] = Field(default_factory=list, alias="brandIds", max_length=100)
+    price_levels: list[str] = Field(default_factory=list, alias="priceLevels", max_length=3)
+    need_ids: list[int] = Field(default_factory=list, alias="needIds", max_length=50)
+
+    def to_preferences(self) -> Preferences:
+        return Preferences(tuple(self.category_ids), tuple(self.brand_ids), tuple(self.price_levels),
+                           tuple(self.need_ids))
+
+
 class RecommendRequest(BaseModel):
     user_id: int | None = Field(default=None, alias="userId")
     n: int = Field(default=8, ge=1, le=50)
     exclude_product_ids: list[int] = Field(default_factory=list, alias="excludeProductIds")
+    preferences: PreferencesBody | None = None
 
 
 class ProductRequest(BaseModel):
@@ -85,8 +98,14 @@ def health():
 
 @app.post("/recommend", dependencies=[Depends(internal_only)])
 def recommend(request: RecommendRequest):
-    """Khuyến nghị cá nhân hoá Top-N theo user_id (khách chưa đăng nhập → phổ biến + mới)."""
-    return _items(recommender.recommend(request.user_id, request.n, request.exclude_product_ids))
+    """
+    Khuyến nghị cá nhân hoá Top-N. basis: BEHAVIOR (theo hành vi của khách), PREFERENCES (khách chưa có hành vi:
+    theo câu trả lời bảng hỏi), POPULAR (chưa có cả hai: phổ biến + mới, giao diện mời trả lời bảng hỏi).
+    """
+    preferences = request.preferences.to_preferences() if request.preferences else None
+    items, basis = recommender.personal(request.user_id, request.n, request.exclude_product_ids,
+                                        preferences=preferences)
+    return {**_items(items), "basis": basis}
 
 
 @app.post("/similar", dependencies=[Depends(internal_only)])

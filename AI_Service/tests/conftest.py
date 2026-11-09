@@ -25,15 +25,30 @@ CATALOG = [
     (9, "Điện thoại ngừng bán", PHONE, "Apple", 15_000_000, "8 GB", "128 GB", False),
 ]
 CATEGORY_NAMES = {PHONE: "Điện Thoại", LAPTOP: "Laptop", ACCESSORY: "Phụ kiện"}
+BRAND_IDS = {"Apple": 1, "Samsung": 2, "Lenovo": 3}
+
+# Nhu cầu (bảng needs / product_needs): need_id, danh mục, tên, các sản phẩm đáp ứng
+NEEDS = [
+    (10, PHONE, "Chụp ảnh, quay phim", (1, 3)),
+    (11, PHONE, "Pin khủng", (4,)),
+    (20, LAPTOP, "Học tập, văn phòng", (5, 7)),
+    (21, LAPTOP, "Đồ hoạ", (6,)),
+]
 
 
 def catalog_frame() -> pd.DataFrame:
     created = datetime(2026, 10, 1)
     rows = [{"product_id": pid, "name": name, "category_id": cat, "category": CATEGORY_NAMES[cat], "brand": brand,
-             "price": float(price), "variant_ram": ram, "variant_storage": storage, "is_active": active,
-             "review_count": 0, "rating": 0, "updated_at": created, "created_at": created}
+             "brand_id": BRAND_IDS[brand], "price": float(price), "variant_ram": ram, "variant_storage": storage,
+             "is_active": active, "review_count": 0, "rating": 0.0, "updated_at": created, "created_at": created}
             for pid, name, cat, brand, price, ram, storage, active in CATALOG]
     return pd.DataFrame(rows).set_index("product_id", drop=False)
+
+
+def needs_frame() -> pd.DataFrame:
+    return pd.DataFrame([{"need_id": need, "category_id": cat, "name": name, "product_id": pid}
+                         for need, cat, name, products in NEEDS for pid in products],
+                        columns=["need_id", "category_id", "name", "product_id"])
 
 
 def interactions_frame(events) -> pd.DataFrame:
@@ -68,6 +83,7 @@ def toy_recommender(monkeypatch):
     monkeypatch.setattr(data, "load_order_baskets", lambda: pd.DataFrame(columns=["order_id", "user_id", "product_id"]))
     monkeypatch.setattr(data, "load_relations", lambda: pd.DataFrame(
         columns=["product_id", "related_product_id", "relation_type", "strength"]))
+    monkeypatch.setattr(data, "load_needs", needs_frame)
     events = interactions_frame(EVENTS)
 
     def load(user_id=None):

@@ -2641,3 +2641,49 @@ body.has-compare-bar .chatbot-launcher {
     color: #b45309;
     border: 1px solid #fcd9b6;
 }
+
+
+/* ================= GỢI Ý CÁ NHÂN: BẢNG HỎI SỞ THÍCH ================= */
+
+/* Khách chưa có hành vi và chưa trả lời bảng hỏi: lời mời thay cho lưới "Dành cho bạn" (trang chủ, trang Khuyến nghị) */
+.preference-prompt {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    background: var(--surface-warm);
+}
+
+.preference-prompt strong {
+    font-size: 20px;
+}
+
+.preference-prompt p {
+    max-width: 640px;
+    margin-top: 6px;
+    color: var(--text-muted);
+}
+
+.preference-prompt .btn {
+    flex: none;
+}
+
+/* "Chọn theo sở thích bạn đã trả lời. Sửa lựa chọn" dưới tiêu đề */
+.section-heading p a {
+    color: var(--color-accent);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+
+    .preference-prompt {
+        flex-direction: column;
+        align-items: stretch;
+        padding: var(--space-3);
+    }
+
+}

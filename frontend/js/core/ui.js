@@ -1399,20 +1399,62 @@ function rememberViewedProduct(productId) {
 
 
 /*
- * POST /recommendations {type, productId?, size} → {type, source: "AI" | "FALLBACK", items: [{product, score, reason}]}.
- * type: PERSONAL | SIMILAR | UPSELL | CROSS_SELL. Gửi token khi đã đăng nhập để danh sách được cá nhân hoá;
- * options.guest = true: luôn hỏi như khách (danh sách phổ biến).
+ * POST /recommendations {type, productId?, size, preferences?} →
+ *   {type, source: "AI" | "FALLBACK", basis, items: [{product, score, reason}]}.
+ * type: PERSONAL | SIMILAR | UPSELL | CROSS_SELL. Gửi token khi đã đăng nhập để danh sách được cá nhân hoá; khách chưa
+ * đăng nhập gửi kèm câu trả lời bảng hỏi lưu ở trình duyệt (nếu có). options.guest = true: luôn hỏi như khách chưa
+ * trả lời (danh sách phổ biến).
+ * basis của PERSONAL: BEHAVIOR (theo hành vi), PREFERENCES (theo câu trả lời bảng hỏi), POPULAR (chưa có cả hai →
+ * trang hiện lời mời trả lời bảng hỏi thay cho danh sách, xem preferencePromptHtml).
  */
 
 function fetchRecommendations(type, productId, size, options) {
 
     const guest = options && options.guest === true;
 
+    const body = { type: type, productId: productId || null, size: size };
+
+    if (type === "PERSONAL" && !guest && !isLoggedIn()) {
+        body.preferences = getGuestPreferences();
+    }
+
     return apiRequest("/recommendations", {
         method: "POST",
         auth: !guest && isLoggedIn(),
-        body: { type: type, productId: productId || null, size: size }
+        body: body
     });
+
+}
+
+
+/*
+ * Khung mời trả lời bảng hỏi sở thích, đặt trong lưới sản phẩm "Dành cho bạn" khi khách chưa có hành vi và chưa trả
+ * lời (basis = POPULAR). backPath: trang quay lại sau khi trả lời, tính từ gốc website.
+ */
+
+function preferencePromptHtml(backPath) {
+
+    const href = siteUrl("customer/preferences.html?redirect=" + encodeURIComponent(backPath));
+
+    return `
+        <div class="preference-prompt">
+            <div class="preference-prompt-text">
+                <strong>Bạn đang tìm sản phẩm nào?</strong>
+                <p>Trả lời vài câu ngắn về loại sản phẩm, tầm giá, hãng và nhu cầu sử dụng để POY gợi ý đúng thứ bạn cần.</p>
+            </div>
+            <a class="btn btn-dark" href="${escapeHtml(href)}">CHỌN SỞ THÍCH</a>
+        </div>`;
+
+}
+
+
+/* Câu dưới tiêu đề khi danh sách theo câu trả lời bảng hỏi: kèm link sửa lựa chọn */
+
+function preferenceNoteHtml(backPath) {
+
+    const href = siteUrl("customer/preferences.html?redirect=" + encodeURIComponent(backPath));
+
+    return 'Chọn theo sở thích bạn đã trả lời. <a href="' + escapeHtml(href) + '">Sửa lựa chọn</a>';
 
 }
 

@@ -17,6 +17,7 @@ def load_products() -> pd.DataFrame:
     """Sản phẩm chưa xoá. Giá = giá bán thấp nhất trong các phiên bản (giống giá hiện trên thẻ sản phẩm)."""
     rows = fetch_all("""
         select p.product_id, p.name, p.category_id, c.name as category, coalesce(b.name, 'Unknown') as brand,
+               coalesce(p.brand_id, 0) as brand_id,
                coalesce(
                    (select min(coalesce(v.discount_price, v.price)) from product_variants v
                     where v.product_id = p.product_id),
@@ -70,6 +71,19 @@ def load_order_baskets() -> pd.DataFrame:
         where upper(o.status) <> 'CANCELLED'
     """)
     return pd.DataFrame(rows, columns=["order_id", "user_id", "product_id"])
+
+
+def load_needs() -> pd.DataFrame:
+    """
+    Nhu cầu (needs: chơi game, chụp ảnh, học tập văn phòng...) của từng danh mục và các sản phẩm đáp ứng
+    (product_needs); product_id rỗng khi nhu cầu chưa có sản phẩm. Dùng cho gợi ý theo bảng hỏi của khách mới.
+    """
+    rows = fetch_all("""
+        select n.need_id, n.category_id, n.name, pn.product_id
+        from needs n
+        left join product_needs pn on pn.need_id = n.need_id
+    """)
+    return pd.DataFrame(rows, columns=["need_id", "category_id", "name", "product_id"])
 
 
 def load_relations() -> pd.DataFrame:

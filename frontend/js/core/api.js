@@ -721,14 +721,110 @@ async function logout() {
 
 function getRedirectTarget(defaultPage) {
 
+    return siteUrl(getRedirectPath(defaultPage));
+
+}
+
+
+/* Như getRedirectTarget nhưng trả về đường dẫn tính từ gốc website (vd. "customer/cart.html") */
+
+function getRedirectPath(defaultPage) {
+
     const target =
         new URLSearchParams(window.location.search).get("redirect");
 
     if (target && /^([a-z0-9_-]+\/)?[a-z0-9_-]+\.html(\?[^\/\\]*)?$/i.test(target)) {
-        return siteUrl(target);
+        return target;
     }
 
-    return siteUrl(defaultPage);
+    return defaultPage;
+
+}
+
+
+/* ================= BẢNG HỎI SỞ THÍCH (gợi ý cho khách chưa có hành vi) ================= */
+
+/*
+ * Câu trả lời của khách chưa đăng nhập: {categoryIds, brandIds, priceLevels, needIds}, lưu ở trình duyệt và gửi
+ * kèm POST /recommendations (fetchRecommendations trong ui.js). Đăng nhập thì chép sang tài khoản (pageAfterLogin).
+ */
+
+const GUEST_PREFERENCES_KEY = "poy_guest_preferences";
+
+
+function getGuestPreferences() {
+
+    try {
+
+        const saved = JSON.parse(localStorage.getItem(GUEST_PREFERENCES_KEY));
+
+        return saved && Array.isArray(saved.categoryIds) && saved.categoryIds.length ? saved : null;
+
+    } catch (error) {
+
+        return null;
+
+    }
+
+}
+
+
+function saveGuestPreferences(preferences) {
+
+    try {
+        localStorage.setItem(GUEST_PREFERENCES_KEY, JSON.stringify(preferences));
+    } catch (error) {
+        /* trình duyệt chặn lưu: lần sau khách được hỏi lại */
+    }
+
+}
+
+
+function clearGuestPreferences() {
+
+    try {
+        localStorage.removeItem(GUEST_PREFERENCES_KEY);
+    } catch (error) {
+        /* bỏ qua */
+    }
+
+}
+
+
+/*
+ * Trang mở sau khi đăng nhập / đăng ký / đăng nhập Google. Khách chưa xem, thích, mua gì và chưa trả lời bảng hỏi
+ * → trang "Sở thích mua sắm" (bắt buộc trả lời để có gợi ý), sau đó mới tới trang đích. Câu trả lời lúc chưa đăng
+ * nhập (nếu có) được lưu vào tài khoản thay vì hỏi lại. Không gọi được API → tới trang đích như trước.
+ */
+
+async function pageAfterLogin(defaultPage) {
+
+    const path = getRedirectPath(defaultPage);
+
+    try {
+
+        const saved = await apiRequest("/users/me/preferences", { auth: true });
+
+        if (saved.answered || saved.hasActivity) {
+            clearGuestPreferences();
+            return siteUrl(path);
+        }
+
+        const guestAnswers = getGuestPreferences();
+
+        if (guestAnswers) {
+            await apiRequest("/users/me/preferences", { method: "PUT", auth: true, body: guestAnswers });
+            clearGuestPreferences();
+            return siteUrl(path);
+        }
+
+        return siteUrl("customer/preferences.html?redirect=" + encodeURIComponent(path));
+
+    } catch (error) {
+
+        return siteUrl(path);
+
+    }
 
 }
 

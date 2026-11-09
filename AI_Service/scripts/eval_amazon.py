@@ -162,6 +162,7 @@ def run(data_dir: str, out_dir: str | None = None) -> None:
     data.load_specs = lambda: specs
     data.load_relations = lambda: pd.DataFrame(columns=["product_id", "related_product_id", "relation_type",
                                                         "strength"])
+    data.load_needs = lambda: pd.DataFrame(columns=["need_id", "category_id", "name", "product_id"])
     evaluation.load_events = lambda: events
     evaluation.load_baskets = lambda: baskets
     print(f"{len(products)} sản phẩm, {events['user_id'].nunique()} người dùng, {len(events)} lượt, "

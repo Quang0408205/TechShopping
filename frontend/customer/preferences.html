@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Sở thích mua sắm - POY</title>
+    <meta name="description" content="Cho POY biết loại sản phẩm, tầm giá, hãng và nhu cầu bạn quan tâm để nhận gợi ý phù hợp.">
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/customer-theme.css">
+    <link rel="stylesheet" href="../css/customer/preferences.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+</head>
+
+<body>
+
+<div data-include="header" data-active="recommendation"></div>
+
+<main>
+
+    <section class="page-hero">
+        <div class="container">
+            <span class="section-label">
+                SỞ THÍCH MUA SẮM
+            </span>
+            <h1>
+                BẠN ĐANG TÌM GÌ?
+            </h1>
+            <p>
+                Trả lời vài câu ngắn để POY gợi ý sản phẩm hợp với bạn ngay từ lần đầu.
+                Khi bạn xem và mua sắm, gợi ý sẽ theo chính những sản phẩm bạn quan tâm.
+            </p>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+
+            <form class="pref-form" id="preferenceForm" novalidate>
+
+                <fieldset class="pref-step">
+                    <legend class="pref-step-head">
+                        <span class="pref-num" aria-hidden="true">1</span>
+                        <span class="pref-title">Bạn quan tâm loại sản phẩm nào?</span>
+                        <span class="pref-optional">Bắt buộc, chọn được nhiều</span>
+                    </legend>
+                    <div class="pref-chips" id="categoryOptions" aria-busy="true"></div>
+                </fieldset>
+
+                <fieldset class="pref-step">
+                    <legend class="pref-step-head">
+                        <span class="pref-num" aria-hidden="true">2</span>
+                        <span class="pref-title">Tầm giá bạn muốn?</span>
+                        <span class="pref-optional">Không bắt buộc</span>
+                    </legend>
+                    <div class="pref-chips" id="priceOptions"></div>
+                    <p class="pref-hint">
+                        Tính trong từng loại sản phẩm: điện thoại cao cấp và tai nghe cao cấp có mức giá khác nhau.
+                    </p>
+                </fieldset>
+
+                <fieldset class="pref-step">
+                    <legend class="pref-step-head">
+                        <span class="pref-num" aria-hidden="true">3</span>
+                        <span class="pref-title">Bạn thích hãng nào?</span>
+                        <span class="pref-optional">Không bắt buộc, bỏ trống nếu hãng nào cũng được</span>
+                    </legend>
+                    <div id="brandOptions"></div>
+                </fieldset>
+
+                <fieldset class="pref-step" id="needStep" hidden>
+                    <legend class="pref-step-head">
+                        <span class="pref-num" aria-hidden="true">4</span>
+                        <span class="pref-title">Bạn dùng để làm gì?</span>
+                        <span class="pref-optional">Không bắt buộc</span>
+                    </legend>
+                    <div id="needOptions"></div>
+                </fieldset>
+
+                <div class="pref-actions">
+                    <p class="form-error" id="preferenceError" role="alert" hidden></p>
+                    <button type="submit" class="btn btn-dark" id="preferenceSubmit">LƯU VÀ XEM GỢI Ý</button>
+                </div>
+
+            </form>
+
+        </div>
+    </section>
+
+</main>
+
+<div data-include="footer"></div>
+
+<script src="../js/core/api.js"></script>
+<script src="../js/core/ui.js"></script>
+<script src="../js/core/cart-store.js"></script>
+<script src="../js/core/layout.js"></script>
+<script src="../js/core/main.js"></script>
+<script src="../js/customer/preferences.js"></script>
+<script src="../js/customer/chatbot.js"></script>
+<script src="../js/customer/compare-wishlist.js"></script>
+
+<script src="../js/customer/ui-effects.js"></script>
+
+</body>
+</html>

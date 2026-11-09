@@ -178,6 +178,69 @@ def test_unknown_user_gets_popular_products(toy_recommender):
     assert {r.reason for r in recs} <= {"Được nhiều khách hàng quan tâm", "Sản phẩm nổi bật", "Sản phẩm mới"}
 
 
+# ---------- khách mới: bảng hỏi sở thích ----------
+
+PHONE, LAPTOP, ACCESSORY = 1, 2, 3
+
+
+def test_personal_basis_is_behaviour_then_answers_then_popular(toy_recommender):
+    answers = engine.Preferences(category_ids=(LAPTOP,))
+    assert toy_recommender.personal(200, 4, preferences=answers)[1] == engine.BASIS_BEHAVIOR   # đã có hành vi
+    assert toy_recommender.personal(999, 4, preferences=answers)[1] == engine.BASIS_PREFERENCES
+    assert toy_recommender.personal(999, 4)[1] == engine.BASIS_POPULAR                        # chưa trả lời
+    # danh mục không còn sản phẩm đang bán → không có gì để gợi ý theo câu trả lời
+    assert toy_recommender.personal(999, 4, preferences=engine.Preferences(category_ids=(77,)))[1] == \
+        engine.BASIS_POPULAR
+
+
+def test_answer_score_counts_matched_questions_per_category(toy_recommender):
+    # tầm giá trong danh mục: điện thoại 1, 3 "Cao", 2 "Trung", 4 "Thấp"; laptop 6 "Cao", 5 "Trung", 7 "Thấp"
+    answers = engine.Preferences(category_ids=(PHONE, LAPTOP), brand_ids=(1,), price_levels=("HIGH",),
+                                 need_ids=(10, 20))     # Apple, cao cấp, chụp ảnh (điện thoại), học tập (laptop)
+    recs = toy_recommender.from_preferences(answers, n=7)
+    score = {r.product_id: r.score for r in recs}
+
+    assert set(score) == {1, 2, 3, 4, 5, 6, 7}              # chỉ danh mục đã chọn, bỏ sản phẩm ngừng bán (9)
+    assert score[1] == pytest.approx(4 / 4)                 # danh mục + Apple + cao cấp + chụp ảnh
+    assert score[3] == pytest.approx(3 / 4)                 # Samsung: trượt câu hãng
+    assert score[2] == pytest.approx(2 / 4)
+    assert score[4] == pytest.approx(1 / 4)
+    assert score[7] == pytest.approx(3 / 4)                 # MacBook: Apple + học tập, giá thấp
+    assert score[5] == score[6] == pytest.approx(2 / 4)
+    assert [r.product_id for r in recs[:2]] == [1, 7]       # vị trí đầu của mỗi danh mục, điểm cao trước
+    assert recs[0].reason == "Hợp với lựa chọn của bạn: Apple · cao cấp · chụp ảnh, quay phim"
+    assert all(r.cf_score is None and r.cbf_score is None for r in recs)
+
+
+def test_answers_ignore_other_customers_behaviour_when_scores_tie(toy_recommender):
+    # chỉ chọn danh mục: mọi laptop cùng điểm; MacBook (7) được nhiều khách xem nhất nhưng Yoga (6) đánh giá cao hơn
+    toy_recommender.model.items.loc[6, "rating"] = 4.9
+    recs = toy_recommender.from_preferences(engine.Preferences(category_ids=(LAPTOP,)), n=3)
+
+    assert recs[0].product_id == 6
+    assert {r.score for r in recs} == {1.0}
+    assert recs[0].reason == "Thuộc danh mục Laptop bạn quan tâm"
+
+
+def test_answers_skip_brand_question_for_a_category_without_the_chosen_brand(toy_recommender):
+    # chọn Samsung: Samsung không bán laptop nên laptop không bị trừ điểm vì câu "hãng"
+    recs = toy_recommender.from_preferences(engine.Preferences(category_ids=(PHONE, LAPTOP), brand_ids=(2,)), n=7)
+    score = {r.product_id: r.score for r in recs}
+
+    assert score[3] == score[4] == 1.0 and score[1] == 0.5
+    assert score[5] == score[6] == score[7] == 1.0
+
+
+def test_answers_leave_out_cases_for_a_phone_model_and_excluded_products(toy_recommender):
+    items = toy_recommender.model.items
+    items.loc[8, ["name", "category"]] = ["Ốp lưng iPhone 16e", "Phụ Kiện"]
+    recs = toy_recommender.from_preferences(engine.Preferences(category_ids=(ACCESSORY, PHONE)), n=8, exclude=[1])
+    ids = [r.product_id for r in recs]
+
+    assert 8 not in ids and 1 not in ids
+    assert set(ids) == {2, 3, 4}
+
+
 def test_upsell_same_category_at_most_30_percent_dearer_with_better_specs(toy_recommender):
     # iPhone 16e 16,99 triệu → tối đa 22,09 triệu: Galaxy S25 (20 triệu, RAM 12 GB, 256 GB) hợp lệ;
     # iPhone 17 (28,49 triệu) quá đắt, Galaxy A56 rẻ hơn

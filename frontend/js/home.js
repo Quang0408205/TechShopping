@@ -1116,9 +1116,10 @@ function renderHomeProductGrids() {
 /* ================= GỢI Ý SẢN PHẨM ================= */
 
 /*
- * POST /recommendations PERSONAL, 8 sản phẩm (2 hàng). Đã đăng nhập: gợi ý theo hành vi của khách, bấm thẻ được tính vào
- * tỉ lệ bấm. Chưa đăng nhập hoặc AI_Service ngừng: backend trả danh sách phổ biến + mới, nên đổi tiêu đề cho đúng.
- * Chỉ gọi khi khu này sắp vào màn hình; lỗi hoặc rỗng thì ẩn cả khu.
+ * POST /recommendations PERSONAL, 8 sản phẩm (2 hàng). basis BEHAVIOR: theo hành vi của khách; PREFERENCES: khách chưa
+ * có hành vi, theo câu trả lời bảng hỏi; POPULAR (chưa có cả hai): hiện lời mời trả lời bảng hỏi thay cho danh sách.
+ * Đã đăng nhập thì bấm thẻ được tính vào tỉ lệ bấm. AI_Service ngừng (FALLBACK): danh sách phổ biến, đổi tiêu đề cho
+ * đúng. Chỉ gọi khi khu này sắp vào màn hình; lỗi hoặc rỗng thì ẩn cả khu.
  */
 
 const HOME_RECOMMENDATION_SIZE = 8;
@@ -1146,19 +1147,33 @@ function renderHomeRecommendations() {
 
             const items = (result && result.items) || [];
 
+            const fromAi = result && result.source === "AI";
+
+            if (fromAi && result.basis === "POPULAR") {
+                document.getElementById("homeRecommendationNote").textContent =
+                    "Cho POY biết bạn quan tâm gì để nhận gợi ý phù hợp.";
+                grid.innerHTML = preferencePromptHtml("index.html");
+                return;
+            }
+
             if (!items.length) {
                 section.hidden = true;
                 return;
             }
 
-            const personal = isLoggedIn() && result.source === "AI";
+            if (fromAi && result.basis === "PREFERENCES") {
+                document.getElementById("homeRecommendationTitle").textContent = "Gợi ý theo sở thích của bạn";
+                document.getElementById("homeRecommendationNote").innerHTML = preferenceNoteHtml("index.html");
+            }
 
-            if (!personal) {
+            const personal = isLoggedIn() && fromAi;
+
+            if (!fromAi) {
+                /* dịch vụ AI không trả lời: backend trả danh sách phổ biến */
                 document.getElementById("homeRecommendationLabel").textContent = "ĐƯỢC QUAN TÂM";
                 document.getElementById("homeRecommendationTitle").textContent = "Được quan tâm nhiều";
-                document.getElementById("homeRecommendationNote").textContent = isLoggedIn()
-                    ? "Sản phẩm nhiều khách xem và mua gần đây."
-                    : "Sản phẩm nhiều khách xem và mua gần đây. Đăng nhập để nhận gợi ý theo sở thích của bạn.";
+                document.getElementById("homeRecommendationNote").textContent =
+                    "Sản phẩm nhiều khách xem và mua gần đây.";
             }
 
             renderRecommendationGrid(grid, items, categories.byId, personal ? "PERSONAL" : null);
