@@ -42,6 +42,7 @@ recommendation_evaluations.sql) — bảng riêng của phần AI, nơi duy nh�
 """
 
 import csv
+import dataclasses
 import json
 import logging
 import math
@@ -373,11 +374,37 @@ def choose_cold_start_k(rows: list[dict], default: int) -> int:
     return default
 
 
-def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.DataFrame) -> dict:
-    """Mỗi (đơn kiểm thử có ≥ 2 sản phẩm, sản phẩm i trong đơn): danh sách mua kèm của i có chứa sản phẩm khác của đơn?"""
+CROSS_SELL_MAIN = "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)"
+CROSS_SELL_BASELINE = "Bán chạy nhất (baseline)"
+
+
+def _variant(session: Session, **changes) -> engine.Recommender:
+    """Bản sao Recommender của session với vài thành phần mô hình được thay (so sánh từng nguồn luật mua kèm)."""
+    rec = engine.Recommender(load_interactions=session.rec._load_interactions, now=session.now)
+    rec._model = dataclasses.replace(session.model, **changes)
+    return rec
+
+
+def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.DataFrame,
+                learn_events: pd.DataFrame | None = None, bootstrap: int = 1000, seed: int = 42) -> dict:
+    """
+    Mỗi (đơn kiểm thử có ≥ 2 sản phẩm, sản phẩm i trong đơn): danh sách mua kèm của i có chứa sản phẩm khác của đơn?
+    Luật "khách mua A cũng mua B" chỉ học từ hành vi trước ngày cắt của đơn (không nhìn thấy đơn kiểm thử).
+    """
+    co_buyers = {}
+    if learn_events is not None and not train_baskets.empty and "order_date" in train_baskets:
+        cutoff = pd.Timestamp(train_baskets["order_date"].max())
+        before = learn_events[pd.to_datetime(learn_events["timestamp"]) <= cutoff]
+        co_buyers = engine._co_buyers(aggregate(before), session.model.items, session.model.index)
+    recommenders = {
+        CROSS_SELL_MAIN: _variant(session, co_buyers=co_buyers),
+        "Chỉ luật cùng đơn (cách cũ)": _variant(session, co_buyers={}),
+        "Chỉ khách mua A cũng mua B": _variant(session, co_purchase={}, co_buyers=co_buyers),
+    }
     popular = [p for p, _ in Counter(train_baskets["product_id"]).most_common()]
-    pairs = hits = popular_hits = with_list = 0
-    hit_slots = popular_slots = 0
+    counts = {name: [0, 0, 0] for name in [*recommenders, CROSS_SELL_BASELINE]}   # có gợi ý, trúng, số món trúng
+    hit_lists = {name: [] for name in counts}
+    pairs = 0
     for _, order in test_baskets.groupby("order_id"):
         products = set(order["product_id"])
         if len(products) < 2:
@@ -386,24 +413,32 @@ def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.
             if product not in session.model.index:
                 continue
             others = products - {product}
-            suggested = [r.product_id for r in session.rec.cross_sell(product, None, CROSS_SELL_N)]
-            baseline = [p for p in popular if p != product][:CROSS_SELL_N]
             pairs += 1
-            with_list += bool(suggested)
-            found = len(others & set(suggested))
-            hits += found > 0
-            hit_slots += found
-            found_popular = len(others & set(baseline))
-            popular_hits += found_popular > 0
-            popular_slots += found_popular
+            lists = {name: [r.product_id for r in rec.cross_sell(product, None, CROSS_SELL_N)]
+                     for name, rec in recommenders.items()}
+            lists[CROSS_SELL_BASELINE] = [p for p in popular if p != product][:CROSS_SELL_N]
+            for name, suggested in lists.items():
+                found = len(others & set(suggested))
+                counts[name][0] += bool(suggested)
+                counts[name][1] += found > 0
+                counts[name][2] += found
+                hit_lists[name].append(float(found > 0))
     share = (lambda x: round(x / pairs, 4) if pairs else 0.0)
+    samples = _samples(pairs, bootstrap, seed)
+    comparisons = []
+    for other in (CROSS_SELL_BASELINE, "Chỉ luật cùng đơn (cách cũ)"):
+        diff = np.array(hit_lists[CROSS_SELL_MAIN]) - np.array(hit_lists[other])
+        low, high = bootstrap_mean_ci(diff, samples) if samples is not None else (0.0, 0.0)
+        comparisons.append({"best": CROSS_SELL_MAIN, "other": other, "metric": "hitRate",
+                            "diff": round(float(diff.mean()) if pairs else 0.0, 4), "low": round(low, 4),
+                            "high": round(high, 4), "significant": bool(low > 0 or high < 0)})
     return {"n": CROSS_SELL_N, "pairs": pairs, "trainOrders": int(train_baskets["order_id"].nunique()),
             "testOrders": int(test_baskets["order_id"].nunique()),
-            "itemsWithRules": len(session.model.co_purchase), "withSuggestions": share(with_list),
-            "rows": [{"model": "Mua kèm (luật kết hợp + phụ kiện)", "hitRate": share(hits),
-                      "precision": share(hit_slots / CROSS_SELL_N)},
-                     {"model": "Bán chạy nhất (baseline)", "hitRate": share(popular_hits),
-                      "precision": share(popular_slots / CROSS_SELL_N)}]}
+            "itemsWithRules": len(session.model.co_purchase), "itemsWithCoBuyers": len(co_buyers),
+            "withSuggestions": share(counts[CROSS_SELL_MAIN][0]),
+            "rows": [{"model": name, "hitRate": share(c[1]), "precision": share(c[2] / CROSS_SELL_N),
+                      "withSuggestions": share(c[0])} for name, c in counts.items()],
+            "comparisons": comparisons}
 
 
 def _upsell(session: Session) -> dict:
@@ -575,7 +610,7 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
         "coldStartRows": cold_rows,
         "coldStartComparisons": _compare(cold_tables, model_name("COLD_CBF", None), [model_name("POPULAR", None)],
                                          cold_samples),
-        "crossSell": _cross_sell(session, train_baskets, test_baskets),
+        "crossSell": _cross_sell(session, train_baskets, test_baskets, learn, bootstrap, seed + 6),
         "upsell": _upsell(session),
     }
 
@@ -684,10 +719,16 @@ def markdown(result: dict) -> str:
                   *_table_lines(result["likeRows"], n, False), *_comparison_lines(result["likeComparisons"], n)]
     cross = result["crossSell"]
     lines += ["", f"## Mua kèm ({cross['testOrders']} đơn kiểm thử, {cross['pairs']} cặp đơn – sản phẩm)", "",
-              f"Luật kết hợp học trên {cross['trainOrders']} đơn đặt trước; {_pct(cross['withSuggestions'])} sản phẩm "
-              f"trong đơn kiểm thử có danh sách mua kèm.", "",
-              f"| Cách gợi ý | HitRate@{cross['n']} | Precision@{cross['n']} |", "|---|---|---|"]
-    lines += [f"| {row['model']} | {row['hitRate']:.4f} | {row['precision']:.4f} |" for row in cross["rows"]]
+              f"Luật cùng đơn học trên {cross['trainOrders']} đơn đặt trước; luật \"khách mua A cũng mua B\" học từ "
+              f"hành vi trước ngày cắt ({cross.get('itemsWithCoBuyers', 0)} sản phẩm có luật); "
+              f"{_pct(cross['withSuggestions'])} sản phẩm trong đơn kiểm thử có danh sách mua kèm.", "",
+              f"| Cách gợi ý | HitRate@{cross['n']} | Precision@{cross['n']} | Có gợi ý |", "|---|---|---|---|"]
+    lines += [f"| {row['model']} | {row['hitRate']:.4f} | {row['precision']:.4f} | "
+              f"{_pct(row.get('withSuggestions', 0))} |" for row in cross["rows"]]
+    lines += ["", *(f"- HitRate@{cross['n']}: {c['best']} − {c['other']}: {c['diff']:+.4f} "
+                    f"(KTC 95%: {c['low']:+.4f} đến {c['high']:+.4f}), "
+                    f"{'có ý nghĩa' if c['significant'] else 'chưa đủ chắc chắn'}"
+                    for c in cross.get("comparisons", []))]
     upsell = result["upsell"]
     lines += ["", "## Nâng cấp", "",
               f"{_pct(upsell['withSuggestions'])} trong {upsell['products']} sản phẩm đang bán có gợi ý nâng cấp; gợi ý "
@@ -808,8 +849,8 @@ def save_history(result: dict) -> bool:
               result["coldUsers"], result["trainEvents"], result["validationEvents"], result["testEvents"],
               result["products"], result["configuredAlpha"], result["bestAlpha"], chosen["factors"],
               chosen["regularization"], chosen["confidence"], chosen["halfLifeDays"], chosen.get("mmrLambda", 1.0),
-              cross_rows["Mua kèm (luật kết hợp + phụ kiện)"]["hitRate"],
-              cross_rows["Bán chạy nhất (baseline)"]["hitRate"], upsell["withSuggestions"],
+              cross_rows.get(CROSS_SELL_MAIN, cross["rows"][0])["hitRate"],
+              cross_rows[CROSS_SELL_BASELINE]["hitRate"], upsell["withSuggestions"],
               result["bootstrapSamples"], result["seconds"])).fetchone()
         if created is None:
             return False

@@ -108,6 +108,7 @@ AI_Service/
 │   │   ├── features.py      Trích thông số (RAM, bộ nhớ, màn hình, camera), Min-Max, One-Hot, điểm r(u,i)
 │   │   ├── als.py           Thuật toán ALS cho phản hồi ngầm định + fold-in
 │   │   ├── engine.py        CBF, Hybrid, cold-start, lọc, xếp hạng, Upsell, Cross-sell, lý do đề xuất
+│   │   ├── compat.py        Luật phụ kiện vừa máy (đời máy, cổng sạc, Apple), thiết bị cùng hãng cho mua kèm
 │   │   └── evaluation.py    Đánh giá offline (Precision / Recall / NDCG / HitRate / Coverage theo α), ghi kết quả
 │   └── chatbot/
 │       ├── rag.py           Embedding + tìm kiếm vector trong pgvector (có lọc metadata)
@@ -245,9 +246,9 @@ thiết kế, nhưng đo theo số lượt thì Hybrid đã tốt hơn chỉ CBF
 |---|---|---|---|
 | **SIMILAR** | Cùng danh mục, đang bán | Cosine giữa hai sản phẩm | "Cùng hãng Apple, cùng tầm giá" |
 | **UPSELL** | Cùng danh mục, giá cao hơn tối đa **δ = 30%**, có ít nhất 1 thông số (RAM / bộ nhớ / camera) tốt hơn. Danh mục không có thông số (đồng hồ thời trang) chỉ xét giá | Hybrid nếu khách có dữ liệu, ngược lại theo độ giống sản phẩm đang xem | "Nâng cấp camera 50MP, chỉ thêm 3.000.000đ" |
-| **CROSS_SELL** | Quan hệ `ACCESSORY / COMPATIBLE / BOUGHT_TOGETHER` trong `product_relations` + cặp mua chung có **lift > 1** | 0.6 × mức liên quan + 0.4 × Hybrid (khi đã đăng nhập) | "Phụ kiện phù hợp với sản phẩm này" |
+| **CROSS_SELL** | Quan hệ `ACCESSORY / COMPATIBLE / BOUGHT_TOGETHER` trong `product_relations` + cặp mua **cùng đơn** có **lift > 1** + **"khách mua A cũng mua B"** (đếm theo khách trên toàn lịch sử thêm giỏ / mua, B khác danh mục với A, ít nhất 2 khách chung, lift > 1; `_co_buyers`); cặp từ luật phải qua `compat.compatible` (phụ kiện vừa máy, thiết bị cùng hãng) | 0.6 × mức liên quan + 0.4 × Hybrid (khi đã đăng nhập); mức liên quan: phụ kiện = strength, cùng đơn = 0,5 + 0,5·confidence, cùng khách = 0,4 + 0,5·confidence | "Phụ kiện phù hợp với sản phẩm này" / "Thường được mua cùng sản phẩm này" / "Khách mua sản phẩm này cũng mua" |
 
-Đơn hàng hiện còn ít nên chưa tính được "mua chung" đáng tin. Vì vậy `build_relations.py` tạo **6.229 quan hệ phụ kiện** theo quy tắc:
+Đơn hàng hiện còn ít nên chưa tính được "mua chung" đáng tin. Vì vậy `build_relations.py` tạo **6.191 quan hệ phụ kiện** theo quy tắc:
 
 - **Điện thoại:** ốp lưng, kính cường lực, sạc, cáp, tai nghe.
 - **Laptop:** chuột, bàn phím, balo, túi chống sốc.
@@ -255,6 +256,7 @@ thiết kế, nhưng đo theo số lượt thì Hybrid đã tốt hơn chỉ CBF
 - **Đồng hồ thông minh:** sạc, tai nghe…
 
 Mỗi thiết bị có tối đa 8 phụ kiện (tối đa 2 mỗi nhóm). Phụ kiện cùng hãng được ưu tiên. Phụ kiện chỉ dành cho iPhone (Lightning, MagSafe iPhone, Magic Mouse…) chỉ gắn với sản phẩm Apple.
+Các luật nằm ở `app/recommender/compat.py`, dùng chung cho `build_relations.py` và `cross_sell`.
 
 Phụ kiện chỉ vừa một số máy (`fits`, từ 08/11/2026; trước đó iPhone 17e được gợi ý ốp lưng iPhone 15 Pro):
 
@@ -262,7 +264,25 @@ Phụ kiện chỉ vừa một số máy (`fits`, từ 08/11/2026; trước đó
   không gắn với iPhone 16e, 16 Plus hay 17e. Catalogue hiện chỉ có ốp iPhone 15 Pro và iPhone 16, nên đa số điện thoại
   không có ốp trong danh sách mua kèm (đúng hơn là gợi ý ốp không vừa).
 - **Apple Pencil Pro** chỉ gắn với iPad Pro, iPad Air, iPad mini (iPad thường không dùng được).
+- **Cáp sạc từ tính (Magnetic) của Apple** là sạc riêng của Apple Watch nên chỉ gắn với Apple Watch (trước đó cáp này
+  được gợi ý cho gần 500 máy, kể cả điện thoại Android và đồng hồ Garmin, Huawei). Pin sạc dự phòng không dây Magnetic
+  (chuẩn Qi2) không bị ảnh hưởng.
+- **Cáp Type-C – Lightning** chỉ gắn với iPhone 14 trở về trước. Từ iPhone 15, mọi iPad và Apple Watch đang bán đều
+  không dùng Lightning, nên trong catalogue hiện tại cáp này không gắn với máy nào (trước đó gợi ý cho 12 iPhone,
+  14 iPad, 13 Apple Watch).
+- **Máy tính bảng** không gắn bàn phím có dây (trước đó 38 máy được gợi ý bàn phím cơ gaming có dây).
 - **Balo / túi laptop ghi cỡ inch** chỉ gắn với laptop có màn hình không lớn hơn cỡ đó (đọc từ thông số "Kích thước màn hình").
+
+Luật mua chung (cùng đơn, "khách mua A cũng mua B") học từ hành vi nên có thể ra cặp không hợp lý, nhất là trên dữ liệu
+mô phỏng. Vì vậy `cross_sell` lọc các cặp này qua `compat.compatible` (từ 09/11/2026):
+
+- phụ kiện phải thuộc nhóm phụ kiện của loại máy và qua các luật trên (trước đó: Nothing Phone (4b) → camera IP,
+  vivo Y05e → cáp Lightning, Redmi Watch → bộ kích sóng Wi-Fi);
+- thiết bị chỉ gợi ý thiết bị khác **cùng hãng**, tức cùng hệ sinh thái: OPPO A6t Pro → OPPO Watch X3, Apple Watch →
+  MacBook, Galaxy Tab → Galaxy S26 Ultra (trước đó: laptop Acer → iPhone Air, Garmin → Motorola);
+- danh mục ngoài catalogue (dữ liệu Amazon ở mục 9.1c) không bị lọc, nên kết quả trên Amazon không đổi.
+
+Quét toàn bộ 868 thiết bị sau khi sửa: không còn cặp nào ở trên, máy nào cũng đủ 4 gợi ý mua kèm.
 
 ### 4.6. Khi AI Service không trả lời (dự phòng)
 
@@ -703,9 +723,11 @@ trọng số 3) nhưng chưa làm gợi ý tốt hơn một cách chắc chắn;
 
 Phần chưa đánh giá được trên dữ liệu hiện có:
 
-- **Mua kèm:** HitRate@4 = 1,5% so với 2,2% của "bán chạy nhất" (276 cặp đơn – sản phẩm): đơn hàng mẫu được sinh ngẫu
-  nhiên nên không có cặp "hay mua cùng nhau" thật. Luật phụ kiện mới (`fits`) bỏ các phụ kiện không vừa máy, nên điểm
-  này không phản ánh việc gợi ý đúng đời máy.
+- **Mua kèm:** HitRate@4 = 2,17%, bằng "bán chạy nhất" (276 cặp đơn – sản phẩm; KTC 95% của chênh lệch: −2,2 đến
+  +2,2 điểm %). Trước khi lọc cặp không vừa máy (09/11/2026) là 1,45%. Đơn hàng mẫu được sinh ngẫu nhiên nên không có
+  cặp "hay mua cùng nhau" thật; thêm luật "khách mua A cũng mua B" không đổi kết quả. Trên dữ liệu mua hàng thật
+  (mục 9.1c) cách mới hơn bán chạy có ý nghĩa. Điểm này không đo việc gợi ý đúng đời máy hay đúng cổng sạc; phần đó do
+  luật phụ kiện bảo đảm và có test riêng.
 - **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%.
 
 Các phép đo này đã sẵn sàng; chỉ có ý nghĩa khi có hành vi và đơn hàng thật.
@@ -771,12 +793,22 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   (người mua phụ kiện cần đồ bổ trợ cho máy, không cần thêm món giống món đã mua). Trọng số α phụ thuộc dữ liệu → khi có
   khách thật phải **chọn lại α** bằng chính quy trình đánh giá (nút "Đánh giá lại" ở trang admin rồi đổi biến môi trường `REC_ALPHA`).
 - MMR λ = 0,9: đa dạng +0,058 (có ý nghĩa), NDCG không giảm có ý nghĩa. Nửa đời tốt nhất: không giảm (dữ liệu trải 14 năm).
-- Chưa tốt: mua kèm (luật kết hợp trên đơn cùng ngày) HitRate@4 0,0104 < bán chạy 0,0155; giả lập khách mới chỉ có 27–63
-  người đủ 12 lượt nên **không dùng** để kết luận ngưỡng k.
+- **Mua kèm** (6.447 cặp đơn – sản phẩm, đơn = cùng người cùng ngày; luật chỉ học từ hành vi trước ngày cắt của đơn kiểm thử):
+
+  | Cách gợi ý | HitRate@4 | Có gợi ý |
+  |---|---|---|
+  | **Đang dùng: cùng đơn + khách mua A cũng mua B** | **2,16%** | 40% |
+  | Chỉ luật cùng đơn (cách cũ) | 1,04% | 14% |
+  | Chỉ khách mua A cũng mua B | 1,69% | 38% |
+  | Bán chạy nhất | 1,55% | 100% |
+
+  Cách đang dùng hơn bán chạy **có ý nghĩa** (+0,60 điểm %, KTC 0,17 → 1,02) và hơn cách cũ (+1,12 điểm %): luật cùng
+  đơn chỉ có ở 14% sản phẩm vì ít đơn nhiều món, đếm theo khách thì dày hơn nhiều.
+- Chưa tốt: giả lập khách mới chỉ có 27–63 người đủ 12 lượt nên **không dùng** để kết luận ngưỡng k.
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-59 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+68 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -784,7 +816,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   của nhau; huấn luyện lặp lại cho cùng kết quả;
 - `test_engine.py`: cosine và Hybrid đúng ví dụ tính tay của báo cáo, khách mới dưới 5 lượt chỉ dùng CBF, khách chưa
   có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, luật mua kèm (lift > 1, ít nhất
-  2 đơn), nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
+  2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem) và lý do hiển thị, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
   lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
   phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
 - `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
@@ -795,7 +827,9 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   trả lời, bỏ câu nhắc nút Xác nhận khi không có thao tác, chọn phiên bản theo từng từ (kể cả khi phiên bản nằm trong
   tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên;
 - `test_relations.py`: ốp lưng ghi đời máy chỉ gắn đúng đời đó (iPhone 16 ≠ 16e / 16 Plus / 17e), Apple Pencil Pro chỉ
-  với iPad Pro / Air / mini, túi laptop phải vừa cỡ màn hình;
+  với iPad Pro / Air / mini, cáp sạc từ tính Apple chỉ với Apple Watch, cáp Lightning chỉ với iPhone ≤ 14, máy tính
+  bảng không nhận bàn phím có dây, túi laptop phải vừa cỡ màn hình; `compatible` lọc luật mua chung (phụ kiện đúng
+  nhóm, thiết bị cùng hãng, dữ liệu ngoài catalogue không bị lọc);
 - cold-start: truyền ngưỡng k cho từng lần gợi ý mà không đổi cấu hình chung, quy tắc chọn k (m nhỏ nhất mà từ đó Hybrid
   không kém CBF).
 
@@ -989,7 +1023,7 @@ Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số ch
 - Kho tri thức RAG không tự cập nhật khi đổi giá / thêm sản phẩm: cần chạy lại `build_index`. Riêng `get_product_details` luôn lấy giá **hiện tại** từ Backend.
 - "Còn hàng" không được lọc khi gợi ý, vì tồn kho tính theo từng chi nhánh và chỉ kiểm tra khi nhân viên xác nhận đơn.
 - `LIKE` trong dữ liệu mô phỏng theo giả định "thích = dấu hiệu sẽ mua" (mục 9.1): đo được cơ chế chạy đúng, chưa phải tác dụng trên khách thật.
-- Cross-sell "mua chung" (lift) chưa có tác dụng vì đơn mẫu mỗi đơn chỉ 1 sản phẩm; hiện dựa vào quan hệ phụ kiện theo quy tắc.
+- Cross-sell "mua chung" chưa có tác dụng trên dữ liệu mẫu (đơn sinh ngẫu nhiên); trên web hiện dựa chủ yếu vào quan hệ phụ kiện theo quy tắc. Luật "khách mua A cũng mua B" chỉ phát huy khi có lịch sử mua thật (đã kiểm chứng trên Amazon, mục 9.1c).
 
 ---
 

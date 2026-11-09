@@ -75,12 +75,17 @@ Cắt lịch sử của 30% khách còn m lượt đầu rồi học lại; Hybr
 
 ## Mua kèm (19890 đơn kiểm thử, 6447 cặp đơn – sản phẩm)
 
-Luật kết hợp học trên 79654 đơn đặt trước; 14% sản phẩm trong đơn kiểm thử có danh sách mua kèm.
+Luật cùng đơn học trên 79654 đơn đặt trước; luật "khách mua A cũng mua B" học từ hành vi trước ngày cắt (2727 sản phẩm có luật); 40% sản phẩm trong đơn kiểm thử có danh sách mua kèm.
 
-| Cách gợi ý | HitRate@4 | Precision@4 |
-|---|---|---|
-| Mua kèm (luật kết hợp + phụ kiện) | 0.0104 | 0.0026 |
-| Bán chạy nhất (baseline) | 0.0155 | 0.0041 |
+| Cách gợi ý | HitRate@4 | Precision@4 | Có gợi ý |
+|---|---|---|---|
+| Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) | 0.0216 | 0.0056 | 40% |
+| Chỉ luật cùng đơn (cách cũ) | 0.0104 | 0.0026 | 14% |
+| Chỉ khách mua A cũng mua B | 0.0169 | 0.0044 | 38% |
+| Bán chạy nhất (baseline) | 0.0155 | 0.0041 | 100% |
+
+- HitRate@4: Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) − Bán chạy nhất (baseline): +0.0060 (KTC 95%: +0.0017 đến +0.0102), có ý nghĩa
+- HitRate@4: Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) − Chỉ luật cùng đơn (cách cũ): +0.0112 (KTC 95%: +0.0087 đến +0.0138), có ý nghĩa
 
 ## Nâng cấp
 

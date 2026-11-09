@@ -17,11 +17,13 @@ from scipy.sparse import csr_matrix
 
 from app import config
 from app.recommender import als, data
+from app.recommender.compat import compatible
 from app.recommender.features import NUMERIC_FEATURES, build_item_features, extract_numeric_specs, interaction_scores
 
 log = logging.getLogger(__name__)
 
 MODEL_FILE = "recommender.pkl"
+ACCESSORY_REASON = "Phụ kiện phù hợp với sản phẩm này"
 
 
 @dataclass
@@ -49,11 +51,12 @@ class Model:
     index: dict[int, int]               # product_id → dòng trong vectors / item_factors
     item_factors: np.ndarray            # Y của ALS
     popularity: np.ndarray              # Σ_u r(u,i)
-    co_purchase: dict[int, list[tuple[int, float, float]]]  # i → [(j, confidence, lift)]
+    co_purchase: dict[int, list[tuple[int, float, float]]]  # i → [(j, confidence, lift)]: cùng một đơn
     relations: pd.DataFrame
     trained_at: datetime
     stats: dict = field(default_factory=dict)
     params: dict = field(default_factory=dict)  # tham số ALS + half_life_days đã dùng khi học (fold-in dùng lại)
+    co_buyers: dict = field(default_factory=dict)  # i → [(j, confidence, lift)]: khách mua i cũng mua j (khác danh mục)
 
     def param(self, key: str):
         """Tham số lúc học; mô hình lưu trước khi có `params` → giá trị trong config."""
@@ -100,6 +103,48 @@ def _co_purchase(baskets: pd.DataFrame, min_pairs: int = 2, min_confidence: floa
     return result
 
 
+BUYER_TYPES = ("ADD_TO_CART", "PURCHASE")
+
+
+def _co_buyers(interactions: pd.DataFrame, items: pd.DataFrame, index: dict[int, int], min_buyers: int = 2,
+               top: int = 20) -> dict[int, list[tuple[int, float, float]]]:
+    """
+    3.5.6 b: "khách mua A cũng mua B" (item-to-item, Linden và cộng sự 2003). Đếm theo từng khách trên toàn bộ lịch sử
+    thêm giỏ / mua, không cần cùng một đơn: confidence(i→j) = số khách có cả i và j / số khách có i;
+    lift = confidence / (số khách có j / số khách). Chỉ giữ j khác danh mục với i (đồ đi kèm, không phải sản phẩm
+    thay thế), ít nhất `min_buyers` khách chung và lift > 1; mỗi i giữ `top` cặp confidence cao nhất.
+    """
+    bought = interactions[interactions["interaction_type"].isin(BUYER_TYPES)]
+    bought = bought[bought["product_id"].isin(index.keys())][["user_id", "product_id"]].drop_duplicates()
+    if bought.empty:
+        return {}
+    users = {u: row for row, u in enumerate(bought["user_id"].unique())}
+    matrix = csr_matrix((np.ones(len(bought)), (bought["user_id"].map(users).to_numpy(int),
+                                                 bought["product_id"].map(index).to_numpy(int))),
+                        shape=(len(users), len(index)))
+    together = (matrix.T @ matrix).tocsr()
+    together.setdiag(0)
+    together.eliminate_zeros()
+    buyers = np.asarray(matrix.sum(axis=0)).ravel()
+    category = items["category_id"].to_numpy()
+    ids = items.index.to_numpy()
+    result: dict[int, list] = {}
+    for i in np.flatnonzero(buyers):
+        start, end = together.indptr[i], together.indptr[i + 1]
+        partners, counts = together.indices[start:end], together.data[start:end]
+        keep = (counts >= min_buyers) & (category[partners] != category[i])
+        if not keep.any():
+            continue
+        partners, counts = partners[keep], counts[keep]
+        confidence = counts / buyers[i]
+        lift = confidence / (buyers[partners] / len(users))
+        keep = lift > 1
+        order = np.argsort(-confidence[keep], kind="stable")[:top]
+        result[int(ids[i])] = [(int(ids[j]), float(c), float(l))
+                               for j, c, l in zip(partners[keep][order], confidence[keep][order], lift[keep][order])]
+    return result
+
+
 def train_model(load_interactions=data.load_interactions, load_baskets=data.load_order_baskets,
                 params: dict | None = None, now=None) -> Model:
     """
@@ -119,7 +164,8 @@ def train_model(load_interactions=data.load_interactions, load_baskets=data.load
         items[feature + "_raw"] = raw[feature]
     index = {int(pid): row for row, pid in enumerate(items.index)}
 
-    scores = interaction_scores(load_interactions(), params["half_life_days"], now)
+    interactions = load_interactions()
+    scores = interaction_scores(interactions, params["half_life_days"], now)
     scores = scores[scores["product_id"].isin(index.keys())]
     users = {int(u): row for row, u in enumerate(sorted(scores["user_id"].unique()))}
     matrix = csr_matrix(
@@ -139,6 +185,7 @@ def train_model(load_interactions=data.load_interactions, load_baskets=data.load
         item_factors=item_factors,
         popularity=np.asarray(matrix.sum(axis=0)).ravel(),
         co_purchase=_co_purchase(load_baskets()),
+        co_buyers=_co_buyers(interactions, items, index),
         relations=data.load_relations(),
         trained_at=datetime.now(),
         params=params,
@@ -146,6 +193,7 @@ def train_model(load_interactions=data.load_interactions, load_baskets=data.load
     model.stats = {
         "products": len(index), "users": len(users), "interactions": int(matrix.nnz),
         "features": int(vectors.shape[1]), "co_purchase_items": len(model.co_purchase),
+        "co_buyer_items": len(model.co_buyers),
         "relations": len(model.relations), "seconds": round((datetime.now() - started).total_seconds(), 1),
     }
     log.info("Recommender trained: %s", model.stats)
@@ -394,13 +442,18 @@ class Recommender:
         rel = m.relations
         declared = rel[(rel["product_id"] == product_id) & rel["relation_type"].isin(data.CROSS_SELL_RELATIONS)]
         for row in declared.itertuples():
-            relevance[int(row.related_product_id)] = (float(row.strength), "Phụ kiện phù hợp với sản phẩm này")
+            relevance[int(row.related_product_id)] = (float(row.strength), ACCESSORY_REASON)
         for j, confidence, lift in m.co_purchase.get(product_id, []):
             score = min(1.0, 0.5 + 0.5 * confidence)
             if score > relevance.get(j, (0, ""))[0]:
                 relevance[j] = (score, "Thường được mua cùng sản phẩm này")
+        for j, confidence, lift in getattr(m, "co_buyers", {}).get(product_id, []):
+            score = min(1.0, 0.4 + 0.5 * confidence)    # cùng khách, không cùng đơn: bằng chứng yếu hơn một chút
+            if score > relevance.get(j, (0, ""))[0]:
+                relevance[j] = (score, "Khách mua sản phẩm này cũng mua")
 
-        pairs = [(m.index[j], s, why) for j, (s, why) in relevance.items() if j in m.index and m.valid[m.index[j]]]
+        pairs = [(m.index[j], s, why) for j, (s, why) in relevance.items() if j in m.index and m.valid[m.index[j]]
+                 and (why == ACCESSORY_REASON or self._fits(m.index[product_id], m.index[j]))]
         if not pairs:
             return []
         candidates = np.array([p[0] for p in pairs])
@@ -409,6 +462,16 @@ class Recommender:
         score = related if personal is None else 0.6 * related + 0.4 * personal
         order = self._rank(candidates, score)[:n]
         return [Recommendation(m.items.index[candidates[p]], score[p], pairs[p][2]) for p in order]
+
+    def _fits(self, device_row: int, accessory_row: int) -> bool:
+        """Gợi ý từ luật mua chung cũng phải vừa máy (luật Apple, đúng đời máy, cổng sạc...) như quan hệ khai báo;
+        thiết bị gợi ý thiết bị khác chỉ khi cùng hãng (compat.compatible)."""
+        items = self.model.items
+        device, accessory = items.iloc[device_row], items.iloc[accessory_row]
+        screen = device.get("screen_inch")
+        return compatible(str(device.get("name", "")), str(device.get("category", "")), str(device.get("brand", "")),
+                          str(accessory.get("name", "")), str(accessory.get("category", "")),
+                          f"{screen} inch" if pd.notna(screen) else None, str(accessory.get("brand", "")))
 
     def _personal_or_similar(self, user_id, anchor_row, candidates):
         """Score_Hybrid(u, j) khi người dùng có dữ liệu, ngược lại độ tương đồng CBF với sản phẩm đang xem."""

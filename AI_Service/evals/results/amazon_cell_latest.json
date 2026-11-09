@@ -990,17 +990,52 @@
     "trainOrders": 79654,
     "testOrders": 19890,
     "itemsWithRules": 1235,
-    "withSuggestions": 0.139,
+    "itemsWithCoBuyers": 2727,
+    "withSuggestions": 0.3989,
     "rows": [
       {
-        "model": "Mua kèm (luật kết hợp + phụ kiện)",
+        "model": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "hitRate": 0.0216,
+        "precision": 0.0056,
+        "withSuggestions": 0.3989
+      },
+      {
+        "model": "Chỉ luật cùng đơn (cách cũ)",
         "hitRate": 0.0104,
-        "precision": 0.0026
+        "precision": 0.0026,
+        "withSuggestions": 0.139
+      },
+      {
+        "model": "Chỉ khách mua A cũng mua B",
+        "hitRate": 0.0169,
+        "precision": 0.0044,
+        "withSuggestions": 0.3844
       },
       {
         "model": "Bán chạy nhất (baseline)",
         "hitRate": 0.0155,
-        "precision": 0.0041
+        "precision": 0.0041,
+        "withSuggestions": 1.0
+      }
+    ],
+    "comparisons": [
+      {
+        "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "other": "Bán chạy nhất (baseline)",
+        "metric": "hitRate",
+        "diff": 0.006,
+        "low": 0.0017,
+        "high": 0.0102,
+        "significant": true
+      },
+      {
+        "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "other": "Chỉ luật cùng đơn (cách cũ)",
+        "metric": "hitRate",
+        "diff": 0.0112,
+        "low": 0.0087,
+        "high": 0.0138,
+        "significant": true
       }
     ]
   },
