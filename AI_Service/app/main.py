@@ -119,7 +119,7 @@ def evaluation():
 
 @app.post("/evaluation", dependencies=[Depends(internal_only)])
 def start_evaluation():
-    """Chạy lại đánh giá offline ở nền (vài chục giây) trên một bản mô hình riêng; xem kết quả bằng GET."""
+    """Chạy lại đánh giá offline ở nền (khoảng 5 phút) trên một bản mô hình riêng; xem kết quả bằng GET."""
     return evaluation_job.start()
 
 

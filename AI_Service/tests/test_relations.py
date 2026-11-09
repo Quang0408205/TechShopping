@@ -1,7 +1,6 @@
 """Luật phụ kiện cho mua kèm (app/recommender/compat.py, dùng ở scripts/build_relations.py và cross_sell)."""
 
-from app.recommender.compat import compatible
-from scripts.build_relations import fits, phone_model
+from app.recommender.compat import compatible, fits, phone_model
 
 CASE_16 = "Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple"
 

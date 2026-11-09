@@ -40,6 +40,13 @@ def test_unknown_tool_arguments_are_dropped(monkeypatch):
     assert out["products"] == []          # trước đây: TypeError → TOOL_FAILED
 
 
+def test_backend_reply_missing_fields_fails_the_tool_not_the_chat(monkeypatch):
+    runner = ToolRunner("token")
+    monkeypatch.setattr(runner, "_call", lambda *args, **kwargs: None)          # Backend trả "data": null
+    out = json.loads(runner.run("get_my_orders", {}))
+    assert out["error"] == "TOOL_FAILED"                                        # trước đây: AttributeError ném ra
+
+
 def test_my_orders_separates_unfinished_orders(monkeypatch):
     statuses = ["DELIVERED", "PENDING", "CANCELLED", "DELIVERED", "SHIPPING", "DELIVERED", "DELIVERED"]
     page = {"content": [{"id": i, "code": f"DH{i:08d}", "status": s, "items": []} for i, s in enumerate(statuses)]}

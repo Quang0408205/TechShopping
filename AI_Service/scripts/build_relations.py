@@ -14,8 +14,7 @@ Chạy lại an toàn: xoá các dòng ACCESSORY cũ rồi tạo lại.
 """
 
 from app.db import connect
-from app.recommender.compat import (  # noqa: F401  (phone_model, fits: dùng trong test)
-    ACCESSORY_CATEGORY, APPLE_ONLY, RULES, fits, phone_model)
+from app.recommender.compat import ACCESSORY_CATEGORY, APPLE_ONLY, RULES, fits
 
 PER_PRODUCT = 8
 

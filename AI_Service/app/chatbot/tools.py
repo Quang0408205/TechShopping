@@ -230,7 +230,8 @@ class ToolRunner:
                 result = {"error": "NOT_FOUND", "message": "Không tìm thấy dữ liệu (hoặc không thuộc tài khoản này)."}
             else:
                 result = {"error": error.code}
-        except (httpx.HTTPError, TypeError, ValueError) as error:
+        except (httpx.HTTPError, TypeError, ValueError, KeyError, AttributeError) as error:
+            # KeyError / AttributeError: Backend trả thiếu trường (vd. "data" rỗng) → báo lỗi tool, không hỏng cả lượt
             log.warning("Tool %s failed: %s", name, error)
             result = {"error": "TOOL_FAILED", "message": "Hệ thống tạm thời không lấy được dữ liệu."}
         output = json.dumps(result, ensure_ascii=False, default=str)
