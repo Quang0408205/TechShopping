@@ -1,11 +1,13 @@
 package com.example.Tech.service.recommendation;
 
 import com.example.Tech.dto.request.product.ProductSearchRequest;
+import com.example.Tech.dto.request.recommendation.PreferenceRequest;
 import com.example.Tech.dto.request.recommendation.RecommendationRequest;
 import com.example.Tech.dto.response.recommendation.RecommendationOverviewResponse;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.dto.response.recommendation.RecommendationResponse;
+import com.example.Tech.entity.recommendation.PriceLevel;
 import com.example.Tech.entity.recommendation.Recommendation;
 import com.example.Tech.entity.recommendation.RecommendationType;
 import com.example.Tech.exception.BusinessException;
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyIterable;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -50,16 +53,21 @@ class RecommendationServiceTest {
     @Mock
     private RecommendationRepository recommendationRepository;
 
+    @Mock
+    private PreferenceService preferenceService;
+
     private RecommendationService service;
 
     @BeforeEach
     void setUp() {
-        service = new RecommendationService(aiClient, productService, recommendationRepository, Clock.systemDefaultZone());
+        service = new RecommendationService(aiClient, productService, recommendationRepository, preferenceService,
+                Clock.systemDefaultZone());
     }
 
     @Test
     void aiAnswer_keepsTheAiOrder_dropsHiddenProducts_andLogsForTheUser() {
-        when(aiClient.fetch(eq(RecommendationType.PERSONAL), eq(7L), any(), eq(8), anyList())).thenReturn(Optional.of(List.of(
+        when(preferenceService.answers(7L)).thenReturn(Optional.empty());
+        when(aiClient.fetchPersonal(eq(7L), eq(8), anyList(), isNull())).thenReturn(Optional.of(personal("BEHAVIOR",
                 new AiRecommendationClient.Item(2L, new BigDecimal("0.91234"), "Tương tự A"),
                 new AiRecommendationClient.Item(3L, new BigDecimal("0.5"), "Hidden"),
                 new AiRecommendationClient.Item(1L, new BigDecimal("0.4"), "Tương tự B"))));
@@ -69,6 +77,7 @@ class RecommendationServiceTest {
         RecommendationResponse response = service.recommend(7L, new RecommendationRequest(RecommendationType.PERSONAL, null, null));
 
         assertThat(response.source()).isEqualTo(RecommendationService.SOURCE_AI);
+        assertThat(response.basis()).isEqualTo("BEHAVIOR");
         assertThat(response.items()).extracting(i -> i.product().id()).containsExactly(2L, 1L);
         assertThat(response.items().get(0).score()).isEqualByComparingTo("0.912");
         @SuppressWarnings("unchecked")
@@ -79,14 +88,57 @@ class RecommendationServiceTest {
 
     @Test
     void guest_isNotLogged() {
-        when(aiClient.fetch(any(), eq(null), any(), anyInt(), anyList()))
-                .thenReturn(Optional.of(List.of(new AiRecommendationClient.Item(2L, BigDecimal.ONE, "Phổ biến"))));
+        when(aiClient.fetchPersonal(eq(null), anyInt(), anyList(), any()))
+                .thenReturn(Optional.of(personal("POPULAR", new AiRecommendationClient.Item(2L, BigDecimal.ONE, "Phổ biến"))));
         List<ProductResponse> visible = List.of(product(2L));
         when(productService.getActiveByIds(List.of(2L))).thenReturn(visible);
 
         service.recommend(null, new RecommendationRequest(RecommendationType.PERSONAL, null, 4));
 
         verify(recommendationRepository, never()).saveAll(anyIterable());
+    }
+
+    @Test
+    void customer_sendsTheAnswersSavedInTheAccount_andTheBasisIsPassedOn() {
+        PreferenceRequest saved = new PreferenceRequest(List.of(4), List.of(1), List.of(PriceLevel.MID), List.of());
+        when(preferenceService.answers(7L)).thenReturn(Optional.of(saved));
+        when(aiClient.fetchPersonal(7L, 8, List.of(), saved))
+                .thenReturn(Optional.of(personal("PREFERENCES", new AiRecommendationClient.Item(2L, BigDecimal.ONE,
+                        "Hợp với lựa chọn của bạn: Samsung"))));
+        List<ProductResponse> visible = List.of(product(2L));
+        when(productService.getActiveByIds(List.of(2L))).thenReturn(visible);
+
+        RecommendationResponse response = service.recommend(7L, new RecommendationRequest(RecommendationType.PERSONAL,
+                null, null, new PreferenceRequest(List.of(5), null, null, null)));   // ignored: the account wins
+
+        assertThat(response.basis()).isEqualTo("PREFERENCES");
+        assertThat(response.items().getFirst().reason()).isEqualTo("Hợp với lựa chọn của bạn: Samsung");
+    }
+
+    @Test
+    void guest_sendsTheAnswersKeptInItsBrowser() {
+        PreferenceRequest browser = new PreferenceRequest(List.of(5), null, List.of(PriceLevel.LOW), null);
+        when(aiClient.fetchPersonal(null, 4, List.of(), browser)).thenReturn(Optional.of(personal("PREFERENCES")));
+        when(productService.getActiveByIds(List.of())).thenReturn(List.of());
+
+        RecommendationResponse response = service.recommend(null,
+                new RecommendationRequest(RecommendationType.PERSONAL, null, 4, browser));
+
+        assertThat(response.basis()).isEqualTo("PREFERENCES");
+        verify(preferenceService, never()).answers(any());
+    }
+
+    @Test
+    void aiDown_personalFallback_hasNoBasis() {
+        when(aiClient.fetchPersonal(any(), anyInt(), anyList(), any())).thenReturn(Optional.empty());
+        PageResponse<ProductResponse> page = PageResponse.from(new PageImpl<>(List.of(product(5L))));
+        when(productService.search(any(), any(Pageable.class))).thenReturn(page);
+
+        RecommendationResponse response = service.recommend(null, new RecommendationRequest(RecommendationType.PERSONAL, null, 3));
+
+        assertThat(response.source()).isEqualTo(RecommendationService.SOURCE_FALLBACK);
+        assertThat(response.basis()).isNull();
+        assertThat(response.items()).hasSize(1);
     }
 
     @Test
@@ -153,6 +205,10 @@ class RecommendationServiceTest {
         assertThat(overview.evaluation()).isNull();
         assertThat(overview.online()).hasSize(RecommendationType.values().length);
         verify(aiClient, never()).evaluation();
+    }
+
+    private static AiRecommendationClient.PersonalList personal(String basis, AiRecommendationClient.Item... items) {
+        return new AiRecommendationClient.PersonalList(List.of(items), basis);
     }
 
     private static ProductResponse product(Long id) {

@@ -13,6 +13,15 @@ public record RecommendationResponse(
                 + "popular / same-category products are returned instead")
         String source,
 
-        List<RecommendedProductResponse> items
+        List<RecommendedProductResponse> items,
+
+        @Schema(description = "PERSONAL from the AI service: BEHAVIOR (the customer's own activity), PREFERENCES "
+                + "(no activity yet: questionnaire answers), POPULAR (neither: the website asks the questionnaire "
+                + "instead of showing this list); null for other types and FALLBACK")
+        String basis
 ) {
+
+    public RecommendationResponse(RecommendationType type, String source, List<RecommendedProductResponse> items) {
+        this(type, source, items, null);
+    }
 }

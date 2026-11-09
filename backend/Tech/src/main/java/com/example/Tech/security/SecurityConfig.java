@@ -103,6 +103,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations", "/api/v1/chat", "/api/v1/chat/stream")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/chat/*/messages").permitAll()
+                        // choices of the shopping-preference questionnaire (guests answer it too)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/recommendations/preference-options").permitAll()
                         .requestMatchers(HttpMethod.POST, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PUT, CATALOG_PATHS).hasRole(ADMIN)
                         .requestMatchers(HttpMethod.PATCH, CATALOG_PATHS).hasRole(ADMIN)

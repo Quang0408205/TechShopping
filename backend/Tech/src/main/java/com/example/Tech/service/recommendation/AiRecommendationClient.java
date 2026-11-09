@@ -1,5 +1,6 @@
 package com.example.Tech.service.recommendation;
 
+import com.example.Tech.dto.request.recommendation.PreferenceRequest;
 import com.example.Tech.entity.recommendation.RecommendationType;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,6 +21,10 @@ import java.util.Optional;
 public class AiRecommendationClient {
 
     public record Item(Long productId, BigDecimal score, String reason) {
+    }
+
+    /** PERSONAL list and what it is based on: BEHAVIOR, PREFERENCES (questionnaire answers) or POPULAR. */
+    public record PersonalList(List<Item> items, String basis) {
     }
 
     record ItemsResponse(List<Item> items) {
@@ -55,6 +60,32 @@ public class AiRecommendationClient {
             return Optional.ofNullable(response).map(ItemsResponse::items);
         } catch (RestClientException exception) {
             log.warn("AI service {} failed, using the fallback list: {}", type.aiPath(), exception.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * POST /recommend for the "for you" list: the customer's activity when there is some, otherwise the questionnaire
+     * answers ({@code preferences}, null when not answered), otherwise popular products.
+     */
+    public Optional<PersonalList> fetchPersonal(Long userId, int size, List<Long> excludeProductIds,
+                                                PreferenceRequest preferences) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("userId", userId);
+        body.put("n", size);
+        body.put("excludeProductIds", excludeProductIds);
+        body.put("preferences", preferences);
+        try {
+            PersonalList response = restClient.post()
+                    .uri(RecommendationType.PERSONAL.aiPath())
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(PersonalList.class);
+            return Optional.ofNullable(response).filter(list -> list.items() != null);
+        } catch (RestClientException exception) {
+            log.warn("AI service {} failed, using the fallback list: {}", RecommendationType.PERSONAL.aiPath(),
+                    exception.getMessage());
             return Optional.empty();
         }
     }

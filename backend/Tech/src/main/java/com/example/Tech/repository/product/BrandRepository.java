@@ -18,6 +18,15 @@ public interface BrandRepository extends JpaRepository<Brand, Integer> {
             """)
     List<Brand> findOnSaleByCategoryId(@Param("categoryId") Integer categoryId);
 
+    /** [brandId, name, productCount] of the products on sale in a category, most products first. */
+    @Query("""
+            select b.id, b.name, count(p) from Product p join p.brand b
+            where p.category.id = :categoryId and p.active = true and p.deletedAt is null
+            group by b.id, b.name
+            order by count(p) desc, b.name
+            """)
+    List<Object[]> countOnSaleByCategoryId(@Param("categoryId") Integer categoryId);
+
     boolean existsByName(String name);
 
     boolean existsByNameAndIdNot(String name, Integer id);
