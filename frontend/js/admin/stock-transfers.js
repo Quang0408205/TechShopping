@@ -1,17 +1,4 @@
-/* ================= CHUYỂN KHO (admin/stock-transfers.html) ================= */
-
-/*
- * API (backend kiểm tra vai trò + chi nhánh trong DB ở mọi request):
- *   GET  /admin/stock-transfers?direction&status&storeId&page&size     nhân viên: phiếu của chi nhánh mình; ADMIN: tất cả
- *   GET  /admin/stock-transfers/{id}                                   phiếu + các dòng
- *   POST /admin/stock-transfers                                        tạo phiếu nháp (từ chi nhánh của mình)
- *   PUT  /admin/stock-transfers/{id}                                   thay nội dung phiếu nháp
- *   POST /admin/stock-transfers/{id}/send                              gửi hàng: trừ tồn chi nhánh gửi
- *   POST /admin/stock-transfers/{id}/receive                           nhận hàng: cộng tồn chi nhánh nhận
- *   POST /admin/stock-transfers/{id}/cancel                            huỷ nháp / huỷ phiếu đang chuyển (hoàn lại chi nhánh gửi)
- *   GET  /stores (chi nhánh đang mở), GET /products?keyword, GET /products/{id}/variants
- * Chi nhánh gửi lập, gửi, huỷ; chi nhánh nhận xác nhận nhận hàng; ADMIN làm được mọi bước.
- */
+/* Chuyển kho (admin/stock-transfers.html) */
 
 const TRANSFER_PAGE_SIZE = 20;
 

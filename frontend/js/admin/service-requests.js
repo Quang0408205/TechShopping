@@ -1,12 +1,4 @@
-/* ================= BẢO HÀNH / BẢO TRÌ / ĐỔI TRẢ (admin/service-requests.html) ================= */
-
-/*
- * API thật (STAFF chỉ chi nhánh mình, ADMIN tất cả; backend kiểm tra lại ở mọi request):
- *   GET   /admin/service-requests?type=&status=&storeId=&keyword=&fromDate=&toDate=&page=&size=
- *   PATCH /admin/service-requests/{TYPE}/{id}  { status?, rejectionReason, notes, estimatedCompletionDate,
- *                                                estimatedCost, actualCost, restockOrderItemIds }
- * Chỉ hiện nút cho bước kế tiếp hợp lệ (giống canMoveTo ở backend); 409 → báo và tải lại.
- */
+/* Bảo hành / bảo trì / đổi trả (admin/service-requests.html) */
 
 const REQUEST_PAGE_SIZE = 20;
 

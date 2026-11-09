@@ -1,9 +1,6 @@
-/* ================= THẺ SẢN PHẨM SỐNG ĐỘNG: XEM NHANH, nghiêng nhẹ ================= */
-
 /*
+ * Thẻ sản phẩm sống động: xem nhanh, nghiêng nhẹ.
  * Gắn bằng uỷ quyền sự kiện nên dùng được cho mọi lưới thẻ (trang chủ, Sản phẩm, chi tiết).
- * - "Xem nhanh": cửa sổ chọn phiên bản + màu, thêm giỏ qua addToCart (cùng đường với trang chi tiết).
- * - Nghiêng 3D nhẹ theo con trỏ: chỉ khi có chuột, không bật khi người dùng giảm chuyển động.
  */
 
 (function () {

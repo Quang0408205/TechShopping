@@ -372,7 +372,7 @@
 
 /* ================= HÀNH ĐỘNG ================= */
 
-/* Kế hoạch v3 GĐ E: tình trạng hàng của phiên bản đang chọn */
+/* Tình trạng hàng của phiên bản đang chọn */
 .detail-stock {
     margin-bottom: var(--space-2);
 
@@ -1937,7 +1937,7 @@ body.lightbox-open {
 }
 
 
-/* Kế hoạch v8: ảnh chính + dải ảnh nhỏ trên cùng nền ngà với thẻ sản phẩm (ảnh nền trắng hoà vào nền) */
+/* Ảnh chính + dải ảnh nhỏ trên cùng nền ngà với thẻ sản phẩm (ảnh nền trắng hoà vào nền) */
 .detail-main-image {
     background: #f6f5f2;
 }

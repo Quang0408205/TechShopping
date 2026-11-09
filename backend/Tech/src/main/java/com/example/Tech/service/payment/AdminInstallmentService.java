@@ -1,7 +1,6 @@
 package com.example.Tech.service.payment;
 
 import com.example.Tech.dto.request.payment.AdminInstallmentSearchRequest;
-import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.payment.AdminInstallmentResponse;
 import org.springframework.data.domain.Pageable;

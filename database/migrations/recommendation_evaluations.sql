@@ -1,7 +1,7 @@
 -- Lịch sử đánh giá offline của hệ thống khuyến nghị (AI_Service/app/recommender/evaluation.py ghi sau mỗi lần chạy:
 -- scripts/evaluate.py hoặc nút "Đánh giá lại" ở trang admin "Gợi ý sản phẩm"). Một lần chạy = một dòng
 -- recommendation_evaluations (cách chia dữ liệu, tham số chọn trên validation, mua kèm / nâng cấp) + các dòng
--- recommendation_evaluation_rows theo phần: VALIDATION (chọn α), TEST (kết quả báo cáo, kèm khoảng tin cậy 95% của
+-- recommendation_evaluation_rows theo phần: VALIDATION (chọn α), TEST (kết quả kiểm thử, kèm khoảng tin cậy 95% của
 -- NDCG; HYBRID_MMR = Hybrid xếp lại bằng MMR với mmr_lambda), TEST_STRONG (chỉ tính thêm giỏ / mua là đúng),
 -- COLD_START (khách mới 1 đến k − 1 lượt).
 -- Chạy lại được.

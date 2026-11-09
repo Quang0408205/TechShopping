@@ -1,16 +1,4 @@
-/* ================= TRANG SẢN PHẨM (Checkpoint 2.8) ================= */
-
-/*
- * Dữ liệu thật từ backend (công khai, KHÔNG gửi token):
- *   GET /categories?size=100                 → map slug ↔ id
- *   GET /products?isActive=true&categoryId=&brandId=&keyword=&minPrice=
- *       &maxPrice=&page=&size=12&sort=       → lưới sản phẩm + phân trang
- *   ảnh thẻ: primaryImageUrl có sẵn trong danh sách (IMG-3, js/core/ui.js)
- *
- * Bộ lọc thương hiệu theo danh mục: GET /categories/{id}/brands (máy chủ
- * trả sẵn hãng có sản phẩm đang bán, có cache), lưu tạm trong bộ nhớ theo
- * categoryId.
- */
+/* Trang sản phẩm */
 
 document.addEventListener(
     "DOMContentLoaded",

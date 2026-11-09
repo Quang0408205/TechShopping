@@ -1,6 +1,5 @@
-/* ================= ĐỊA CHỈ 2 CẤP: TỈNH / THÀNH → PHƯỜNG / XÃ ================= */
-
 /*
+ * Địa chỉ 2 cấp: tỉnh / thành → phường / xã.
  * Theo đơn vị hành chính mới từ 01/07/2025 (34 tỉnh / thành, không còn quận / huyện).
  * Dữ liệu tĩnh assets/data/vn-units.json: [{ n: tên tỉnh, w: [tên phường / xã] }].
  * setupVnAddress(provinceInput, wardInput) biến 2 ô chữ thành ô chọn có tìm kiếm (gõ không dấu được);

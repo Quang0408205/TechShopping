@@ -1,4 +1,4 @@
-"""Điểm quan tâm r(u,i), chuẩn hoá Min-Max và vector đặc trưng sản phẩm (báo cáo mục 3.5.3)."""
+"""Điểm quan tâm r(u,i), chuẩn hoá Min-Max và vector đặc trưng sản phẩm."""
 
 import math
 
@@ -13,7 +13,7 @@ LN2 = math.log(2)
 
 
 def test_interaction_score_adds_weighted_log_counts():
-    # thêm giỏ (w = 4) + bấm (w = 2), mỗi hành vi 1 lần: 4·ln 2 + 2·ln 2 = 4,159 (ví dụ iPhone 17 của báo cáo)
+    # thêm giỏ (w = 4) + bấm (w = 2), mỗi hành vi 1 lần: 4·ln 2 + 2·ln 2 = 4,159
     scores = interaction_scores(interactions_frame([(72, 11, "ADD_TO_CART", 1), (72, 11, "CLICK", 1)]))
 
     assert len(scores) == 1

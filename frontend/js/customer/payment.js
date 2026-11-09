@@ -1,17 +1,6 @@
-/* ================= TRANG THANH TOÁN (CHUYỂN KHOẢN / THẺ QUỐC TẾ) ================= */
-
 /*
+ * Trang thanh toán (chuyển khoản / thẻ quốc tế).
  * customer/payment.html?id=<id đơn>: hiện ngay sau khi đặt đơn chuyển khoản hoặc thẻ.
- * Dữ liệu: GET /api/v1/orders/{id} (fetchMyOrder). Cứ 5 giây hỏi lại một lần; khi
- * tiền về (payment.status = PAID) trang tự chuyển sang "Đã nhận được thanh toán".
- * - Chuyển khoản: thông tin trên (có nút sao chép STK / số tiền / nội dung), QR dưới;
- *   webhook ngân hàng xác nhận.
- * - Thẻ quốc tế (Stripe chế độ Test): nút mở Stripe Checkout; &start=card
- *   (vừa đặt đơn) → tự mở. Stripe đưa khách về &card=paid (hỏi lại Stripe qua
- *   POST …/payment/card-refresh, chạy cả khi không có webhook) hoặc &card=back (chưa trả).
- * - "Huỷ thanh toán": huỷ đơn, trả lượt voucher, đưa đúng sản phẩm về giỏ → trang giỏ hàng.
- * Đơn không còn chờ tiền (đã huỷ, đổi cách trả...) → khối thông báo. Mọi dữ liệu đưa vào
- * innerHTML đều escape.
  */
 
 const PAYMENT_POLL_MS = 5000;

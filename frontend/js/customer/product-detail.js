@@ -1,19 +1,4 @@
-/* ================= TRANG CHI TIẾT SẢN PHẨM (Checkpoint A2) ================= */
-
-/*
- * customer/product-detail.html?id=<productId>. Dữ liệu thật, công khai
- * (KHÔNG gửi token):
- *   GET /products/{id}                 → thông tin chính (404 → "không tìm thấy")
- *   GET /products/{id}/variants        → phiên bản (giá, màu, RAM, bộ nhớ)
- *   GET /products/{id}/images          → ảnh (ảnh chính trước)
- *   GET /products/{id}/specifications  → thông số (nếu có)
- *   POST /recommendations (SIMILAR, UPSELL, CROSS_SELL) → "Sản phẩm tương tự", "Có thể nâng cấp", "Mua kèm"
- *
- * Dựa trên trang chi tiết của bản frontend tham chiếu, nhưng không bịa phân
- * bố sao (dòng ★ = đánh giá thật, chưa có thì điểm Thế Giới Di Động), bỏ các vùng
- * gợi ý mua kèm / nâng cấp và không dùng catalogue mock.
- * Giỏ hàng: snapshot {productId, variantId, ...} theo tài khoản (js/core/cart-store.js, F2).
- */
+/* Trang chi tiết sản phẩm */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -1046,7 +1031,7 @@ document.addEventListener(
             promoEl.hidden = !prices.promotionName;
 
 
-            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua (v3) */
+            /* Giá 0 (11 sản phẩm crawl) → không bán trực tuyến, mời liên hệ; hết hàng → khoá mua */
 
             const canBuy = canBuyCurrent();
 

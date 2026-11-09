@@ -1,14 +1,4 @@
-/* ================= KHUYẾN MÃI (admin/promotions.html) ================= */
-
-/*
- * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET    /admin/promotions?keyword=&status=&fromDate=&toDate=&page=&size=  mới nhất trước
- *   POST   /admin/promotions          { name, description, discountType, discountValue, maxDiscountAmount,
- *   PUT    /admin/promotions/{id}       startDate, endDate, active, products: [{ productId, discountType?, discountValue? }] }
- *   DELETE /admin/promotions/{id}
- * Sản phẩm được tìm qua GET /products. Trạng thái (status) do backend tính, trang chỉ đổi sang nhãn.
- * Thời điểm kết thúc không tính vào chương trình: [bắt đầu, kết thúc).
- */
+/* Khuyến mãi (admin/promotions.html) */
 
 const PROMOTION_PAGE_SIZE = 20;
 

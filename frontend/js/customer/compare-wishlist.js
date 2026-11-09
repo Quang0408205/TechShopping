@@ -1,14 +1,4 @@
-/* ================= YÊU THÍCH + SO SÁNH SẢN PHẨM (dùng chung mọi trang khách hàng) ================= */
-
-/*
- *.
- * - Yêu thích: lưu trên server theo tài khoản (GET /wishlist/ids, POST / DELETE /wishlist/{id}) để server gửi email khi
- *   giá giảm. Chưa đăng nhập bấm tim → sang trang đăng nhập rồi quay lại. Số trên biểu tượng tim ở đầu trang = số đã lưu.
- * - So sánh: lưu trên trình duyệt (localStorage poy_compare), tối đa 4 sản phẩm CÙNG danh mục (thông số mới so được với
- *   nhau); thanh nổi ở đáy màn hình hiện ảnh các sản phẩm đã chọn + nút "So sánh ngay" (customer/compare.html?ids=…).
- * Nút nằm trong thẻ sản phẩm / trang chi tiết: [data-wish] và [data-compare] kèm data-product-id…; thẻ vẽ sau (lọc, tải
- * thêm) được cập nhật trạng thái nhờ MutationObserver. Dữ liệu hiển thị đều escape.
- */
+/* Yêu thích + so sánh sản phẩm (dùng chung mọi trang khách hàng) */
 
 const COMPARE_KEY = "poy_compare";
 

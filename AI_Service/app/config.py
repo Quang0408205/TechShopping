@@ -42,13 +42,13 @@ RAG_POLICY_K = int(os.getenv("RAG_POLICY_K") or "5")
 # trọng số danh sách từ khoá trong RRF của chế độ hybrid (danh sách vector luôn có trọng số 1)
 RAG_KEYWORD_WEIGHT = float(os.getenv("RAG_KEYWORD_WEIGHT") or "1.0")
 
-# ---- tham số khuyến nghị (báo cáo mục 3.5) ----
+# ---- tham số khuyến nghị ----
 
-# w_t của từng hành vi (Bảng 3.19), giống InteractionType.java ở backend
+# w_t của từng hành vi, giống InteractionType.java ở backend
 INTERACTION_WEIGHTS = {"VIEW": 1.0, "CLICK": 2.0, "LIKE": 3.0, "ADD_TO_CART": 4.0, "PURCHASE": 5.0}
 
 ALPHA = float(os.getenv("REC_ALPHA", "0.6"))          # trọng số CBF trong Hybrid: α chọn trên validation (scripts/evaluate.py)
-COLD_START_K = int(os.getenv("REC_COLD_START_K", "2"))  # k của Bảng 3.21: chọn trên validation (bước 1e của evaluate)
+COLD_START_K = int(os.getenv("REC_COLD_START_K", "2"))  # ngưỡng k: chọn trên validation (bước 1e của evaluate)
 CANDIDATES_K = 50                                       # K ứng viên lấy từ mỗi mô hình
 UPSELL_DELTA = 0.30                                     # δ: giá cao hơn tối đa 30%
 

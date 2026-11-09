@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 
 /**
- * Writes user_interactions, the behaviour data the recommendation models learn from (report section 3.5.7).
+ * Writes user_interactions, the behaviour data the recommendation models learn from.
  * The same behaviour on the same product within {@link #REPEAT_WINDOW} is recorded once, so reloading a
  * page does not inflate the score; purchases are always recorded. A CLICK picked in a recommendation list also marks
  * that recommendation as clicked (click-through rate).

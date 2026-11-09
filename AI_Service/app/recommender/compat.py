@@ -1,5 +1,5 @@
 """
-Phụ kiện có dùng được với máy này không (báo cáo mục 3.5.6 b). Dùng ở hai chỗ:
+Phụ kiện có dùng được với máy này không (3.5.6 b). Dùng ở hai chỗ:
   - scripts/build_relations.py khi tạo quan hệ ACCESSORY;
   - Recommender.cross_sell lọc gợi ý đến từ luật mua chung (cùng đơn, "khách mua A cũng mua B"), để luật học từ hành vi
     không gợi ý phụ kiện không vừa máy (vd. cáp Lightning cho điện thoại Android) hay không thuộc nhóm phụ kiện của loại

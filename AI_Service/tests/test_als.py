@@ -1,4 +1,4 @@
-"""ALS cho phản hồi ngầm định (Hu, Koren & Volinsky 2008; báo cáo mục 3.5.4 b)."""
+"""ALS cho phản hồi ngầm định (Hu, Koren & Volinsky 2008)."""
 
 import numpy as np
 import pytest

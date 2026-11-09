@@ -1,5 +1,5 @@
 """
-Luồng xử lý hội thoại (báo cáo mục 3.6.4): LLM đọc câu hỏi + lịch sử, tự chọn RAG (search_policies,
+Luồng xử lý hội thoại: LLM đọc câu hỏi + lịch sử, tự chọn RAG (search_policies,
 search_products) hoặc Function Calling (đơn hàng, giỏ hàng, bảo hành, cửa hàng, khuyến nghị, đề xuất thao tác),
 Chatbot Service chạy tool rồi gửi kết quả lại cho LLM cho tới khi có câu trả lời cuối.
 

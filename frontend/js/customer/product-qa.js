@@ -1,10 +1,6 @@
-/* ================= HỎI ĐÁP SẢN PHẨM (tab "Hỏi đáp" ở trang chi tiết) ================= */
-
 /*
+ * Hỏi đáp sản phẩm (tab "Hỏi đáp" ở trang chi tiết).
  * initProductQuestions(product) — gọi từ product-detail.js khi đã có sản phẩm.
- * API: GET /products/{id}/questions?page&size (công khai, chỉ câu đã có trả lời),
- *      POST /product-questions { productId, question } (cần đăng nhập; 10–500 ký tự, tối đa 5 câu / 24 giờ).
- * Câu hỏi chỉ hiện công khai sau khi cửa hàng trả lời, nên sau khi gửi khách được báo như vậy.
  */
 
 function initProductQuestions(product) {

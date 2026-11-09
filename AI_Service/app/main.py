@@ -1,6 +1,6 @@
 """
 AI Service (Python/FastAPI). Chỉ Spring Boot Backend gọi vào, kèm header X-Internal-Key.
-Endpoint nội bộ: Bảng 3.23 (khuyến nghị) và /chat (chatbot, mục 3.6.5).
+Endpoint nội bộ: khuyến nghị và /chat (chatbot).
 Tài liệu tự sinh: http://localhost:8000/docs
 """
 
@@ -132,7 +132,7 @@ def _require_llm():
 @app.post("/chat", dependencies=[Depends(internal_only)])
 def chat(request: ChatRequest):
     """
-    Một lượt hội thoại (mục 3.6.5). accessToken là JWT của khách (Backend chuyển tiếp) để tool gọi API nghiệp vụ
+    Một lượt hội thoại. accessToken là JWT của khách (Backend chuyển tiếp) để tool gọi API nghiệp vụ
     dưới quyền của chính khách; không có token thì chỉ trả lời câu hỏi chung.
     """
     _require_llm()

@@ -28,7 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * POST /api/v1/recommendations (report section 3.5.7): asks the AI service, checks the products again
+ * POST /api/v1/recommendations: asks the AI service, checks the products again
  * (still active, not deleted), logs what a logged-in user was shown in recommendations, and falls back to
  * popular / same-category products when the AI service does not answer so shopping is never blocked.
  * Admin: retraining, offline evaluation and the click-through rate of the logged lists.

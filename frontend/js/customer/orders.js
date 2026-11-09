@@ -1,12 +1,4 @@
-/* ================= LỊCH SỬ MUA HÀNG ================= */
-
-/*
- * Đơn của tài khoản đang đăng nhập: GET /api/v1/orders (fetchMyOrders, js/core/order-store.js), mới nhất trước,
- * 10 đơn / trang. Tab theo trạng thái (Tất cả / Chờ xác nhận / Đang giao = đã xác nhận + đang giao / Đã giao /
- * Đã huỷ) kèm số đơn (GET /orders/summary), ô tìm theo mã đơn / tên sản phẩm; tab + từ khoá nằm trên địa chỉ
- * (?tab=&q=) để Back / tải lại giữ nguyên. Đơn đã giao / đã huỷ có nút "Mua lại" (buyAgain).
- * Chưa đăng nhập: account-sidebar.js đã chuyển tới trang đăng nhập. Mọi dữ liệu đưa vào innerHTML đều escape.
- */
+/* Lịch sử mua hàng */
 
 const ORDER_TABS = {
     all: [],

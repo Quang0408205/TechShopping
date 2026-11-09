@@ -1,5 +1,5 @@
 """
-Xây kho tri thức RAG (báo cáo mục 3.6.2 a): Thu thập → Làm sạch → Chunking → Embedding → Vector Database.
+Xây kho tri thức RAG: Thu thập → Làm sạch → Chunking → Embedding → Vector Database.
 
 Nguồn: knowledge/*.md (chính sách, mỗi mục "## " là một chunk, doc_type POLICY) + mỗi sản phẩm đang bán là
 một chunk (tên, danh mục, hãng, giá, phiên bản, thông số chính; doc_type PRODUCT). Mô tả sản phẩm crawl từ TGDĐ

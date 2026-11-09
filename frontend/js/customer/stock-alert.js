@@ -1,10 +1,7 @@
-/* ================= "BÁO TÔI KHI CÓ HÀNG" (trang chi tiết sản phẩm) ================= */
-
 /*
+ * "báo tôi khi có hàng" (trang chi tiết sản phẩm).
  * updateStockAlert(variantId, soldOut) — product-detail.js gọi mỗi khi đổi phiên bản hoặc tồn kho.
  * Phiên bản hết hàng ở mọi chi nhánh đang mở → hiện nút; bấm khi chưa đăng nhập → trang đăng nhập.
- * API: GET /stock-subscriptions (id phiên bản đang chờ), POST /stock-subscriptions { variantId },
- *      DELETE /stock-subscriptions/{variantId}. Hàng về thì cửa hàng gửi một email rồi xoá đăng ký.
  */
 
 let stockAlertVariantId = null;

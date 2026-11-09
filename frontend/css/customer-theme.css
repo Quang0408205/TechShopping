@@ -1,7 +1,6 @@
-/* ================= THEME KHU VỰC KHÁCH HÀNG ================= */
-
 /*
- * Chỉ nạp ở index.html, customer/*, auth/* (ngay sau style.css). Trang admin/
+ * Theme khu vực khách hàng.
+ * Chỉ nạp ở index.html, customer, auth (ngay sau style.css). Trang admin/
  * không nạp file này, nên đổi token / component ở đây không ảnh hưởng admin.
  * Giữ đen - trắng - đồng; thêm nền kem ấm và một màu nhấn cho khuyến mãi.
  */
@@ -35,7 +34,6 @@
     --space-10: 80px;
     --space-12: 96px;
 
-    /* Bo góc vừa phải hơn bản cũ (16px) */
     --radius-lg: 12px;
 
     --gutter: 24px;

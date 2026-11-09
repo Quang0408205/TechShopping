@@ -1,21 +1,4 @@
-/* ================= HEADER / FOOTER DÙNG CHUNG ================= */
-
-/*
- * Trang chỉ cần đặt chỗ:
- *
- *   <div data-include="header" data-active="products"></div>
- *   ...
- *   <div data-include="footer"></div>
- *
- * layout.js tải partials/header.html, partials/footer.html và thay chỗ đặt
- * bằng nội dung đó (thay hẳn thẻ div để header "sticky" vẫn hoạt động).
- *
- * Cần nạp sau js/core/api.js (dùng SITE_ROOT) và trước main.js.
- * Cần chạy website qua HTTP (Live Server); mở file trực tiếp (file://) sẽ không tải được.
- *
- * Chuyển trang không giật: partial đã tải được lưu ở sessionStorage và chèn ĐỒNG BỘ ngay khi
- * script chạy (trước lần vẽ đầu); bản mới vẫn được tải lại ngầm cho lần chuyển trang sau.
- */
+/* Header / footer dùng chung */
 
 const PARTIAL_CACHE_PREFIX = "poy_partial:";
 

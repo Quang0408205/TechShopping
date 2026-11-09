@@ -1,32 +1,6 @@
-/* ================= TRANG THANH TOÁN ================= */
-
 /*
+ * Trang thanh toán.
  * Chỉ dành cho người đã đăng nhập.
- * - Điền sẵn họ tên / số điện thoại / địa chỉ từ API tài khoản thật
- *   (GET /users/me, GET /users/me/profile); lỗi thì bỏ qua, người dùng tự nhập.
- * - Tóm tắt lấy từ giỏ trên server (/api/v1/cart), kể cả phí ship. Có dòng
- *   ngừng bán thì không cho đặt hàng (trang giỏ hàng yêu cầu xoá trước).
- * - Trả góp: đối tác (kỳ hạn, khoảng giá trị đơn, có cần thẻ hay không), độ dài CCCD
- *   và danh sách ngân hàng lấy từ GET /payments/installment-options; chưa có đối tác nào
- *   nhận đơn (hoặc không tải được) thì khoá lựa chọn trả góp. Tiền mỗi kỳ = tổng / số kỳ làm tròn
- *   xuống, kỳ cuối nhận phần lẻ (giống server).
- * - Hình thức nhận hàng: giao tận nhà (cần địa chỉ; server tự chọn
- *   chi nhánh gần địa chỉ) hoặc nhận tại cửa hàng (chọn 1 cửa hàng đang mở từ
- *   GET /stores, không cần địa chỉ, miễn phí vận chuyển giống server — GET /cart
- *   luôn tính phí giao tận nhà nên tóm tắt tự bỏ phí khi chọn nhận tại cửa hàng).
- *   Không tải được / chưa có cửa hàng nào → khoá lựa chọn nhận tại cửa hàng.
- * - GET /cart/store-availability cho biết cửa hàng nào có đủ cả giỏ;
- *   cửa hàng thiếu hàng hiện "(thiếu hàng)" và không chọn được. Không cửa hàng nào đủ
- *   → báo trước (giao tận nhà cũng sẽ bị 409 OUT_OF_STOCK). Gặp OUT_OF_STOCK lúc đặt
- *   → tải lại giỏ + tình trạng hàng.
- * - Đặt hàng: POST /api/v1/orders (placeOrder, js/core/order-store.js) gửi
- *   người nhận / hình thức nhận (+ địa chỉ hoặc cửa hàng) / ghi chú / phương thức
- *   thanh toán (+ hồ sơ trả góp); server tạo đơn từ giỏ, xoá giỏ, rồi chuyển sang
- *   trang chi tiết đơn.
- * - "Thẻ quốc tế" (Stripe, chế độ Test) chỉ hiện khi GET /payments/card-options
- *   bật; đơn vượt hạn mức thẻ thì khoá. Đặt xong (chuyển khoản / thẻ) → trang thanh toán; thẻ thì
- *   trang đó tự mở Stripe. Có đơn còn chờ tiền (khách bấm Back) → khung nhắc phía trên.
- * Mọi dữ liệu đưa vào innerHTML đều escape.
  */
 
 document.addEventListener(
@@ -159,7 +133,7 @@ document.addEventListener(
         /* Cửa hàng đang mở (công khai); lỗi → null (khoá "Nhận tại cửa hàng") */
         const storesPromise = loadPickupStores();
 
-        /* Cửa hàng nào có đủ cả giỏ (v3); lỗi → null (không khoá gì, server vẫn kiểm tra) */
+        /* Cửa hàng nào có đủ cả giỏ; lỗi → null (không khoá gì, server vẫn kiểm tra) */
         const stockPromise = loadStoreStock();
 
 
@@ -307,6 +281,18 @@ document.addEventListener(
         document.querySelectorAll('input[name="deliveryType"]').forEach(function (radio) {
             radio.addEventListener("change", refreshProvinceFee);
         });
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.visibilityState === "visible") {
+                refreshProvinceFee(true);
+            }
+        });
+
+        setInterval(function () {
+            if (document.visibilityState === "visible") {
+                refreshProvinceFee(true);
+            }
+        }, 30000);
 
 
         document.getElementById("voucherApplyBtn").addEventListener("click", function () {
@@ -495,14 +481,13 @@ document.addEventListener(
         }
 
 
-
-        async function refreshProvinceFee() {
+        async function refreshProvinceFee(force) {
 
             const province = area.getValue().province;
 
             const key = selectedDeliveryType() + "|" + (province || "") + "|" + (lastCart ? lastCart.subtotal : "");
 
-            if (key === provinceFeeKey) {
+            if (force !== true && key === provinceFeeKey) {
                 return;
             }
 
@@ -1419,6 +1404,16 @@ document.addEventListener(
 
             }
 
+
+            const totalBeforeRefresh = currentTotal;
+
+            await refreshProvinceFee(true);
+
+            if (currentTotal !== totalBeforeRefresh) {
+                showFormError("Phí giao hàng đã thay đổi, tổng thanh toán mới là " + formatPrice(currentTotal)
+                    + ". Vui lòng kiểm tra lại rồi bấm Đặt hàng.");
+                return;
+            }
 
             const button = document.getElementById("checkoutSubmitBtn");
 

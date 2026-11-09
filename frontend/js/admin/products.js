@@ -1,24 +1,4 @@
-/* ================= SẢN PHẨM (admin/products.html) — B2 ================= */
-
-/*
- * API catalogue thật (ghi cần ADMIN, backend kiểm tra ở mọi request):
- *   GET    /products?keyword=&categoryId=&isActive=&page=&size=&sort=
- *   POST   /products                 thêm
- *   PUT    /products/{id}            sửa: PUT thay toàn bộ, trường bỏ trống bị
- *                                    xoá (trừ tồn kho / bảo hành / isActive),
- *                                    nên luôn gửi đủ các trường hiện có
- *   DELETE /products/{id}            xoá mềm (sản phẩm biến mất khỏi website)
- *   GET    /categories, /brands      danh sách cho ô chọn
- *
- * Ảnh sản phẩm (IMG-2):
- *   POST   /admin/uploads/product-images   upload file (multipart "file") → { url }
- *   Thêm mới: ảnh gom ở danh sách nháp, gửi kèm POST /products (images: 1 ảnh
- *             chính + ≥ 1 ảnh phụ). File đã upload mà không lưu sản phẩm thì
- *             vẫn nằm trên server (chưa có API dọn).
- *   Sửa:      mỗi thao tác lưu ngay: GET /products/{id}/images,
- *             POST /product-images, PUT /product-images/{id} (đặt ảnh chính),
- *             DELETE /product-images/{id} (không xoá được ảnh cuối cùng).
- */
+/* Sản phẩm (admin/products.html) */
 
 const PRODUCT_ADMIN_PAGE_SIZE = 20;
 

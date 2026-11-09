@@ -1,9 +1,4 @@
-/* ================= THEO DÕI ĐƠN HÀNG (link trong email) ================= */
-
-/*
- * customer/track.html?token=<mã ngẫu nhiên>: không cần đăng nhập. API chỉ trả mã đơn, sản phẩm, tiền và tiến trình
- * (không có số điện thoại / địa chỉ chi tiết). Mọi dữ liệu từ API đều escape khi đưa vào HTML.
- */
+/* Theo dõi đơn hàng (link trong email) */
 
 document.addEventListener("DOMContentLoaded", async function () {
 

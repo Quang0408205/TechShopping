@@ -1,7 +1,6 @@
 package com.example.Tech.service.impl.payment;
 
 import com.example.Tech.dto.request.payment.AdminInstallmentSearchRequest;
-import com.example.Tech.dto.request.payment.PaymentConfirmRequest;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.order.AdminOrderResponse;
 import com.example.Tech.dto.response.payment.AdminInstallmentResponse;

@@ -1,11 +1,4 @@
-/* ================= YÊU CẦU DỊCH VỤ CỦA TÔI (customer/service-requests.html) ================= */
-
-/*
- * GET  /service-requests/mine?type=&status=&page=&size=   bảo hành / bảo trì / trả hàng, mới nhất trước
- * GET  /service-requests/{TYPE}/{id}                     một yêu cầu (link ?type=&id= từ trang đơn hàng)
- * POST /service-requests/{TYPE}/{id}/cancel              huỷ khi còn chờ
- * Chưa đăng nhập: account-sidebar.js đã chuyển tới trang đăng nhập. Mọi chữ qua escapeHtml, ảnh qua isSafeImageUrl.
- */
+/* Yêu cầu dịch vụ của tôi (customer/service-requests.html) */
 
 const SERVICE_PAGE_SIZE = 10;
 

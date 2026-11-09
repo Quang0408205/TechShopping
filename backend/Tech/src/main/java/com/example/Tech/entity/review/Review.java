@@ -26,9 +26,8 @@ import java.util.List;
 /**
  * A 1-5 star rating + comment by one account for one product. One review per account per product (DB unique
  * constraint on user_id, product_id). "Đã mua hàng" is never stored here: it is computed at read time
- * from DELIVERED orders. updated_at is NOT @UpdateTimestamp on purpose, matching docs/TechShopping_v2.sql:
- * an admin hide/unhide must not look like "the customer edited this", so only the edit-comment code path
- * (a later step) may set it.
+ * from DELIVERED orders. updated_at is NOT @UpdateTimestamp on purpose: an admin hide/unhide must not
+ * look like "the customer edited this", so only the edit-comment code path may set it.
  */
 @Entity
 @Table(name = "reviews")

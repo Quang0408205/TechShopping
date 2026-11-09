@@ -1,13 +1,4 @@
-/* ================= TRANG GIỎ HÀNG ================= */
-
-/*
- * Giao diện lấy từ bản frontend mới; dữ liệu là giỏ trên server
- * (js/core/cart-store.js → /api/v1/cart). Chưa đăng nhập → mời đăng nhập.
- * Dòng đã ngừng bán: không tính tiền, chỉ còn nút xoá, và chặn thanh toán
- * cho tới khi xoá hết. Mọi dữ liệu đưa vào innerHTML đều escape.
- * Có đơn chuyển khoản / thẻ còn chờ tiền → khung nhắc phía trên giỏ
- * (awaiting-payment.js); "Huỷ đơn & lấy lại giỏ" xong thì tải lại giỏ.
- */
+/* Trang giỏ hàng */
 
 document.addEventListener(
     "DOMContentLoaded",
@@ -291,7 +282,7 @@ function renderCart(summary) {
                 </div>` : ""}
                 <div class="cart-total-row">
                     <span>
-                        Phí vận chuyển
+                        Phí vận chuyển (tạm tính, chốt theo tỉnh khi thanh toán)
                     </span>
                     <strong>
                         ${summary.shippingFee === 0 ? "Miễn phí" : formatPrice(summary.shippingFee)}

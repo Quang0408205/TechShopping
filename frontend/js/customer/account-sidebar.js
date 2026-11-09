@@ -1,12 +1,4 @@
-/* ================= THANH BÊN TRANG TÀI KHOẢN ================= */
-
-/*
- * Dùng chung cho Tài khoản / Lịch sử mua hàng / Yêu cầu dịch vụ. Trang đánh dấu mục đang mở bằng
- * <body data-account-page="profile|loyalty|security|address|orders|service-requests"> (trang Tài khoản đổi
- * giá trị theo hash, xem account.js). mỗi mục có icon, khối người dùng có nhãn hạng thành viên
- * (GET /loyalty/me, dùng chung qua getLoyaltySummary()); điện thoại: menu thành hàng tab cuộn ngang.
- * Tên / email lấy từ phiên đăng nhập (poy_auth) nên phải escape.
- */
+/* Thanh bên trang tài khoản */
 
 const ACCOUNT_NAV_ICONS = {
     profile: '<path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/><path d="M4 20c1.5-3.5 4.5-5 8-5s6.5 1.5 8 5"/>',

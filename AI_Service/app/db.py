@@ -1,4 +1,4 @@
-"""Kết nối PostgreSQL. Mặc định CHỈ ĐỌC (báo cáo mục 3.5.7): mọi lệnh ghi sẽ bị PostgreSQL từ chối."""
+"""Kết nối PostgreSQL. Mặc định CHỈ ĐỌC: mọi lệnh ghi sẽ bị PostgreSQL từ chối."""
 
 from contextlib import contextmanager
 

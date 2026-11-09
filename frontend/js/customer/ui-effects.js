@@ -1,9 +1,4 @@
-/* ================= HIỆU ỨNG GIAO DIỆN KHU VỰC KHÁCH ================= */
-
-/*
- * Chỉ thao tác giao diện, không gọi API. Nạp cuối <body>, sau main.js.
- * Header / footer do layout.js chèn nên phải chờ layoutReady.
- */
+/* Hiệu ứng giao diện khu vực khách */
 
 (function () {
 

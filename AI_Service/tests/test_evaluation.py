@@ -1,4 +1,4 @@
-"""Chỉ số đánh giá, cách chia dữ liệu theo thời gian và khoảng tin cậy bootstrap (báo cáo mục 3.7)."""
+"""Chỉ số đánh giá, cách chia dữ liệu theo thời gian và khoảng tin cậy bootstrap."""
 
 import math
 

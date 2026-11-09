@@ -42,7 +42,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Chatbot conversations (report section 3.6.5): the backend keeps the session and its messages, sends the
+ * Chatbot conversations: the backend keeps the session and its messages, sends the
  * question with the recent history and the customer's token to the Chatbot Service, and stores the answer.
  * No transaction spans the LLM call (it can take many seconds): each save is its own short transaction.
  */

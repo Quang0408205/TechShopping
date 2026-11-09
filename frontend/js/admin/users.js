@@ -1,17 +1,4 @@
-/* ================= NGƯỜI DÙNG & PHÂN QUYỀN (admin/users.html) — B2 ================= */
-
-/*
- * API thật (chỉ ADMIN, backend kiểm tra lại quyền ở mọi request):
- *   GET    /admin/users?keyword=&role=&isActive=&createdFrom=&createdTo=&page=&size=&sort=   tìm kiếm, lọc ngày tạo, phân trang
- *   POST   /admin/users/admins  { email, username, fullname, phone }   tạo ADMIN, mật khẩu tạm ngẫu nhiên (hiện một lần)
- *   PATCH  /admin/users/{id}/status  { active }                khoá / mở khoá
- *   PUT    /admin/users/{id}/roles   { roles: ["STAFF" | "BRANCH_MANAGER"] }   đổi vai trò nội bộ
- *   DELETE /admin/users/{id}                                   xoá mềm (204)
- * Hai tab: Khách hàng (role=CUSTOMER: chỉ khoá / mở khoá / xoá) và Nội bộ (role=INTERNAL hoặc
- * STAFF / BRANCH_MANAGER / ADMIN: thêm "Đổi vai trò" cho nhân viên và quản lý; quản trị viên và chính mình
- * không đổi được). Lỗi 409 (chi nhánh đã có quản lý, tài khoản khách, quản trị viên cuối cùng…) hiển thị bằng
- * thông báo của máy chủ.
- */
+/* Người dùng & phân quyền (admin/users.html) */
 
 const USER_PAGE_SIZE = 20;
 

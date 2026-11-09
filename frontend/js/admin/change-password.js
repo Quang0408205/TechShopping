@@ -1,10 +1,4 @@
-/* ================= ĐỔI MẬT KHẨU TẠM (admin/change-password.html) ================= */
-
-/*
- * Tài khoản mới tuyển có mustChangePassword: backend chỉ cho GET /users/me, PUT /users/me/password và
- * /auth/* cho tới khi đổi xong (PASSWORD_CHANGE_REQUIRED với mọi API khác). Đổi xong backend thu hồi mọi phiên
- * nên xoá phiên cục bộ và về trang đăng nhập.
- */
+/* Đổi mật khẩu tạm (admin/change-password.html) */
 
 document.addEventListener(
     "DOMContentLoaded",

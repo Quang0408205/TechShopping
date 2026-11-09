@@ -2,52 +2,36 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Chuyển kho - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
 <body class="admin-body" data-page-title="Chuyển kho" data-roles="">
-
 
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="stock-transfers"></div>
 
-
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
-
         <main class="admin-content">
-
-
             <div class="admin-filter-bar admin-filter-bar--split">
-
                 <form class="admin-filter-bar" id="transferFilterForm" role="search">
-
                     <!-- ADMIN: tất cả hoặc một chi nhánh; nhân viên: khoá vào chi nhánh của mình -->
                     <select id="transferStoreFilter" aria-label="Chi nhánh"></select>
-
                     <select id="transferDirectionFilter" aria-label="Hướng chuyển">
                         <option value="">Chuyển đi và chuyển đến</option>
                         <option value="OUTGOING">Chuyển đi</option>
                         <option value="INCOMING">Chuyển đến</option>
                     </select>
-
                     <select id="transferStatusFilter" aria-label="Trạng thái">
                         <option value="">Mọi trạng thái</option>
                         <option value="DRAFT">Nháp</option>
@@ -55,54 +39,35 @@
                         <option value="RECEIVED">Đã nhận</option>
                         <option value="CANCELLED">Đã huỷ</option>
                     </select>
-
                     <button type="submit" class="btn btn-dark">LỌC</button>
-
                 </form>
-
                 <button type="button" class="btn btn-dark" id="transferNewBtn">+ LẬP PHIẾU CHUYỂN</button>
-
             </div>
-
-
             <!-- Lập / sửa phiếu nháp, hoặc xem phiếu đã gửi / đã nhận / đã huỷ -->
             <section class="admin-panel" id="transferPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="transferPanelTitle">Phiếu chuyển kho</h2>
                     <span class="admin-badge" id="transferPanelStatus" hidden></span>
                 </div>
-
                 <form id="transferForm" novalidate>
-
                     <p id="transferError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field">
                             <label for="transferFrom">Chi nhánh gửi *</label>
                             <select id="transferFrom"></select>
                         </div>
-
                         <div class="admin-field">
                             <label for="transferTo">Chi nhánh nhận *</label>
                             <select id="transferTo"></select>
                         </div>
-
                         <div class="admin-field admin-field-wide">
                             <label for="transferNote">Ghi chú</label>
                             <input type="text" id="transferNote" maxlength="1000" placeholder="Lý do điều hàng…">
                         </div>
-
                     </div>
-
-
                     <div id="transferAddBox">
-
                         <h3>Thêm sản phẩm vào phiếu</h3>
-
                         <div class="admin-form-grid">
-
                             <div class="admin-field admin-field-wide" id="transferSearchBox">
                                 <label for="transferProductKeyword">Tìm sản phẩm</label>
                                 <div class="admin-filter-bar">
@@ -110,36 +75,25 @@
                                     <button type="button" class="btn btn-outline-dark" id="transferProductSearchBtn">TÌM SẢN PHẨM</button>
                                 </div>
                             </div>
-
                             <p class="admin-field-wide" id="transferChosenProduct" hidden></p>
-
                             <ul class="admin-promo-results admin-field-wide" id="transferProductResults" hidden></ul>
-
                             <div class="admin-field">
                                 <label for="transferVariant">Phiên bản</label>
                                 <select id="transferVariant" disabled>
                                     <option value="">Chọn sản phẩm trước</option>
                                 </select>
                             </div>
-
                             <div class="admin-field">
                                 <label for="transferQuantity">Số lượng</label>
                                 <input type="number" id="transferQuantity" min="1" max="100000" step="1" inputmode="numeric">
                             </div>
-
                             <div class="admin-field">
                                 <button type="button" class="btn btn-outline-dark" id="transferAddLineBtn">THÊM DÒNG</button>
                             </div>
-
                         </div>
-
                     </div>
-
-
                     <div class="admin-table-wrapper">
-
                         <table class="admin-table">
-
                             <thead>
                                 <tr>
                                     <th>Sản phẩm</th>
@@ -147,9 +101,7 @@
                                     <th></th>
                                 </tr>
                             </thead>
-
                             <tbody id="transferLines"></tbody>
-
                             <tfoot>
                                 <tr>
                                     <td><strong>Tổng</strong></td>
@@ -157,35 +109,23 @@
                                     <td></td>
                                 </tr>
                             </tfoot>
-
                         </table>
-
                     </div>
-
                     <p class="admin-subtext" id="transferMeta"></p>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="transferSaveBtn">LƯU NHÁP</button>
                         <button type="button" class="btn btn-dark" id="transferSendBtn">LƯU VÀ GỬI HÀNG</button>
                         <button type="button" class="btn btn-outline-dark" id="transferCloseBtn">ĐÓNG</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Danh sách phiếu chuyển</h2>
                     <span class="admin-row-count" id="transferRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table">
-
                         <thead>
                             <tr>
                                 <th>Mã phiếu</th>
@@ -196,23 +136,15 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-
                         <tbody id="transferTableBody"></tbody>
-
                     </table>
-
                 </div>
-
                 <div class="admin-pagination" id="transferPagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

@@ -18,8 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Checks the CategoryAttribute mapping (composite key, like PromotionProduct) against the real PostgreSQL
- * test database (techshopping_test). Every test is rolled back. Schema only for now (v3 survey, 2026-10-05);
- * no service uses this table yet.
+ * test database (techshopping_test). Every test is rolled back.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

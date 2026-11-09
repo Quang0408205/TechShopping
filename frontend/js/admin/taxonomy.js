@@ -1,13 +1,6 @@
-/* ================= DANH MỤC / THƯƠNG HIỆU (admin/categories.html, admin/brands.html) ================= */
-
 /*
+ * Danh mục / thương hiệu (admin/categories.html, admin/brands.html).
  * Một file cho cả 2 trang; body[data-taxonomy] chọn cấu hình bên dưới. Chỉ ADMIN (data-roles="ADMIN").
- * API (đọc công khai, ghi chỉ ADMIN — SecurityConfig CATALOG_PATHS):
- *   GET    /categories | /brands?size=100&page=      tải hết rồi tìm / lọc / phân trang ngay trên trang (ít dòng)
- *   POST   /categories | /brands                     201
- *   PUT    /categories/{id} | /brands/{id}           gửi đủ trường (ẩn / hiện = PUT với isActive đảo)
- *   DELETE /categories/{id} | /brands/{id}           409 RESOURCE_IN_USE khi còn sản phẩm (danh mục: hoặc còn danh mục con)
- *   GET    /products?categoryId= | brandId=&size=1   số sản phẩm của từng dòng (totalElements)
  */
 
 const TAXONOMY_PAGE_SIZE = 20;

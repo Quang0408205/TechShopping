@@ -1,11 +1,4 @@
-/* ================= ĐĂNG NHẬP NỘI BỘ (admin/login.html) — B2 ================= */
-
-/*
- * POST /api/v1/auth/login thật (email hoặc tên đăng nhập). Chỉ tài khoản có
- * role STAFF, BRANCH_MANAGER hoặc ADMIN được vào: tài khoản khách hàng đăng nhập đúng mật
- * khẩu vẫn bị từ chối, và refresh token vừa cấp được thu hồi ngay.
- * ?reason=… (staff-auth.js requireStaffLogin) giải thích vì sao bị đưa về đây.
- */
+/* Đăng nhập nội bộ (admin/login.html) */
 
 const STAFF_LOGIN_REASONS = {
     expired: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",

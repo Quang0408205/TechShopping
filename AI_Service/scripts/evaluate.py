@@ -1,5 +1,5 @@
 """
-Đánh giá offline các mô hình khuyến nghị (báo cáo mục 3.7 / 4.8.3), tinh chỉnh tham số và chọn α cho Hybrid.
+Đánh giá offline các mô hình khuyến nghị, tinh chỉnh tham số và chọn α cho Hybrid.
 Cách chia dữ liệu (huấn luyện / validation / kiểm thử), các bước tinh chỉnh, công thức chỉ số và bootstrap:
 app/recommender/evaluation.py. Chạy mất vài phút (18 bộ tham số ALS + 11 giá trị α + 3 mức giảm trọng số).
 

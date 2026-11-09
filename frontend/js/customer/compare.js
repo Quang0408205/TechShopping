@@ -1,11 +1,4 @@
-/* ================= TRANG SO SÁNH SẢN PHẨM ================= */
-
-/*
- * customer/compare.html?ids=1,2,3 (2–4 sản phẩm). Mỗi sản phẩm: GET /products/{id} + GET /products/{id}/specifications.
- * Bảng: ảnh + tên + nút bỏ, các dòng cơ bản (giá, thương hiệu, đánh giá, bảo hành, tình trạng), rồi các thông số kỹ thuật
- * (gộp theo tên thông số). Dòng có giá trị khác nhau được tô nhạt; ô "Chỉ hiện điểm khác nhau" ẩn các dòng giống nhau.
- * Giá rẻ nhất được đánh dấu. Mọi dữ liệu từ API đều escape khi đưa vào HTML.
- */
+/* Trang so sánh sản phẩm */
 
 document.addEventListener("DOMContentLoaded", async function () {
 

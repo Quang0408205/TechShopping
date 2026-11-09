@@ -1,15 +1,4 @@
-/* ================= VOUCHER (admin/vouchers.html) ================= */
-
-/*
- * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET    /admin/vouchers?keyword=&status=&page=&size=     mới nhất trước
- *   POST   /admin/vouchers   { code, name, description, discountPercent, maxDiscount, minOrderAmount,
- *   PUT    /admin/vouchers/{id}  startsAt, endsAt, usageLimit, perCustomerLimit, allCategories, categoryIds, active }
- *   PATCH  /admin/vouchers/{id}/status { active }
- *   DELETE /admin/vouchers/{id}          (chỉ khi chưa đơn nào dùng)
- *   GET    /admin/vouchers/{id}/usages   đơn đã dùng (kể cả đơn đã huỷ = đã trả lượt)
- * Danh mục lấy từ GET /categories. Trạng thái (status) do backend tính.
- */
+/* Voucher (admin/vouchers.html) */
 
 const VOUCHER_PAGE_SIZE = 20;
 

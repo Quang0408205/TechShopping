@@ -1,5 +1,5 @@
 """
-Tạo quan hệ ACCESSORY trong product_relations cho Cross-selling (báo cáo mục 3.5.6 b).
+Tạo quan hệ ACCESSORY trong product_relations cho Cross-selling.
 
 Dữ liệu đơn hàng còn ít nên chưa tính được "mua chung" (lift) đáng tin; quan hệ khai báo được ưu tiên.
 Quy tắc: thiết bị chính → phụ kiện thuộc nhóm phù hợp (theo từ khoá trong tên), cùng hãng được ưu tiên,

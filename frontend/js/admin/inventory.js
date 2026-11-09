@@ -1,16 +1,4 @@
-/* ================= TỒN KHO (admin/inventory.html) ================= */
-
-/*
- * API thật (backend kiểm tra lại vai trò + chi nhánh trong DB ở mọi request):
- *   GET  /admin/stores/{storeId}/inventory?keyword&outOfStock&page&size     tồn kho 1 chi nhánh
- *        (STAFF: chỉ chi nhánh mình đang được gán; ADMIN: mọi chi nhánh)
- *   GET  /admin/inventory?keyword&outOfStock&page&size                      "Tất cả chi nhánh" (chỉ ADMIN):
- *        mỗi dòng 1 phiên bản + số lượng từng chi nhánh; outOfStock = không chi nhánh nào còn
- *   POST /admin/stores/{storeId}/inventory/stock-in { variantId, quantity, supplierName?, note? }
- *   GET  /admin/stores/{storeId}/inventory/{variantId}/movements?page&size  lịch sử, mới nhất trước
- *   GET  /products?keyword&isActive=true&size, GET /products/{id}/variants   chọn hàng khi nhập kho
- * Bảng chỉ có phiên bản đã từng nhập ở chi nhánh; "Sắp hết" (≤ 5) chỉ tô màu ở trang này.
- */
+/* Tồn kho (admin/inventory.html) */
 
 const INVENTORY_PAGE_SIZE = 20;
 
@@ -950,7 +938,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const requestId = ++pickerCounter;
 
-        /* Chỉ sản phẩm đang bán: sản phẩm ẩn (vd. bản cũ TGDD-OLD-*) không nhập kho */
         const params = new URLSearchParams({ size: String(STOCK_PICKER_SIZE), isActive: "true" });
 
         const keyword = productKeywordInput.value.trim();
