@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             saveAuth(auth);
 
-            window.location.href = getRedirectTarget("index.html");
+            window.location.href = await pageAfterLogin("index.html");
 
         } catch (error) {
 

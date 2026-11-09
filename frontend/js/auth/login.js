@@ -119,7 +119,7 @@ document.addEventListener(
                     saveAuth(auth);
 
                     window.location.href =
-                        getRedirectTarget("index.html");
+                        await pageAfterLogin("index.html");
 
                 } catch (error) {
 

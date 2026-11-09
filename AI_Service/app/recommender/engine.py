@@ -25,6 +25,21 @@ log = logging.getLogger(__name__)
 MODEL_FILE = "recommender.pkl"
 ACCESSORY_REASON = "Phụ kiện phù hợp với sản phẩm này"
 
+# Căn cứ của danh sách "Dành cho bạn" (giao diện đổi tiêu đề theo căn cứ; POPULAR → hiện bảng hỏi)
+BASIS_BEHAVIOR, BASIS_PREFERENCES, BASIS_POPULAR = "BEHAVIOR", "PREFERENCES", "POPULAR"
+# Câu "Tầm giá" của bảng hỏi ↔ phân khúc giá (phân vị 1/3, 2/3 trong từng danh mục, features.build_item_features)
+PRICE_LEVELS = {"LOW": "Thấp", "MID": "Trung", "HIGH": "Cao"}
+PRICE_LABELS = {"Thấp": "phổ thông", "Trung": "tầm trung", "Cao": "cao cấp"}
+
+
+@dataclass(frozen=True)
+class Preferences:
+    """Câu trả lời bảng hỏi của khách: danh mục quan tâm (bắt buộc), tầm giá, hãng, nhu cầu (có thể bỏ trống)."""
+    category_ids: tuple[int, ...]
+    brand_ids: tuple[int, ...] = ()
+    price_levels: tuple[str, ...] = ()
+    need_ids: tuple[int, ...] = ()
+
 
 @dataclass
 class Recommendation:
@@ -57,6 +72,8 @@ class Model:
     stats: dict = field(default_factory=dict)
     params: dict = field(default_factory=dict)  # tham số ALS + half_life_days đã dùng khi học (fold-in dùng lại)
     co_buyers: dict = field(default_factory=dict)  # i → [(j, confidence, lift)]: khách mua i cũng mua j (khác danh mục)
+    needs: dict = field(default_factory=dict)          # need_id → (category_id, tên nhu cầu): bảng hỏi của khách mới
+    product_needs: dict = field(default_factory=dict)  # dòng sản phẩm → frozenset(need_id) sản phẩm đáp ứng
 
     def param(self, key: str):
         """Tham số lúc học; mô hình lưu trước khi có `params` → giá trị trong config."""
@@ -145,24 +162,40 @@ def _co_buyers(interactions: pd.DataFrame, items: pd.DataFrame, index: dict[int,
     return result
 
 
+def _needs(frame: pd.DataFrame, index: dict[int, int]) -> tuple[dict, dict]:
+    """(need_id → (category_id, tên), dòng sản phẩm → frozenset(need_id)) từ bảng của data.load_needs."""
+    needs = {int(row.need_id): (int(row.category_id), str(row.name))
+             for row in frame.drop_duplicates("need_id").itertuples()}
+    pairs = frame.dropna(subset=["product_id"])
+    product_needs: dict[int, set] = {}
+    for pid, need in zip(pairs["product_id"].astype(int), pairs["need_id"].astype(int)):
+        if pid in index:
+            product_needs.setdefault(index[pid], set()).add(need)
+    return needs, {row: frozenset(values) for row, values in product_needs.items()}
+
+
 def train_model(load_interactions=data.load_interactions, load_baskets=data.load_order_baskets,
-                params: dict | None = None, now=None) -> Model:
+                params: dict | None = None, now=None, load_needs=None) -> Model:
     """
     load_interactions / load_baskets: nguồn hành vi và đơn hàng (mặc định cả database; đánh giá offline truyền phần
     huấn luyện). params: factors, regularization, confidence, iterations, half_life_days (thiếu → config).
     now: mốc tính tuổi hành vi khi giảm dần trọng số (mặc định lúc học).
+    load_needs: nhu cầu của sản phẩm cho bảng hỏi (mặc định data.load_needs).
     """
     started = datetime.now()
     params = {"factors": config.ALS_FACTORS, "regularization": config.ALS_REGULARIZATION,
               "confidence": config.ALS_CONFIDENCE, "iterations": config.ALS_ITERATIONS,
               "half_life_days": config.HALF_LIFE_DAYS, **(params or {})}
     products = data.load_products()
+    if "brand_id" not in products:          # nguồn ngoài (scripts/eval_amazon.py) không có mã hãng
+        products["brand_id"] = 0
     specs = data.load_specs()
     items, vectors = build_item_features(products, specs)
     raw = extract_numeric_specs(products, specs)
     for feature in NUMERIC_FEATURES:
         items[feature + "_raw"] = raw[feature]
     index = {int(pid): row for row, pid in enumerate(items.index)}
+    needs, product_needs = _needs((load_needs or data.load_needs)(), index)
 
     interactions = load_interactions()
     scores = interaction_scores(interactions, params["half_life_days"], now)
@@ -189,6 +222,8 @@ def train_model(load_interactions=data.load_interactions, load_baskets=data.load
         relations=data.load_relations(),
         trained_at=datetime.now(),
         params=params,
+        needs=needs,
+        product_needs=product_needs,
     )
     model.stats = {
         "products": len(index), "users": len(users), "interactions": int(matrix.nnz),
@@ -219,6 +254,9 @@ class Recommender:
             with path.open("rb") as f:
                 self._model = pickle.load(f)
             log.info("Recommender loaded from %s (trained %s)", path, self._model.trained_at)
+            if not hasattr(self._model, "product_needs") or "brand_id" not in self._model.items:
+                log.info("Model file has no questionnaire data (brand ids, product needs): retraining")
+                self.train()
         else:
             self.train()
 
@@ -277,19 +315,25 @@ class Recommender:
         s_cf = _min_max(cf[candidates])
         return alpha * s_cbf + (1 - alpha) * s_cf, s_cbf, s_cf
 
-    def _rank(self, candidates: np.ndarray, score: np.ndarray) -> np.ndarray:
-        """3.5.5 d: điểm giảm dần; bằng điểm thì ưu tiên phổ biến hơn, rồi cập nhật gần đây hơn."""
+    def _rank(self, candidates: np.ndarray, score: np.ndarray, prior: tuple | None = None) -> np.ndarray:
+        """
+        3.5.5 d: điểm giảm dần; bằng điểm thì ưu tiên phổ biến hơn, rồi cập nhật gần đây hơn.
+        prior: các cột (theo dòng sản phẩm, cột đầu quan trọng nhất) thay cho độ phổ biến khi bằng điểm.
+        """
         m = self.model
         updated = m.items["updated_at"].to_numpy("datetime64[s]")[candidates].astype(float)
-        return np.lexsort((-updated, -m.popularity[candidates], -np.round(score, 6)))
+        prior = (m.popularity,) if prior is None else prior
+        return np.lexsort((-updated, *[-np.asarray(p, float)[candidates] for p in reversed(prior)],
+                           -np.round(score, 6)))
 
-    def _mmr(self, candidates: np.ndarray, score: np.ndarray, n: int, lam: float) -> np.ndarray:
+    def _mmr(self, candidates: np.ndarray, score: np.ndarray, n: int, lam: float,
+             prior: tuple | None = None) -> np.ndarray:
         """
         Maximal Marginal Relevance: chọn lần lượt j = argmax [λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)].
         Score (Hybrid, trong [0, 1]) và cosine (vector thuộc tính không âm, trong [0, 1]) cùng thang. λ = 1 → giống
         _rank; bằng nhau thì giữ thứ tự của _rank. Trả về vị trí trong `candidates` như _rank.
         """
-        order = self._rank(candidates, score)
+        order = self._rank(candidates, score, prior)
         if lam >= 1 or len(order) <= 1:
             return order[:n]
         vectors = self.model.vectors[candidates[order]]
@@ -307,10 +351,37 @@ class Recommender:
     # ---------- khuyến nghị cá nhân hoá ----------
 
     def recommend(self, user_id: int | None, n: int = 8, exclude: list[int] | None = None,
-                  alpha: float | None = None) -> list[Recommendation]:
-        """Danh sách hiển thị cho khách: như recommend_alphas, thêm bộ lọc phụ kiện theo đời máy."""
-        return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude,
-                                     own_models_only=True)[0]
+                  alpha: float | None = None, preferences: Preferences | None = None) -> list[Recommendation]:
+        """Danh sách hiển thị cho khách (xem personal)."""
+        return self.personal(user_id, n, exclude, alpha, preferences)[0]
+
+    def personal(self, user_id: int | None, n: int = 8, exclude: list[int] | None = None,
+                 alpha: float | None = None, preferences: Preferences | None = None) -> tuple[list[Recommendation], str]:
+        """
+        Danh sách "Dành cho bạn" và căn cứ của nó:
+          BEHAVIOR: khách đã có hành vi → như recommend_alphas, thêm bộ lọc phụ kiện theo đời máy;
+          PREFERENCES: khách chưa có hành vi nhưng đã trả lời bảng hỏi → from_preferences (không dùng hành vi của
+            khách khác);
+          POPULAR: chưa có cả hai → danh sách phổ biến (giao diện hiện bảng hỏi thay cho danh sách này).
+        """
+        state = self._user_state(user_id)
+        if state is not None:
+            return self._behavior_lists(state, n, [config.ALPHA if alpha is None else alpha], self._allowed(exclude),
+                                        own_models_only=True)[0], BASIS_BEHAVIOR
+        if preferences is not None and preferences.category_ids:
+            result = self.from_preferences(preferences, n, exclude)
+            if result:
+                return result, BASIS_PREFERENCES
+        return self.popular(n, self._allowed(exclude)), BASIS_POPULAR
+
+    def _allowed(self, exclude: list[int] | None) -> np.ndarray:
+        """Sản phẩm được phép gợi ý: đang bán, có giá, không nằm trong exclude."""
+        m = self.model
+        allowed = m.valid.copy()
+        for pid in exclude or []:
+            if pid in m.index:
+                allowed[m.index[pid]] = False
+        return allowed
 
     def recommend_alphas(self, user_id: int | None, n: int, alphas: list[float],
                          exclude: list[int] | None = None, mmr_lambda: float | None = None,
@@ -320,15 +391,16 @@ class Recommender:
         một lần (đánh giá offline thử nhiều α trên cùng khách). mmr_lambda: λ của MMR (mặc định config.MMR_LAMBDA).
         own_models_only: bỏ ốp lưng, kính cường lực… của đời máy khách chưa quan tâm. Chỉ bật khi hiển thị
         (recommend); đánh giá offline không bật, nên số liệu đánh giá là của mô hình chưa có bộ lọc này.
+        Khách chưa có hành vi → danh sách phổ biến (đánh giá offline không có câu trả lời bảng hỏi).
         """
+        return self._behavior_lists(self._user_state(user_id), n, alphas, self._allowed(exclude), mmr_lambda,
+                                    cold_start_k, own_models_only)
+
+    def _behavior_lists(self, state, n: int, alphas: list[float], allowed: np.ndarray,
+                        mmr_lambda: float | None = None, cold_start_k: int | None = None,
+                        own_models_only: bool = False) -> list[list[Recommendation]]:
         mmr_lambda = config.MMR_LAMBDA if mmr_lambda is None else mmr_lambda
         m = self.model
-        allowed = m.valid.copy()
-        for pid in exclude or []:
-            if pid in m.index:
-                allowed[m.index[pid]] = False
-
-        state = self._user_state(user_id)
         if state is None:
             popular = self.popular(n, allowed)
             return [popular for _ in alphas]
@@ -366,7 +438,7 @@ class Recommender:
                     m.items.index[row], score[pos], self._reason_personal(row, rows, r, from_cf),
                     s_cbf[pos], None if s_cf is None else s_cf[pos]))
             lists.append(result)
-        log.debug("user %s: %d interactions, alphas=%s", user_id, count, alphas)
+        log.debug("%d interactions, alphas=%s", count, alphas)
         return lists
 
     def _own_model_mask(self, rows: np.ndarray) -> np.ndarray:
@@ -382,6 +454,79 @@ class Recommender:
         _, fitted, device = self._model_columns
         owned = (set(device[rows]) | set(fitted[rows])) - {""}
         return (fitted == "") | np.isin(fitted, list(owned))
+
+    def from_preferences(self, preferences: Preferences, n: int = 8,
+                         exclude: list[int] | None = None) -> list[Recommendation]:
+        """
+        Gợi ý cho khách chưa có hành vi theo câu trả lời bảng hỏi; không dùng hành vi của khách khác.
+          1. Ứng viên: sản phẩm đang bán thuộc danh mục khách chọn (bỏ ốp lưng, kính cường lực... theo đời máy, vì
+             chưa biết khách dùng máy nào).
+          2. Score_Q(i) = (1 + Σ_q khớp_q(i)) / (1 + |Q_i|): số 1 là câu "danh mục" (ứng viên luôn khớp), Q_i là các
+             câu khách đã trả lời và áp dụng được cho danh mục của i:
+               hãng: 1 nếu hãng của i nằm trong các hãng khách chọn (chỉ tính khi khách chọn hãng có bán ở danh mục này);
+               tầm giá: 1 nếu phân khúc giá của i (phân vị 1/3, 2/3 trong danh mục) là tầm giá khách chọn;
+               nhu cầu: tỉ lệ nhu cầu khách chọn ở danh mục này mà i đáp ứng (product_needs).
+          3. Mỗi danh mục xếp bằng MMR (λ như danh sách cá nhân; bằng điểm thì ưu tiên điểm đánh giá, rồi số lượt đánh
+             giá của sản phẩm), sau đó lấy lần lượt từng vị trí của các danh mục để danh mục nào khách chọn cũng có mặt.
+        """
+        m = self.model
+        items = m.items
+        allowed = self._allowed(exclude) & self._own_model_mask(np.array([], dtype=int))
+        category = items["category_id"].to_numpy()
+        brand = items["brand_id"].to_numpy()
+        segment = items["price_segment"].to_numpy()
+        prior = (items["rating"].to_numpy(float) if "rating" in items else np.zeros(len(items)),
+                 items["review_count"].to_numpy(float) if "review_count" in items else np.zeros(len(items)))
+        brands = set(preferences.brand_ids)
+        levels = {PRICE_LEVELS[level] for level in preferences.price_levels if level in PRICE_LEVELS}
+        needs = {need for need in preferences.need_ids if need in m.needs}
+
+        ranked = []                                        # mỗi danh mục: [(dòng, điểm, lý do)] đã xếp
+        for category_id in dict.fromkeys(preferences.category_ids):
+            rows = np.flatnonzero(allowed & (category == category_id))
+            if rows.size == 0:
+                continue
+            brands_here = brands & set(brand[rows].tolist())
+            needs_here = {need for need in needs if m.needs[need][0] == category_id}
+            matched = np.ones(rows.size)
+            asked = 1
+            if brands_here:
+                matched += np.isin(brand[rows], list(brands_here))
+                asked += 1
+            if levels:
+                matched += np.isin(segment[rows], list(levels))
+                asked += 1
+            if needs_here:
+                matched += [len(m.product_needs.get(row, frozenset()) & needs_here) / len(needs_here) for row in rows]
+                asked += 1
+            score = matched / asked
+            order = self._mmr(rows, score, n, config.MMR_LAMBDA, prior)
+            ranked.append([(rows[p], score[p], self._reason_preferences(rows[p], brands_here, levels, needs_here))
+                           for p in order])
+
+        result = []
+        for position in range(n):
+            # vị trí thứ `position` của mọi danh mục, điểm cao trước
+            for row, score, reason in sorted((lst[position] for lst in ranked if position < len(lst)),
+                                             key=lambda entry: -entry[1]):
+                if len(result) < n:
+                    result.append(Recommendation(items.index[row], score, reason))
+        return result
+
+    def _reason_preferences(self, row: int, brands: set, levels: set, needs: set) -> str:
+        m = self.model
+        items = m.items
+        matched = []
+        if items["brand_id"].iloc[row] in brands:
+            matched.append(str(items["brand"].iloc[row]))
+        segment = items["price_segment"].iloc[row]
+        if segment in levels:
+            matched.append(PRICE_LABELS[segment])
+        for need in sorted(m.product_needs.get(row, frozenset()) & needs):
+            matched.append(m.needs[need][1].lower())
+        if matched:
+            return "Hợp với lựa chọn của bạn: " + " · ".join(matched)
+        return "Thuộc danh mục " + str(items["category"].iloc[row]) + " bạn quan tâm"
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
         """người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""

@@ -71,6 +71,14 @@ async function renderRecommendationSection(section, context) {
         const categories = await context.categories;
 
 
+        /* "Dành cho bạn" của khách chưa có hành vi và chưa trả lời bảng hỏi: mời trả lời thay cho danh sách */
+
+        if (items.prompt) {
+            grid.innerHTML = preferencePromptHtml("customer/recommendation.html");
+            return;
+        }
+
+
         if (section.sectionId) {
 
             /* Khu "nâng cấp" chỉ hiện khi thật sự có sản phẩm */
@@ -115,7 +123,20 @@ async function renderRecommendationSection(section, context) {
 
 async function loadPersonalProducts(context, size) {
 
-    return (await fetchRecommendations("PERSONAL", null, size)).items;
+    const result = await fetchRecommendations("PERSONAL", null, size);
+
+    if (result.source === "AI" && result.basis === "POPULAR") {
+        return { prompt: true };
+    }
+
+    if (result.source === "AI" && result.basis === "PREFERENCES") {
+        const note = document.getElementById("personalNote");
+        document.getElementById("personalTitle").textContent = "GỢI Ý THEO SỞ THÍCH CỦA BẠN";
+        note.innerHTML = preferenceNoteHtml("customer/recommendation.html");
+        note.hidden = false;
+    }
+
+    return result.items;
 
 }
 

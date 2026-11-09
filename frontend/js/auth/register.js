@@ -132,8 +132,9 @@ document.addEventListener(
 
                     saveAuth(auth);
 
+                    /* tài khoản mới: trả lời bảng hỏi sở thích trước (pageAfterLogin trong api.js) */
                     window.location.href =
-                        getRedirectTarget("index.html");
+                        await pageAfterLogin("index.html");
 
                 } catch (error) {
 

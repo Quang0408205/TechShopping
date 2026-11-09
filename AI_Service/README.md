@@ -153,6 +153,9 @@ AI_Service/
 | `exception/ErrorCode.java` | Sửa | `AI_SERVICE_UNAVAILABLE (503)`, `CHAT_SESSION_NOT_FOUND (404)` |
 | `resources/application.yml` | Sửa | Khối `app.ai` (base-url, internal-key, timeout) |
 | Test: `InteractionRecorderTest`, `RecommendationServiceTest`, `ChatServiceTest` | Mới | 15 unit test; sửa nhẹ 3 test cũ vì constructor có thêm tham số |
+| `entity/recommendation/UserPreference.java`, `PriceLevel.java`, `repository/recommendation/UserPreferenceRepository.java` | Mới (09/11) | Bảng `user_preferences`: câu trả lời bảng hỏi sở thích |
+| `service/recommendation/PreferenceService.java`, `controller/recommendation/PreferenceController.java` | Mới (09/11) | Lựa chọn của bảng hỏi; đọc / lưu câu trả lời (kiểm tra mã danh mục, hãng, nhu cầu thuộc danh mục đã chọn); `RecommendationService` gửi câu trả lời sang AI cho danh sách PERSONAL |
+| Test: `PreferenceApiIntegrationTest` + 3 test trong `RecommendationServiceTest` | Mới (09/11) | Lựa chọn công khai, lưu / thay câu trả lời, từ chối câu trả lời sai, cờ "đã có hành vi"; câu trả lời của tài khoản / trình duyệt được gửi sang AI |
 
 ### 3.3. Frontend (`frontend/`)
 
@@ -161,6 +164,7 @@ AI_Service/
 | `js/core/api.js` | `trackInteraction()` + tự gửi `CLICK` khi bấm vào thẻ sản phẩm bất kỳ |
 | `js/core/ui.js` | `fetchRecommendations()`, `renderRecommendationGrid()` (thẻ sản phẩm + dòng **lý do gợi ý**) |
 | `js/customer/recommendation.js` | 5 khu của trang Khuyến nghị lấy dữ liệu từ AI thay cho quy tắc tạm |
+| `customer/preferences.html`, `js/customer/preferences.js`, `css/customer/preferences.css` | Trang "Sở thích mua sắm" (bảng hỏi 4 câu); `js/core/api.js`: lưu câu trả lời của khách chưa đăng nhập, `pageAfterLogin()` chuyển khách mới tới bảng hỏi sau đăng ký / đăng nhập |
 | `js/home.js`, `index.html` | Khu gợi ý ở trang chủ (ngay sau Flash sale) lấy 8 gợi ý PERSONAL từ AI khi khu này sắp vào màn hình: đã đăng nhập → "Gợi ý dành cho bạn" theo lịch sử, kèm lý do; chưa đăng nhập hoặc AI ngừng → đổi tiêu đề thành "Được quan tâm nhiều"; lỗi hoặc rỗng thì ẩn cả khu |
 | `js/customer/product-detail.js`, `customer/product-detail.html` | Gửi `VIEW`; thêm 3 khu Nâng cấp / Mua kèm / Tương tự; nhớ sản phẩm xem gần nhất |
 | `js/customer/chatbot.js` | Widget gọi chatbot AI: **chữ hiện dần** (đọc luồng SSE), dòng "Đang tra cứu…", **nút Xác nhận** cho thao tác đề xuất, giữ cuộc trò chuyện khi chuyển trang, **tự quay về chế độ từ khoá** khi AI ngừng |
@@ -239,11 +243,47 @@ AI_Service/
 |---|---|
 | Khách có ≥ 2 lượt tương tác | Hybrid α = 0,6, xếp lại bằng MMR |
 | Khách có đúng 1 lượt tương tác | Chỉ dùng CBF (α = 1), cũng xếp lại bằng MMR |
-| Khách mới / chưa đăng nhập | Khoảng ¾ sản phẩm phổ biến nhất + ¼ sản phẩm mới nhất |
+| Khách chưa có hành vi (mới đăng ký / chưa đăng nhập) | **Bảng hỏi sở thích** (mục 4.4b): gợi ý theo câu trả lời, không dùng hành vi của khách khác |
+| Chưa có hành vi và chưa trả lời bảng hỏi | Web hiện lời mời trả lời thay cho danh sách; API vẫn trả ¾ phổ biến + ¼ mới (`basis = POPULAR`) |
 | Sản phẩm mới chưa ai tương tác | Chỉ có điểm CBF |
 
 Ngưỡng **k = 2** (`REC_COLD_START_K`) được chọn trên validation (mục 9.1, bước 5): trước 08/11/2026 cố định k = 5 theo
 thiết kế, nhưng đo theo số lượt thì Hybrid đã tốt hơn chỉ CBF từ lượt thứ 2.
+
+### 4.4b. Khách mới: bảng hỏi sở thích (từ 09/11/2026, theo góp ý của GVHD)
+
+Trước đây khách chưa có hành vi nhận danh sách phổ biến, tức là gợi ý theo hành vi của **toàn bộ** khách, ai cũng như ai.
+Nay hệ thống **hỏi** khách rồi gợi ý theo câu trả lời (preference elicitation):
+
+| Câu | Lựa chọn (lấy từ dữ liệu) | Bắt buộc |
+|---|---|---|
+| 1. Loại sản phẩm quan tâm | 6 danh mục đang bán, chọn nhiều | Có |
+| 2. Tầm giá | Phổ thông / Tầm trung / Cao cấp = phân khúc giá **trong từng danh mục** (phân vị 1/3, 2/3 như CBF) | Không |
+| 3. Hãng yêu thích | Các hãng có hàng ở những danh mục đã chọn, hãng nhiều sản phẩm trước | Không |
+| 4. Nhu cầu sử dụng | Bảng `needs` / `product_needs` (chơi game, chụp ảnh, học tập văn phòng, đồ hoạ…): điện thoại, laptop, máy tính bảng | Không |
+
+**Khi nào hỏi:** đăng ký / đăng nhập (kể cả Google) mà tài khoản chưa có hành vi và chưa trả lời → chuyển tới trang
+`customer/preferences.html` trước. Khu "Gợi ý dành cho bạn" (trang chủ, trang Khuyến nghị) hiện lời mời trả lời thay cho
+danh sách khi chưa có cả hai. Khách chưa đăng nhập cũng trả lời được: câu trả lời lưu ở trình duyệt, gửi kèm
+`POST /recommendations`, đăng nhập thì chép vào tài khoản. Sửa lại ở menu tài khoản "Sở thích mua sắm".
+
+**Cách tính** (`Recommender.from_preferences`):
+
+1. Ứng viên: sản phẩm đang bán thuộc danh mục đã chọn; bỏ ốp lưng, kính cường lực… theo đời máy (chưa biết khách dùng
+   máy nào).
+2. `Score_Q(i) = (1 + Σ_q khớp_q(i)) / (1 + |Q_i|)`: số 1 là câu danh mục (ứng viên luôn khớp); `Q_i` là các câu khách
+   đã trả lời **và áp dụng được cho danh mục của i**: hãng (1 nếu đúng hãng đã chọn; chỉ tính khi khách chọn hãng có
+   bán ở danh mục này, nên chọn Samsung không trừ điểm laptop), tầm giá (1 nếu đúng phân khúc), nhu cầu (tỉ lệ nhu cầu
+   đã chọn của danh mục này mà sản phẩm đáp ứng).
+3. Mỗi danh mục xếp bằng MMR (λ = 0,7); bằng điểm thì ưu tiên **điểm đánh giá, rồi số lượt đánh giá của sản phẩm**
+   (thuộc tính sản phẩm), không dùng độ phổ biến tính từ hành vi khách khác. Sau đó lấy lần lượt từng vị trí của các
+   danh mục để danh mục nào đã chọn cũng có mặt.
+4. Lý do: *"Hợp với lựa chọn của bạn: Samsung · tầm trung · chụp ảnh, quay phim"*, hoặc *"Thuộc danh mục Laptop bạn
+   quan tâm"* khi chỉ khớp câu danh mục.
+
+Từ lượt xem / thích / thêm giỏ / mua đầu tiên, gợi ý chuyển sang theo **hành vi thật** của khách (CBF, rồi Hybrid từ
+k = 2 lượt) như bảng trên. API trả thêm `basis`: `BEHAVIOR` / `PREFERENCES` / `POPULAR` để giao diện đổi tiêu đề.
+Đánh giá offline (mục 9.1) không đổi: khách mô phỏng không có câu trả lời bảng hỏi.
 
 ### 4.5. Tương tự, Upsell, Cross-sell
 
@@ -453,7 +493,9 @@ Khách có thể nhờ trợ lý *"thêm iPhone 17e vào giỏ"* hoặc *"huỷ 
 | Phương thức | Endpoint | Quyền | Mô tả |
 |---|---|---|---|
 | POST | `/api/v1/interactions` | Đăng nhập | `{productId, type: "VIEW"\|"CLICK"}` → 204 |
-| POST | `/api/v1/recommendations` | Công khai (token tuỳ chọn) | `{type, productId?, size?}` → `{type, source, items:[{product, score, reason}]}` |
+| POST | `/api/v1/recommendations` | Công khai (token tuỳ chọn) | `{type, productId?, size?, preferences?}` → `{type, source, basis, items:[{product, score, reason}]}`; `preferences`: câu trả lời bảng hỏi của khách chưa đăng nhập |
+| GET | `/api/v1/recommendations/preference-options` | Công khai | Lựa chọn của bảng hỏi: danh mục đang bán, hãng (số sản phẩm), nhu cầu |
+| GET / PUT | `/api/v1/users/me/preferences` | Đã đăng nhập | Câu trả lời của tôi (`answered`, `hasActivity`) / lưu lại (thay toàn bộ; ít nhất 1 danh mục) |
 | POST | `/api/v1/admin/recommendations/train` | ADMIN | Huấn luyện lại ngay, trả thống kê |
 | POST | `/api/v1/chat/stream` | Công khai (token tuỳ chọn) | `{sessionToken?, message}` → luồng SSE `session`, `delta`, `status`, `done {sessionToken, reply, products, actions}` hoặc `error` (widget dùng API này) |
 | POST | `/api/v1/chat` | Công khai (token tuỳ chọn) | Như trên nhưng trả một lần: `{sessionToken, reply, products, actions}` |
@@ -479,7 +521,7 @@ curl -X POST http://localhost:8080/api/v1/recommendations \
 
 | Phương thức | Endpoint | Mô tả |
 |---|---|---|
-| POST | `/recommend` | `{userId?, n, excludeProductIds}`: khuyến nghị cá nhân |
+| POST | `/recommend` | `{userId?, n, excludeProductIds, preferences?}`: khuyến nghị cá nhân, trả thêm `basis` (BEHAVIOR / PREFERENCES / POPULAR) |
 | POST | `/similar` | `{productId, n}`: sản phẩm tương tự |
 | POST | `/upsell` | `{productId, userId?, n}` |
 | POST | `/cross-sell` | `{productId, userId?, n}` |
@@ -502,6 +544,11 @@ File `database/migrations/ai_recommendation.sql` (chạy lại nhiều lần v�
 | `chat_sessions` | `user_id` cho phép NULL (khách chưa đăng nhập); thêm `session_token` (unique), `last_message_at` |
 | **`kb_chunks`** (mới) | Kho tri thức RAG: `doc_type`, `source`, `product_id`, `title`, `content`, `metadata jsonb`, `embedding vector(384)`; chỉ mục HNSW cosine |
 | Extension | `create extension vector` (pgvector) |
+
+Bảng hỏi sở thích (09/11/2026) dùng bảng **`user_preferences`** (migration `user_preferences.sql`, đã có trong
+`techshopping.sql`): mỗi dòng là một lựa chọn của khách, đúng một trong `category_id` / `brand_id` / `need_id` /
+`price_level` (LOW, MID, HIGH); khoá ngoại tới `users`, `categories`, `brands`, `needs`. Database đã có thì chạy
+migration này cho cả `techshopping` và `techshopping_test`.
 
 ---
 
@@ -823,14 +870,16 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-72 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+77 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
 - `test_als.py`: fold-in bằng đúng nghiệm đóng x_u = (YᵀC_uY + λI)⁻¹YᵀC_u p_u; khách giống nhau được gợi ý sản phẩm
   của nhau; huấn luyện lặp lại cho cùng kết quả;
 - `test_engine.py`: cosine và Hybrid đúng ví dụ tính tay của báo cáo, khách mới dưới 5 lượt chỉ dùng CBF, khách chưa
-  có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, ốp lưng theo đời máy chỉ hiện với
+  có hành vi và chưa trả lời bảng hỏi nhận sản phẩm phổ biến; bảng hỏi (mục 4.4b): căn cứ BEHAVIOR / PREFERENCES /
+  POPULAR, Score_Q đúng ví dụ tính tay, câu "hãng" chỉ tính ở danh mục có hãng đã chọn, bằng điểm thì theo điểm đánh
+  giá sản phẩm chứ không theo hành vi khách khác, bỏ ốp lưng theo đời máy và sản phẩm loại trừ; không gợi ý sản phẩm đã xem hoặc ngừng bán, ốp lưng theo đời máy chỉ hiện với
   khách đã quan tâm đúng đời máy (đánh giá offline không lọc), luật mua kèm (lift > 1, ít nhất
   2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem) và lý do hiển thị, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
   lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
@@ -864,11 +913,16 @@ luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đ
 
 - 15 unit test mới:
   - `InteractionRecorderTest`: trọng số, chặn lặp, chặn PURCHASE từ trình duyệt;
-  - `RecommendationServiceTest`: giữ thứ tự AI, bỏ sản phẩm ẩn, dự phòng Upsell đắt hơn hẳn;
+  - `RecommendationServiceTest`: giữ thứ tự AI, bỏ sản phẩm ẩn, dự phòng Upsell đắt hơn hẳn; gửi câu trả lời bảng hỏi
+    của tài khoản (khách đăng nhập) hoặc của trình duyệt (khách vãng lai) sang AI và chuyển tiếp `basis`;
+  - `PreferenceApiIntegrationTest`: lựa chọn của bảng hỏi công khai (chỉ danh mục có hàng, nhu cầu có sản phẩm), câu trả
+    lời cần token, lưu / thay toàn bộ, từ chối khi thiếu danh mục / mã không tồn tại / nhu cầu của danh mục chưa chọn,
+    cờ "đã có hành vi";
   - `ChatServiceTest`: lưu tin, chặn phiên người khác, gắn phiên khách sau đăng nhập, cắt lịch sử dài, AI ngừng → 503.
 - `ChatServiceTest` có thêm 2 test cho streaming: chuyển tiếp `delta`/`status`, kết thúc bằng `done` có thao tác; AI ngừng → sự kiện `error`.
-- Toàn bộ **902 test** backend (133 lớp) đều đạt (09/11/2026, sau khi gộp nhánh main có phần hoàn tiền; lần chạy
-  03/11/2026 là 895 test, 132 lớp).
+- Toàn bộ **903 test** backend (133 lớp) đều đạt (09/11/2026, sau khi thêm bảng hỏi sở thích: 8 test mới). Trước đó
+  là 895 test, 132 lớp; con số "902 test, 133 lớp" ghi trước đây đếm nhầm báo cáo cũ của `HtmlSanitizerTest` (7 test,
+  lớp đã xoá) còn sót trong `target/surefire-reports`. Số chuẩn là dòng `Tests run:` ở cuối `./mvnw test`.
 - Test tích hợp cần database `techshopping_test`. Nếu máy có Postgres khác chiếm `localhost:5432`, chạy:
   ```bash
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
