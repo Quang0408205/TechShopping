@@ -341,7 +341,7 @@ document.addEventListener("DOMContentLoaded", async function () {
                 comparisonText(result.likeComparisons)) +
 
             subHeading("Mua kèm", formatNumber(cross.pairs) + " cặp đơn – sản phẩm") +
-            '<p class="admin-field-hint">Luật kết hợp học trên ' + formatNumber(cross.trainOrders) + " đơn đặt trước, chấm trên " +
+            '<p class="admin-field-hint">Luật cùng đơn và luật “khách mua A cũng mua B” học từ ' + formatNumber(cross.trainOrders) + " đơn đặt trước và hành vi trước đó, chấm trên " +
             formatNumber(cross.testOrders) + " đơn sau; " + formatPercent(cross.withSuggestions) +
             " sản phẩm trong đơn có danh sách mua kèm.</p>" +
             miniTable(["Cách gợi ý", "HitRate@" + cross.n, "Precision@" + cross.n], cross.rows.map(function (row) {

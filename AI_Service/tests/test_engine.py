@@ -89,6 +89,48 @@ def test_co_purchase_keeps_pairs_with_lift_above_one_and_two_orders():
     assert 3 not in result                             # cặp chỉ xuất hiện trong 1 đơn
 
 
+def test_co_buyers_counts_customers_not_orders_and_keeps_other_categories_only():
+    # hand_model: danh mục 1 = điện thoại (1 iPhone 17, 3 iPhone 16e, 4 Samsung), 2 = laptop (2 Lenovo, 5 Yoga)
+    model = hand_model()
+    events = interactions_frame([(u, 1, "PURCHASE", 1) for u in (1, 2, 3, 4)] +      # 4 khách mua iPhone 17
+                                [(u, 2, "ADD_TO_CART", 1) for u in (1, 2, 3)] +      # 3 người trong đó thêm laptop
+                                [(u, 3, "PURCHASE", 1) for u in (1, 2)] +            # 2 người mua thêm iPhone 16e
+                                [(u, 4, "PURCHASE", 1) for u in range(5, 11)] +      # 6 khách khác mua Samsung
+                                [(u, 5, "VIEW", 1) for u in (1, 2, 3)])              # chỉ xem: không tính
+    result = engine._co_buyers(events, model.items, model.index)
+    assert result[1] == [(2, pytest.approx(3 / 4), pytest.approx((3 / 4) / (3 / 10)))]   # khác đơn vẫn tính
+    assert result[2][0][0] == 1 and result[2][0][1] == pytest.approx(1.0)
+    assert 3 not in [p for p, _, _ in result[1]]   # iPhone 16e cùng danh mục: sản phẩm thay thế, không phải đồ đi kèm
+    assert 5 not in [p for p, _, _ in result[1]]   # Yoga chỉ được xem
+
+
+def test_cross_sell_uses_co_buyer_rules_with_their_reason():
+    model = hand_model()
+    model.co_buyers = {1: [(2, 0.75, 2.5)]}
+    model.relations = pd.DataFrame(columns=["product_id", "related_product_id", "relation_type", "strength"])
+    rec = engine.Recommender(load_interactions=lambda user_id=None: interactions_frame([]))
+    rec._model = model
+    suggested = rec.cross_sell(1, None, 4)
+    assert [r.product_id for r in suggested] == [2]
+    assert suggested[0].reason == "Khách mua sản phẩm này cũng mua"
+    assert suggested[0].score == pytest.approx(0.4 + 0.5 * 0.75)
+
+
+def test_cross_sell_rules_drop_accessories_that_do_not_fit_the_device():
+    # luật mua chung học từ hành vi vẫn phải qua luật phụ kiện: cáp Lightning không gợi ý cho máy Android,
+    # điện thoại khác hãng không gợi ý cho điện thoại
+    model = hand_model()
+    model.items["brand"] = ["vivo", "Apple", "Ugreen", "Samsung", "Lenovo"]
+    model.items["category"] = ["Điện Thoại", "Phụ Kiện", "Phụ Kiện", "Điện Thoại", "Phụ Kiện"]
+    model.items["name"] = ["vivo Y05e", "Cáp sạc Type-C - Lightning 1m Apple", "Tai nghe Bluetooth Ugreen",
+                           "Galaxy A07", "Pin sạc dự phòng 10000mAh Lenovo"]
+    model.co_buyers = {1: [(2, 0.9, 3.0), (3, 0.5, 2.0), (5, 0.4, 2.0), (4, 0.6, 2.0)]}   # 4: điện thoại khác hãng
+    model.relations = pd.DataFrame(columns=["product_id", "related_product_id", "relation_type", "strength"])
+    rec = engine.Recommender(load_interactions=lambda user_id=None: interactions_frame([]))
+    rec._model = model
+    assert [r.product_id for r in rec.cross_sell(1, None, 4)] == [3, 5]
+
+
 # ---------- trên catalogue nhỏ (conftest) ----------
 
 def test_user_with_enough_interactions_gets_hybrid_without_seen_or_inactive_products(toy_recommender):

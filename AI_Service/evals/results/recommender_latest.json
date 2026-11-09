@@ -1,5 +1,5 @@
 {
-  "evaluatedAt": "2026-11-08T13:48:24",
+  "evaluatedAt": "2026-11-09T10:48:24",
   "n": 10,
   "trainRatio": 0.7,
   "validationRatio": 0.1,
@@ -35,7 +35,7 @@
     "coldStartK": 2
   },
   "bootstrapSamples": 1000,
-  "seconds": 293.4,
+  "seconds": 289.2,
   "tuning": {
     "als": [
       {
@@ -1043,17 +1043,52 @@
     "trainOrders": 2500,
     "testOrders": 625,
     "itemsWithRules": 10,
-    "withSuggestions": 0.4384,
+    "itemsWithCoBuyers": 103,
+    "withSuggestions": 0.6051,
     "rows": [
       {
-        "model": "Mua kèm (luật kết hợp + phụ kiện)",
-        "hitRate": 0.0145,
-        "precision": 0.0036
+        "model": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "hitRate": 0.0217,
+        "precision": 0.0054,
+        "withSuggestions": 0.6051
+      },
+      {
+        "model": "Chỉ luật cùng đơn (cách cũ)",
+        "hitRate": 0.0217,
+        "precision": 0.0054,
+        "withSuggestions": 0.4384
+      },
+      {
+        "model": "Chỉ khách mua A cũng mua B",
+        "hitRate": 0.0217,
+        "precision": 0.0054,
+        "withSuggestions": 0.5906
       },
       {
         "model": "Bán chạy nhất (baseline)",
         "hitRate": 0.0217,
-        "precision": 0.0054
+        "precision": 0.0054,
+        "withSuggestions": 1.0
+      }
+    ],
+    "comparisons": [
+      {
+        "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "other": "Bán chạy nhất (baseline)",
+        "metric": "hitRate",
+        "diff": 0.0,
+        "low": -0.0217,
+        "high": 0.0218,
+        "significant": false
+      },
+      {
+        "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
+        "other": "Chỉ luật cùng đơn (cách cũ)",
+        "metric": "hitRate",
+        "diff": 0.0,
+        "low": 0.0,
+        "high": 0.0,
+        "significant": false
       }
     ]
   },
