@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix
 
 from app import config
 from app.recommender import als, data
-from app.recommender.compat import compatible
+from app.recommender.compat import ACCESSORY_CATEGORY, MODEL_SPECIFIC, compatible, phone_model
 from app.recommender.features import NUMERIC_FEATURES, build_item_features, extract_numeric_specs, interaction_scores
 
 log = logging.getLogger(__name__)
@@ -209,6 +209,7 @@ class Recommender:
         self._now = now
         self._model: Model | None = None
         self._lock = threading.Lock()
+        self._model_columns = None      # (mô hình, đời máy của phụ kiện theo đời máy, đời máy của thiết bị)
 
     # ---------- huấn luyện / nạp ----------
 
@@ -307,14 +308,18 @@ class Recommender:
 
     def recommend(self, user_id: int | None, n: int = 8, exclude: list[int] | None = None,
                   alpha: float | None = None) -> list[Recommendation]:
-        return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude)[0]
+        """Danh sách hiển thị cho khách: như recommend_alphas, thêm bộ lọc phụ kiện theo đời máy."""
+        return self.recommend_alphas(user_id, n, [config.ALPHA if alpha is None else alpha], exclude,
+                                     own_models_only=True)[0]
 
     def recommend_alphas(self, user_id: int | None, n: int, alphas: list[float],
                          exclude: list[int] | None = None, mmr_lambda: float | None = None,
-                         cold_start_k: int | None = None) -> list[list[Recommendation]]:
+                         cold_start_k: int | None = None, own_models_only: bool = False) -> list[list[Recommendation]]:
         """
         Một danh sách Top-N cho mỗi α: hồ sơ khách, điểm CBF / CF và tập ứng viên không phụ thuộc α nên chỉ tính
         một lần (đánh giá offline thử nhiều α trên cùng khách). mmr_lambda: λ của MMR (mặc định config.MMR_LAMBDA).
+        own_models_only: bỏ ốp lưng, kính cường lực… của đời máy khách chưa quan tâm. Chỉ bật khi hiển thị
+        (recommend); đánh giá offline không bật, nên số liệu đánh giá là của mô hình chưa có bộ lọc này.
         """
         mmr_lambda = config.MMR_LAMBDA if mmr_lambda is None else mmr_lambda
         m = self.model
@@ -331,6 +336,9 @@ class Recommender:
         rows, r, count = state
         # bỏ sản phẩm đã mua (3.5.5 a) và cả sản phẩm đã xem: danh sách "dành cho bạn" chỉ gồm sản phẩm mới với khách
         allowed[rows] = False
+        if own_models_only:
+            # đo 09/11: 144/2.302 khách được gợi ý ốp lưng iPhone 15 Pro dù chưa xem máy này (CF học từ độ phổ biến)
+            allowed &= self._own_model_mask(rows)
         cbf, cf = self._cbf_cf(state, cold_start_k)
 
         # 3.5.5 a: K ứng viên tốt nhất từ mỗi mô hình (đã bỏ sản phẩm không hợp lệ / đã mua)
@@ -360,6 +368,20 @@ class Recommender:
             lists.append(result)
         log.debug("user %s: %d interactions, alphas=%s", user_id, count, alphas)
         return lists
+
+    def _own_model_mask(self, rows: np.ndarray) -> np.ndarray:
+        """False ở phụ kiện theo đời máy (ốp lưng, kính cường lực…) của đời máy khách chưa xem / mua; đời máy của khách
+        lấy từ cả thiết bị lẫn phụ kiện đã tương tác ('iPhone 16 Plus 128GB', 'Ốp lưng iPhone 16 Plus' → iphone 16 plus)."""
+        m = self.model
+        if self._model_columns is None or self._model_columns[0] is not m:
+            names = m.items["name"].astype(str).tolist()
+            accessory = (m.items["category"].astype(str) == ACCESSORY_CATEGORY).tolist()
+            fitted = [(phone_model(x) or "") if a and MODEL_SPECIFIC.search(x) else "" for x, a in zip(names, accessory)]
+            device = ["" if a else (phone_model(x) or "") for x, a in zip(names, accessory)]
+            self._model_columns = (m, np.array(fitted, dtype=object), np.array(device, dtype=object))
+        _, fitted, device = self._model_columns
+        owned = (set(device[rows]) | set(fitted[rows])) - {""}
+        return (fitted == "") | np.isin(fitted, list(owned))
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
         """người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""

@@ -190,7 +190,7 @@ Có sẵn khi database Docker được tạo lần đầu (`database/docker-init
 
 ## 7. Kiểm thử
 
-- **Backend:** 895 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
+- **Backend:** 902 test (đơn vị, tích hợp với database thật qua MockMvc) cho xác thực, phân quyền, giỏ hàng, đơn hàng, thanh toán, trả góp, tồn kho, khuyến mãi, hậu mãi, đánh giá, báo cáo, nhập Excel, cache và giới hạn tốc độ.
 - **Giao diện:** các kịch bản chạy trên trình duyệt Edge không giao diện (điều khiển qua Chrome DevTools Protocol) cho từng khu vực: trang khách, giỏ hàng và thanh toán (kể cả thẻ quốc tế với một Stripe giả chạy cục bộ), từng trang quản trị, bố cục ở nhiều kích thước màn hình, an toàn trước chèn mã độc.
 - **Ma trận quyền:** một kịch bản gọi hàng chục hành động quan trọng bằng năm kiểu người gọi (chưa đăng nhập, khách, nhân viên, quản lý, ADMIN) và so với luật phân quyền.
 - **Chatbot và khuyến nghị:** có bộ câu hỏi đánh giá chatbot và đo Precision / Recall / NDCG cho khuyến nghị.

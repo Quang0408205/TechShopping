@@ -220,7 +220,10 @@ AI_Service/
 ### 4.4. Các bước tạo danh sách "Gợi ý dành cho bạn"
 
 1. Lấy **K = 50** ứng viên tốt nhất từ CBF và 50 từ CF, rồi hợp nhất.
-2. **Lọc:** bỏ sản phẩm bị ẩn, đã xoá, giá = 0, và sản phẩm khách **đã tương tác hoặc đã mua**.
+2. **Lọc:** bỏ sản phẩm bị ẩn, đã xoá, giá = 0, và sản phẩm khách **đã tương tác hoặc đã mua**. Khi hiển thị
+   (`/recommend`) còn bỏ ốp lưng, kính cường lực… ghi đời máy mà khách chưa xem hay mua đời máy đó (`own_models_only`,
+   từ 09/11/2026: trước đó 144/2.302 khách được gợi ý ốp lưng iPhone 15 Pro dù chỉ xem máy OPPO hay Samsung). Bộ lọc
+   này không bật trong đánh giá offline (mục 9.1), nên số liệu ở đó là của mô hình chưa có bộ lọc.
 3. Tính điểm Hybrid và sắp xếp giảm dần. Bằng điểm thì ưu tiên sản phẩm phổ biến hơn, rồi sản phẩm cập nhật gần hơn.
 4. **Xếp lại cho đa dạng (MMR, λ = 0,7):** chọn lần lượt từng sản phẩm j có
    `λ·Score(j) − (1 − λ)·max_{k đã chọn} cos(v_j, v_k)` lớn nhất. Sản phẩm gần giống món đã chọn (5 chiếc iPhone cùng
@@ -820,14 +823,15 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-71 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+72 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
 - `test_als.py`: fold-in bằng đúng nghiệm đóng x_u = (YᵀC_uY + λI)⁻¹YᵀC_u p_u; khách giống nhau được gợi ý sản phẩm
   của nhau; huấn luyện lặp lại cho cùng kết quả;
 - `test_engine.py`: cosine và Hybrid đúng ví dụ tính tay của báo cáo, khách mới dưới 5 lượt chỉ dùng CBF, khách chưa
-  có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, luật mua kèm (lift > 1, ít nhất
+  có hành vi nhận sản phẩm phổ biến, không gợi ý sản phẩm đã xem hoặc ngừng bán, ốp lưng theo đời máy chỉ hiện với
+  khách đã quan tâm đúng đời máy (đánh giá offline không lọc), luật mua kèm (lift > 1, ít nhất
   2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem) và lý do hiển thị, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
   lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
   phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
@@ -863,7 +867,8 @@ luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đ
   - `RecommendationServiceTest`: giữ thứ tự AI, bỏ sản phẩm ẩn, dự phòng Upsell đắt hơn hẳn;
   - `ChatServiceTest`: lưu tin, chặn phiên người khác, gắn phiên khách sau đăng nhập, cắt lịch sử dài, AI ngừng → 503.
 - `ChatServiceTest` có thêm 2 test cho streaming: chuyển tiếp `delta`/`status`, kết thúc bằng `done` có thao tác; AI ngừng → sự kiện `error`.
-- Toàn bộ **895 test** backend (132 lớp) đều đạt (03/11/2026, sau khi gộp nhánh main).
+- Toàn bộ **902 test** backend (133 lớp) đều đạt (09/11/2026, sau khi gộp nhánh main có phần hoàn tiền; lần chạy
+  03/11/2026 là 895 test, 132 lớp).
 - Test tích hợp cần database `techshopping_test`. Nếu máy có Postgres khác chiếm `localhost:5432`, chạy:
   ```bash
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
@@ -1040,6 +1045,8 @@ Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số ch
 - Sản phẩm thêm mới chỉ được gợi ý sau lần huấn luyện kế tiếp (tối đa 24 giờ, hoặc huấn luyện ngay bằng API ADMIN).
 - Kho tri thức RAG không tự cập nhật khi đổi giá / thêm sản phẩm: cần chạy lại `build_index`. Riêng `get_product_details` luôn lấy giá **hiện tại** từ Backend.
 - "Còn hàng" không được lọc khi gợi ý, vì tồn kho tính theo từng chi nhánh và chỉ kiểm tra khi nhân viên xác nhận đơn.
+- Bộ lọc ốp lưng / kính cường lực theo đời máy (mục 4.4) chỉ bật khi hiển thị, chưa có trong đánh giá offline: chạy thử
+  ngày 09/11/2026 với bộ lọc bật trong đánh giá thì λ của MMR chọn trên validation đổi từ 0,7 sang 0,8.
 - `LIKE` trong dữ liệu mô phỏng theo giả định "thích = dấu hiệu sẽ mua" (mục 9.1): đo được cơ chế chạy đúng, chưa phải tác dụng trên khách thật.
 - Cross-sell "mua chung" chưa có tác dụng trên dữ liệu mẫu (đơn sinh ngẫu nhiên); trên web hiện dựa chủ yếu vào quan hệ phụ kiện theo quy tắc. Luật "khách mua A cũng mua B" chỉ phát huy khi có lịch sử mua thật (đã kiểm chứng trên Amazon, mục 9.1c).
 

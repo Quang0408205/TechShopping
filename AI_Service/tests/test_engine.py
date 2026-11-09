@@ -143,6 +143,15 @@ def test_user_with_enough_interactions_gets_hybrid_without_seen_or_inactive_prod
     assert [r.score for r in recs] == sorted([r.score for r in recs], reverse=True)
 
 
+def test_case_for_a_phone_model_is_shown_only_to_users_who_looked_at_that_model(toy_recommender):
+    items = toy_recommender.model.items
+    items.loc[8, ["name", "category"]] = ["Ốp lưng iPhone 16e", "Phụ Kiện"]
+    assert 8 not in [r.product_id for r in toy_recommender.recommend(105, n=8)]    # khách chỉ xem Samsung
+    assert 8 in [r.product_id for r in toy_recommender.recommend(200, n=8)]        # khách đã xem iPhone 16e
+    # đánh giá offline không bật bộ lọc này (số liệu đánh giá là của mô hình chưa lọc)
+    assert 8 in [r.product_id for r in toy_recommender.recommend_alphas(105, 8, [0.6])[0]]
+
+
 def test_new_user_below_k_gets_cbf_only(toy_recommender, monkeypatch):
     monkeypatch.setattr(config, "COLD_START_K", 5)
     recs = toy_recommender.recommend(201, n=3)
