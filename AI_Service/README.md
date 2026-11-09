@@ -81,7 +81,7 @@ Nguyên tắc chính:
 
 | Công nghệ | Dùng để |
 |---|---|
-| **Spring `RestClient`** | Gọi AI Service (timeout 3 giây cho khuyến nghị, 90 giây cho chatbot) |
+| **Spring `RestClient`** | Gọi AI Service (timeout 3 giây cho khuyến nghị, 240 giây cho chatbot) |
 | **Spring Data JPA** | Entity mới: `UserInteraction`, `Recommendation`, `ChatSession`, `ChatMessage` |
 | **Redis** | Giới hạn số tin nhắn chatbot mỗi giờ |
 | **JUnit 5 + Mockito** | Unit test cho các service mới |
