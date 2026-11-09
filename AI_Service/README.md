@@ -984,7 +984,7 @@ Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số ch
 | Trường hợp | Kết quả |
 |---|---|
 | Khách chưa đăng nhập / đã đăng nhập xem khuyến nghị | Phổ biến + mới / danh sách cá nhân hoá, có lý do |
-| SIMILAR, UPSELL, CROSS_SELL cho iPhone 17e | iPhone cùng tầm giá; Galaxy S26 (+3 triệu, camera tốt hơn); AirPods, ốp MagSafe, cáp, sạc |
+| SIMILAR, UPSELL, CROSS_SELL cho iPhone 17e | iPhone cùng tầm giá; Galaxy S26 (+3 triệu, camera tốt hơn); sạc 20W Apple, AirPods 4, AirPods Pro, AirPods Max |
 | Bấm 3 lần cùng sản phẩm | Chỉ 1 dòng CLICK |
 | Thêm vào giỏ | Ghi ADD_TO_CART (điểm 4) |
 | Trình duyệt gửi PURCHASE | 400 |
