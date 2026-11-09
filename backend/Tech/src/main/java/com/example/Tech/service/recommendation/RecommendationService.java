@@ -1,6 +1,7 @@
 package com.example.Tech.service.recommendation;
 
 import com.example.Tech.dto.request.product.ProductSearchRequest;
+import com.example.Tech.dto.request.recommendation.PreferenceRequest;
 import com.example.Tech.dto.request.recommendation.RecommendationRequest;
 import com.example.Tech.dto.response.product.ProductResponse;
 import com.example.Tech.dto.response.recommendation.RecommendationOverviewResponse;
@@ -28,7 +29,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * POST /api/v1/recommendations: asks the AI service, checks the products again
+ * POST /api/v1/recommendations: asks the AI service (PERSONAL: with the questionnaire answers of a customer
+ * without activity, see PreferenceService), checks the products again
  * (still active, not deleted), logs what a logged-in user was shown in recommendations, and falls back to
  * popular / same-category products when the AI service does not answer so shopping is never blocked.
  * Admin: retraining, offline evaluation and the click-through rate of the logged lists.
@@ -45,6 +47,7 @@ public class RecommendationService {
     private final AiRecommendationClient aiClient;
     private final ProductService productService;
     private final RecommendationRepository recommendationRepository;
+    private final PreferenceService preferenceService;
     private final Clock clock;
 
     /** Not transactional: no database connection is held while waiting for the AI service. */
@@ -56,9 +59,22 @@ public class RecommendationService {
         int size = request.sizeOrDefault();
         List<Long> exclude = request.productId() != null ? List.of(request.productId()) : List.of();
 
+        if (type == RecommendationType.PERSONAL) {
+            // a customer's own answers come from the account; a guest's browser sends its answers
+            PreferenceRequest preferences = userId != null
+                    ? preferenceService.answers(userId).orElse(null)
+                    : request.preferences();
+            return aiClient.fetchPersonal(userId, size, exclude, preferences)
+                    .map(list -> fromAi(userId, type, list.items(), list.basis()))
+                    .orElseGet(() -> fallbackResponse(type, request.productId(), size));
+        }
         return aiClient.fetch(type, userId, request.productId(), size, exclude)
-                .map(items -> fromAi(userId, type, items))
-                .orElseGet(() -> new RecommendationResponse(type, SOURCE_FALLBACK, fallback(type, request.productId(), size)));
+                .map(items -> fromAi(userId, type, items, null))
+                .orElseGet(() -> fallbackResponse(type, request.productId(), size));
+    }
+
+    private RecommendationResponse fallbackResponse(RecommendationType type, Long productId, int size) {
+        return new RecommendationResponse(type, SOURCE_FALLBACK, fallback(type, productId, size));
     }
 
     public Map<String, Object> train() {
@@ -100,7 +116,8 @@ public class RecommendationService {
         return whole == 0 ? null : BigDecimal.valueOf(part).divide(BigDecimal.valueOf(whole), 4, RoundingMode.HALF_UP);
     }
 
-    private RecommendationResponse fromAi(Long userId, RecommendationType type, List<AiRecommendationClient.Item> items) {
+    private RecommendationResponse fromAi(Long userId, RecommendationType type, List<AiRecommendationClient.Item> items,
+                                          String basis) {
         Map<Long, AiRecommendationClient.Item> byId = items.stream()
                 .collect(Collectors.toMap(AiRecommendationClient.Item::productId, Function.identity(), (a, b) -> a));
         List<RecommendedProductResponse> result = productService
@@ -117,7 +134,7 @@ public class RecommendationService {
                     .map(r -> new Recommendation(userId, r.product().id(), type, r.score(), r.reason(), now))
                     .toList());
         }
-        return new RecommendationResponse(type, SOURCE_AI, result);
+        return new RecommendationResponse(type, SOURCE_AI, result, basis);
     }
 
     /** Popular products (by TGDĐ reviews); for a product page: the same category, more expensive for UPSELL. */
