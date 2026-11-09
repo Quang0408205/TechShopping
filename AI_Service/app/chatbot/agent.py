@@ -288,8 +288,12 @@ def _session_note(logged_in: bool) -> str:
     Trạng thái đăng nhập để LLM biết có thể gọi các tool dữ liệu cá nhân hay phải mời khách đăng nhập. Đặt trong
     lời nhắc hệ thống, KHÔNG chèn vào tin nhắn của khách: mô hình nhỏ (Qwen 7B) chèn vào tin nhắn thì hay quên gọi tool.
     """
+    # Khách chưa đăng nhập hỏi "đơn của tôi": thỉnh thoảng (khoảng 1/10, đo 09/11) mô hình không gọi tool mà hỏi mã
+    # đơn, nên nói rõ phải làm gì thay vì chỉ nêu "cần đăng nhập".
     return ("Phiên hiện tại: khách ĐÃ đăng nhập, được gọi trực tiếp các tool get_my_* và propose_*." if logged_in else
-            "Phiên hiện tại: khách CHƯA đăng nhập; đơn hàng, giỏ hàng, bảo hành, thêm giỏ, huỷ đơn cần đăng nhập.")
+            "Phiên hiện tại: khách CHƯA đăng nhập. Khi khách hỏi về đơn hàng, giỏ hàng, yêu cầu bảo hành của chính "
+            "họ hoặc muốn thêm giỏ, huỷ đơn: mời khách đăng nhập để xem / thực hiện; không hỏi mã đơn, số điện thoại "
+            "hay email thay thế.")
 
 
 def _history(history: list[dict]) -> list[dict]:
