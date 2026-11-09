@@ -1,5 +1,5 @@
 """
-Recommendation Engine (báo cáo mục 3.5.1–3.5.6): CBF + CF (ALS) → Hybrid → lọc → xếp hạng → Top-N,
+Recommendation Engine: CBF + CF (ALS) → Hybrid → lọc → xếp hạng → Top-N,
 cùng Upselling / Cross-selling. Huấn luyện offline (train) → lưu models/; khi có request chỉ tính điểm.
 """
 
@@ -348,7 +348,7 @@ class Recommender:
 
         lists = []
         for alpha in alphas:
-            alpha = 1.0 if cf is None else alpha        # Bảng 3.21: ít dữ liệu → chỉ CBF
+            alpha = 1.0 if cf is None else alpha        # ít dữ liệu → chỉ CBF
             score, s_cbf, s_cf = self._hybrid(cbf, cf, candidates, alpha)
             result = []
             for pos in self._mmr(candidates, score, n, mmr_lambda):
@@ -362,7 +362,7 @@ class Recommender:
         return lists
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
-        """Bảng 3.21: người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
+        """người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
         m = self.model
         allowed = m.valid if allowed is None else allowed
         # model files trained before 2026-10-17 still have the old TGDĐ column name

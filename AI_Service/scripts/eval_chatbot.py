@@ -1,5 +1,5 @@
 """
-Đánh giá tự động Chatbot (báo cáo mục 3.7.3 b, 4.8.4) trên bộ câu hỏi evals/chatbot_cases.json.
+Đánh giá tự động Chatbot trên bộ câu hỏi evals/chatbot_cases.json.
 
 Mỗi câu hỏi được gửi tới đúng luồng thật (Claude + RAG + Function Calling + API Backend) rồi chấm theo:
   1. Tool:        các tool bắt buộc có được gọi không (expect_tools)

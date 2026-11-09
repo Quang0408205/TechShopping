@@ -1,9 +1,4 @@
-/* ================= THÔNG BÁO NỘI BỘ (admin/notifications.html) ================= */
-
-/*
- * API: GET /admin/notifications?unreadOnly&page&size, POST /admin/notifications/{id}/read,
- *      POST /admin/notifications/read-all
- */
+/* Thông báo nội bộ (admin/notifications.html) */
 
 const NOTIF_PAGE_SIZE = 20;
 

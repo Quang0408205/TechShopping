@@ -20,8 +20,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 /**
- * One row per status change of an order, written by OrderStatusRecorder (not a Postgres trigger as in
- * techshopping_v3.sql: the project uses no triggers). The CONFIRMED row tells who gets the sale (SalesRecorder).
+ * One row per status change of an order, written by OrderStatusRecorder (the project uses no database triggers).
+ * The CONFIRMED row tells who gets the sale (SalesRecorder).
  */
 @Entity
 @Table(name = "order_status_history")

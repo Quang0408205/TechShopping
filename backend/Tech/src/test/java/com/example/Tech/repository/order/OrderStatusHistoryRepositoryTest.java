@@ -26,9 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Checks the OrderStatusHistory mapping against the real PostgreSQL test database (techshopping_test).
- * Schema only for now (v3 survey, 2026-10-05): no service writes rows here yet, this will be done by
- * application code (OrderServiceImpl / AdminOrderServiceImpl) when the order's status changes, not by a
- * Postgres trigger as in docs/techshopping_v3.sql.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

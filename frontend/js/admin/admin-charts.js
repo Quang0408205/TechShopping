@@ -1,14 +1,4 @@
-/* ================= BIỂU ĐỒ CHO admin/ (SVG THUẦN, KHÔNG THƯ VIỆN) ================= */
-
-/*
- * Lấy từ bản frontend tham chiếu: dự án không thêm thư viện ngoài nên biểu
- * đồ vẽ bằng SVG + JS thuần. Cột (so sánh hạng mục) và đường (xu hướng theo
- * thời gian). Rê chuột hiện giá trị nhờ thẻ <title> có sẵn của SVG.
- * Mọi nhãn đi qua escapeHtml (js/core/ui.js).
- *
- * Nạp trước script của trang có gọi renderBarChart / renderLineChart.
- * options chung: formatValue, color, height, maxValue (đỉnh trục; bỏ trống = giá trị lớn nhất, ít nhất 1).
- */
+/* Biểu đồ cho admin/ (svg thuần, không thư viện) */
 
 function cssVar(name, fallback) {
 

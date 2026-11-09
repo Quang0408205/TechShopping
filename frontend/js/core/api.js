@@ -1,17 +1,7 @@
-/* ================= KẾT NỐI SPRING BOOT API ================= */
-
 /*
+ * Gọi API của Backend Spring Boot.
  * Dùng chung cho mọi trang. Phải được nạp ĐẦU TIÊN,
  * trước layout.js, main.js và các file JS của từng trang.
- *
- * Mọi response của backend có dạng:
- *   { success, timestamp, data, error: { code, message, details } }
- */
-
-/*
- * Trên máy lập trình (localhost / 127.0.0.1) gọi thẳng backend :8080 (CORS dev cho mọi cổng localhost).
- * Khi triển khai (tên miền khác, vd. ngrok) nginx chuyển tiếp /api sang backend nên dùng đường dẫn tương đối:
- * cùng một nguồn, không cần CORS (docker/nginx/default.conf).
  */
 
 const API_BASE_URL =
@@ -20,7 +10,7 @@ const API_BASE_URL =
         : "/api/v1";
 
 /*
- * Ảnh tải lên (/uploads/...) được backend ghi kèm địa chỉ công khai lúc tải (localhost:8080, tên miền ngrok…), nên
+ * Ảnh tải lên (/uploads/...) được backend ghi kèm địa chỉ công khai lúc tải (localhost:8080, tên miền công khai…), nên
  * khi đổi nơi chạy web thì link cũ trỏ sai máy. Đọc dữ liệu: đổi phần địa chỉ của mọi link /uploads/ sang máy chủ đang
  * phục vụ API (localhost:8080 ở máy lập trình, chính tên miền khi triển khai — nginx chuyển tiếp /uploads/).
  * Gửi dữ liệu: trả lại đúng link gốc (backend chỉ nhận link ảnh của chính nó theo địa chỉ đã ghi).
@@ -153,7 +143,7 @@ function siteUrl(path) {
 
 /*
  * Khu nội bộ (admin/) dùng phiên riêng, nên cùng một trình duyệt vẫn đăng
- * nhập song song được một tài khoản khách và một tài khoản nhân viên (B2).
+ * nhập song song được một tài khoản khách và một tài khoản nhân viên.
  */
 
 const IS_STAFF_AREA =
@@ -171,8 +161,8 @@ const AUTH_STORAGE_KEY =
     IS_STAFF_AREA ? STAFF_AUTH_STORAGE_KEY : CUSTOMER_AUTH_STORAGE_KEY;
 
 /*
- * Giỏ hàng nằm trên server từ. Hai khoá cũ chỉ còn để dọn một lần
- * (js/core/cart-store.js): "poy_cart_<userId>" (F2, chuyển lên server) và
+ * Giỏ hàng nằm trên server. Hai khoá cũ chỉ còn để dọn một lần
+ * (js/core/cart-store.js): "poy_cart_<userId>" (chuyển lên server) và
  * "poy_cart" (kiểu cũ theo tên sản phẩm, bỏ đi).
  */
 const CART_STORAGE_KEY = "poy_cart";
@@ -266,7 +256,7 @@ const API_ERROR_MESSAGES = {
     INTERNAL_ERROR:
         "Hệ thống đang gặp sự cố. Vui lòng thử lại sau.",
 
-    /* Khu nội bộ (B2): quản lý người dùng */
+    /* Khu nội bộ: quản lý người dùng */
 
     USER_NOT_FOUND:
         "Không tìm thấy người dùng.",
@@ -283,7 +273,7 @@ const API_ERROR_MESSAGES = {
     USER_DELETED:
         "Tài khoản này đã bị xoá, không thể thay đổi.",
 
-    /* Khu nội bộ (B2): quản lý sản phẩm */
+    /* Khu nội bộ: quản lý sản phẩm */
 
     PRODUCT_NOT_FOUND:
         "Không tìm thấy sản phẩm (có thể đã bị xoá).",

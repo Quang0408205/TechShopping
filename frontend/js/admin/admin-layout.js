@@ -1,30 +1,4 @@
-/* ================= KHUNG DÙNG CHUNG CHO CÁC TRANG admin/ ================= */
-
-/*
- * Mỗi trang admin/*.html (trừ login.html) chỉ cần:
- *
- *   <body class="admin-body" data-page-title="Tổng quan" data-roles="BRANCH_MANAGER,ADMIN">
- *   <div data-include="admin-sidebar" data-active="dashboard"></div>
- *   <div data-include="admin-topbar"></div>
- *
- * data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên).
- *
- * File này:
- *   1. chặn trang nếu chưa đăng nhập nội bộ / không đủ quyền (chạy ngay khi nạp);
- *   2. chờ layout.js chèn sidebar + topbar, ẩn mục menu không thuộc vai trò;
- *   3. điền tên / vai trò / chi nhánh lên topbar, gắn đăng xuất, menu mobile;
- *   4. cung cấp adminLayoutReady (Promise → nhân viên hiện tại, hoặc null nếu
- *      đã chuyển hướng) và các hàm dùng chung cho bảng / bộ lọc.
- *
- * .admin-shell bị ẩn (css/admin/admin.css) cho tới khi body có class
- * "admin-ready" (máy chủ đã xác nhận) hoặc "admin-shell-early" (vẽ sớm theo phiên đã
- * lưu, chỉ khi vai trò trong phiên được vào trang), nên người không đủ quyền không thấy trang.
- *
- * Thứ tự nạp: js/core/api.js → js/core/ui.js → js/core/layout.js →
- * js/admin/staff-auth.js →
- * (js/admin/admin-charts.js) → js/admin/admin-layout.js → script của trang.
- * Script của trang: DOMContentLoaded → const staff = await adminLayoutReady.
- */
+/* Khung dùng chung cho các trang admin/ */
 
 const adminLayoutReady = initAdminLayout();
 
@@ -453,11 +427,21 @@ function adminStatCardsHtml(cards) {
         /* chỉ khi số đã rút gọn (từ 1 triệu); "850.000đ" đã đầy đủ */
         const full = exact !== value ? ` data-full="${escapeHtml(exact)}" tabindex="0"` : "";
 
+        const tone = card.tone ? ` admin-stat-card--${card.tone}` : "";
+
+        const subTone = card.subTone ? ` admin-stat-sub--${card.subTone}` : "";
+
+        const details = Array.isArray(card.details) && card.details.length
+            ? `<ul class="admin-stat-details">${card.details.map(function (item) {
+                return `<li><strong>${escapeHtml(item.value)}</strong><span>${escapeHtml(item.label)}</span></li>`;
+            }).join("")}</ul>`
+            : `<div class="admin-stat-sub${subTone}">${escapeHtml(card.sub || "")}</div>`;
+
         return `
-            <div class="admin-stat-card">
+            <div class="admin-stat-card${tone}">
                 <div class="admin-stat-label">${escapeHtml(card.label)}</div>
                 <div class="admin-stat-value"><span${full}>${escapeHtml(value)}</span></div>
-                <div class="admin-stat-sub">${escapeHtml(card.sub || "")}</div>
+                ${details}
             </div>
         `;
 

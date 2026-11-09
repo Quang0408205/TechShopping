@@ -1,13 +1,4 @@
-/* ================= CHI NHÁNH (admin/stores.html) ================= */
-
-/*
- * Chỉ ADMIN, dữ liệu thật:
- *   GET    /admin/stores?keyword&active&page&size   danh sách (theo tên)
- *   POST   /admin/stores                            thêm (201)
- *   PUT    /admin/stores/{id}                       sửa toàn bộ; active=false = tạm đóng
- *   DELETE /admin/stores/{id}                       xoá (409 STORE_IN_USE khi đã có nhân viên / tồn kho / đơn)
- * Cột "Nhân viên" đếm nhân viên đang làm được gán vào chi nhánh (GET /admin/employees).
- */
+/* Chi nhánh (admin/stores.html) */
 
 const STORE_PAGE_SIZE = 20;
 

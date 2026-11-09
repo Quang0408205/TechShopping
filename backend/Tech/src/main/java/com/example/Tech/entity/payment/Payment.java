@@ -75,6 +75,15 @@ public class Payment {
     @JoinColumn(name = "refunded_by")
     private User refundedBy;
 
+    @Column(name = "refund_bank", length = 100)
+    private String refundBank;
+
+    @Column(name = "refund_account_number", length = 30)
+    private String refundAccountNumber;
+
+    @Column(name = "refund_account_holder", length = 100)
+    private String refundAccountHolder;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "installment_payment_id", unique = true)
     private InstallmentPayment installmentPayment;

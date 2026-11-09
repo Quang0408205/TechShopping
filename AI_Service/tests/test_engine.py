@@ -1,4 +1,4 @@
-"""CBF, Hybrid, khách mới, mua kèm, nâng cấp (báo cáo mục 3.5.4–3.5.6); số liệu trùng ví dụ tính tay của báo cáo."""
+"""CBF, Hybrid, khách mới, mua kèm, nâng cấp; số liệu là ví dụ tính tay."""
 
 from datetime import datetime
 
@@ -34,7 +34,7 @@ def hand_model() -> engine.Model:
 
 
 def test_cbf_profile_and_cosine_match_the_worked_example(monkeypatch):
-    monkeypatch.setattr(config, "COLD_START_K", 5)       # ví dụ tính tay của báo cáo dùng k = 5
+    monkeypatch.setattr(config, "COLD_START_K", 5)       # ví dụ tính tay dùng k = 5
     # An: iPhone 17 thêm giỏ + bấm (r = 4,159), laptop Lenovo mua (r = 3,466)
     events = interactions_frame([(1, 1, "ADD_TO_CART", 1), (1, 1, "CLICK", 1), (1, 2, "PURCHASE", 1)])
     rec = engine.Recommender(load_interactions=lambda user_id=None: events)

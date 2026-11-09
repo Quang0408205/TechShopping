@@ -5,6 +5,7 @@ import com.example.Tech.entity.payment.InstallmentStatus;
 import com.example.Tech.dto.request.payment.InstallmentRequest;
 import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.dto.request.order.OrderCreateRequest;
+import com.example.Tech.dto.request.order.RefundAccountRequest;
 import com.example.Tech.entity.combo.OrderCombo;
 import com.example.Tech.dto.response.common.PageResponse;
 import com.example.Tech.dto.response.order.OrderCountsResponse;
@@ -228,11 +229,24 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponse cancelMyOrder(Long userId, Long orderId) {
+    public OrderResponse cancelMyOrder(Long userId, Long orderId, RefundAccountRequest refundAccount) {
         User user = currentUserLoader.load(userId);
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .filter(found -> found.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.ORDER_NOT_FOUND, orderId));
+        Payment refundDue = order.getPaymentMethod() == PaymentMethod.BANK_TRANSFER
+                ? paymentRepository.findByOrderIdAndInstallmentPaymentIsNull(orderId)
+                .filter(payment -> payment.getStatus() == PaymentStatus.PAID)
+                .orElse(null)
+                : null;
+        if (refundDue != null) {
+            if (refundAccount == null) {
+                throw new BusinessException(ErrorCode.REFUND_ACCOUNT_REQUIRED);
+            }
+            refundDue.setRefundBank(refundAccount.bankName().trim());
+            refundDue.setRefundAccountNumber(refundAccount.accountNumber().trim());
+            refundDue.setRefundAccountHolder(refundAccount.accountHolder().trim());
+        }
         Order saved = cancel(order, user);
         log.info("User id={} cancelled order id={}", userId, orderId);
         return orderViewLoader.toResponse(saved);

@@ -1,11 +1,4 @@
-/* ================= LIÊN HỆ KHÁCH HÀNG (admin/contact-requests.html) ================= */
-
-/*
- * API thật (một hộp thư chung cho nhân viên / quản lý mọi chi nhánh; ADMIN chỉ xem):
- *   GET   /admin/contact-requests?keyword=&status=&topic=&page=&size=
- *   PATCH /admin/contact-requests/{id}  { status, staffNote }
- * Luồng: Mới → Đang xử lý → Đã xử lý (bắt buộc ghi chú), Đã xử lý mở lại được; không quay về Mới.
- */
+/* Liên hệ khách hàng (admin/contact-requests.html) */
 
 const CONTACT_PAGE_SIZE = 20;
 

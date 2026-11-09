@@ -1,11 +1,4 @@
-/* ================= HOÁ ĐƠN / PHIẾU GIAO HÀNG ĐỂ IN ================= */
-
-/*
- * Dựng nội dung in từ OrderResponse của API (đơn của khách: GET /orders/{id}; nhân viên: GET /admin/orders/{id}).
- * kind "invoice" = hoá đơn bán hàng (có giá, có thông tin công ty nếu khách xuất hoá đơn);
- * kind "delivery" = phiếu giao hàng (người nhận, địa chỉ, số lượng, tiền thu hộ, không có giá từng món).
- * Mọi giá trị từ API đi qua escapeHtml.
- */
+/* Hoá đơn / phiếu giao hàng để in */
 
 const INVOICE_PAYMENT_LABELS = {
     COD: "Thanh toán khi nhận hàng (COD)",

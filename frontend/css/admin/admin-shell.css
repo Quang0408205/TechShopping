@@ -1,6 +1,5 @@
-/* ================= KHU NỘI BỘ: KHUNG MỚI ================= */
-
 /*
+ * Khu nội bộ: khung mới.
  * Nạp SAU css/admin/admin.css trên mọi trang admin/. Cùng tông đen / trắng / đồng và font
  * Be Vietnam Pro của khu khách hàng; nền đặc, không gradient. Sidebar 248px, nội dung tối đa 1440px,
  * thu gọn menu dưới 1024px. Các token màu (--color-*, --gray-*) vẫn lấy từ css/style.css.

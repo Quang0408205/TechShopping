@@ -1,8 +1,4 @@
-/* ================= TRANG SẢN PHẨM ================= */
-
-/* .page-hero, .breadcrumb: css/customer-theme.css */
-
-/* --header-sticky-h: phần header còn dính khi cuộn, ui-effects.js đo lại khi đổi kích thước */
+/* Trang sản phẩm */
 
 .products-page {
     --sticky-top: var(--header-sticky-h, 73px);

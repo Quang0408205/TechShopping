@@ -1,4 +1,4 @@
-"""Làm giàu + chuẩn hoá dữ liệu (báo cáo mục 3.5.3 c–i): trích thông số số, Min-Max, One-Hot, điểm r(u,i)."""
+"""Làm giàu + chuẩn hoá dữ liệu: trích thông số số, Min-Max, One-Hot, điểm r(u,i)."""
 
 import re
 
@@ -48,7 +48,7 @@ def _from_name(name: str) -> tuple[float | None, float | None]:
 
 def extract_numeric_specs(products: pd.DataFrame, specs: pd.DataFrame) -> pd.DataFrame:
     """
-    Bảng 3.17: ram_gb, storage_gb, screen_inch, camera_mp (None khi không có).
+    ram_gb, storage_gb, screen_inch, camera_mp (None khi không có).
     Thứ tự tin cậy: tên sản phẩm → bảng thông số → cột ram/storage của phiên bản. Với laptop, dữ liệu import
     ghi RAM vào cột storage của phiên bản ("16 GB"), nên dung lượng < 64 GB ở đó bị bỏ qua.
     """

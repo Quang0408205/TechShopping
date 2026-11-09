@@ -1,10 +1,6 @@
-/* ================= LỊCH SỬ CHATBOT (admin/chat-history.html) ================= */
-
 /*
+ * Lịch sử chatbot (admin/chat-history.html).
  * Chỉ ADMIN, chỉ xem: theo dõi chất lượng câu trả lời của trợ lý AI.
- *   GET /admin/chat-sessions?page=&size=        → danh sách phiên, hoạt động gần nhất trước
- *   GET /admin/chat-sessions/{id}/messages      → tin nhắn của một phiên
- * Nội dung tin nhắn do khách nhập / AI sinh ra nên luôn escape.
  */
 
 const CHAT_SESSION_PAGE_SIZE = 30;

@@ -1,17 +1,4 @@
-/* ================= KHU QUẢN TRỊ NỘI BỘ (admin/) ================= */
-
-/*
- * Lấy từ bản frontend tham chiếu (Checkpoint B1). Khu admin cố tình khác khu
- * khách hàng (sidebar tối, bố cục bảng điều khiển) để nhân viên luôn biết
- * mình đang ở khu nội bộ.
- *
- * Design token (--color-*, --gray-*, --radius-*…) khai báo chung ở css/style.css
- * (từ F1), trang admin/ nạp style.css trước file này.
- */
-
-
-
-/* Quy tắc display của tác giả (vd. .admin-nav a) không được thắng [hidden] */
+/* Khu quản trị nội bộ (admin/) */
 
 .admin-body [hidden] {
     display: none !important;
@@ -1528,7 +1515,7 @@ button.admin-badge {
 }
 
 
-/* ================= ĐÁNH GIÁ SẢN PHẨM (admin/reviews) — R5 ================= */
+/* ================= ĐÁNH GIÁ SẢN PHẨM (admin/reviews) ================= */
 
 /* Nhãn "Sản phẩm: … ×" trên thanh lọc */
 .admin-filter-chip {

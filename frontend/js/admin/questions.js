@@ -1,9 +1,4 @@
-/* ================= HỎI ĐÁP SẢN PHẨM (admin/questions.html) ================= */
-
-/*
- * API: GET /admin/questions?status&keyword&page&size, PUT /admin/questions/{id}/answer { answer },
- *      PATCH /admin/questions/{id}/hidden { hidden }. Nhân viên, quản lý chi nhánh và ADMIN đều trả lời được.
- */
+/* Hỏi đáp sản phẩm (admin/questions.html) */
 
 const QUESTION_PAGE_SIZE = 20;
 

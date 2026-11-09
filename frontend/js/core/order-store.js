@@ -1,19 +1,4 @@
-/* ================= ĐƠN HÀNG: ĐƠN TRÊN SERVER ================= */
-
-/*
- * Đơn hàng lưu ở backend theo tài khoản: /api/v1/orders (cần đăng nhập).
- *   placeOrder(input)      POST /orders: đặt hàng từ GIỎ TRÊN SERVER (giá,
- *                          phí ship do server tính; giỏ được xoá sau khi đặt)
- *   fetchMyOrders(page)    GET  /orders?page=&size=  (mới nhất trước)
- *   fetchMyOrder(id)       GET  /orders/{id}  (không có / của người khác → null)
- *   cancelMyOrder(id)      POST /orders/{id}/cancel  (chỉ khi PENDING)
- * Mọi hàm trả về đơn đã đổi sang dạng dùng ở giao diện (toOrderView); lỗi API
- * thì ném ApiError (api.js).
- *
- * Đơn mô phỏng cũ trên trình duyệt ("poy_orders_<userId>", F2) được xoá im
- * lặng khi nạp file này (quyết định 2026-10-02).
- * Cần nạp sau js/core/api.js và js/core/cart-store.js (cartItemImageUrl).
- */
+/* Đơn hàng: đơn trên server */
 
 const LEGACY_ORDERS_STORAGE_PREFIX = "poy_orders_";
 
@@ -162,10 +147,10 @@ async function fetchMyOrder(id) {
 }
 
 
-async function cancelMyOrder(id) {
+async function cancelMyOrder(id, refundAccount) {
 
     const order = await apiRequest("/orders/" + encodeURIComponent(id) + "/cancel", {
-        method: "POST", auth: true
+        method: "POST", auth: true, body: refundAccount || undefined
     });
 
     return toOrderView(order);

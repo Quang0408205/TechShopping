@@ -1,5 +1,5 @@
 """
-Đánh giá phần TÌM KIẾM của RAG (báo cáo mục 3.7.3 b, 4.8.4): so sánh 3 cách tìm (vector, keyword, hybrid) và
+Đánh giá phần TÌM KIẾM của RAG: so sánh 3 cách tìm (vector, keyword, hybrid) và
 chọn số chunk K đưa cho LLM, trên bộ câu hỏi có đáp án evals/retrieval_cases.json.
 
 Với mỗi câu hỏi, lấy danh sách Top-8 rồi tính, với K = 1, 3, 5, 8:

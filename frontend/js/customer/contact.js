@@ -1,9 +1,4 @@
-/* ================= FORM LIÊN HỆ (customer/contact.html) ================= */
-
-/*
- * POST /api/v1/contact-requests (công khai; đã đăng nhập thì gửi kèm token để gắn tài khoản).
- * Chỉ báo thành công khi API trả 201. Lỗi theo ô (details) hiện dưới ô đó; 429 = gửi quá nhiều lần.
- */
+/* Form liên hệ (customer/contact.html) */
 
 document.addEventListener(
     "DOMContentLoaded",

@@ -47,6 +47,7 @@ Database Docker chỉ được tạo từ `database/techshopping.sql` **một l�
 | 41 | `product_questions_stock_alerts.sql` | Hỏi đáp sản phẩm (`product_questions`: hiện công khai khi đã trả lời và không bị ẩn) và đăng ký báo khi có hàng lại (`stock_subscriptions`) |
 | 42 | `recommendation_clicks.sql` | Đo hiệu quả gợi ý trên web: `recommendations.clicked_at` (khách bấm vào sản phẩm được gợi ý), cho tỉ lệ bấm / chuyển đổi ở trang admin "Gợi ý sản phẩm" |
 | 43 | `recommendation_evaluations.sql` | Lịch sử đánh giá offline của hệ thống khuyến nghị: mỗi lần chạy (tham số chọn trên validation, mua kèm / nâng cấp) trong `recommendation_evaluations`, chỉ số từng mô hình theo phần (validation, kiểm thử, chỉ thêm giỏ / mua, khách mới; khoảng tin cậy NDCG, độ đa dạng) trong `recommendation_evaluation_rows`. AI Service ghi sau mỗi lần đánh giá |
+| 44 | `refund_account.sql` | Tài khoản nhận hoàn tiền khi khách huỷ đơn chuyển khoản đã thanh toán (`payments.refund_bank`, `refund_account_number`, `refund_account_holder`); chạy lại được |
 | — | `ai_recommendation.sql` | Bảng hành vi người dùng, quan hệ sản phẩm, kho tri thức (pgvector) của phần AI |
 
 Cách chạy một file (PowerShell, từ gốc repo):

@@ -1,13 +1,5 @@
-/* ================= TRANG CHI TIẾT: ĐIỂM NỔI BẬT, CÒN HÀNG TẠI CỬA HÀNG, SO SÁNH VỚI… ================= */
+/* Trang chi tiết: điểm nổi bật, còn hàng tại cửa hàng, so sánh với… */
 
-/*
- * Dữ liệu thật cả: điểm nổi bật rút từ bảng thông số, tồn kho từ GET /products/{id}/store-stock,
- * gợi ý so sánh từ GET /products (cùng danh mục, giá trong khoảng ±35%). Thiếu dữ liệu thì khối tự ẩn.
- * product-detail.js gọi: renderProductHighlights(rows), loadStoreStock(productId), renderStoreStock(variantId),
- * loadCompareSuggestions(product, price).
- */
-
-/* rows = [[tên, giá trị], ...] như renderSpecs; chọn tối đa 4 ô có dữ liệu, ít hơn 3 ô thì ẩn cả khối */
 function renderProductHighlights(rows) {
 
     const box = document.getElementById("detailHighlights");

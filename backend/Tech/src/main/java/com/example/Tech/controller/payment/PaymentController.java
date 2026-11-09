@@ -5,9 +5,7 @@ import com.example.Tech.service.payment.installment.InstallmentPartnerPolicy;
 import com.example.Tech.dto.response.common.ApiResult;
 import com.example.Tech.dto.response.payment.CardOptionsResponse;
 import com.example.Tech.dto.response.payment.InstallmentOptionsResponse;
-import com.example.Tech.entity.payment.InstallmentBank;
 import com.example.Tech.service.payment.CardPaymentService;
-import com.example.Tech.service.payment.InstallmentPolicy;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 
 /** Payment rules for the checkout page. Requires a valid access token (the /api/v1/** rule of SecurityConfig). */
 @RestController

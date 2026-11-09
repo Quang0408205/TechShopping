@@ -1,15 +1,4 @@
-/* ================= COMBO (admin/combos.html) ================= */
-
-/*
- * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET    /admin/combos?keyword=&status=&page=&size=   mới nhất trước
- *   POST   /admin/combos   { name, description, mainProductId, startsAt, endsAt, active,
- *   PUT    /admin/combos/{id}   items: [{ productId, discountType: PERCENT|AMOUNT, discountValue }] }
- *   PATCH  /admin/combos/{id}/status { active }
- *   DELETE /admin/combos/{id}                (chỉ khi chưa đơn nào áp combo)
- *   GET    /admin/combos/suggestions?productId=   gợi ý món kèm từ product_relations (AI)
- * Tìm sản phẩm: GET /products?keyword= (công khai). Trạng thái (status) do backend tính.
- */
+/* Combo (admin/combos.html) */
 
 const COMBO_PAGE_SIZE = 20;
 

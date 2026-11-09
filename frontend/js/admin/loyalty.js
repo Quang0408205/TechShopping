@@ -1,11 +1,4 @@
-/* ================= HẠNG THÀNH VIÊN (admin/loyalty.html) ================= */
-
-/*
- * API thật (chỉ ADMIN; backend kiểm tra lại vai trò trong DB):
- *   GET /admin/loyalty/tiers     4 hạng, thấp → cao
- *   PUT /admin/loyalty/tiers     { tiers: [{ code, minSpent, pointMultiplier }] } — gửi đủ 4 hạng
- * Kiểm tra trước khi gửi (server kiểm lại): hạng đầu = 0, ngưỡng tăng dần, hệ số 1–5 (2 số lẻ).
- */
+/* Hạng thành viên (admin/loyalty.html) */
 
 const TIER_EXAMPLE_ORDER = 20000000;
 

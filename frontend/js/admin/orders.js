@@ -1,19 +1,4 @@
-/* ================= ĐƠN HÀNG (admin/orders.html) ================= */
-
-/*
- * API thật (STAFF và ADMIN; backend kiểm tra lại vai trò trong DB ở mọi request):
- *   GET   /admin/orders?keyword=&status=&fromDate=&toDate=&storeId=&page=&size=  mới nhất trước
- *         (nhân viên: backend chỉ trả đơn của chi nhánh mình)
- *   PATCH /admin/orders/{id}/status  { status, trackingNumber? }
- *   POST  /admin/orders/{id}/payment/confirm { transactionId? }   chuyển khoản đã nhận tiền
- *   POST  /admin/orders/{id}/payment/refund                       đã hoàn tiền đơn hủy
- *   POST  /admin/orders/{id}/installment/approve | reject { reason }
- *   PATCH /admin/orders/{id}/store { storeId }   chỉ ADMIN, đơn đang chờ (vd. chi nhánh thiếu hàng)
- * Chỉ hiện nút cho bước kế tiếp hợp lệ (giống OrderStatus.canMoveTo ở backend).
- * Số đơn trên tab trạng thái = totalElements của GET /admin/orders?size=1 với cùng bộ lọc.
- * 409 INVALID_ORDER_STATUS (khách vừa hủy / người khác vừa đổi) → báo và tải lại;
- * 409 PAYMENT_REQUIRED / INSTALLMENT_NOT_APPROVED / INSUFFICIENT_STOCK / ORDER_STORE_MISSING → câu của server.
- */
+/* Đơn hàng (admin/orders.html) */
 
 const ORDER_PAGE_SIZE = 20;
 
@@ -823,6 +808,12 @@ document.addEventListener("DOMContentLoaded", async function () {
 
             if (payment.transactionId) {
                 facts.push(["Mã giao dịch", escapeHtml(payment.transactionId)]);
+            }
+
+            if (payment.refundAccount) {
+                facts.push(["Hoàn tiền về", escapeHtml(payment.refundAccount.bankName)]);
+                facts.push(["Số tài khoản", escapeHtml(payment.refundAccount.accountNumber)]);
+                facts.push(["Chủ tài khoản", escapeHtml(payment.refundAccount.accountHolder)]);
             }
 
             if (payment.refundedAt) {

@@ -1,12 +1,6 @@
-/* ================= DESIGN TOKENS ================= */
-
 /*
- * Hệ thống token dùng chung cho toàn bộ site (Customer + sau này là admin/).
- * Mục tiêu: giữ tinh thần tối giản đen-trắng hiện có, chỉ bổ sung MỘT accent
- * trung tính (đồng/bronze) dùng có chọn lọc cho điểm nhấn tương tác (link,
- * trạng thái active, focus ring, badge) — không sơn lại toàn bộ giao diện.
- * Bo góc + shadow + easing cũng được chuẩn hoá tại đây để mọi component
- * (card, button, input) dùng chung một "ngôn ngữ" hình khối và chuyển động.
+ * Design tokens dùng chung cho khu khách hàng và admin/: tông đen - trắng, một màu nhấn đồng (bronze) cho link,
+ * trạng thái active, focus ring và badge.
  */
 
 :root {
@@ -641,7 +635,6 @@ img {
 
     transition: transform var(--duration-base) var(--ease-standard), box-shadow var(--duration-base) var(--ease-standard);
 }
-
 
 
 .contact-hub-item:nth-child(3) {
@@ -1335,6 +1328,17 @@ img {
 .modal-field input:focus,
 .modal-field select:focus {
     border-color: var(--color-ink);
+}
+
+.modal-field + .modal-field {
+    margin-top: 0;
+}
+
+.modal-error {
+    margin: -10px 0 20px;
+    color: var(--color-danger);
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .state-box p:last-child {

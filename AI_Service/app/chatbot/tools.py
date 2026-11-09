@@ -1,5 +1,5 @@
 """
-Function Calling (báo cáo mục 3.6.3, Bảng 3.24). Mỗi tool là một chức năng nghiệp vụ; tool cần dữ liệu riêng của
+Function Calling. Mỗi tool là một chức năng nghiệp vụ; tool cần dữ liệu riêng của
 khách gọi API Spring Boot KÈM access token của chính khách đó, nên Backend vẫn tự xác thực và kiểm tra quyền
 (đơn hàng phải thuộc tài khoản đang đăng nhập). Chatbot Service không truy cập bảng nghiệp vụ trực tiếp;
 nó chỉ đọc kho tri thức kb_chunks của riêng nó.

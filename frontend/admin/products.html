@@ -2,254 +2,163 @@
 <html lang="vi">
 
 <head>
-
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
-
     <title>Sản phẩm - Quản trị POY</title>
-
     <link rel="stylesheet" href="../css/style.css">
-
     <link rel="stylesheet" href="../css/admin/admin.css">
     <link rel="stylesheet" href="../css/admin/admin-shell.css">
-
     <link
         href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
-
 </head>
 
-<!-- data-roles: vai trò được vào trang (bỏ trống = mọi nhân viên), kiểm tra ở js/admin/admin-layout.js -->
 <body class="admin-body" data-page-title="Sản phẩm" data-roles="ADMIN">
-
 
 <div class="admin-shell">
 
     <div data-include="admin-sidebar" data-active="products"></div>
 
     <div class="admin-main">
-
         <div data-include="admin-topbar"></div>
-
         <main class="admin-content">
-
-
             <div class="admin-filter-bar admin-filter-bar--split">
-
                 <form class="admin-filter-bar" id="productFilterForm" role="search">
-
                     <input type="search" id="productKeyword" placeholder="Tìm tên sản phẩm…" maxlength="255" aria-label="Từ khoá">
-
                     <select id="productCategoryFilter" aria-label="Danh mục">
                         <option value="">Mọi danh mục</option>
                     </select>
-
                     <select id="productBrandFilter" aria-label="Thương hiệu">
                         <option value="">Mọi thương hiệu</option>
                     </select>
-
                     <select id="productStatusFilter" aria-label="Trạng thái">
                         <option value="">Mọi trạng thái</option>
                         <option value="true">Đang bán</option>
                         <option value="false">Đã ẩn</option>
                     </select>
-
                     <button type="submit" class="btn btn-dark">TÌM</button>
-
                 </form>
-
                 <button type="button" class="btn btn-outline-dark" id="productImportBtn">
                     NHẬP TỪ EXCEL
                 </button>
-
                 <button type="button" class="btn btn-dark" id="newProductBtn">
                     + THÊM SẢN PHẨM
                 </button>
-
             </div>
-
-
-            <!-- Nhập sản phẩm bằng Excel (js/admin/excel-import.js) -->
             <section class="admin-panel" id="productImportPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2>Nhập sản phẩm từ Excel</h2>
                     <button type="button" class="btn btn-outline-dark" id="productImportClose">ĐÓNG</button>
                 </div>
-
                 <div id="productImportRoot"></div>
-
             </section>
-
-
             <!-- Thêm / sửa sản phẩm -->
             <section class="admin-panel" id="productFormPanel" hidden>
-
                 <div class="admin-panel-header">
                     <h2 id="productFormTitle">Thêm sản phẩm</h2>
                 </div>
-
                 <form id="productForm" novalidate>
-
                     <p id="productFormError" class="form-error" role="alert" hidden></p>
-
                     <div class="admin-form-grid">
-
                         <div class="admin-field admin-field-wide">
                             <label for="pfName">Tên sản phẩm *</label>
                             <input type="text" id="pfName" maxlength="255" required>
                         </div>
-
                         <div class="admin-field">
                             <label for="pfCategory">Danh mục *</label>
                             <select id="pfCategory" required></select>
                         </div>
-
                         <div class="admin-field">
                             <label for="pfBrand">Thương hiệu</label>
                             <select id="pfBrand"></select>
                         </div>
-
                         <div class="admin-field">
                             <label for="pfBasePrice">Giá gốc (đ) *</label>
                             <input type="number" id="pfBasePrice" min="1" step="1000" required>
                         </div>
-
                         <div class="admin-field">
                             <label for="pfDiscountPrice">Giá khuyến mãi (đ)</label>
                             <input type="number" id="pfDiscountPrice" min="0" step="1000" placeholder="Để trống nếu không giảm giá">
                         </div>
-
                         <div class="admin-field">
                             <label for="pfSku">Mã SKU</label>
                             <input type="text" id="pfSku" maxlength="50">
                         </div>
-
                         <div class="admin-field">
                             <label for="pfSlug">Slug (đường dẫn)</label>
                             <input type="text" id="pfSlug" maxlength="255" placeholder="Tự tạo từ tên nếu để trống">
                         </div>
-
                         <div class="admin-field">
                             <label for="pfWarranty">Bảo hành (tháng)</label>
                             <input type="number" id="pfWarranty" min="0" step="1">
                         </div>
-
                         <div class="admin-field">
                             <label for="pfWeight">Khối lượng (kg)</label>
                             <input type="number" id="pfWeight" min="0" step="0.01">
                         </div>
-
                         <div class="admin-field admin-field-wide">
                             <label for="pfDescription">Mô tả</label>
                             <textarea id="pfDescription" rows="4"></textarea>
                         </div>
-
-                        <!-- Ảnh: thêm mới = gửi cùng sản phẩm khi LƯU; sửa = lưu ngay từng thao tác (js/admin/products.js) -->
                         <fieldset class="admin-field admin-field-wide admin-image-field" id="pfImages">
-
                             <legend>Ảnh sản phẩm *</legend>
-
                             <p class="admin-field-hint" id="pfImagesHint"></p>
-
                             <p class="form-error" id="pfImagesError" role="alert" hidden></p>
-
                             <div class="admin-image-list" id="pfImageList" aria-live="polite"></div>
-
                             <div class="admin-image-add" id="pfImageAdd">
-
                                 <label class="btn btn-outline-dark admin-image-file-btn">
                                     CHỌN ẢNH TỪ MÁY
                                     <input type="file" id="pfImageFile" accept="image/jpeg,image/png,image/webp" multiple>
                                 </label>
-
                                 <input type="url" id="pfImageUrl" maxlength="2048" placeholder="Hoặc dán link ảnh https://…" aria-label="Link ảnh">
-
                                 <button type="button" class="btn btn-outline-dark" id="pfImageUrlBtn">THÊM LINK</button>
-
                                 <label class="admin-image-color-pick">
                                     Màu của ảnh thêm mới
                                     <select id="pfImageColor" aria-label="Màu của ảnh thêm mới"><option value="">Chung (mọi màu)</option></select>
                                 </label>
-
                             </div>
-
                         </fieldset>
-
-                        <!-- Phiên bản + thông số: ghi khi bấm LƯU (js/admin/product-extras.js) -->
                         <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfVariants">
-
                             <legend>Phiên bản *</legend>
-
                             <p class="admin-field-hint">Mỗi thẻ là một phiên bản (RAM + bộ nhớ, giá) khách chọn khi mua; trong thẻ khai báo các màu và thông số riêng của phiên bản. Cần ít nhất 1 phiên bản, giá lớn hơn 0. Màu hoặc phiên bản đã bán / còn tồn kho không xoá được.</p>
-
                             <div id="pfVariantRows"></div>
-
                             <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfVariantAdd">+ THÊM PHIÊN BẢN</button>
-
                         </fieldset>
-
                         <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfSpecs">
-
                             <legend>Thông số kỹ thuật chung</legend>
-
                             <p class="admin-field-hint">Đã gợi ý sẵn các thông số hay gặp của danh mục; gõ tên để chọn tên đã dùng (tên lạ vẫn lưu được nhưng sẽ báo vàng). Nhãn "→ Nhóm" cho biết dòng nằm ở nhóm nào trên trang khách; nhiều mục trong một giá trị thì ngăn bằng dấu |. Dòng để trống giá trị sẽ không được lưu; dùng ↑ ↓ để đổi thứ tự.</p>
-
-                            <!-- Ô nổi bật trang khách sẽ hiện, tính từ các dòng bên dưới (product-extras.js) -->
                             <div class="admin-hl-bar" id="pfHighlightBar" aria-live="polite"></div>
-
                             <datalist id="pfSpecNameList"></datalist>
-
                             <div id="pfSpecRows"></div>
-
                             <button type="button" class="btn btn-outline-dark admin-extra-add" id="pfSpecAdd">+ THÊM THÔNG SỐ</button>
-
                         </fieldset>
-
-                        <!-- Nhu cầu của danh mục (vd Laptop: Gaming, Đồ hoạ); ghi khi bấm LƯU (js/admin/product-extras.js) -->
                         <fieldset class="admin-field admin-field-wide admin-extra-field" id="pfNeeds" hidden>
-
                             <legend>Nhu cầu</legend>
-
                             <p class="admin-field-hint">Chọn các nhu cầu phù hợp với sản phẩm; khách lọc theo nhu cầu ở trang Sản phẩm. Một sản phẩm có thể có nhiều nhu cầu.</p>
-
                             <div id="pfNeedList" class="admin-need-list"></div>
-
                         </fieldset>
-
                         <label class="admin-field-check admin-field-wide">
                             <input type="checkbox" id="pfActive" checked>
                             Đang bán (hiển thị trên website)
                         </label>
-
                     </div>
-
                     <div class="admin-form-actions">
                         <button type="submit" class="btn btn-dark" id="productSaveBtn">LƯU</button>
                         <button type="button" class="btn btn-outline-dark" id="productCancelBtn">HỦY</button>
                     </div>
-
                 </form>
-
             </section>
-
-
             <section class="admin-panel">
-
                 <div class="admin-panel-header">
                     <h2>Danh sách sản phẩm</h2>
                     <span class="admin-row-count" id="productRowCount"></span>
                 </div>
-
                 <div class="admin-table-wrapper">
-
                     <table class="admin-table admin-table--wide">
-
                         <thead>
                             <tr>
                                 <th>Sản phẩm</th>
@@ -260,23 +169,15 @@
                                 <th>Thao tác</th>
                             </tr>
                         </thead>
-
                         <tbody id="productTableBody"></tbody>
-
                     </table>
-
                 </div>
-
                 <div class="admin-pagination" id="productPagination"></div>
-
             </section>
-
         </main>
-
     </div>
 
 </div>
-
 
 <script src="../js/core/api.js"></script>
 <script src="../js/core/ui.js"></script>

@@ -1,5 +1,5 @@
 -- Trang tĩnh (giới thiệu, điều khoản, chính sách...): bảng content_pages, nội dung là HTML. Nạp sẵn 8 trang;
--- chạy lại được (không ghi đè trang đã sửa). Bảng banners của bản cũ không còn dùng nên được bỏ.
+-- chạy lại được (không ghi đè trang đã sửa).
 
 drop table if exists banners;
 

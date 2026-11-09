@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/** Calls the Recommendation Service of AI_Service (report table 3.23). Empty when it does not answer. */
+/** Calls the Recommendation Service of AI_Service. Empty when it does not answer. */
 @Slf4j
 @Component
 public class AiRecommendationClient {

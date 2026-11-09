@@ -1,14 +1,4 @@
-/* ================= GỢI Ý SẢN PHẨM (admin/recommendations.html) ================= */
-
-/*
- * API thật (chỉ ADMIN):
- *   GET  /admin/recommendations/overview?days=   { aiAvailable, model, evaluation, days, online[] }
- *   POST /admin/recommendations/train             huấn luyện lại ngay (vài giây), trả số liệu mô hình mới
- *   POST /admin/recommendations/evaluation        chạy lại đánh giá offline ở nền (vài phút: tinh chỉnh + kiểm thử)
- * model / evaluation lấy từ AI Service (null khi AI ngừng); evaluation.history = các lần đánh giá trước (bảng
- * recommendation_evaluations); online lấy từ database (bảng recommendations).
- * Đang đánh giá thì tải lại tổng quan mỗi 3 giây đến khi xong.
- */
+/* Gợi ý sản phẩm (admin/recommendations.html) */
 
 const REC_LIST_LABELS = {
     PERSONAL: "Gợi ý dành cho bạn",

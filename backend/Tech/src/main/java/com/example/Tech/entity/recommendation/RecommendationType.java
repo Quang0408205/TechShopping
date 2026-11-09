@@ -1,6 +1,6 @@
 package com.example.Tech.entity.recommendation;
 
-/** Kind of list asked for; the path is the AI service endpoint that computes it (report table 3.23). */
+/** Kind of list asked for; the path is the AI service endpoint that computes it. */
 public enum RecommendationType {
     PERSONAL("/recommend"),
     SIMILAR("/similar"),

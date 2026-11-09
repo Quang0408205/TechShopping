@@ -1,9 +1,4 @@
-/* ================= TRANG TĨNH (customer/page.html?slug=) ================= */
-
-/*
- * API công khai: GET /pages/{slug} (nội dung HTML đã được backend lọc), GET /pages (danh sách bên cạnh).
- * Liên kết nội bộ trong nội dung viết dạng "/customer/contact.html" được gắn vào gốc của site.
- */
+/* Trang tĩnh (customer/page.html?slug=) */
 
 document.addEventListener("DOMContentLoaded", async function () {
 

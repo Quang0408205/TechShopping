@@ -13,7 +13,7 @@ public final class SensitiveData {
     static final int MAX_LENGTH = 2000;
 
     private static final Pattern SECRET_KEY = Pattern.compile(
-            "(?i)(.*(password|passwd|token|secret|credential|citizen|cardnumber|cvv|cvc|authorization).*|otp|pin)");
+            "(?i)(.*(password|passwd|token|secret|credential|citizen|cardnumber|accountnumber|cvv|cvc|authorization).*|otp|pin)");
 
     private SensitiveData() {
     }

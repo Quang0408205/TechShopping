@@ -1,6 +1,6 @@
 # Phần AI của TechShopping: Khuyến nghị sản phẩm + Chatbot
 
-Tài liệu này giải thích **mọi thứ đã thêm vào dự án cho phần AI**: dùng công nghệ gì, file nào làm gì, thuật toán chạy ra sao, cách cài đặt, chạy, kiểm thử. Thiết kế bám theo báo cáo khoá luận (mục 3.5 Recommendation, 3.6 Chatbot, 3.7 Đánh giá).
+Tài liệu này giải thích **mọi thứ đã thêm vào dự án cho phần AI**: dùng công nghệ gì, file nào làm gì, thuật toán chạy ra sao, cách cài đặt, chạy, kiểm thử.
 
 Phần AI gồm hai chức năng:
 
@@ -161,7 +161,7 @@ AI_Service/
 | `js/core/api.js` | `trackInteraction()` + tự gửi `CLICK` khi bấm vào thẻ sản phẩm bất kỳ |
 | `js/core/ui.js` | `fetchRecommendations()`, `renderRecommendationGrid()` (thẻ sản phẩm + dòng **lý do gợi ý**) |
 | `js/customer/recommendation.js` | 5 khu của trang Khuyến nghị lấy dữ liệu từ AI thay cho quy tắc tạm |
-| `js/home.js`, `index.html` | Khu "Gợi ý dành cho bạn" ở trang chủ lấy 4 gợi ý PERSONAL từ AI (đã đăng nhập: theo lịch sử, kèm lý do; chưa đăng nhập: phổ biến); trước 09/11/2026 chỉ là 4 sản phẩm mới nhất |
+| `js/home.js`, `index.html` | Khu gợi ý ở trang chủ (ngay sau Flash sale) lấy 8 gợi ý PERSONAL từ AI khi khu này sắp vào màn hình: đã đăng nhập → "Gợi ý dành cho bạn" theo lịch sử, kèm lý do; chưa đăng nhập hoặc AI ngừng → đổi tiêu đề thành "Được quan tâm nhiều"; lỗi hoặc rỗng thì ẩn cả khu |
 | `js/customer/product-detail.js`, `customer/product-detail.html` | Gửi `VIEW`; thêm 3 khu Nâng cấp / Mua kèm / Tương tự; nhớ sản phẩm xem gần nhất |
 | `js/customer/chatbot.js` | Widget gọi chatbot AI: **chữ hiện dần** (đọc luồng SSE), dòng "Đang tra cứu…", **nút Xác nhận** cho thao tác đề xuất, giữ cuộc trò chuyện khi chuyển trang, **tự quay về chế độ từ khoá** khi AI ngừng |
 | `js/admin/chat-history.js`, `admin/chat-history.html`, `partials/admin-sidebar.html` | Trang Lịch sử chatbot đọc dữ liệu thật, hiện trong menu ADMIN |
@@ -230,7 +230,7 @@ AI_Service/
    - *"Khách quan tâm Samsung Galaxy S26 Ultra cũng quan tâm sản phẩm này"* khi điểm chủ yếu đến từ CF (sản phẩm khách
      đã tương tác có vector ALS gần nhất); không xác định được thì *"Khách hàng có sở thích giống bạn cũng quan tâm"*.
 
-**Cold-start** (Bảng 3.21 trong báo cáo):
+**Cold-start**:
 
 | Trường hợp | Cách xử lý |
 |---|---|
@@ -285,6 +285,14 @@ mô phỏng. Vì vậy `cross_sell` lọc các cặp này qua `compat.compatible
 - danh mục ngoài catalogue (dữ liệu Amazon ở mục 9.1c) không bị lọc, nên kết quả trên Amazon không đổi.
 
 Quét toàn bộ 868 thiết bị sau khi sửa: không còn cặp nào ở trên, máy nào cũng đủ 4 gợi ý mua kèm.
+
+Phụ kiện chỉ vừa một số máy (`fits`, từ 08/11/2026; trước đó iPhone 17e được gợi ý ốp lưng iPhone 15 Pro):
+
+- **Ốp lưng, kính cường lực, miếng dán ghi tên đời máy** chỉ gắn với đúng đời đó: "Ốp lưng iPhone 16" gắn với iPhone 16,
+  không gắn với iPhone 16e, 16 Plus hay 17e. Catalogue hiện chỉ có ốp iPhone 15 Pro và iPhone 16, nên đa số điện thoại
+  không có ốp trong danh sách mua kèm (đúng hơn là gợi ý ốp không vừa).
+- **Apple Pencil Pro** chỉ gắn với iPad Pro, iPad Air, iPad mini (iPad thường không dùng được).
+- **Balo / túi laptop ghi cỡ inch** chỉ gắn với laptop có màn hình không lớn hơn cỡ đó (đọc từ thông số "Kích thước màn hình").
 
 ### 4.6. Khi AI Service không trả lời (dự phòng)
 
@@ -942,7 +950,7 @@ database khác, nên lần này so **trên cùng máy, cùng database**:
   - 30/30 là **một lần chạy**; mô hình 8B trả lời khác nhau giữa các lần, các lần chạy trước trên cùng máy dao động
     23–24/30 với cùng bộ câu hỏi cũ.
 
-Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do), có thể dán thẳng vào mục 4.8.4 của báo cáo. Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
+Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do). Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
 
 ### 9.5. Đánh giá phần tìm kiếm RAG (`scripts/eval_retrieval.py`)
 

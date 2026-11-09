@@ -1,21 +1,4 @@
-/* ================= TIỆN ÍCH GIAO DIỆN DÙNG CHUNG ================= */
-
-/*
- * Toast thông báo (thay cho alert()), khung xương (skeleton) khi đang tải,
- * trạng thái rỗng / lỗi và thẻ sản phẩm dùng chung cho trang chủ + trang
- * Sản phẩm. Lấy chọn lọc từ bản frontend tham chiếu, viết lại theo đúng
- * ProductResponse của backend (GET /api/v1/products).
- *
- * Thứ tự nạp: js/core/api.js → js/core/ui.js → js/core/layout.js →
- * js/core/main.js → script của trang. setupAddToCart() nằm trong main.js,
- * chỉ được gọi lúc chạy nên không phụ thuộc thứ tự nạp. Trang admin/ nạp
- * ui.js nhưng không nạp main.js.
- */
-
-
-/* ================= ĐỊNH DẠNG GIÁ ================= */
-
-/* formatPrice(41990000) → "41.990.000đ" (chuyển từ main.js sang đây để trang admin/ dùng được) */
+/* Tiện ích giao diện dùng chung */
 
 function formatPrice(price) {
 
@@ -323,14 +306,12 @@ function getDisplayPrice(product) {
 
 /*
  * productCardHtml(product, categorySlug): product là một phần tử của
- * data.content từ GET /products. Giữ đúng markup thẻ cũ (.product-card >
- * .product-image + .product-info); ảnh và tên link sang trang chi tiết
- * (A2). Nút .add-cart vẫn mang data-name /
- * data-price vì giỏ hàng còn lưu theo tên cho tới.
+ * data.content từ GET /products. Thẻ gồm .product-image + .product-info; ảnh và
+ * tên link sang trang chi tiết.
  * Sản phẩm giá 0 (11 sản phẩm trong dữ liệu crawl) hiển thị "Liên hệ" và
  * không cho thêm vào giỏ. availableQuantity = 0 (không chi nhánh đang mở nào
  * còn hàng) → nhãn "Hết hàng", nút bị khoá.
- * Thiếu trường này (API cũ) thì coi như còn hàng.
+ * Thiếu trường này thì coi như còn hàng.
  * Ảnh: primaryImageUrl (ảnh chính, không có thì ảnh đầu tiên) nếu là
  * http(s), không thì ảnh thay thế theo danh mục; ảnh hỏng cũng đổi sang ảnh
  * thay thế (bindProductImageFallbacks).
@@ -883,6 +864,8 @@ let modalOverlayElement = null;
  * onConfirm nhận giá trị đã trim; Enter trong ô = xác nhận.
  * select (tuỳ chọn, thay cho input) = { label, value, options: [{ value, label }] }:
  * thêm một ô chọn, onConfirm nhận giá trị đang chọn.
+ * fields (tuỳ chọn) = [{ name, label, value, placeholder, maxLength, inputMode, options }]: nhiều ô nhập hoặc chọn;
+ * validate(values) trả chuỗi lỗi thì hộp thoại giữ nguyên và hiện lỗi, onConfirm nhận object giá trị.
  * Mọi chuỗi đều được escape.
  */
 
@@ -894,6 +877,8 @@ function openConfirmModal(options) {
     const input = options.input;
 
     const select = options.select;
+
+    const fields = Array.isArray(options.fields) ? options.fields : [];
 
     const overlay = document.createElement("div");
 
@@ -914,6 +899,27 @@ function openConfirmModal(options) {
                     >
                 </label>
             ` : ""}
+            ${fields.map(function (field) {
+                return field.options
+                    ? `<label class="modal-field">
+                        <span>${escapeHtml(field.label)}</span>
+                        <select name="${escapeHtml(field.name)}">
+                            <option value="">${escapeHtml(field.placeholder || "Chọn")}</option>
+                            ${field.options.map(function (option) {
+                                return `<option value="${escapeHtml(option)}" ${option === field.value ? "selected" : ""}>${escapeHtml(option)}</option>`;
+                            }).join("")}
+                        </select>
+                    </label>`
+                    : `<label class="modal-field">
+                        <span>${escapeHtml(field.label)}</span>
+                        <input type="text" name="${escapeHtml(field.name)}" value="${escapeHtml(field.value || "")}"
+                            placeholder="${escapeHtml(field.placeholder || "")}"
+                            ${field.maxLength ? `maxlength="${Number(field.maxLength)}"` : ""}
+                            ${field.inputMode ? `inputmode="${escapeHtml(field.inputMode)}"` : ""}
+                            autocomplete="off">
+                    </label>`;
+            }).join("")}
+            <p class="modal-error" hidden></p>
             ${!input && select ? `
                 <label class="modal-field">
                     <span>${escapeHtml(select.label || "")}</span>
@@ -945,6 +951,38 @@ function openConfirmModal(options) {
 
 
     function confirm() {
+
+        if (fields.length) {
+
+            const values = {};
+
+            fields.forEach(function (field) {
+                values[field.name] = overlay.querySelector('[name="' + field.name + '"]').value.trim();
+            });
+
+            const message = typeof options.validate === "function" ? options.validate(values) : "";
+
+            if (message) {
+
+                const errorBox = overlay.querySelector(".modal-error");
+
+                errorBox.textContent = message;
+
+                errorBox.hidden = false;
+
+                return;
+
+            }
+
+            closeModal();
+
+            if (typeof options.onConfirm === "function") {
+                options.onConfirm(values);
+            }
+
+            return;
+
+        }
 
         const value = inputElement
             ? inputElement.value.trim()
@@ -987,6 +1025,10 @@ function openConfirmModal(options) {
     } else if (selectElement) {
 
         selectElement.focus();
+
+    } else if (fields.length) {
+
+        overlay.querySelector(".modal-field input, .modal-field select").focus();
 
     }
 

@@ -1,18 +1,4 @@
-/* ================= ĐÁNH GIÁ SẢN PHẨM (tab "ĐÁNH GIÁ" ở customer/product-detail.html) ================= */
-
-/*
- * API thật:
- *   GET    /products/{id}/reviews?rating=&withImages=&page=&size=   công khai, chỉ đánh giá đang hiện, mới nhất trước
- *   GET    /products/{id}/reviews/summary                           trung bình, tổng, số đánh giá từng mức 5→1, có ảnh
- *   GET    /reviews/mine?productId=                                 đánh giá của tôi (kể cả bị ẩn, kèm lý do)
- *   POST   /reviews {productId, rating, comment, imageUrls}         viết (nhiều đánh giá / tài khoản, cách nhau ≥ 1 phút)
- *   PUT    /reviews/{id}, DELETE /reviews/{id}                      sửa / xoá đánh giá của mình
- *   POST   /uploads/review-images (multipart "file") → { url }      ảnh đánh giá (JPG / PNG / WebP ≤ 5 MB)
- * Chỉ hiển thị số thật (không bịa phân bố sao). Đánh giá của mình có nhãn "Của bạn" + Sửa / Xoá ngay trong
- * danh sách; đánh giá bị ẩn chỉ mình thấy, ở khối phía trên. Mọi chữ qua escapeHtml, mọi ảnh qua isSafeImageUrl.
- *
- * initProductReviews(product, { onSummaryChange(summary) }) — gọi từ product-detail.js khi đã có sản phẩm.
- */
+/* Đánh giá sản phẩm (tab "đánh giá" ở customer/product-detail.html) */
 
 const REVIEW_PAGE_SIZE = 5;
 

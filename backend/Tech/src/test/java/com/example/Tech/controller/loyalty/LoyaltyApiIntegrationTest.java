@@ -176,7 +176,9 @@ class LoyaltyApiIntegrationTest {
                 .andExpect(status().isCreated())).get("id").asLong();
         send(post("/api/v1/admin/orders/" + cancelled + "/payment/confirm"), staff, null).andExpect(status().isOk());
         send(get("/api/v1/loyalty/me"), customer, null).andExpect(jsonPath("$.data.points").value(1599 * 2));
-        send(post("/api/v1/orders/" + cancelled + "/cancel"), customer, null).andExpect(status().isOk());
+        send(post("/api/v1/orders/" + cancelled + "/cancel"), customer,
+                Map.of("bankName", "Vietcombank", "accountNumber", "0123456789", "accountHolder", "NGUYEN VAN A"))
+                .andExpect(status().isOk());
         send(get("/api/v1/loyalty/me"), customer, null)
                 .andExpect(jsonPath("$.data.points").value(1599))
                 .andExpect(jsonPath("$.data.totalSpent").value(16020000));

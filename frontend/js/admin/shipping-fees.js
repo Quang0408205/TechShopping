@@ -1,10 +1,4 @@
-/* ================= PHÍ GIAO HÀNG THEO TỈNH (admin/shipping-fees.html) ================= */
-
-/*
- * API (chỉ ADMIN): GET /admin/shipping-fees, POST /admin/shipping-fees { provinceName, fee },
- * PUT /admin/shipping-fees/{id}, DELETE /admin/shipping-fees/{id} (tỉnh quay về phí mặc định).
- * Tên tỉnh chọn từ danh sách của ô địa chỉ ở trang thanh toán (assets/data/vn-units.json) để khớp đúng tên.
- */
+/* Phí giao hàng theo tỉnh (admin/shipping-fees.html) */
 
 document.addEventListener("DOMContentLoaded", async function () {
 

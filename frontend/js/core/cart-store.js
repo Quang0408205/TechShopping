@@ -1,24 +1,5 @@
-/* ================= GIỎ HÀNG: GIỎ TRÊN SERVER ================= */
+/* Giỏ hàng: giỏ trên server */
 
-/*
- * Giỏ hàng lưu ở backend theo tài khoản: /api/v1/cart (cần đăng nhập).
- * Mỗi dòng xác định bằng variantId; giá, tên, ảnh luôn lấy từ server lúc đọc
- * (không tin giá do trình duyệt gửi lên). Mọi hàm đều async và trả về giỏ đã
- * đổi sang dạng dùng cho trang giỏ / thanh toán:
- *   { items: [{ productId, variantId, name, variantLabel, price, oldPrice,
- *               image, quantity, lineTotal, available }],
- *     totalQuantity, subtotal, comboDiscount (tiền giảm combo), shippingFee, total, hasUnavailableItems }
- * availableQuantity: số còn ở các chi nhánh đang mở (null = API cũ).
- * Dòng available = false: sản phẩm đã ngừng bán (bị xoá / ẩn / chưa có giá) hoặc không đủ hàng,
- * không tính vào tạm tính, chỉ còn nút xoá.
- *
- * Giỏ cũ lưu trên trình duyệt ("poy_cart_<userId>", F2) được chuyển lên
- * server một lần (migrateLocalCart); lỗi API thì hàm ném ApiError (api.js).
- *
- * Thứ tự nạp: api.js → ui.js → cart-store.js → layout.js → main.js.
- */
-
-/* Tối đa mỗi dòng, giống CartService.MAX_LINE_QUANTITY ở backend */
 const MAX_CART_LINE_QUANTITY = 10;
 
 
@@ -111,7 +92,7 @@ async function addCartItem(snapshot, quantity) {
 }
 
 
-/* quantity <= 0 xoá dòng; tối đa MAX_CART_LINE_QUANTITY. productId giữ lại cho tương thích F2. */
+/* quantity <= 0 xoá dòng; tối đa MAX_CART_LINE_QUANTITY */
 
 async function updateCartItemQuantity(productId, variantId, quantity) {
 
@@ -199,7 +180,7 @@ function cartItemImageUrl(item) {
 /* ================= CHUYỂN GIỎ CŨ TRÊN TRÌNH DUYỆT LÊN SERVER ================= */
 
 /*
- * F2 lưu giỏ ở localStorage "poy_cart_<userId>". Lần đầu đọc / ghi giỏ sau khi
+ * Giỏ cũ nằm ở localStorage "poy_cart_<userId>". Lần đầu đọc / ghi giỏ sau khi
  * đăng nhập: gửi từng dòng lên POST /cart/items (server cộng dồn, tối đa 10),
  * xoá dòng đã chuyển khỏi localStorage, rồi báo bằng toast. Dòng không có
  * phiên bản hoặc sản phẩm đã ngừng bán thì bỏ qua. Mất mạng / hết phiên → dừng,
@@ -327,7 +308,7 @@ async function runLocalCartMigration() {
 
 
 /*
- * Giỏ hàng kiểu cũ (trước F2) lưu ở "poy_cart" theo TÊN sản phẩm, không có
+ * Giỏ hàng kiểu cũ lưu ở "poy_cart" theo TÊN sản phẩm, không có
  * phiên bản nên không chuyển lên server được: xoá đi và báo một lần.
  */
 

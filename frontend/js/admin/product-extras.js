@@ -1,16 +1,8 @@
-/* ================= PHIÊN BẢN + MÀU + THÔNG SỐ KỸ THUẬT (form admin/products.html) ================= */
-
 /*
+ * Phiên bản + màu + thông số kỹ thuật (form admin/products.html).
  * Dùng bởi js/admin/products.js. Sửa trong form, ghi khi bấm LƯU (sau khi lưu sản phẩm).
  * Phiên bản nằm TRONG sản phẩm: mỗi thẻ = 1 phiên bản (RAM + bộ nhớ, giá), trong thẻ có các màu.
  * Mỗi (phiên bản, màu) là một dòng product_variants — dòng đã có giữ nguyên id (giỏ / đơn / tồn kho không hỏng).
- *   Phiên bản: GET /products/{id}/variants, POST /product-variants, PUT /product-variants/{id},
- *              DELETE /product-variants/{id} (409 RESOURCE_IN_USE nếu đã bán / còn tồn kho).
- *   Thông số:  GET /products/{id}/specifications, POST / PUT / DELETE /product-specifications[/{id}];
- *              dòng không có variantId là thông số chung; thông số riêng của thẻ phiên bản được ghi
- *              cho từng màu của thẻ (variantId) và ghi đè dòng chung cùng tên trên trang khách.
- *              Mẫu tên theo danh mục: GET /categories/{id}/spec-names (tên hay gặp nhất).
- * Dòng thông số để trống giá trị không được lưu (dòng cũ bị để trống thì xoá).
  */
 
 function createProductExtras() {

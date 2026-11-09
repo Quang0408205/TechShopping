@@ -1,14 +1,8 @@
-/* ================= ĐƠN ĐANG CHỜ THANH TOÁN ================= */
-
 /*
+ * Đơn đang chờ thanh toán.
  * Giỏ hàng xoá ngay khi đặt đơn, nên khách bấm Back từ trang thanh toán sẽ thấy giỏ trống.
- * Trang giỏ / checkout gọi showAwaitingPaymentNotice(box): có đơn chuyển khoản / thẻ còn chờ
- * tiền (GET /orders/awaiting-payment) → khung "Đơn DH… đang chờ thanh toán" với
- * "Tiếp tục thanh toán" | "Huỷ đơn & lấy lại giỏ" (POST /orders/{id}/cancel-payment: server
- * huỷ đơn, trả lượt voucher, đưa đúng sản phẩm về giỏ). Cần order-store.js.
  */
 
-/* Back / Forward lấy trang từ bộ nhớ đệm (bfcache) → nạp lại để thấy trạng thái mới */
 window.addEventListener("pageshow", function (event) {
 
     if (event.persisted) {

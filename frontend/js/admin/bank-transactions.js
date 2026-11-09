@@ -1,14 +1,7 @@
-/* ================= ĐỐI SOÁT CHUYỂN KHOẢN (admin/bank-transactions.html) ================= */
-
 /*
+ * Đối soát chuyển khoản (admin/bank-transactions.html).
  * Chỉ ADMIN. Tiền khách chuyển về tài khoản công ty do webhook ngân hàng báo; đơn khớp mã + đúng số tiền được
  * tự xác nhận, phần còn lại nằm ở đây cho ADMIN xử lý.
- *   GET  /admin/bank-transactions?status=&attention=&page=&size=
- *   GET  /admin/bank-transactions/info
- *   POST /admin/bank-transactions/{id}/assign   { orderId, note }
- *   POST /admin/bank-transactions/{id}/ignore   { note }
- *   POST /admin/bank-transactions/simulate      { content, amount }   (chỉ khi PAYMENT_SIMULATOR_ENABLED)
- * Nội dung chuyển khoản do người ngoài nhập nên luôn escape.
  */
 
 const BANK_PAGE_SIZE = 20;

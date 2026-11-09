@@ -1,26 +1,4 @@
-/* ================= PHIÊN ĐĂNG NHẬP NỘI BỘ (admin/) — B2 ================= */
-
-/*
- * Đăng nhập nội bộ dùng tài khoản THẬT: POST /api/v1/auth/login, chỉ nhận
- * tài khoản có role STAFF, BRANCH_MANAGER hoặc ADMIN. Phiên lưu ở "poy_staff_auth"
- * (api.js tự chọn khoá này trên các trang admin/), tách khỏi phiên khách
- * "poy_auth", nên một trình duyệt vẫn đăng nhập song song được cả hai.
- *
- *   {
- *     accessToken, refreshToken, user,   (AuthResponse thật)
- *     staff: { id, fullname, email, role, roleLabel, storeId, storeName }
- *   }
- *
- * staff.role là mã hiển thị EMPLOYEE / BRANCH_MANAGER / ADMIN, lấy từ ROLE của
- * backend (không còn suy ra từ chức danh tại chi nhánh):
- *   - ADMIN → ADMIN (toàn hệ thống);
- *   - BRANCH_MANAGER → BRANCH_MANAGER; STAFF → EMPLOYEE;
- *   - chi nhánh = phân công đang hiệu lực trong hồ sơ nhân viên thật
- *     (GET /employees/me); chưa có hồ sơ / chưa được gán → "Chưa gán chi nhánh"
- *     (backend từ chối mọi thao tác theo chi nhánh của tài khoản này).
- *
- * Nạp sau js/core/api.js.
- */
+/* Phiên đăng nhập nội bộ (admin/) */
 
 const STAFF_BACKEND_ROLES = ["STAFF", "BRANCH_MANAGER", "ADMIN"];
 

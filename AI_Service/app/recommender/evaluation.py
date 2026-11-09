@@ -1,5 +1,5 @@
 """
-Đánh giá offline các mô hình khuyến nghị (báo cáo mục 3.7 / 4.8.3), tinh chỉnh tham số và chọn α cho Hybrid.
+Đánh giá offline các mô hình khuyến nghị, tinh chỉnh tham số và chọn α cho Hybrid.
 
 Chia theo thời gian cho từng người dùng thành 3 phần: 70% hành vi đầu → huấn luyện, 10% tiếp theo → validation,
 20% cuối → kiểm thử.
@@ -615,7 +615,7 @@ def evaluate(n: int = 10, train_ratio: float = 0.7, validation_ratio: float = 0.
     }
 
 
-# ---------- ghi kết quả: JSON (trang admin), CSV + Markdown + biểu đồ SVG (dán vào báo cáo) ----------
+# ---------- ghi kết quả: JSON (trang admin), CSV + Markdown + biểu đồ SVG ----------
 
 def save(result: dict, directory: Path = config.EVAL_RESULTS_DIR) -> None:
     directory.mkdir(parents=True, exist_ok=True)

@@ -4,6 +4,7 @@ import com.example.Tech.config.BankTransferProperties;
 import com.example.Tech.config.PaymentWebhookProperties;
 import com.example.Tech.config.StripeProperties;
 import com.example.Tech.dto.response.payment.CardPaymentResponse;
+import com.example.Tech.dto.response.payment.RefundAccountResponse;
 import com.example.Tech.dto.response.payment.BankTransferResponse;
 import com.example.Tech.dto.response.payment.InstallmentPeriodResponse;
 import com.example.Tech.dto.response.payment.InstallmentResponse;
@@ -51,8 +52,17 @@ public class PaymentMapper {
                 payment.getTransactionId(),
                 payment.getPaidAt(),
                 payment.getRefundedAt(),
+                toRefundAccount(payment),
                 awaitingTransfer ? toBankTransfer(payment, order) : null,
                 awaitingCard ? new CardPaymentResponse(stripe.testMode(), payBefore(order)) : null);
+    }
+
+    private static RefundAccountResponse toRefundAccount(Payment payment) {
+        if (payment.getRefundAccountNumber() == null) {
+            return null;
+        }
+        return new RefundAccountResponse(payment.getRefundBank(), payment.getRefundAccountNumber(),
+                payment.getRefundAccountHolder());
     }
 
     public InstallmentResponse toResponse(InstallmentOrder plan, Order order, List<InstallmentPayment> periods,

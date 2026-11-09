@@ -1,10 +1,10 @@
-"""Thu thập dữ liệu cho khuyến nghị (báo cáo mục 3.5.2, 3.5.3 k): Product / Interaction / Transaction Data."""
+"""Thu thập dữ liệu cho khuyến nghị: Product / Interaction / Transaction Data."""
 
 import pandas as pd
 
 from app.db import fetch_all
 
-# Thông số dùng làm đặc trưng số (Bảng 3.17); tên lấy theo dữ liệu crawl TGDĐ
+# Thông số dùng làm đặc trưng số; tên lấy theo dữ liệu crawl TGDĐ
 SPEC_NAMES = (
     "RAM", "Loại RAM", "Dung lượng lưu trữ", "Ổ cứng", "Kích thước màn hình", "Độ phân giải camera sau",
 )
