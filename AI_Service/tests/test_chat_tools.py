@@ -66,6 +66,38 @@ def test_phantom_confirm_button_sentence_is_dropped():
                                            "- **DH00000389** – Chờ xác nhận – Casio x1")
 
 
+def test_tool_nudge_quotes_the_latest_question_not_an_earlier_one(monkeypatch):
+    from app.chatbot import agent
+
+    class Quiet:                                   # LLM giả: không gọi tool, ghi lại các tin nhắn nhận được
+        nudge_without_tool, errors, seen = True, (), []
+
+        def start(self, history, message, note):
+            return history + [{"role": "user", "content": message}]
+
+        def stream_turn(self, messages, note):
+            self.seen.append([m["content"] for m in messages])
+            return agent.Turn("Mình không hỗ trợ giải toán.", [], "end")
+            yield                                    # để hàm là generator như nhà cung cấp thật
+
+    llm = Quiet()
+    monkeypatch.setattr(agent, "provider", lambda: llm)
+    history = [{"role": "user", "content": "iPhone 17e giá bao nhiêu?"},
+               {"role": "assistant", "content": "iPhone 17e giá từ 21.990.000đ."}]
+    out = agent.chat("Giải giúp tôi phương trình x^2 - 4 = 0", history, None)
+    nudge = llm.seen[1][-1]                          # lần gọi thứ hai: sau lời nhắc
+    assert "«Giải giúp tôi phương trình x^2 - 4 = 0»" in nudge and "câu hỏi trên" not in nudge
+    assert out["reply"] == "Mình không hỗ trợ giải toán." and out["toolsUsed"] == []
+
+
+def test_pending_action_is_not_described_as_done():
+    from app.chatbot.agent import soften_pending_actions
+    assert soften_pending_actions("Đã thêm OPPO A6t Pro vào giỏ hàng. Bấm nút Xác nhận bên dưới.") == \
+        "Chuẩn bị thêm OPPO A6t Pro vào giỏ hàng. Bấm nút Xác nhận bên dưới."
+    assert soften_pending_actions("Mình đã huỷ giúp bạn đơn DH1") == "Mình chuẩn bị huỷ giúp bạn đơn DH1"
+    assert soften_pending_actions("Sản phẩm đã có trong giỏ") == "Sản phẩm đã có trong giỏ"
+
+
 IPHONE_17E_VARIANTS = [{"id": 1, "variantName": "256 GB - Đen", "price": 17990000},
                        {"id": 2, "variantName": "256 GB - Trắng", "price": 17990000},
                        {"id": 3, "variantName": "512 GB - Đen", "price": 23990000, "discountPrice": 22990000}]

@@ -406,7 +406,8 @@ Vòng hội thoại viết một lần, chạy được với hai loại nhà cu
 - Qwen3 được gửi `reasoning_effort = none` (`LLM_REASONING_EFFORT`) để tắt bước "suy nghĩ": khoảng 40 giây xuống 2 giây mỗi lượt mà vẫn chọn đúng tool.
 - **Chốt chặn cho mô hình nhỏ** (đo bằng bộ đánh giá, mục 9.4):
   - trạng thái đăng nhập được ghi trong **lời nhắc hệ thống**, không chèn vào tin nhắn khách (chèn vào tin nhắn làm Qwen quên gọi tool);
-  - lượt đầu không gọi tool nào thì **nhắc lại một lần** "câu này cần tra cứu thì gọi tool ngay" và gửi sự kiện `reset` để xoá đoạn "để mình tra cứu..." đã hiện (Ollama bỏ qua `tool_choice="required"` nên phải làm bằng code);
+  - lượt đầu không gọi tool nào thì **nhắc lại một lần** "câu này cần tra cứu thì gọi tool ngay" và gửi sự kiện `reset` để xoá đoạn "để mình tra cứu..." đã hiện (Ollama bỏ qua `tool_choice="required"` nên phải làm bằng code). Lời nhắc trích nguyên văn câu hỏi mới nhất: trước 09/11/2026 nó viết "câu hỏi trên", và khi hội thoại dài Qwen hiểu nhầm là một câu trước đó (hỏi giải toán sau khi đã hỏi giá iPhone thì trả về danh sách iPhone);
+  - còn thao tác chờ bấm Xác nhận mà câu trả lời viết "Đã thêm / đã huỷ" thì đổi thành "Chuẩn bị thêm / chuẩn bị huỷ";
   - có thao tác chờ xác nhận mà câu trả lời không nhắc bấm nút thì tự thêm dòng "👉 Bấm nút Xác nhận bên dưới";
   - câu trả lời chứa nguyên văn hướng dẫn nội bộ (bị prompt injection) thì thay bằng câu từ chối.
 - Riêng với Claude: mức suy luận `AI_CHAT_EFFORT` (mặc định `low`), prompt caching cho phần lời nhắc + tool, và server-side fallback khi bị bộ lọc an toàn từ chối (tự tắt với Haiku).
@@ -818,7 +819,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-69 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+71 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -834,7 +835,8 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   chọn λ của MMR;
 - `test_chat_tools.py`: chunk sản phẩm lấy thông số chính của danh mục trước, tóm tắt cho LLM rút gọn danh sách
   phiên bản mà vẫn giữ camera / pin, tool bỏ tham số lạ thay vì lỗi, Backend trả thiếu dữ liệu thì tool báo lỗi
-  thay vì làm hỏng cả lượt chat, `get_my_orders` tách đơn chưa xong và dựng dòng
+  thay vì làm hỏng cả lượt chat, lời nhắc gọi tool trích đúng câu hỏi mới nhất (hội thoại dài không trả lời nhầm câu
+  trước), thao tác chờ xác nhận không bị nói là "đã thêm / đã huỷ", `get_my_orders` tách đơn chưa xong và dựng dòng
   trả lời, bỏ câu nhắc nút Xác nhận khi không có thao tác, chọn phiên bản theo từng từ (kể cả khi phiên bản nằm trong
   tên sản phẩm), giá theo dung lượng, `recommend_products` tìm sản phẩm theo tên;
 - `test_relations.py`: ốp lưng ghi đời máy chỉ gắn đúng đời đó (iPhone 16 ≠ 16e / 16 Plus / 17e), Apple Pencil Pro chỉ
@@ -938,6 +940,8 @@ database khác, nên lần này so **trên cùng máy, cùng database**:
   sau 6 lượt cần 5.023 token và vẫn nêu đủ 4/4 đơn đang chờ (18,5 giây).
 - Cuối cùng sửa 6 câu trượt còn lại, rồi chạy lại cả bộ: **30/30 (100%)**, 12,6 giây / câu
   (`evals/results/20261108-1253.json`; lần so sánh với code cũ: `20261108-1053.json`).
+- 09/11/2026, sau khi sửa lời nhắc gọi tool (trích câu hỏi mới nhất) và câu "đã thêm" khi còn chờ xác nhận: chạy
+  lại cả bộ vẫn **30/30 (100%)**, 12,0 giây / câu (`evals/results/20261109-1304.json`).
   - **Sửa bộ câu hỏi (4 câu)**: `pol-shipping-fee` kiểm theo chính sách hiện tại (30.000đ, phí riêng theo tỉnh; không được
     nêu ngưỡng miễn phí cũ); `acc-order-code`, `act-cancel` dùng đơn của chính tài khoản kiểm thử (DH00003119,
     DH00000221); `act-add-cart` nêu rõ màu ("256GB màu Đen"), vì bản 256GB có 3 màu nên hỏi lại là đúng. Các mã đơn

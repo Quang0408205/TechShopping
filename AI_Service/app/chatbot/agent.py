@@ -33,10 +33,17 @@ FALLBACK_MODELS = ("claude-fable-5-1", "claude-opus-5-5", "claude-opus-5", "clau
 CONFIRM_REMINDER = "👉 Bấm nút Xác nhận bên dưới để thực hiện."
 
 # Mô hình nhỏ (Qwen 7B) hay "hứa sẽ tra cứu" mà không gọi tool, và Ollama bỏ qua tool_choice="required":
-# lượt đầu không gọi tool nào thì nhắc lại một lần.
-TOOL_NUDGE = ("(Nhắc từ hệ thống) Nếu câu hỏi trên cần thông tin về chính sách, sản phẩm, giá, gợi ý mua kèm / nâng "
-              "cấp, đơn hàng, giỏ hàng, bảo hành hoặc cửa hàng thì GỌI TOOL phù hợp ngay bây giờ, không hỏi lại khách "
-              "và không nói là sẽ tra cứu. Nếu không cần tra cứu (chào hỏi, ngoài phạm vi) thì trả lời câu hỏi ban đầu.")
+# lượt đầu không gọi tool nào thì nhắc lại một lần. Lời nhắc trích nguyên văn câu hỏi mới nhất: viết "câu hỏi trên" thì
+# khi hội thoại dài, mô hình nhỏ hiểu là một câu trước đó (vd. hỏi giải toán sau khi đã hỏi giá iPhone 17e → nó gọi
+# search_products("iPhone 17e") và liệt kê iPhone; đo 09/11, 2/2 lần).
+TOOL_NUDGE = ("(Nhắc từ hệ thống) Câu hỏi MỚI NHẤT của khách là: «{question}». Chỉ xét câu này, không trả lời lại các "
+              "câu trước. Nếu câu này cần thông tin về chính sách, sản phẩm, giá, gợi ý mua kèm / nâng cấp, đơn hàng, giỏ "
+              "hàng, bảo hành hoặc cửa hàng thì GỌI TOOL phù hợp ngay bây giờ, không hỏi lại khách và không nói là sẽ tra "
+              "cứu. Nếu không cần tra cứu (chào hỏi, ngoài phạm vi mua sắm) thì trả lời đúng câu này.")
+
+
+def tool_nudge(question: str) -> str:
+    return TOOL_NUDGE.replace("{question}", question.strip()[:500])
 
 # Câu trả lời chứa các đoạn này là đang lộ hướng dẫn nội bộ (bị prompt injection)
 LEAK_MARKERS = ("Quy tắc quan trọng nhất", "Nguồn thông tin:", "Thao tác thay khách", "LOGIN_REQUIRED",
@@ -56,6 +63,15 @@ def drop_phantom_buttons(text: str) -> str:
         if kept or not line.strip():
             lines.append(" ".join(kept))
     return re.sub(r"\n{3,}", "\n\n", "\n".join(lines)).strip()
+
+
+# Thao tác còn chờ khách bấm Xác nhận mà mô hình nhỏ vẫn viết "Đã thêm ... vào giỏ" (đo 09/11): sửa thành "chuẩn bị"
+_DONE_ALREADY = re.compile(r"\b([Đđ])ã\s+(thêm|huỷ|hủy)\b")
+
+
+def soften_pending_actions(text: str) -> str:
+    """'Đã thêm X vào giỏ' → 'Chuẩn bị thêm X vào giỏ' khi thao tác chưa được thực hiện."""
+    return _DONE_ALREADY.sub(lambda m: ("Chuẩn bị " if m.group(1) == "Đ" else "chuẩn bị ") + m.group(2), text)
 
 
 SYSTEM_PROMPT = """Bạn là trợ lý mua sắm AI của POY, cửa hàng bán điện thoại, laptop, máy tính bảng, đồng hồ \
@@ -325,7 +341,7 @@ def chat_events(message: str, history: list[dict], access_token: str | None,
             if started:
                 yield {"type": "reset"}                       # xoá chữ "để mình tra cứu..." đã hiện
             messages.append({"role": "assistant", "content": turn.text or "..."})
-            messages.append({"role": "user", "content": TOOL_NUDGE})
+            messages.append({"role": "user", "content": tool_nudge(message)})
             continue
         if turn.text.strip():
             texts.append(turn.text.strip())
@@ -355,7 +371,11 @@ def chat_events(message: str, history: list[dict], access_token: str | None,
             reply = drop_phantom_buttons(reply) or EMPTY_REPLY
             yield {"type": "reset"}
             yield {"type": "delta", "text": reply}
-        # có thao tác chờ xác nhận: luôn nhắc khách bấm nút (mô hình nhỏ đôi khi nói nhầm là "đã thêm")
+        # có thao tác chờ xác nhận: không để câu trả lời nói là đã làm xong, và luôn nhắc khách bấm nút
+        if runner.actions and _DONE_ALREADY.search(reply):
+            reply = soften_pending_actions(reply)
+            yield {"type": "reset"}
+            yield {"type": "delta", "text": reply}
         if runner.actions and "xác nhận" not in reply.lower():
             reply += "\n\n" + CONFIRM_REMINDER
             yield {"type": "delta", "text": "\n\n" + CONFIRM_REMINDER}
