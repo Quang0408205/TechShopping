@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix
 
 from app import config
 from app.recommender import als, data
-from app.recommender.compat import ACCESSORY_CATEGORY, MODEL_SPECIFIC, compatible, phone_model
+from app.recommender.compat import ACCESSORY_CATEGORY, MODEL_SPECIFIC, accessory_kind, compatible, phone_model
 from app.recommender.features import NUMERIC_FEATURES, build_item_features, extract_numeric_specs, interaction_scores
 
 log = logging.getLogger(__name__)
@@ -566,7 +566,7 @@ class Recommender:
         sims = m.vectors @ m.vectors[i]
         same_category = m.items["category_id"].to_numpy() == m.items["category_id"].iloc[i]
         candidates = np.flatnonzero(m.valid & same_category)
-        candidates = candidates[candidates != i]
+        candidates = self._same_accessory_kind(i, candidates[candidates != i])
         order = self._rank(candidates, sims[candidates])[:n]
         return [Recommendation(m.items.index[candidates[p]], sims[candidates[p]],
                                self._reason_similar(candidates[p], i)) for p in order]
@@ -574,6 +574,16 @@ class Recommender:
     # ---------- Upselling (3.5.6 a) ----------
 
     def upsell(self, product_id: int, user_id: int | None = None, n: int = 4) -> list[Recommendation]:
+        """
+        Bản cao hơn của sản phẩm đang xem. Ứng viên phải cùng danh mục, đang bán, đắt hơn tối đa δ = 30%, và:
+          - thiết bị có thông số (RAM, bộ nhớ, camera): không kém hơn ở thông số nào mà cả hai cùng ghi, đồng thời
+            tốt hơn ít nhất một thông số, hoặc cùng hãng (đời mới hơn / bản cao hơn cùng dòng, như iPhone 17 Pro Max
+            → iPhone 18 Pro Max). Trước 11/11/2026 chỉ cần một thông số tốt hơn, nên iPad mini 7 (RAM 8 GB) được
+            gợi ý iPad 10 (RAM 4 GB) vì bộ nhớ lớn hơn;
+          - phụ kiện: cùng loại (sạc → sạc, tai nghe → tai nghe), ốp lưng / kính cường lực cùng đời máy. Trước đó
+            danh mục Phụ kiện chỉ xét giá, nên ốp lưng được gợi ý "nâng cấp" lên camera IP, loa Bluetooth;
+          - danh mục không có thông số (đồng hồ thời trang) chỉ xét giá.
+        """
         m = self.model
         if product_id not in m.index:
             return []
@@ -587,11 +597,12 @@ class Recommender:
 
         raw = items[[f + "_raw" for f in ("ram_gb", "storage_gb", "camera_mp")]].to_numpy(float)
         if not np.all(np.isnan(raw[i])):
-            # có ít nhất một thông số chính tốt hơn; danh mục không có thông số (đồng hồ thời trang) chỉ xét giá
-            better = np.nan_to_num(raw - raw[i], nan=0.0) > 0
-            mask &= better.any(axis=1)
+            diff = np.nan_to_num(raw - raw[i], nan=0.0)    # một bên không ghi thông số đó → không so
+            brand = items["brand"].to_numpy()
+            same_brand = (brand == brand[i]) & (brand[i] != "Unknown")
+            mask &= ~(diff < 0).any(axis=1) & ((diff > 0).any(axis=1) | same_brand)
 
-        candidates = np.flatnonzero(mask)
+        candidates = self._same_accessory_kind(i, np.flatnonzero(mask))
         if candidates.size == 0:
             return []
         score = self._personal_or_similar(user_id, i, candidates)
@@ -630,11 +641,29 @@ class Recommender:
         order = self._rank(candidates, score)[:n]
         return [Recommendation(m.items.index[candidates[p]], score[p], pairs[p][2]) for p in order]
 
-    def _fits(self, device_row: int, accessory_row: int) -> bool:
-        """Gợi ý từ luật mua chung cũng phải vừa máy (luật Apple, đúng đời máy, cổng sạc...) như quan hệ khai báo;
-        thiết bị gợi ý thiết bị khác chỉ khi cùng hãng (compat.compatible)."""
+    def _same_accessory_kind(self, anchor_row: int, candidates: np.ndarray) -> np.ndarray:
+        """Phụ kiện chỉ so với phụ kiện cùng loại (sạc với sạc, tai nghe với tai nghe; compat.accessory_kind), ốp lưng
+        và kính cường lực còn phải cùng đời máy. Danh mục Phụ kiện gồm nhiều loại hàng khác hẳn nhau, nên trước
+        11/11/2026 "Tương tự" của camera IP là chuột, tai nghe, balo (77% gợi ý khác loại). Sản phẩm khác: giữ nguyên."""
         items = self.model.items
-        device, accessory = items.iloc[device_row], items.iloc[accessory_row]
+        if items["category"].iloc[anchor_row] != ACCESSORY_CATEGORY:
+            return candidates
+        names = items["name"]
+        anchor = names.iloc[anchor_row]
+        kind = accessory_kind(anchor)
+        model = phone_model(anchor) if MODEL_SPECIFIC.search(anchor) else None
+        return np.array([j for j in candidates if accessory_kind(names.iloc[j]) == kind
+                         and (model is None or phone_model(names.iloc[j]) == model)], dtype=int)
+
+    def _fits(self, anchor_row: int, other_row: int) -> bool:
+        """Gợi ý từ luật mua chung cũng phải vừa máy (luật Apple, đúng đời máy, cổng sạc...) như quan hệ khai báo;
+        thiết bị gợi ý thiết bị khác chỉ khi cùng hãng (compat.compatible). Đang xem phụ kiện mà gợi ý máy thì xét
+        theo chiều máy → phụ kiện: tai nghe → điện thoại được, camera IP / máy chiếu → điện thoại thì không (trước
+        11/11/2026 chiều này không được lọc, dữ liệu mô phỏng cho ra "camera IP mua kèm iPhone 18 Pro")."""
+        items = self.model.items
+        device, accessory = items.iloc[anchor_row], items.iloc[other_row]
+        if device.get("category") == ACCESSORY_CATEGORY and accessory.get("category") != ACCESSORY_CATEGORY:
+            device, accessory = accessory, device
         screen = device.get("screen_inch_raw")          # thông số gốc như build_relations, không điền trung vị
         return compatible(str(device.get("name", "")), str(device.get("category", "")), str(device.get("brand", "")),
                           str(accessory.get("name", "")), str(accessory.get("category", "")),

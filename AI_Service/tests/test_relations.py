@@ -1,8 +1,20 @@
 """Luật phụ kiện cho mua kèm (app/recommender/compat.py, dùng ở scripts/build_relations.py và cross_sell)."""
 
-from app.recommender.compat import compatible, fits, phone_model
+from app.recommender.compat import accessory_kind, compatible, fits, phone_model
 
 CASE_16 = "Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple"
+
+
+def test_accessory_kind_reads_the_type_at_the_start_of_the_name():
+    assert accessory_kind("Sạc nhanh Type-C PD 20W Apple") == "sạc"
+    assert accessory_kind("Bộ sạc nhanh 4 cổng USB Type-C 140W Anker Zolo B2697 kèm Cáp Type C - Type C") == "sạc"
+    assert accessory_kind("Cáp sạc nhanh Type-C - Magnetic 1m Apple") == "cáp"
+    assert accessory_kind("Pin sạc dự phòng 10000mAh Type C PD 30W") == "pin sạc dự phòng"
+    assert accessory_kind("AirPods 4 (chống ồn)") == accessory_kind("Tai nghe Bluetooth Chụp Tai Sony WH-CH520")
+    assert accessory_kind("Miếng dán kính cường lực iPhone 16 Pro Max") == "kính cường lực"
+    assert accessory_kind("Camera IP 360 Độ 2MP TP-Link Tapo C200C") != accessory_kind(
+        "Camera cầm tay DJI Pocket 3 Creator Combo")
+    assert accessory_kind("Loa Bluetooth JBL Go 5") == "loa"
 
 
 def test_phone_model_reads_line_and_variant():

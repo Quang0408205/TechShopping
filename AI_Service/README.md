@@ -200,7 +200,7 @@ AI_Service/
 
 ### 4.2. Xây đặc trưng (`features.py`)
 
-- **Điểm tương tác:** `r(u,i) = Σ_t w_t · log(1 + n(u,i,t)) · 0,5^(tuổi / h)`. Hàm log làm cho việc xem đi xem lại nhiều lần không lấn át được hành vi mua; hệ số `0,5^(tuổi / h)` giảm dần hành vi cũ (tuổi = số ngày từ lần gần nhất của hành vi đó, nửa đời h = 30 ngày chọn trên validation; `REC_HALF_LIFE_DAYS = 0` tắt).
+- **Điểm tương tác:** `r(u,i) = Σ_t w_t · log(1 + n(u,i,t)) · 0,5^(tuổi / h)`. Hàm log làm cho việc xem đi xem lại nhiều lần không lấn át được hành vi mua; hệ số `0,5^(tuổi / h)` giảm dần hành vi cũ (tuổi = số ngày từ lần gần nhất của hành vi đó, nửa đời h = 90 ngày chọn trên validation; `REC_HALF_LIFE_DAYS = 0` tắt).
 - **Lý do chọn trọng số w_t (xem 1, bấm 2, thích 3, thêm giỏ 4, mua 5):** xếp theo mức cam kết của khách: xem chỉ là lướt qua, bấm là chủ động chọn, thích là bày tỏ, thêm giỏ là ý định mua, mua là chắc chắn. Thang tuyến tính 1–5 giữ thứ tự đó mà không để một hành vi lấn át hẳn các hành vi còn lại.
 - **Thông số kỹ thuật:** đọc `ram_gb`, `storage_gb`, `screen_inch`, `camera_mp` theo thứ tự tin cậy:
   1. tên sản phẩm (dữ liệu TGDĐ ghi sẵn, ví dụ `8GB/256GB` hoặc `(Core 5, 16GB, 512GB)`);
@@ -289,9 +289,9 @@ k = 2 lượt) như bảng trên. API trả thêm `basis`: `BEHAVIOR` / `PREFERE
 
 | Loại | Điều kiện chọn | Xếp hạng | Ví dụ lý do |
 |---|---|---|---|
-| **SIMILAR** | Cùng danh mục, đang bán | Cosine giữa hai sản phẩm | "Cùng hãng Apple, cùng tầm giá" |
-| **UPSELL** | Cùng danh mục, giá cao hơn tối đa **δ = 30%**, có ít nhất 1 thông số (RAM / bộ nhớ / camera) tốt hơn. Danh mục không có thông số (đồng hồ thời trang) chỉ xét giá | Hybrid nếu khách có dữ liệu, ngược lại theo độ giống sản phẩm đang xem | "Nâng cấp camera 50MP, chỉ thêm 3.000.000đ" |
-| **CROSS_SELL** | Quan hệ `ACCESSORY / COMPATIBLE / BOUGHT_TOGETHER` trong `product_relations` + cặp mua **cùng đơn** có **lift > 1** + **"khách mua A cũng mua B"** (đếm theo khách trên toàn lịch sử thêm giỏ / mua, B khác danh mục với A, ít nhất 2 khách chung, lift > 1; `_co_buyers`); cặp từ luật phải qua `compat.compatible` (phụ kiện vừa máy, thiết bị cùng hãng) | 0.6 × mức liên quan + 0.4 × Hybrid (khi đã đăng nhập); mức liên quan: phụ kiện = strength, cùng đơn = 0,5 + 0,5·confidence, cùng khách = 0,4 + 0,5·confidence | "Phụ kiện phù hợp với sản phẩm này" / "Thường được mua cùng sản phẩm này" / "Khách mua sản phẩm này cũng mua" |
+| **SIMILAR** | Cùng danh mục, đang bán; phụ kiện cùng loại (camera IP → camera IP, sạc → sạc), ốp lưng / kính cường lực cùng đời máy | Cosine giữa hai sản phẩm | "Cùng hãng Apple, cùng tầm giá" |
+| **UPSELL** | Cùng danh mục, giá cao hơn tối đa **δ = 30%**, **không kém hơn** ở thông số nào (RAM / bộ nhớ / camera) mà cả hai cùng ghi, và **tốt hơn ít nhất 1 thông số** hoặc **cùng hãng** (đời mới / bản cao hơn cùng dòng: iPhone 17 Pro Max → iPhone 18 Pro Max). Phụ kiện: **cùng loại** (sạc → sạc, tai nghe → tai nghe; `compat.accessory_kind`), ốp lưng / kính cường lực cùng đời máy. Đồng hồ thời trang (không có thông số) chỉ xét giá | Hybrid nếu khách có dữ liệu, ngược lại theo độ giống sản phẩm đang xem | "Nâng cấp camera 50MP, chỉ thêm 3.000.000đ" |
+| **CROSS_SELL** | Quan hệ `ACCESSORY / COMPATIBLE / BOUGHT_TOGETHER` trong `product_relations` + cặp mua **cùng đơn** có **lift > 1** + **"khách mua A cũng mua B"** (đếm theo khách trên toàn lịch sử thêm giỏ / mua, B khác danh mục với A, ít nhất 2 khách chung, lift > 1; `_co_buyers`); cặp từ luật phải qua `compat.compatible` (phụ kiện vừa máy, thiết bị cùng hãng; đang xem phụ kiện thì xét chiều máy → phụ kiện: tai nghe → điện thoại được, camera IP → điện thoại thì không) | 0.6 × mức liên quan + 0.4 × Hybrid (khi đã đăng nhập); mức liên quan: phụ kiện = strength, cùng đơn = 0,5 + 0,5·confidence, cùng khách = 0,4 + 0,5·confidence | "Phụ kiện phù hợp với sản phẩm này" / "Thường được mua cùng sản phẩm này" / "Khách mua sản phẩm này cũng mua" |
 
 Đơn hàng hiện còn ít nên chưa tính được "mua chung" đáng tin. Vì vậy `build_relations.py` tạo **6.191 quan hệ phụ kiện** theo quy tắc:
 
@@ -328,14 +328,6 @@ mô phỏng. Vì vậy `cross_sell` lọc các cặp này qua `compat.compatible
 - danh mục ngoài catalogue (dữ liệu Amazon ở mục 9.1c) không bị lọc, nên kết quả trên Amazon không đổi.
 
 Quét toàn bộ 868 thiết bị sau khi sửa: không còn cặp nào ở trên, máy nào cũng đủ 4 gợi ý mua kèm.
-
-Phụ kiện chỉ vừa một số máy (`fits`, từ 08/11/2026; trước đó iPhone 17e được gợi ý ốp lưng iPhone 15 Pro):
-
-- **Ốp lưng, kính cường lực, miếng dán ghi tên đời máy** chỉ gắn với đúng đời đó: "Ốp lưng iPhone 16" gắn với iPhone 16,
-  không gắn với iPhone 16e, 16 Plus hay 17e. Catalogue hiện chỉ có ốp iPhone 15 Pro và iPhone 16, nên đa số điện thoại
-  không có ốp trong danh sách mua kèm (đúng hơn là gợi ý ốp không vừa).
-- **Apple Pencil Pro** chỉ gắn với iPad Pro, iPad Air, iPad mini (iPad thường không dùng được).
-- **Balo / túi laptop ghi cỡ inch** chỉ gắn với laptop có màn hình không lớn hơn cỡ đó (đọc từ thông số "Kích thước màn hình").
 
 ### 4.6. Khi AI Service không trả lời (dự phòng)
 
@@ -789,8 +781,12 @@ Phần chưa đánh giá được trên dữ liệu hiện có:
   +2,2 điểm %). Trước khi lọc cặp không vừa máy (09/11/2026) là 1,45%. Đơn hàng mẫu được sinh ngẫu nhiên nên không có
   cặp "hay mua cùng nhau" thật; thêm luật "khách mua A cũng mua B" không đổi kết quả. Trên dữ liệu mua hàng thật
   (mục 9.1c) cách mới hơn bán chạy có ý nghĩa. Điểm này không đo việc gợi ý đúng đời máy hay đúng cổng sạc; phần đó do
-  luật phụ kiện bảo đảm và có test riêng.
-- **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%.
+  luật phụ kiện bảo đảm và có test riêng. Từ 11/11/2026, đang xem phụ kiện thì chỉ gợi ý máy dùng được phụ kiện đó:
+  HitRate không đổi, sản phẩm trong đơn kiểm thử có danh sách mua kèm giảm từ 61% xuống 53% (phần bỏ đi là các cặp
+  kiểu "camera IP mua kèm iPhone").
+- **Nâng cấp:** 97,7% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%. Từ 11/11/2026 gợi ý
+  không được kém hơn ở thông số nào và phụ kiện phải cùng loại (trước đó 98,1%, nhưng 16–21% gợi ý cho laptop, điện
+  thoại, máy tính bảng kém hơn ở một thông số, và ốp lưng được "nâng cấp" lên camera IP, loa).
 
 Các phép đo này đã sẵn sàng; chỉ có ý nghĩa khi có hành vi và đơn hàng thật.
 
@@ -870,7 +866,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-77 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+83 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -881,7 +877,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   POPULAR, Score_Q đúng ví dụ tính tay, câu "hãng" chỉ tính ở danh mục có hãng đã chọn, bằng điểm thì theo điểm đánh
   giá sản phẩm chứ không theo hành vi khách khác, bỏ ốp lưng theo đời máy và sản phẩm loại trừ; không gợi ý sản phẩm đã xem hoặc ngừng bán, ốp lưng theo đời máy chỉ hiện với
   khách đã quan tâm đúng đời máy (đánh giá offline không lọc), luật mua kèm (lift > 1, ít nhất
-  2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem) và lý do hiển thị, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, thông số tốt hơn), tính nhiều α một lần cho cùng kết quả,
+  2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem; từ phụ kiện chỉ gợi ý máy dùng được phụ kiện đó) và lý do hiển thị, "Tương tự" của phụ kiện cùng loại, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, không kém hơn ở thông số nào, khác hãng thì phải tốt hơn ít nhất một thông số, phụ kiện cùng loại và cùng đời máy), tính nhiều α một lần cho cùng kết quả,
   lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
   phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
 - `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
@@ -896,7 +892,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 - `test_relations.py`: ốp lưng ghi đời máy chỉ gắn đúng đời đó (iPhone 16 ≠ 16e / 16 Plus / 17e), Apple Pencil Pro chỉ
   với iPad Pro / Air / mini, cáp sạc từ tính Apple chỉ với Apple Watch, cáp Lightning chỉ với iPhone ≤ 14, máy tính
   bảng không nhận bàn phím có dây, túi laptop phải vừa cỡ màn hình; `compatible` lọc luật mua chung (phụ kiện đúng
-  nhóm, thiết bị cùng hãng, dữ liệu ngoài catalogue không bị lọc);
+  nhóm, thiết bị cùng hãng, dữ liệu ngoài catalogue không bị lọc); loại phụ kiện đọc từ đầu tên ("Bộ sạc" = "Sạc", "AirPods" = tai nghe, camera IP khác camera cầm tay);
 - cold-start: truyền ngưỡng k cho từng lần gợi ý mà không đổi cấu hình chung, quy tắc chọn k (m nhỏ nhất mà từ đó Hybrid
   không kém CBF).
 
@@ -1061,7 +1057,7 @@ Kết quả lần chạy 08/11/2026, sau khi xây lại kho với thông số ch
 | Trường hợp | Kết quả |
 |---|---|
 | Khách chưa đăng nhập / đã đăng nhập xem khuyến nghị | Phổ biến + mới / danh sách cá nhân hoá, có lý do |
-| SIMILAR, UPSELL, CROSS_SELL cho iPhone 17e | iPhone cùng tầm giá; Galaxy S26 (+3 triệu, camera tốt hơn); sạc 20W Apple, AirPods 4, AirPods Pro, AirPods Max |
+| SIMILAR, UPSELL, CROSS_SELL cho iPhone 17e | iPhone cùng tầm giá; iPhone 17 (+6,5 triệu, bản cao hơn cùng hãng) rồi máy khác hãng có camera tốt hơn, không kém thông số nào (OPPO Find X9s, Galaxy S26+, Galaxy S25 Ultra); sạc 20W Apple, AirPods 4, AirPods Pro, AirPods Max |
 | Bấm 3 lần cùng sản phẩm | Chỉ 1 dòng CLICK |
 | Thêm vào giỏ | Ghi ADD_TO_CART (điểm 4) |
 | Trình duyệt gửi PURCHASE | 400 |

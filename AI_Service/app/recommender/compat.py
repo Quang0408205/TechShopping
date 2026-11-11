@@ -28,6 +28,26 @@ INCH = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:inch|\")", re.IGNORECASE)
 LAST_LIGHTNING_IPHONE = 14  # từ iPhone 15 (2023) và mọi iPad, Apple Watch đang bán đều không dùng cổng Lightning
 
 
+# Loại phụ kiện đọc từ đầu tên (TGDĐ ghi loại trước: "Ốp lưng ...", "Pin sạc dự phòng ...", "Sạc nhanh ...").
+# Chỉ liệt kê tiền tố nhiều chữ hoặc các tên khác nhau cùng một loại; còn lại lấy chữ đầu ("Loa", "Chuột", "Quạt").
+ACCESSORY_KINDS = (
+    ("pin sạc dự phòng", "pin sạc dự phòng"), ("ốp lưng", "ốp lưng"), ("bao da", "ốp lưng"),
+    ("kính cường lực", "kính cường lực"), ("miếng dán", "kính cường lực"), ("bộ sạc", "sạc"), ("củ sạc", "sạc"),
+    ("tai nghe", "tai nghe"), ("airpods", "tai nghe"), ("bàn phím", "bàn phím"), ("camera ip", "camera ip"),
+    ("máy chiếu", "máy chiếu"), ("apple pencil", "bút"), ("balo", "balo, túi"), ("túi", "balo, túi"),
+    ("repeater", "router"), ("bộ kích sóng", "router"),
+)
+
+
+def accessory_kind(name: str) -> str:
+    """'Sạc nhanh Type-C PD 20W Apple' → 'sạc'; 'Bộ sạc nhanh 4 cổng ...' → 'sạc'; 'Cáp sạc ...' → 'cáp'."""
+    lower = name.lower().strip()
+    for prefix, kind in ACCESSORY_KINDS:
+        if lower.startswith(prefix):
+            return kind
+    return lower.split(" ", 1)[0]
+
+
 def phone_model(name: str) -> str | None:
     """'Ốp lưng MagSafe iPhone 16 Nhựa' → 'iphone 16'; 'iPhone 16 Plus 128GB' → 'iphone 16 plus'."""
     match = PHONE_MODEL.search(name)

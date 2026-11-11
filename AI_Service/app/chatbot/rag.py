@@ -1,7 +1,7 @@
 """
 RAG: tìm Top-K chunk liên quan nhất trong kho tri thức kb_chunks.
 
-Ba cách tìm (RAG_MODE trong app/config.py, mặc định "hybrid"):
+Ba cách tìm (RAG_MODE trong app/config.py, mặc định "vector": MRR cao nhất khi đánh giá truy hồi):
   vector   Embedding câu hỏi → K chunk có cosine lớn nhất (pgvector, chỉ mục HNSW). Hiểu nghĩa ("máy pin trâu"),
            nhưng yếu với mã máy ("S26+", "MTJV3", "GA-2100").
   keyword  Tìm từ khoá full-text của PostgreSQL trên cột search_tsv (bỏ dấu tiếng Việt, tên sản phẩm có trọng số

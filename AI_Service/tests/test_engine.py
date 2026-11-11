@@ -131,6 +131,23 @@ def test_cross_sell_rules_drop_accessories_that_do_not_fit_the_device():
     assert [r.product_id for r in rec.cross_sell(1, None, 4)] == [3, 5]
 
 
+def test_cross_sell_from_an_accessory_suggests_only_devices_it_fits():
+    # đang xem phụ kiện mà gợi ý máy: xét theo chiều máy → phụ kiện. Tai nghe mua kèm điện thoại được;
+    # camera IP thì không (trước đây dữ liệu mô phỏng cho ra "camera IP mua kèm iPhone 18 Pro", laptop)
+    model = hand_model()
+    model.items["brand"] = ["TP-Link", "Apple", "Sony", "Samsung", "Lenovo"]
+    model.items["category"] = ["Phụ Kiện", "Điện Thoại", "Phụ Kiện", "Điện Thoại", "Laptop"]
+    model.items["name"] = ["Camera IP 360 Độ 2MP TP-Link Tapo C200C", "iPhone 18 Pro",
+                           "Tai nghe Bluetooth Chụp Tai Sony WH-CH520", "Galaxy S26", "Lenovo Yoga"]
+    model.co_buyers = {1: [(2, 0.9, 3.0), (4, 0.5, 2.0), (5, 0.5, 2.0)], 3: [(2, 0.9, 3.0), (4, 0.5, 2.0)]}
+    model.relations = pd.DataFrame(columns=["product_id", "related_product_id", "relation_type", "strength"])
+    rec = engine.Recommender(load_interactions=lambda user_id=None: interactions_frame([]))
+    rec._model = model
+
+    assert rec.cross_sell(1, None, 4) == []
+    assert [r.product_id for r in rec.cross_sell(3, None, 4)] == [2, 4]
+
+
 # ---------- trên catalogue nhỏ (conftest) ----------
 
 def test_user_with_enough_interactions_gets_hybrid_without_seen_or_inactive_products(toy_recommender):
@@ -250,10 +267,56 @@ def test_upsell_same_category_at_most_30_percent_dearer_with_better_specs(toy_re
     assert recs[0].reason.startswith("Nâng cấp RAM 12GB, bộ nhớ 256GB")
 
 
+def test_upsell_never_downgrades_a_spec_and_allows_a_dearer_model_of_the_same_brand(toy_recommender):
+    # iPhone 16e (8 GB, 128 GB, 16,99 triệu): iPhone 17 cùng thông số nhưng cùng hãng, đắt hơn → bản cao hơn cùng dòng;
+    # Galaxy A56 bộ nhớ lớn hơn nhưng RAM kém hơn → không phải nâng cấp (trước đây vẫn được gợi ý)
+    items = toy_recommender.model.items
+    items.loc[1, ["price", "ram_gb_raw", "storage_gb_raw"]] = [19_000_000, 8, 128]
+    items.loc[4, ["price", "ram_gb_raw", "storage_gb_raw"]] = [18_000_000, 6, 256]
+
+    recs = {r.product_id: r for r in toy_recommender.upsell(2)}
+
+    assert set(recs) == {1, 3}
+    assert recs[1].reason.startswith("Phiên bản cao cấp hơn")
+
+
+def test_upsell_of_another_brand_needs_a_better_spec(toy_recommender):
+    # Galaxy S25 cùng RAM, bộ nhớ với iPhone 16e nhưng khác hãng: chỉ đắt hơn, không phải nâng cấp
+    toy_recommender.model.items.loc[3, ["ram_gb_raw", "storage_gb_raw"]] = [8, 128]
+
+    assert toy_recommender.upsell(2) == []
+
+
+def test_accessory_upsell_keeps_the_kind_and_the_phone_model(toy_recommender):
+    # trước đây ốp lưng được "nâng cấp" lên camera IP, loa Bluetooth vì danh mục Phụ kiện chỉ xét giá
+    items = toy_recommender.model.items
+    rows = [8, 5, 6, 7]
+    items.loc[rows, "category_id"] = ACCESSORY
+    items.loc[rows, "category"] = "Phụ Kiện"
+    items.loc[rows, ["ram_gb_raw", "storage_gb_raw", "camera_mp_raw"]] = np.nan
+    items.loc[rows, "name"] = ["Ốp lưng MagSafe iPhone 16 Nhựa Trong Apple", "Ốp lưng Magnetic iPhone 16 TORRAS",
+                               "Ốp lưng Magnetic iPhone 17 Pro Max TORRAS", "Loa Bluetooth JBL Go 5"]
+    items.loc[rows, "price"] = [890_000, 990_000, 950_000, 1_000_000]
+
+    assert [r.product_id for r in toy_recommender.upsell(8)] == [5]
+
+
 def test_similar_stays_in_the_category(toy_recommender):
     ids = [r.product_id for r in toy_recommender.similar(5, n=3)]
 
     assert set(ids) <= {6, 7}
+
+
+def test_similar_accessory_keeps_the_kind(toy_recommender):
+    # danh mục Phụ kiện gồm nhiều loại hàng: "Tương tự" của camera IP trước đây là chuột, tai nghe, balo
+    items = toy_recommender.model.items
+    rows = [5, 6, 7, 8]
+    items.loc[rows, "category_id"] = ACCESSORY
+    items.loc[rows, "category"] = "Phụ Kiện"
+    items.loc[rows, "name"] = ["Camera IP 360 Độ 3MP EZVIZ TY1", "Camera IP Ngoài trời 360 Độ 3MP Dahua",
+                               "Chuột Bluetooth Silent Logitech Signature M650", "Tai nghe Bluetooth Sony WH-CH520"]
+
+    assert [r.product_id for r in toy_recommender.similar(5, n=4)] == [6]
 
 
 def test_recommend_alphas_gives_the_same_lists_as_one_alpha_at_a_time(toy_recommender):

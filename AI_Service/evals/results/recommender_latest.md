@@ -1,4 +1,4 @@
-# Đánh giá offline hệ thống khuyến nghị (2026-11-09 13:29:40)
+# Đánh giá offline hệ thống khuyến nghị (2026-11-11 17:46:21)
 
 - Chia theo thời gian từng người dùng: 70% hành vi đầu để huấn luyện, 10% tiếp theo để tinh chỉnh (validation), 20% cuối để kiểm thử (16429 / 2456 / 5713 lượt).
 - Tham số chọn trên validation (347 người dùng): ALS 16 chiều, λ = 1.0, a = 5.0; α = 0.6; nửa đời giảm trọng số 90 ngày; MMR λ = 0.7; ngưỡng cold-start k = 2.
@@ -85,13 +85,13 @@ Chênh lệch trên cùng người dùng (KTC 95%; không chứa 0 = chênh lệ
 
 ## Mua kèm (625 đơn kiểm thử, 276 cặp đơn – sản phẩm)
 
-Luật cùng đơn học trên 2500 đơn đặt trước; luật "khách mua A cũng mua B" học từ hành vi trước ngày cắt (103 sản phẩm có luật); 61% sản phẩm trong đơn kiểm thử có danh sách mua kèm.
+Luật cùng đơn học trên 2500 đơn đặt trước; luật "khách mua A cũng mua B" học từ hành vi trước ngày cắt (103 sản phẩm có luật); 53% sản phẩm trong đơn kiểm thử có danh sách mua kèm.
 
 | Cách gợi ý | HitRate@4 | Precision@4 | Có gợi ý |
 |---|---|---|---|
-| Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) | 0.0217 | 0.0054 | 61% |
-| Chỉ luật cùng đơn (cách cũ) | 0.0217 | 0.0054 | 44% |
-| Chỉ khách mua A cũng mua B | 0.0217 | 0.0054 | 59% |
+| Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) | 0.0217 | 0.0054 | 53% |
+| Chỉ luật cùng đơn (cách cũ) | 0.0217 | 0.0054 | 43% |
+| Chỉ khách mua A cũng mua B | 0.0217 | 0.0054 | 51% |
 | Bán chạy nhất (baseline) | 0.0217 | 0.0054 | 100% |
 
 - HitRate@4: Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện) − Bán chạy nhất (baseline): +0.0000 (KTC 95%: -0.0217 đến +0.0218), chưa đủ chắc chắn
