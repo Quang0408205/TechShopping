@@ -88,6 +88,12 @@ class Model:
         return (self.items["is_active"].to_numpy(bool)) & (self.items["price"].to_numpy(float) > 0)
 
 
+def seconds_until_retrain(trained_at: datetime, every_seconds: float, now: datetime | None = None) -> float:
+    """Còn bao lâu nữa mô hình đủ `every_seconds` tuổi; 0 khi đã quá hạn (huấn luyện lại ngay)."""
+    age = ((now or datetime.now()) - trained_at).total_seconds()
+    return max(0.0, every_seconds - age)
+
+
 def _unit_rows(matrix: np.ndarray) -> np.ndarray:
     norms = np.linalg.norm(matrix, axis=1, keepdims=True)
     return matrix / np.where(norms == 0, 1, norms)
@@ -157,8 +163,8 @@ def _co_buyers(interactions: pd.DataFrame, items: pd.DataFrame, index: dict[int,
         lift = confidence / (buyers[partners] / len(users))
         keep = lift > 1
         order = np.argsort(-confidence[keep], kind="stable")[:top]
-        result[int(ids[i])] = [(int(ids[j]), float(c), float(l))
-                               for j, c, l in zip(partners[keep][order], confidence[keep][order], lift[keep][order])]
+        result[int(ids[i])] = [(int(ids[j]), float(c), float(v))
+                               for j, c, v in zip(partners[keep][order], confidence[keep][order], lift[keep][order])]
     return result
 
 

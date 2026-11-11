@@ -148,6 +148,14 @@ def test_cross_sell_from_an_accessory_suggests_only_devices_it_fits():
     assert [r.product_id for r in rec.cross_sell(3, None, 4)] == [2, 4]
 
 
+def test_retraining_is_due_24_hours_after_training_not_after_start_up():
+    # mô hình nạp từ file đã 2 ngày tuổi → huấn luyện lại ngay; mới 6 giờ tuổi → chờ 18 giờ nữa
+    now = datetime(2026, 11, 11, 12, 0)
+    day = 24 * 3600
+    assert engine.seconds_until_retrain(datetime(2026, 11, 9, 22, 0), day, now) == 0
+    assert engine.seconds_until_retrain(datetime(2026, 11, 11, 6, 0), day, now) == 18 * 3600
+
+
 # ---------- trên catalogue nhỏ (conftest) ----------
 
 def test_user_with_enough_interactions_gets_hybrid_without_seen_or_inactive_products(toy_recommender):

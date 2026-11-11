@@ -254,7 +254,7 @@ AI_Service/
 | **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0,6** (cấu hình đang chạy, chọn trên validation 09/11; lần đo 25/11 chọn α = 0,4, mục 9.1) | `engine.py` |
 
 - **Fold-in:** khi có request, vector của khách được tính lại từ hành vi *hiện tại*, nên hành vi mới phát sinh sau lần huấn luyện gần nhất vẫn được tính.
-- **Huấn luyện:** khoảng 7 giây (25/11/2026: 2.491 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại mỗi 24 giờ; mô hình lưu ở volume `ai_models`.
+- **Huấn luyện:** khoảng 7 giây (25/11/2026: 2.491 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại khi mô hình đủ 24 giờ tuổi, tính từ lúc huấn luyện (khởi động lại dịch vụ với mô hình cũ hơn 24 giờ thì huấn luyện lại ngay; trước 11/11/2026 tính từ lúc khởi động, nên máy tắt / mở mỗi ngày thì mô hình không được cập nhật); mô hình lưu ở volume `ai_models`.
 
 ### 4.4. Các bước tạo danh sách "Gợi ý dành cho bạn"
 

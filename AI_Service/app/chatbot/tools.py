@@ -341,8 +341,10 @@ class ToolRunner:
         done = [o for o in orders if o["status"] in ("DELIVERED", "CANCELLED")][:3]
         # Dòng trả lời dựng sẵn: tự tổng hợp thì qwen3:8b gộp 4 đơn "chờ xác nhận" thành một câu và chỉ nêu 1 mã
         # (5/5 lần); chép dòng có sẵn thì nêu đủ 4/4 (đo 08/11).
-        line = lambda o: " – ".join(filter(None, [o["code"], ORDER_STATUS_VI.get(o["status"], o["status"]),
-                                                  ", ".join(o["items"])]))
+        def line(o):
+            return " – ".join(filter(None, [o["code"], ORDER_STATUS_VI.get(o["status"], o["status"]),
+                                            ", ".join(o["items"])]))
+
         return {"active_orders": active, "recent_completed_orders": done,
                 "answer_lines": [line(o) for o in active] or [line(o) for o in done[:1]]}
 
