@@ -423,7 +423,9 @@ def _cross_sell(session: Session, train_baskets: pd.DataFrame, test_baskets: pd.
                 counts[name][1] += found > 0
                 counts[name][2] += found
                 hit_lists[name].append(float(found > 0))
-    share = (lambda x: round(x / pairs, 4) if pairs else 0.0)
+    def share(x):
+        return round(x / pairs, 4) if pairs else 0.0
+
     samples = _samples(pairs, bootstrap, seed)
     comparisons = []
     for other in (CROSS_SELL_BASELINE, "Chỉ luật cùng đơn (cách cũ)"):

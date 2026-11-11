@@ -219,7 +219,7 @@ AI_Service/
 | **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0,6** (chọn trên tập validation, mục 9.1) | `engine.py` |
 
 - **Fold-in:** khi có request, vector của khách được tính lại từ hành vi *hiện tại*, nên hành vi mới phát sinh sau lần huấn luyện gần nhất vẫn được tính.
-- **Huấn luyện:** khoảng 3–4 giây (2.302 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại mỗi 24 giờ; mô hình lưu ở volume `ai_models`.
+- **Huấn luyện:** khoảng 3–4 giây (2.302 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại khi mô hình đủ 24 giờ tuổi, tính từ lúc huấn luyện (khởi động lại dịch vụ với mô hình cũ hơn 24 giờ thì huấn luyện lại ngay; trước 11/11/2026 tính từ lúc khởi động, nên máy tắt / mở mỗi ngày thì mô hình không được cập nhật); mô hình lưu ở volume `ai_models`.
 
 ### 4.4. Các bước tạo danh sách "Gợi ý dành cho bạn"
 
@@ -397,7 +397,7 @@ sequenceDiagram
 
 | Cách tìm | Cách làm | Mạnh / yếu |
 |---|---|---|
-| **`vector`** (mặc định) | Embedding câu hỏi rồi lấy Top-K chunk có cosine lớn nhất (toán tử `<=>`, chỉ mục **HNSW**: tìm láng giềng gần đúng, không cần so với cả 4.303 vector) | Hiểu nghĩa ("máy pin trâu"); thực tế cũng tìm đúng mã máy |
+| **`vector`** (mặc định) | Embedding câu hỏi rồi lấy Top-K chunk có cosine lớn nhất (toán tử `<=>`, chỉ mục **HNSW**: tìm láng giềng gần đúng, không cần so với cả 4.317 vector) | Hiểu nghĩa ("máy pin trâu"); thực tế cũng tìm đúng mã máy |
 | `keyword` | Full-text search của PostgreSQL trên cột `search_tsv`: bỏ dấu tiếng Việt (`unaccent`), tên sản phẩm trọng số A, nội dung trọng số D, bỏ từ dừng ("giá", "bao", "nhiêu"...), khớp tiền tố | Nhanh (10 ms), nhưng không hiểu từ đồng nghĩa và dễ xếp sai thứ tự |
 | `hybrid` | Chạy cả hai rồi gộp bằng **Reciprocal Rank Fusion** có trọng số: `điểm = 1/(60+hạng_vector) + w/(60+hạng_từ_khoá)` (`RAG_KEYWORD_WEIGHT`) | Thử nghiệm; đo được là kém hơn `vector` (mục 9.5) |
 
@@ -866,7 +866,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-83 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+84 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);
@@ -878,7 +878,7 @@ Kết quả (08/11/2026, kiểm thử 20.000 người dùng, NDCG@10 kèm KTC 95
   giá sản phẩm chứ không theo hành vi khách khác, bỏ ốp lưng theo đời máy và sản phẩm loại trừ; không gợi ý sản phẩm đã xem hoặc ngừng bán, ốp lưng theo đời máy chỉ hiện với
   khách đã quan tâm đúng đời máy (đánh giá offline không lọc), luật mua kèm (lift > 1, ít nhất
   2 đơn), luật "khách mua A cũng mua B" (đếm theo khách, chỉ khác danh mục, bỏ hành vi xem; từ phụ kiện chỉ gợi ý máy dùng được phụ kiện đó) và lý do hiển thị, "Tương tự" của phụ kiện cùng loại, nâng cấp (cùng danh mục, đắt hơn tối đa 30%, không kém hơn ở thông số nào, khác hãng thì phải tốt hơn ít nhất một thông số, phụ kiện cùng loại và cùng đời máy), tính nhiều α một lần cho cùng kết quả,
-  lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, MMR đúng ví dụ tính tay (bỏ qua sản
+  lý do ALS nêu đúng sản phẩm khách đã quan tâm, mô hình giữ tham số lúc học, lịch huấn luyện lại tính theo tuổi mô hình, MMR đúng ví dụ tính tay (bỏ qua sản
   phẩm trùng với món đã chọn khi λ = 0,5, giữ thứ tự khi λ = 0,8) và không làm danh sách kém đa dạng hơn;
 - `test_evaluation.py`: Precision / Recall / NDCG / HitRate đúng ví dụ tính tay, chia dữ liệu theo thời gian từng
   người dùng (70 / 10 / 20) và đơn hàng theo ngày đặt, khoảng tin cậy bootstrap, item–item kNN, độ đa dạng, quy tắc

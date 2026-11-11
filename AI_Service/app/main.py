@@ -16,22 +16,31 @@ from pydantic import BaseModel, Field
 
 from app import config
 from app.chatbot import agent
-from app.recommender.engine import Preferences, recommender
+from app.recommender.engine import Preferences, recommender, seconds_until_retrain
 from app.recommender.evaluation import evaluation_job
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("ai-service")
 
 RETRAIN_EVERY_SECONDS = 24 * 3600
+RETRAIN_RETRY_SECONDS = 3600
 
 
 async def _retrain_daily():
+    """
+    Huấn luyện lại khi mô hình đủ 24 giờ tuổi, tính từ lúc nó được huấn luyện (trained_at) chứ không từ lúc dịch vụ
+    khởi động. Trước 11/11/2026 vòng lặp chờ 24 giờ kể từ khi khởi động, nên máy tắt / mở lại mỗi ngày thì mô hình
+    lưu trong volume không bao giờ được huấn luyện lại (sản phẩm và hành vi mới không vào gợi ý).
+    """
+    delay = seconds_until_retrain(recommender.model.trained_at, RETRAIN_EVERY_SECONDS)
     while True:
-        await asyncio.sleep(RETRAIN_EVERY_SECONDS)
+        await asyncio.sleep(delay)
         try:
             await run_in_threadpool(recommender.train)
+            delay = RETRAIN_EVERY_SECONDS
         except Exception:
             log.exception("Scheduled retraining failed; keeping the previous model")
+            delay = RETRAIN_RETRY_SECONDS
 
 
 @asynccontextmanager
