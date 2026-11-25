@@ -1,21 +1,21 @@
 {
-  "evaluatedAt": "2026-11-09T13:29:40",
+  "evaluatedAt": "2026-11-25T21:18:39",
   "n": 10,
   "trainRatio": 0.7,
   "validationRatio": 0.1,
   "testRatio": 0.2,
   "coldStartK": 2,
-  "likeEvents": 709,
-  "users": 499,
-  "strongUsers": 385,
-  "coldUsers": 136,
-  "validationUsers": 347,
-  "trainEvents": 16429,
-  "validationEvents": 2456,
-  "testEvents": 5713,
+  "likeEvents": 2,
+  "users": 548,
+  "strongUsers": 400,
+  "coldUsers": 171,
+  "validationUsers": 354,
+  "trainEvents": 16643,
+  "validationEvents": 2508,
+  "testEvents": 5831,
   "products": 4302,
   "configuredAlpha": 0.6,
-  "bestAlpha": 0.6,
+  "bestAlpha": 0.4,
   "configured": {
     "alpha": 0.6,
     "factors": 16,
@@ -26,216 +26,216 @@
     "coldStartK": 2
   },
   "chosen": {
-    "alpha": 0.6,
-    "factors": 16,
-    "regularization": 1.0,
+    "alpha": 0.4,
+    "factors": 32,
+    "regularization": 0.1,
     "confidence": 5.0,
     "halfLifeDays": 90.0,
-    "mmrLambda": 0.7,
-    "coldStartK": 2
+    "mmrLambda": 0.8,
+    "coldStartK": 1
   },
   "bootstrapSamples": 1000,
-  "seconds": 345.2,
+  "seconds": 468.9,
   "tuning": {
     "als": [
       {
         "factors": 16,
         "regularization": 0.1,
         "confidence": 5.0,
-        "ndcg": 0.0821
+        "ndcg": 0.0795
       },
       {
         "factors": 16,
         "regularization": 0.1,
         "confidence": 10.0,
-        "ndcg": 0.0683
+        "ndcg": 0.0628
       },
       {
         "factors": 16,
         "regularization": 0.1,
         "confidence": 20.0,
-        "ndcg": 0.0508
+        "ndcg": 0.045
       },
       {
         "factors": 16,
         "regularization": 1.0,
         "confidence": 5.0,
-        "ndcg": 0.0827
+        "ndcg": 0.0778
       },
       {
         "factors": 16,
         "regularization": 1.0,
         "confidence": 10.0,
-        "ndcg": 0.0642
+        "ndcg": 0.062
       },
       {
         "factors": 16,
         "regularization": 1.0,
         "confidence": 20.0,
-        "ndcg": 0.0466
+        "ndcg": 0.0433
       },
       {
         "factors": 32,
         "regularization": 0.1,
         "confidence": 5.0,
-        "ndcg": 0.0738
+        "ndcg": 0.1012
       },
       {
         "factors": 32,
         "regularization": 0.1,
         "confidence": 10.0,
-        "ndcg": 0.0726
+        "ndcg": 0.0859
       },
       {
         "factors": 32,
         "regularization": 0.1,
         "confidence": 20.0,
-        "ndcg": 0.0677
-      },
-      {
-        "factors": 32,
-        "regularization": 1.0,
-        "confidence": 5.0,
-        "ndcg": 0.0775
-      },
-      {
-        "factors": 32,
-        "regularization": 1.0,
-        "confidence": 10.0,
-        "ndcg": 0.0743
-      },
-      {
-        "factors": 32,
-        "regularization": 1.0,
-        "confidence": 20.0,
-        "ndcg": 0.0645
-      },
-      {
-        "factors": 64,
-        "regularization": 0.1,
-        "confidence": 5.0,
-        "ndcg": 0.0775
-      },
-      {
-        "factors": 64,
-        "regularization": 0.1,
-        "confidence": 10.0,
         "ndcg": 0.0679
       },
       {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 5.0,
+        "ndcg": 0.1
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 10.0,
+        "ndcg": 0.0871
+      },
+      {
+        "factors": 32,
+        "regularization": 1.0,
+        "confidence": 20.0,
+        "ndcg": 0.0684
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 5.0,
+        "ndcg": 0.0859
+      },
+      {
+        "factors": 64,
+        "regularization": 0.1,
+        "confidence": 10.0,
+        "ndcg": 0.0799
+      },
+      {
         "factors": 64,
         "regularization": 0.1,
         "confidence": 20.0,
-        "ndcg": 0.0627
+        "ndcg": 0.0712
       },
       {
         "factors": 64,
         "regularization": 1.0,
         "confidence": 5.0,
-        "ndcg": 0.0747
+        "ndcg": 0.0859
       },
       {
         "factors": 64,
         "regularization": 1.0,
         "confidence": 10.0,
-        "ndcg": 0.0658
+        "ndcg": 0.0758
       },
       {
         "factors": 64,
         "regularization": 1.0,
         "confidence": 20.0,
-        "ndcg": 0.0603
+        "ndcg": 0.0634
       }
     ],
     "decay": [
       {
         "halfLifeDays": 0.0,
-        "ndcg": 0.1038
+        "ndcg": 0.1251
       },
       {
         "halfLifeDays": 30.0,
-        "ndcg": 0.1067
+        "ndcg": 0.1267
       },
       {
         "halfLifeDays": 90.0,
-        "ndcg": 0.1082
+        "ndcg": 0.1285
       }
     ],
     "mmr": [
       {
         "lambda": 1.0,
-        "ndcg": 0.1082,
-        "diversity": 0.2824
+        "ndcg": 0.1285,
+        "diversity": 0.4199
       },
       {
         "lambda": 0.9,
-        "ndcg": 0.1048,
-        "diversity": 0.3295
+        "ndcg": 0.1272,
+        "diversity": 0.4698
       },
       {
         "lambda": 0.8,
-        "ndcg": 0.1076,
-        "diversity": 0.4067
+        "ndcg": 0.1246,
+        "diversity": 0.5402
       },
       {
         "lambda": 0.7,
-        "ndcg": 0.1032,
-        "diversity": 0.5142
+        "ndcg": 0.1128,
+        "diversity": 0.6324
       },
       {
         "lambda": 0.6,
-        "ndcg": 0.0932,
-        "diversity": 0.645
+        "ndcg": 0.1018,
+        "diversity": 0.7354
       },
       {
         "lambda": 0.5,
-        "ndcg": 0.0776,
-        "diversity": 0.7554
+        "ndcg": 0.0885,
+        "diversity": 0.7972
       }
     ],
     "mmrMaxLoss": 0.05,
     "coldStart": [
       {
         "events": 1,
-        "users": 90,
-        "popular": 0.0515,
-        "cbf": 0.0838,
-        "hybrid": 0.0816
+        "users": 88,
+        "popular": 0.032,
+        "cbf": 0.1105,
+        "hybrid": 0.1232
       },
       {
         "events": 2,
-        "users": 89,
-        "popular": 0.0439,
-        "cbf": 0.0792,
-        "hybrid": 0.0876
+        "users": 88,
+        "popular": 0.0235,
+        "cbf": 0.1212,
+        "hybrid": 0.1265
       },
       {
         "events": 3,
         "users": 88,
-        "popular": 0.042,
-        "cbf": 0.0918,
-        "hybrid": 0.1028
+        "popular": 0.0237,
+        "cbf": 0.1218,
+        "hybrid": 0.1633
       },
       {
         "events": 5,
         "users": 88,
-        "popular": 0.0375,
-        "cbf": 0.0982,
-        "hybrid": 0.1122
+        "popular": 0.0236,
+        "cbf": 0.1361,
+        "hybrid": 0.1907
       },
       {
         "events": 8,
-        "users": 87,
-        "popular": 0.0389,
-        "cbf": 0.0935,
-        "hybrid": 0.1332
+        "users": 88,
+        "popular": 0.0228,
+        "cbf": 0.1267,
+        "hybrid": 0.2021
       },
       {
         "events": 12,
-        "users": 84,
-        "popular": 0.0355,
-        "cbf": 0.0942,
-        "hybrid": 0.1284
+        "users": 88,
+        "popular": 0.0186,
+        "cbf": 0.1495,
+        "hybrid": 0.2021
       }
     ]
   },
@@ -243,152 +243,152 @@
     {
       "events": 1,
       "users": 91,
-      "popular": 0.0486,
-      "cbf": 0.0649,
-      "hybrid": 0.0707
+      "popular": 0.0368,
+      "cbf": 0.1407,
+      "hybrid": 0.1579
     },
     {
       "events": 2,
       "users": 91,
-      "popular": 0.0496,
-      "cbf": 0.0822,
-      "hybrid": 0.0927
+      "popular": 0.0358,
+      "cbf": 0.1599,
+      "hybrid": 0.1817
     },
     {
       "events": 3,
       "users": 91,
-      "popular": 0.0444,
-      "cbf": 0.0927,
-      "hybrid": 0.1095
+      "popular": 0.0359,
+      "cbf": 0.1623,
+      "hybrid": 0.1888
     },
     {
       "events": 5,
       "users": 90,
-      "popular": 0.0444,
-      "cbf": 0.1085,
-      "hybrid": 0.1265
+      "popular": 0.0343,
+      "cbf": 0.1641,
+      "hybrid": 0.2121
     },
     {
       "events": 8,
-      "users": 90,
-      "popular": 0.0414,
-      "cbf": 0.1198,
-      "hybrid": 0.1473
+      "users": 88,
+      "popular": 0.0275,
+      "cbf": 0.1652,
+      "hybrid": 0.2228
     },
     {
       "events": 12,
-      "users": 90,
-      "popular": 0.0338,
-      "cbf": 0.1176,
-      "hybrid": 0.1467
+      "users": 88,
+      "popular": 0.0276,
+      "cbf": 0.1635,
+      "hybrid": 0.21
     }
   ],
   "likeRows": [
     {
       "model": "Có LIKE (mọi tương tác)",
       "kind": "HYBRID",
-      "alpha": 0.6,
-      "precision": 0.0313,
-      "recall": 0.0984,
-      "ndcg": 0.0769,
-      "hitRate": 0.2445,
+      "alpha": 0.4,
+      "precision": 0.0316,
+      "recall": 0.0995,
+      "ndcg": 0.0817,
+      "hitRate": 0.2336,
       "ci": {
         "precision": [
-          0.0264,
+          0.0265,
           0.0369
         ],
         "recall": [
-          0.0825,
-          0.1177
+          0.0827,
+          0.1166
         ],
         "ndcg": [
-          0.0646,
-          0.0919
+          0.0669,
+          0.0963
         ],
         "hitRate": [
-          0.2084,
-          0.2826
+          0.1971,
+          0.2701
         ]
       }
     },
     {
       "model": "Bỏ LIKE (mọi tương tác)",
       "kind": "HYBRID",
-      "alpha": 0.6,
-      "precision": 0.0317,
-      "recall": 0.098,
-      "ndcg": 0.0742,
-      "hitRate": 0.2425,
+      "alpha": 0.4,
+      "precision": 0.0316,
+      "recall": 0.0995,
+      "ndcg": 0.0818,
+      "hitRate": 0.2336,
       "ci": {
         "precision": [
-          0.0263,
-          0.0375
+          0.0265,
+          0.0369
         ],
         "recall": [
-          0.0817,
-          0.1188
+          0.0827,
+          0.1166
         ],
         "ndcg": [
-          0.062,
-          0.0891
+          0.0672,
+          0.0964
         ],
         "hitRate": [
-          0.2044,
-          0.2826
+          0.1971,
+          0.2701
         ]
       }
     },
     {
       "model": "Có LIKE (thêm giỏ / mua)",
       "kind": "HYBRID",
-      "alpha": 0.6,
-      "precision": 0.0104,
-      "recall": 0.0636,
-      "ndcg": 0.0362,
-      "hitRate": 0.0987,
+      "alpha": 0.4,
+      "precision": 0.011,
+      "recall": 0.096,
+      "ndcg": 0.0541,
+      "hitRate": 0.11,
       "ci": {
         "precision": [
-          0.0073,
-          0.0135
+          0.0083,
+          0.0143
         ],
         "recall": [
-          0.0424,
-          0.086
+          0.0702,
+          0.1244
         ],
         "ndcg": [
-          0.0234,
-          0.0501
+          0.0377,
+          0.072
         ],
         "hitRate": [
-          0.0675,
-          0.1299
+          0.0825,
+          0.1425
         ]
       }
     },
     {
       "model": "Bỏ LIKE (thêm giỏ / mua)",
       "kind": "HYBRID",
-      "alpha": 0.6,
-      "precision": 0.0109,
-      "recall": 0.0645,
-      "ndcg": 0.0362,
-      "hitRate": 0.1013,
+      "alpha": 0.4,
+      "precision": 0.011,
+      "recall": 0.096,
+      "ndcg": 0.0543,
+      "hitRate": 0.11,
       "ci": {
         "precision": [
-          0.0075,
+          0.0083,
           0.0143
         ],
         "recall": [
-          0.0431,
-          0.0877
+          0.0702,
+          0.1244
         ],
         "ndcg": [
-          0.0239,
-          0.0496
+          0.0379,
+          0.0722
         ],
         "hitRate": [
-          0.0701,
-          0.1325
+          0.0825,
+          0.1425
         ]
       }
     }
@@ -398,17 +398,17 @@
       "model": "Có LIKE (mọi tương tác)",
       "versus": "Bỏ LIKE (mọi tương tác)",
       "metric": "ndcg",
-      "diff": 0.0027,
-      "low": -0.0006,
-      "high": 0.0065
+      "diff": -0.0001,
+      "low": -0.0002,
+      "high": 0.0
     },
     {
       "model": "Có LIKE (thêm giỏ / mua)",
       "versus": "Bỏ LIKE (thêm giỏ / mua)",
       "metric": "ndcg",
-      "diff": 0.0,
-      "low": -0.0032,
-      "high": 0.0034
+      "diff": -0.0002,
+      "low": -0.0006,
+      "high": 0.0
     }
   ],
   "validationRows": [
@@ -416,121 +416,121 @@
       "model": "Phổ biến (baseline)",
       "kind": "POPULAR",
       "alpha": null,
-      "precision": 0.0052,
-      "recall": 0.0365,
-      "ndcg": 0.0186,
-      "hitRate": 0.0519,
+      "precision": 0.0042,
+      "recall": 0.0188,
+      "ndcg": 0.0102,
+      "hitRate": 0.0424,
       "coverage": 0.0037
     },
     {
       "model": "CF/ALS (α=0)",
       "kind": "CF",
       "alpha": 0.0,
-      "precision": 0.0233,
-      "recall": 0.146,
-      "ndcg": 0.0827,
-      "hitRate": 0.2017,
-      "coverage": 0.0844
+      "precision": 0.0274,
+      "recall": 0.1455,
+      "ndcg": 0.1012,
+      "hitRate": 0.2514,
+      "coverage": 0.1246
     },
     {
       "model": "Hybrid α=0.1",
       "kind": "HYBRID",
       "alpha": 0.1,
-      "precision": 0.0245,
-      "recall": 0.15,
-      "ndcg": 0.0898,
-      "hitRate": 0.2104,
-      "coverage": 0.0925
+      "precision": 0.0302,
+      "recall": 0.1557,
+      "ndcg": 0.107,
+      "hitRate": 0.2684,
+      "coverage": 0.1278
     },
     {
       "model": "Hybrid α=0.2",
       "kind": "HYBRID",
       "alpha": 0.2,
-      "precision": 0.0239,
-      "recall": 0.1472,
-      "ndcg": 0.0893,
-      "hitRate": 0.2075,
-      "coverage": 0.1048
+      "precision": 0.0333,
+      "recall": 0.1709,
+      "ndcg": 0.1172,
+      "hitRate": 0.291,
+      "coverage": 0.1369
     },
     {
       "model": "Hybrid α=0.3",
       "kind": "HYBRID",
       "alpha": 0.3,
-      "precision": 0.0256,
-      "recall": 0.1541,
-      "ndcg": 0.0945,
-      "hitRate": 0.2219,
-      "coverage": 0.1197
+      "precision": 0.0328,
+      "recall": 0.1689,
+      "ndcg": 0.1169,
+      "hitRate": 0.2853,
+      "coverage": 0.1471
     },
     {
       "model": "Hybrid α=0.4",
       "kind": "HYBRID",
       "alpha": 0.4,
-      "precision": 0.0274,
-      "recall": 0.1657,
-      "ndcg": 0.1029,
-      "hitRate": 0.2392,
-      "coverage": 0.1434
+      "precision": 0.0347,
+      "recall": 0.1815,
+      "ndcg": 0.1251,
+      "hitRate": 0.3079,
+      "coverage": 0.1629
     },
     {
       "model": "Hybrid α=0.5",
       "kind": "HYBRID",
       "alpha": 0.5,
-      "precision": 0.0259,
-      "recall": 0.1519,
-      "ndcg": 0.1034,
-      "hitRate": 0.2305,
-      "coverage": 0.1834
+      "precision": 0.0325,
+      "recall": 0.1662,
+      "ndcg": 0.1184,
+      "hitRate": 0.291,
+      "coverage": 0.1894
     },
     {
       "model": "Hybrid α=0.6",
       "kind": "HYBRID",
       "alpha": 0.6,
-      "precision": 0.0256,
-      "recall": 0.1535,
-      "ndcg": 0.1038,
-      "hitRate": 0.2277,
+      "precision": 0.0316,
+      "recall": 0.1622,
+      "ndcg": 0.1149,
+      "hitRate": 0.2825,
       "coverage": 0.2157
     },
     {
       "model": "Hybrid α=0.7",
       "kind": "HYBRID",
       "alpha": 0.7,
-      "precision": 0.0251,
-      "recall": 0.1548,
-      "ndcg": 0.1026,
-      "hitRate": 0.2305,
-      "coverage": 0.2345
+      "precision": 0.0297,
+      "recall": 0.1508,
+      "ndcg": 0.1089,
+      "hitRate": 0.2655,
+      "coverage": 0.2306
     },
     {
       "model": "Hybrid α=0.8",
       "kind": "HYBRID",
       "alpha": 0.8,
-      "precision": 0.0242,
-      "recall": 0.1494,
-      "ndcg": 0.1015,
-      "hitRate": 0.2248,
-      "coverage": 0.2448
+      "precision": 0.0271,
+      "recall": 0.1392,
+      "ndcg": 0.1036,
+      "hitRate": 0.2429,
+      "coverage": 0.2355
     },
     {
       "model": "Hybrid α=0.9",
       "kind": "HYBRID",
       "alpha": 0.9,
-      "precision": 0.0233,
-      "recall": 0.1454,
-      "ndcg": 0.096,
-      "hitRate": 0.2133,
-      "coverage": 0.2483
+      "precision": 0.026,
+      "recall": 0.136,
+      "ndcg": 0.0964,
+      "hitRate": 0.2345,
+      "coverage": 0.2378
     },
     {
       "model": "CBF (α=1)",
       "kind": "CBF",
       "alpha": 1.0,
-      "precision": 0.0225,
-      "recall": 0.1374,
-      "ndcg": 0.0793,
-      "hitRate": 0.2075,
-      "coverage": 0.2315
+      "precision": 0.0237,
+      "recall": 0.1214,
+      "ndcg": 0.0842,
+      "hitRate": 0.209,
+      "coverage": 0.2292
     }
   ],
   "rows": [
@@ -538,28 +538,28 @@
       "model": "Phổ biến (baseline)",
       "kind": "POPULAR",
       "alpha": null,
-      "precision": 0.0066,
-      "recall": 0.0292,
-      "ndcg": 0.0174,
-      "hitRate": 0.0621,
-      "coverage": 0.0037,
-      "diversity": 0.7198,
+      "precision": 0.0075,
+      "recall": 0.0436,
+      "ndcg": 0.0231,
+      "hitRate": 0.0748,
+      "coverage": 0.004,
+      "diversity": 0.6387,
       "ci": {
         "precision": [
-          0.0044,
-          0.0092
+          0.0055,
+          0.0099
         ],
         "recall": [
-          0.0177,
-          0.0414
+          0.0303,
+          0.0586
         ],
         "ndcg": [
-          0.0112,
-          0.0249
+          0.0161,
+          0.0308
         ],
         "hitRate": [
-          0.0401,
-          0.0842
+          0.0547,
+          0.0985
         ]
       },
       "mmrLambda": null
@@ -568,28 +568,28 @@
       "model": "Item-kNN (baseline)",
       "kind": "KNN",
       "alpha": null,
-      "precision": 0.022,
-      "recall": 0.0689,
-      "ndcg": 0.0528,
-      "hitRate": 0.1764,
-      "coverage": 0.2836,
-      "diversity": 0.624,
+      "precision": 0.0254,
+      "recall": 0.0785,
+      "ndcg": 0.0596,
+      "hitRate": 0.1898,
+      "coverage": 0.2494,
+      "diversity": 0.6241,
       "ci": {
         "precision": [
-          0.0176,
-          0.0273
+          0.0206,
+          0.0303
         ],
         "recall": [
-          0.0535,
-          0.0853
+          0.0635,
+          0.0945
         ],
         "ndcg": [
-          0.0406,
-          0.0661
+          0.0474,
+          0.0723
         ],
         "hitRate": [
-          0.1423,
-          0.2124
+          0.1588,
+          0.2208
         ]
       },
       "mmrLambda": null
@@ -598,28 +598,28 @@
       "model": "CBF (α=1)",
       "kind": "CBF",
       "alpha": 1.0,
-      "precision": 0.0327,
-      "recall": 0.1034,
-      "ndcg": 0.0789,
-      "hitRate": 0.2485,
-      "coverage": 0.2736,
-      "diversity": 0.1663,
+      "precision": 0.0259,
+      "recall": 0.0861,
+      "ndcg": 0.0656,
+      "hitRate": 0.2117,
+      "coverage": 0.2429,
+      "diversity": 0.1716,
       "ci": {
         "precision": [
-          0.0272,
-          0.0389
+          0.0215,
+          0.0307
         ],
         "recall": [
-          0.0854,
-          0.1233
+          0.0709,
+          0.1037
         ],
         "ndcg": [
-          0.0652,
-          0.0941
+          0.054,
+          0.079
         ],
         "hitRate": [
-          0.2104,
-          0.2886
+          0.1788,
+          0.2464
         ]
       },
       "mmrLambda": null
@@ -628,28 +628,58 @@
       "model": "CF/ALS (α=0)",
       "kind": "CF",
       "alpha": 0.0,
-      "precision": 0.0267,
-      "recall": 0.0889,
-      "ndcg": 0.0609,
-      "hitRate": 0.2084,
-      "coverage": 0.0883,
-      "diversity": 0.6129,
+      "precision": 0.0307,
+      "recall": 0.0945,
+      "ndcg": 0.0742,
+      "hitRate": 0.219,
+      "coverage": 0.1258,
+      "diversity": 0.6286,
       "ci": {
         "precision": [
-          0.0216,
-          0.0319
+          0.0257,
+          0.0361
         ],
         "recall": [
-          0.0713,
-          0.1084
+          0.0787,
+          0.1133
         ],
         "ndcg": [
-          0.0494,
-          0.0743
+          0.0607,
+          0.0881
         ],
         "hitRate": [
-          0.1723,
-          0.2445
+          0.1861,
+          0.25
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.4",
+      "kind": "HYBRID",
+      "alpha": 0.4,
+      "precision": 0.0356,
+      "recall": 0.111,
+      "ndcg": 0.0878,
+      "hitRate": 0.25,
+      "coverage": 0.1653,
+      "diversity": 0.4305,
+      "ci": {
+        "precision": [
+          0.0301,
+          0.0412
+        ],
+        "recall": [
+          0.0926,
+          0.1293
+        ],
+        "ndcg": [
+          0.0723,
+          0.103
+        ],
+        "hitRate": [
+          0.2153,
+          0.2847
         ]
       },
       "mmrLambda": null
@@ -658,58 +688,88 @@
       "model": "Hybrid α=0.6",
       "kind": "HYBRID",
       "alpha": 0.6,
-      "precision": 0.0345,
-      "recall": 0.1065,
-      "ndcg": 0.0853,
-      "hitRate": 0.2645,
-      "coverage": 0.2383,
-      "diversity": 0.2961,
+      "precision": 0.0305,
+      "recall": 0.0969,
+      "ndcg": 0.0808,
+      "hitRate": 0.2281,
+      "coverage": 0.2327,
+      "diversity": 0.3128,
       "ci": {
         "precision": [
-          0.0287,
-          0.0401
+          0.0254,
+          0.0358
         ],
         "recall": [
-          0.0883,
-          0.1261
+          0.0791,
+          0.1152
         ],
         "ndcg": [
-          0.0709,
-          0.1006
+          0.0657,
+          0.0966
         ],
         "hitRate": [
-          0.2265,
-          0.3027
+          0.1934,
+          0.261
         ]
       },
       "mmrLambda": null
     },
     {
-      "model": "Hybrid α=0.6 + MMR λ=0.7",
+      "model": "Hybrid α=0.4 + MMR λ=0.8",
       "kind": "HYBRID_MMR",
-      "alpha": 0.6,
-      "precision": 0.0313,
-      "recall": 0.0984,
-      "ndcg": 0.0769,
-      "hitRate": 0.2445,
-      "coverage": 0.1736,
-      "diversity": 0.518,
+      "alpha": 0.4,
+      "precision": 0.0316,
+      "recall": 0.0995,
+      "ndcg": 0.0817,
+      "hitRate": 0.2336,
+      "coverage": 0.1625,
+      "diversity": 0.5483,
       "ci": {
         "precision": [
-          0.0261,
+          0.0266,
           0.0369
         ],
         "recall": [
-          0.0816,
-          0.1184
+          0.0832,
+          0.1174
         ],
         "ndcg": [
-          0.0635,
-          0.0922
+          0.067,
+          0.0969
         ],
         "hitRate": [
-          0.2084,
-          0.2826
+          0.1989,
+          0.2665
+        ]
+      },
+      "mmrLambda": 0.8
+    },
+    {
+      "model": "Hybrid α=0.6 + MMR λ=0.7",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.6,
+      "precision": 0.031,
+      "recall": 0.0965,
+      "ndcg": 0.0801,
+      "hitRate": 0.2336,
+      "coverage": 0.1906,
+      "diversity": 0.515,
+      "ci": {
+        "precision": [
+          0.0259,
+          0.0361
+        ],
+        "recall": [
+          0.0802,
+          0.1141
+        ],
+        "ndcg": [
+          0.0656,
+          0.0958
+        ],
+        "hitRate": [
+          0.1989,
+          0.2682
         ]
       },
       "mmrLambda": 0.7
@@ -717,54 +777,54 @@
   ],
   "comparisons": [
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "CF/ALS (α=0)",
       "metric": "ndcg",
-      "diff": 0.0244,
-      "low": 0.0148,
-      "high": 0.034
+      "diff": 0.0135,
+      "low": 0.0065,
+      "high": 0.0199
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "CBF (α=1)",
       "metric": "ndcg",
-      "diff": 0.0065,
-      "low": -0.0042,
-      "high": 0.0166
+      "diff": 0.0221,
+      "low": 0.0117,
+      "high": 0.0337
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "Item-kNN (baseline)",
       "metric": "ndcg",
-      "diff": 0.0325,
-      "low": 0.0205,
-      "high": 0.045
+      "diff": 0.0281,
+      "low": 0.0186,
+      "high": 0.039
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "Phổ biến (baseline)",
       "metric": "ndcg",
-      "diff": 0.0679,
-      "low": 0.0515,
-      "high": 0.0841
+      "diff": 0.0647,
+      "low": 0.0477,
+      "high": 0.082
     }
   ],
   "mmrComparisons": [
     {
-      "model": "Hybrid α=0.6 + MMR λ=0.7",
-      "versus": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4 + MMR λ=0.8",
+      "versus": "Hybrid α=0.4",
       "metric": "ndcg",
-      "diff": -0.0085,
-      "low": -0.0135,
-      "high": -0.0033
+      "diff": -0.0061,
+      "low": -0.0092,
+      "high": -0.0028
     },
     {
-      "model": "Hybrid α=0.6 + MMR λ=0.7",
-      "versus": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4 + MMR λ=0.8",
+      "versus": "Hybrid α=0.4",
       "metric": "diversity",
-      "diff": 0.2218,
-      "low": 0.2087,
-      "high": 0.2352
+      "diff": 0.1178,
+      "low": 0.1099,
+      "high": 0.1253
     }
   ],
   "strongRows": [
@@ -772,26 +832,26 @@
       "model": "Phổ biến (baseline)",
       "kind": "POPULAR",
       "alpha": null,
-      "precision": 0.0039,
-      "recall": 0.0249,
-      "ndcg": 0.0135,
-      "hitRate": 0.039,
+      "precision": 0.0058,
+      "recall": 0.0496,
+      "ndcg": 0.0243,
+      "hitRate": 0.0575,
       "ci": {
         "precision": [
-          0.0021,
-          0.006
+          0.0035,
+          0.0083
         ],
         "recall": [
-          0.0123,
-          0.0385
+          0.03,
+          0.0712
         ],
         "ndcg": [
-          0.0064,
-          0.0223
+          0.0146,
+          0.036
         ],
         "hitRate": [
-          0.0208,
-          0.0597
+          0.035,
+          0.0825
         ]
       },
       "mmrLambda": null
@@ -800,26 +860,26 @@
       "model": "Item-kNN (baseline)",
       "kind": "KNN",
       "alpha": null,
-      "precision": 0.0075,
-      "recall": 0.047,
-      "ndcg": 0.0252,
-      "hitRate": 0.0675,
+      "precision": 0.008,
+      "recall": 0.0702,
+      "ndcg": 0.0451,
+      "hitRate": 0.08,
       "ci": {
         "precision": [
-          0.0049,
-          0.0104
+          0.0055,
+          0.0108
         ],
         "recall": [
-          0.0288,
-          0.0671
+          0.0462,
+          0.0944
         ],
         "ndcg": [
-          0.0152,
-          0.0372
+          0.0289,
+          0.0624
         ],
         "hitRate": [
-          0.0442,
-          0.091
+          0.055,
+          0.1075
         ]
       },
       "mmrLambda": null
@@ -828,26 +888,26 @@
       "model": "CBF (α=1)",
       "kind": "CBF",
       "alpha": 1.0,
-      "precision": 0.0096,
-      "recall": 0.0716,
-      "ndcg": 0.0386,
-      "hitRate": 0.0961,
+      "precision": 0.01,
+      "recall": 0.0848,
+      "ndcg": 0.0548,
+      "hitRate": 0.1,
       "ci": {
         "precision": [
-          0.0068,
-          0.0127
+          0.0073,
+          0.013
         ],
         "recall": [
-          0.0478,
-          0.0963
+          0.0612,
+          0.1111
         ],
         "ndcg": [
-          0.0249,
-          0.0539
+          0.0382,
+          0.0739
         ],
         "hitRate": [
-          0.0675,
-          0.1273
+          0.0725,
+          0.13
         ]
       },
       "mmrLambda": null
@@ -856,26 +916,54 @@
       "model": "CF/ALS (α=0)",
       "kind": "CF",
       "alpha": 0.0,
-      "precision": 0.0104,
-      "recall": 0.0593,
-      "ndcg": 0.0328,
-      "hitRate": 0.0935,
+      "precision": 0.0105,
+      "recall": 0.094,
+      "ndcg": 0.0502,
+      "hitRate": 0.105,
       "ci": {
         "precision": [
           0.0075,
           0.0138
         ],
         "recall": [
-          0.04,
-          0.0807
+          0.0671,
+          0.1213
         ],
         "ndcg": [
-          0.0218,
-          0.0455
+          0.0348,
+          0.0668
         ],
         "hitRate": [
-          0.0675,
-          0.1221
+          0.075,
+          0.1375
+        ]
+      },
+      "mmrLambda": null
+    },
+    {
+      "model": "Hybrid α=0.4",
+      "kind": "HYBRID",
+      "alpha": 0.4,
+      "precision": 0.0123,
+      "recall": 0.1079,
+      "ndcg": 0.0579,
+      "hitRate": 0.12,
+      "ci": {
+        "precision": [
+          0.009,
+          0.0158
+        ],
+        "recall": [
+          0.0792,
+          0.1388
+        ],
+        "ndcg": [
+          0.0416,
+          0.0764
+        ],
+        "hitRate": [
+          0.09,
+          0.155
         ]
       },
       "mmrLambda": null
@@ -884,54 +972,82 @@
       "model": "Hybrid α=0.6",
       "kind": "HYBRID",
       "alpha": 0.6,
-      "precision": 0.0117,
-      "recall": 0.0671,
-      "ndcg": 0.0417,
-      "hitRate": 0.1065,
+      "precision": 0.0102,
+      "recall": 0.0854,
+      "ndcg": 0.0513,
+      "hitRate": 0.1,
       "ci": {
         "precision": [
-          0.0083,
-          0.0153
+          0.0075,
+          0.0135
         ],
         "recall": [
-          0.0463,
-          0.0907
+          0.0612,
+          0.1113
         ],
         "ndcg": [
-          0.0283,
-          0.0565
+          0.0353,
+          0.0685
         ],
         "hitRate": [
-          0.0779,
-          0.1377
+          0.0725,
+          0.13
         ]
       },
       "mmrLambda": null
     },
     {
+      "model": "Hybrid α=0.4 + MMR λ=0.8",
+      "kind": "HYBRID_MMR",
+      "alpha": 0.4,
+      "precision": 0.011,
+      "recall": 0.096,
+      "ndcg": 0.0541,
+      "hitRate": 0.11,
+      "ci": {
+        "precision": [
+          0.0083,
+          0.0143
+        ],
+        "recall": [
+          0.0698,
+          0.1221
+        ],
+        "ndcg": [
+          0.0377,
+          0.0713
+        ],
+        "hitRate": [
+          0.0825,
+          0.1425
+        ]
+      },
+      "mmrLambda": 0.8
+    },
+    {
       "model": "Hybrid α=0.6 + MMR λ=0.7",
       "kind": "HYBRID_MMR",
       "alpha": 0.6,
-      "precision": 0.0104,
-      "recall": 0.0636,
-      "ndcg": 0.0362,
-      "hitRate": 0.0987,
+      "precision": 0.0105,
+      "recall": 0.0898,
+      "ndcg": 0.0513,
+      "hitRate": 0.105,
       "ci": {
         "precision": [
-          0.0073,
-          0.0138
+          0.0078,
+          0.0135
         ],
         "recall": [
-          0.0437,
-          0.0894
+          0.0642,
+          0.1156
         ],
         "ndcg": [
-          0.0246,
-          0.0503
+          0.0354,
+          0.068
         ],
         "hitRate": [
-          0.0701,
-          0.1325
+          0.0775,
+          0.1351
         ]
       },
       "mmrLambda": 0.7
@@ -939,36 +1055,36 @@
   ],
   "strongComparisons": [
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "CF/ALS (α=0)",
       "metric": "ndcg",
-      "diff": 0.0089,
-      "low": -0.0033,
-      "high": 0.0215
+      "diff": 0.0077,
+      "low": 0.0,
+      "high": 0.0165
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "CBF (α=1)",
       "metric": "ndcg",
-      "diff": 0.0031,
-      "low": -0.007,
-      "high": 0.0127
+      "diff": 0.003,
+      "low": -0.0099,
+      "high": 0.0157
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "Item-kNN (baseline)",
       "metric": "ndcg",
-      "diff": 0.0164,
-      "low": 0.0044,
-      "high": 0.0299
+      "diff": 0.0128,
+      "low": 0.0008,
+      "high": 0.0258
     },
     {
-      "model": "Hybrid α=0.6",
+      "model": "Hybrid α=0.4",
       "versus": "Phổ biến (baseline)",
       "metric": "ndcg",
-      "diff": 0.0282,
-      "low": 0.0131,
-      "high": 0.0445
+      "diff": 0.0336,
+      "low": 0.0146,
+      "high": 0.0543
     }
   ],
   "coldStartRows": [
@@ -976,26 +1092,26 @@
       "model": "Phổ biến (baseline)",
       "kind": "POPULAR",
       "alpha": null,
-      "precision": 0.0074,
-      "recall": 0.0699,
-      "ndcg": 0.0271,
-      "hitRate": 0.0735,
+      "precision": 0.0053,
+      "recall": 0.0497,
+      "ndcg": 0.0181,
+      "hitRate": 0.0526,
       "ci": {
         "precision": [
-          0.0029,
-          0.0125
+          0.0023,
+          0.0088
         ],
         "recall": [
-          0.0294,
-          0.1176
+          0.0205,
+          0.0848
         ],
         "ndcg": [
-          0.0123,
-          0.0457
+          0.0071,
+          0.031
         ],
         "hitRate": [
-          0.0294,
-          0.125
+          0.0234,
+          0.0877
         ]
       }
     },
@@ -1003,26 +1119,26 @@
       "model": "CBF (khách mới)",
       "kind": "CBF",
       "alpha": null,
-      "precision": 0.0015,
-      "recall": 0.011,
-      "ndcg": 0.0054,
-      "hitRate": 0.0147,
+      "precision": 0.0029,
+      "recall": 0.0292,
+      "ndcg": 0.0174,
+      "hitRate": 0.0292,
       "ci": {
         "precision": [
-          0.0,
-          0.0037
+          0.0006,
+          0.0058
         ],
         "recall": [
-          0.0,
-          0.0294
+          0.0058,
+          0.0585
         ],
         "ndcg": [
-          0.0,
-          0.0144
+          0.0034,
+          0.035
         ],
         "hitRate": [
-          0.0,
-          0.0368
+          0.0058,
+          0.0585
         ]
       }
     }
@@ -1032,42 +1148,42 @@
       "model": "CBF (khách mới)",
       "versus": "Phổ biến (baseline)",
       "metric": "ndcg",
-      "diff": -0.0217,
-      "low": -0.0418,
-      "high": -0.0045
+      "diff": -0.0006,
+      "low": -0.0197,
+      "high": 0.0211
     }
   ],
   "crossSell": {
     "n": 4,
-    "pairs": 276,
-    "trainOrders": 2500,
-    "testOrders": 625,
-    "itemsWithRules": 10,
-    "itemsWithCoBuyers": 103,
-    "withSuggestions": 0.6051,
+    "pairs": 199,
+    "trainOrders": 2514,
+    "testOrders": 638,
+    "itemsWithRules": 14,
+    "itemsWithCoBuyers": 111,
+    "withSuggestions": 0.608,
     "rows": [
       {
         "model": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
-        "hitRate": 0.0217,
-        "precision": 0.0054,
-        "withSuggestions": 0.6051
+        "hitRate": 0.0302,
+        "precision": 0.0088,
+        "withSuggestions": 0.608
       },
       {
         "model": "Chỉ luật cùng đơn (cách cũ)",
-        "hitRate": 0.0217,
-        "precision": 0.0054,
-        "withSuggestions": 0.4384
+        "hitRate": 0.0251,
+        "precision": 0.0075,
+        "withSuggestions": 0.4523
       },
       {
         "model": "Chỉ khách mua A cũng mua B",
-        "hitRate": 0.0217,
-        "precision": 0.0054,
-        "withSuggestions": 0.5906
+        "hitRate": 0.0302,
+        "precision": 0.0088,
+        "withSuggestions": 0.5879
       },
       {
         "model": "Bán chạy nhất (baseline)",
-        "hitRate": 0.0217,
-        "precision": 0.0054,
+        "hitRate": 0.0603,
+        "precision": 0.0151,
         "withSuggestions": 1.0
       }
     ],
@@ -1076,18 +1192,18 @@
         "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
         "other": "Bán chạy nhất (baseline)",
         "metric": "hitRate",
-        "diff": 0.0,
-        "low": -0.0217,
-        "high": 0.0218,
+        "diff": -0.0302,
+        "low": -0.0704,
+        "high": 0.0101,
         "significant": false
       },
       {
         "best": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
         "other": "Chỉ luật cùng đơn (cách cũ)",
         "metric": "hitRate",
-        "diff": 0.0,
+        "diff": 0.005,
         "low": 0.0,
-        "high": 0.0,
+        "high": 0.0201,
         "significant": false
       }
     ]
@@ -1095,6 +1211,6 @@
   "upsell": {
     "products": 4302,
     "withSuggestions": 0.9812,
-    "meanPriceIncrease": 0.1047
+    "meanPriceIncrease": 0.105
   }
 }

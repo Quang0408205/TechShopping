@@ -24,32 +24,32 @@
 <text x="428.6" y="330" text-anchor="middle" fill="#4b5563">0.9</text>
 <text x="470.0" y="330" text-anchor="middle" fill="#4b5563">1.0</text>
 <text x="263.0" y="352" text-anchor="middle" fill="#111827">α trên validation (0 = chỉ ALS, 1 = chỉ CBF)</text>
-<path d="M56.0,192.9 L97.4,182.7 L138.8,183.4 L180.2,175.9 L221.6,163.8 L263.0,163.1 L304.4,162.5 L345.8,164.3 L387.2,165.8 L428.6,173.8 L470.0,197.8" fill="none" stroke="#2563eb" stroke-width="2.5"/>
-<circle cx="56.0" cy="192.9" r="3.5" fill="#2563eb"/>
-<circle cx="97.4" cy="182.7" r="3.5" fill="#2563eb"/>
-<circle cx="138.8" cy="183.4" r="3.5" fill="#2563eb"/>
-<circle cx="180.2" cy="175.9" r="3.5" fill="#2563eb"/>
-<circle cx="221.6" cy="163.8" r="3.5" fill="#2563eb"/>
-<circle cx="263.0" cy="163.1" r="3.5" fill="#2563eb"/>
-<circle cx="304.4" cy="162.5" r="3.5" fill="#2563eb"/>
-<circle cx="345.8" cy="164.3" r="3.5" fill="#2563eb"/>
-<circle cx="387.2" cy="165.8" r="3.5" fill="#2563eb"/>
-<circle cx="428.6" cy="173.8" r="3.5" fill="#2563eb"/>
-<circle cx="470.0" cy="197.8" r="3.5" fill="#2563eb"/>
-<path d="M56.0,101.8 L97.4,96.0 L138.8,100.0 L180.2,90.1 L221.6,73.4 L263.0,93.3 L304.4,91.0 L345.8,89.1 L387.2,96.9 L428.6,102.6 L470.0,114.1" fill="none" stroke="#d97706" stroke-width="2.5"/>
-<circle cx="56.0" cy="101.8" r="3.5" fill="#d97706"/>
-<circle cx="97.4" cy="96.0" r="3.5" fill="#d97706"/>
-<circle cx="138.8" cy="100.0" r="3.5" fill="#d97706"/>
-<circle cx="180.2" cy="90.1" r="3.5" fill="#d97706"/>
-<circle cx="221.6" cy="73.4" r="3.5" fill="#d97706"/>
-<circle cx="263.0" cy="93.3" r="3.5" fill="#d97706"/>
-<circle cx="304.4" cy="91.0" r="3.5" fill="#d97706"/>
-<circle cx="345.8" cy="89.1" r="3.5" fill="#d97706"/>
-<circle cx="387.2" cy="96.9" r="3.5" fill="#d97706"/>
-<circle cx="428.6" cy="102.6" r="3.5" fill="#d97706"/>
-<circle cx="470.0" cy="114.1" r="3.5" fill="#d97706"/>
-<line x1="56" y1="285.2" x2="470" y2="285.2" stroke="#6b7280" stroke-dasharray="5 4"/>
-<line x1="304.4" y1="24" x2="304.4" y2="312" stroke="#16a34a" stroke-dasharray="3 3"/>
+<path d="M56.0,166.3 L97.4,157.9 L138.8,143.2 L180.2,143.7 L221.6,131.9 L263.0,141.5 L304.4,146.5 L345.8,155.2 L387.2,162.8 L428.6,173.2 L470.0,190.8" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+<circle cx="56.0" cy="166.3" r="3.5" fill="#2563eb"/>
+<circle cx="97.4" cy="157.9" r="3.5" fill="#2563eb"/>
+<circle cx="138.8" cy="143.2" r="3.5" fill="#2563eb"/>
+<circle cx="180.2" cy="143.7" r="3.5" fill="#2563eb"/>
+<circle cx="221.6" cy="131.9" r="3.5" fill="#2563eb"/>
+<circle cx="263.0" cy="141.5" r="3.5" fill="#2563eb"/>
+<circle cx="304.4" cy="146.5" r="3.5" fill="#2563eb"/>
+<circle cx="345.8" cy="155.2" r="3.5" fill="#2563eb"/>
+<circle cx="387.2" cy="162.8" r="3.5" fill="#2563eb"/>
+<circle cx="428.6" cy="173.2" r="3.5" fill="#2563eb"/>
+<circle cx="470.0" cy="190.8" r="3.5" fill="#2563eb"/>
+<path d="M56.0,102.5 L97.4,87.8 L138.8,65.9 L180.2,68.8 L221.6,50.6 L263.0,72.7 L304.4,78.4 L345.8,94.8 L387.2,111.6 L428.6,116.2 L470.0,137.2" fill="none" stroke="#d97706" stroke-width="2.5"/>
+<circle cx="56.0" cy="102.5" r="3.5" fill="#d97706"/>
+<circle cx="97.4" cy="87.8" r="3.5" fill="#d97706"/>
+<circle cx="138.8" cy="65.9" r="3.5" fill="#d97706"/>
+<circle cx="180.2" cy="68.8" r="3.5" fill="#d97706"/>
+<circle cx="221.6" cy="50.6" r="3.5" fill="#d97706"/>
+<circle cx="263.0" cy="72.7" r="3.5" fill="#d97706"/>
+<circle cx="304.4" cy="78.4" r="3.5" fill="#d97706"/>
+<circle cx="345.8" cy="94.8" r="3.5" fill="#d97706"/>
+<circle cx="387.2" cy="111.6" r="3.5" fill="#d97706"/>
+<circle cx="428.6" cy="116.2" r="3.5" fill="#d97706"/>
+<circle cx="470.0" cy="137.2" r="3.5" fill="#d97706"/>
+<line x1="56" y1="297.3" x2="470" y2="297.3" stroke="#6b7280" stroke-dasharray="5 4"/>
+<line x1="221.6" y1="24" x2="221.6" y2="312" stroke="#16a34a" stroke-dasharray="3 3"/>
 <line x1="484" y1="34" x2="506" y2="34" stroke="#2563eb" stroke-width="2.5"/>
 <text x="512" y="38" fill="#111827">NDCG@10</text>
 <line x1="484" y1="54" x2="506" y2="54" stroke="#d97706" stroke-width="2.5"/>
