@@ -57,3 +57,10 @@ create table if not exists recommendation_evaluation_rows (
     constraint chk_recommendation_evaluation_rows_kind
         check (kind in ('POPULAR', 'KNN', 'CBF', 'CF', 'HYBRID', 'HYBRID_MMR'))
 );
+
+-- Database tạo từ bản cũ (trước khi có MMR): thêm cột / sửa ràng buộc, chạy lại vẫn được.
+alter table recommendation_evaluations add column if not exists mmr_lambda decimal(3, 2) not null default 1;
+alter table recommendation_evaluation_rows add column if not exists mmr_lambda decimal(3, 2);
+alter table recommendation_evaluation_rows drop constraint if exists chk_recommendation_evaluation_rows_kind;
+alter table recommendation_evaluation_rows add constraint chk_recommendation_evaluation_rows_kind
+    check (kind in ('POPULAR', 'KNN', 'CBF', 'CF', 'HYBRID', 'HYBRID_MMR'));

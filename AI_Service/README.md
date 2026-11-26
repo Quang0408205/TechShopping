@@ -29,10 +29,13 @@ Phần AI gồm hai chức năng:
 
 ---
 
-## Chỉ số mới nhất (tóm tắt, đo lại 25/11/2026)
+## Chỉ số mới nhất (tóm tắt, đo lại 25/11 và 26/11/2026)
 
 Đo lại ngày 25/11/2026 trên database hiện tại (đã dựng lại, **khác dữ liệu ngày 09/11**, nên không so trực tiếp với các số
-trước đó). Chi tiết và cách đo xem mục 9; file gốc ở `evals/results/`.
+trước đó). Chi tiết và cách đo xem mục 9; file gốc ở `evals/results/`. Ngày 26/11/2026 gộp 2 commit 11/11 của nhánh Yle
+(nâng cấp không kém thông số, phụ kiện cùng loại, mua kèm từ phụ kiện chỉ gợi ý máy dùng được; huấn luyện theo tuổi mô
+hình) rồi đo lại khuyến nghị và RAG: các chỉ số khuyến nghị cá nhân và RAG không đổi, chỉ đổi mua kèm / nâng cấp (dòng
+bên dưới).
 
 | Phần | Chỉ số | Giá trị | Nguồn |
 |---|---|---|---|
@@ -45,11 +48,11 @@ trước đó). Chi tiết và cách đo xem mục 9; file gốc ở `evals/resu
 | | Tham số chọn trên validation | ALS 32 chiều λ = 0,1 a = 5; α = 0,4; nửa đời 90 ngày; MMR λ = 0,8; k = 1 (cấu hình đang chạy vẫn là của 09/11: ALS 16, α = 0,6, MMR 0,7, k = 2) | như trên |
 | Khuyến nghị (Amazon Reviews 2023, 20.000 khách thật) | NDCG@10 Hybrid α = 0,2 | **0,0280** (0,0262–0,0297); hơn CBF, kNN, phổ biến có ý nghĩa, ngang ALS (0,0274) | `amazon_cell_latest.md` (**09/11**, không chạy lại: cần tải 4 GB dữ liệu và ~65 phút) |
 | | Mua kèm HitRate@4 | 2,16% (bán chạy nhất: 1,55%; hơn có ý nghĩa) | như trên |
-| Mua kèm (dữ liệu mô phỏng) | HitRate@4 | 3,02% so với bán chạy nhất 6,03% (chênh −3,02 điểm %, chưa đủ chắc chắn; đơn mẫu sinh ngẫu nhiên) | `recommender_latest.md` |
-| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 98% / +10% | `recommender_latest.md` |
+| Mua kèm (dữ liệu mô phỏng) | HitRate@4 | 3,02% so với bán chạy nhất 6,03% (chênh −3,02 điểm %, chưa đủ chắc chắn; đơn mẫu sinh ngẫu nhiên); 51% sản phẩm có danh sách mua kèm (25/11: 61%) | `recommender_latest.md` (26/11) |
+| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 97,7% / +10% (25/11: 98,1% / +10,5%) | `recommender_latest.md` (26/11) |
 | RAG (40 câu) | Hit@1 / Hit@3 / MRR của `vector` (đang dùng) | **0,850 / 0,925 / 0,900**; keyword 0,725 / 0,800 / 0,779 | `retrieval_latest.md` |
 | Chatbot (30 câu, Qwen3 8B + giám khảo) | Đạt | **27/30 (90%)**, 27,8 giây / câu, 2,0 lần gọi LLM / câu, chi phí 0đ (lần 09/11: 30/30, 12,9 giây) | `latest.md` = `20261125-2137.json` |
-| Test | pytest AI Service | **77 đạt** (chạy lại 25/11) | |
+| Test | pytest AI Service | **84 đạt** (chạy lại 26/11) | |
 | | JUnit Backend | 903 đạt (số ngày 09/11, **chưa chạy lại**) | |
 
 Lưu ý khi trích dẫn:
@@ -58,7 +61,8 @@ Lưu ý khi trích dẫn:
 - Chatbot 27/30: 2 câu trượt (`acc-order-code`, `act-cancel`) do **dữ liệu**: database dựng lại không còn đơn DH00003119 và
   DH00000221 thuộc tài khoản kiểm thử, nên chatbot trả "không tồn tại hoặc không thuộc tài khoản của bạn" (đúng hành vi,
   sai kỳ vọng của câu hỏi). Câu thứ ba (`pol-shipping-fee`) thiếu cụm "tỉnh / thành" trong câu trả lời. Mục 9.4 có chi tiết.
-- Ngoài Amazon (09/11), mọi số trên là của lần đo 25/11/2026. Nếu đổi dữ liệu hoặc mô hình thì chạy lại theo mục 9 rồi
+- Amazon là số 09/11, chatbot là số 25/11; khuyến nghị, mua kèm, nâng cấp, RAG và pytest đo lại 26/11/2026 (khuyến nghị cá
+  nhân và RAG ra y hệt 25/11). Nếu đổi dữ liệu hoặc mô hình thì chạy lại theo mục 9 rồi
   cập nhật bảng này.
 
 ---
@@ -814,13 +818,14 @@ chỉ đo được khi có khách thật dùng trái tim. Dữ liệu mô phỏn
 Phần chưa đánh giá được trên dữ liệu hiện có:
 
 - **Mua kèm:** HitRate@4 = **3,02%**, **thấp hơn "bán chạy nhất" 6,03%** nhưng chưa đủ chắc chắn (199 cặp đơn – sản phẩm;
-  KTC 95% của chênh lệch: −7,0 đến +1,0 điểm %), 61% sản phẩm có danh sách mua kèm. Chỉ luật cùng đơn: 2,51% (44%
+  KTC 95% của chênh lệch: −7,0 đến +1,0 điểm %), 51% sản phẩm có danh sách mua kèm. Chỉ luật cùng đơn: 2,51% (42%
   sản phẩm có gợi ý). Đơn hàng mẫu được sinh ngẫu nhiên nên không có cặp "hay mua cùng nhau" thật, nên chưa chứng minh
   được mua kèm hơn bán chạy trên dữ liệu này (lần 09/11 hai bên bằng nhau, 2,17%). Trên dữ liệu mua hàng thật (mục 9.1c)
   cách mới hơn bán chạy có ý nghĩa. Điểm này không đo việc gợi ý đúng đời máy hay đúng cổng sạc; phần đó do luật phụ
   kiện bảo đảm và có test riêng. Từ 11/11/2026, đang xem phụ kiện thì chỉ gợi ý máy dùng được phụ kiện đó
-  (bỏ các cặp kiểu "camera IP mua kèm iPhone").
-- **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%. Từ 11/11/2026 gợi ý
+  (bỏ các cặp kiểu "camera IP mua kèm iPhone"): đo lại 26/11 HitRate không đổi, sản phẩm có danh sách mua kèm giảm từ
+  61% xuống 51%.
+- **Nâng cấp:** 97,7% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%. Từ 11/11/2026 gợi ý
   không được kém hơn ở thông số nào và phụ kiện phải cùng loại (trước đó 16–21% gợi ý cho laptop, điện thoại, máy tính
   bảng kém hơn ở một thông số, và ốp lưng được "nâng cấp" lên camera IP, loa).
 
@@ -1077,15 +1082,15 @@ Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đ�
 docker compose exec ai-service python -m scripts.eval_retrieval     # kết quả: evals/results/retrieval_latest.md
 ```
 
-Kết quả lần chạy **25/11/2026 21:10** (database hiện tại; lần 08/11 và 09/11 cho `vector` y hệt, `keyword` thấp hơn 0,075 Hit@1):
+Kết quả lần chạy **26/11/2026 12:29** (database hiện tại; lần 25/11 ra y hệt, chỉ khác thời gian / câu; lần 08/11 và 09/11 cho `vector` y hệt, `keyword` thấp hơn 0,075 Hit@1):
 
 | Cách tìm | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | ms / câu |
 |---|---|---|---|---|---|---|
-| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,900** | 62 |
-| keyword | 0,725 | 0,800 | 0,875 | 0,925 | 0,779 | 16 |
-| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 61 |
-| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 44 |
-| hybrid (w = 0,25) | 0,825 | 0,900 | 0,950 | 0,950 | 0,874 | 42 |
+| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,900** | 38 |
+| keyword | 0,725 | 0,800 | 0,875 | 0,925 | 0,779 | 11 |
+| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 275 |
+| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 42 |
+| hybrid (w = 0,25) | 0,825 | 0,900 | 0,950 | 0,950 | 0,874 | 39 |
 
 - `vector` gần như không đổi so với lần chạy 03/11 (MRR 0,900): embedding vẫn tính trên văn bản cũ; chênh 0,001 là do
   catalogue đổi (kho cũ đo lại ngày 08/11 cũng ra 0,896).

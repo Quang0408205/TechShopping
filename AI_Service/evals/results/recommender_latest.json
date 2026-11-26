@@ -1,5 +1,5 @@
 {
-  "evaluatedAt": "2026-11-25T21:18:39",
+  "evaluatedAt": "2026-11-26T12:35:40",
   "n": 10,
   "trainRatio": 0.7,
   "validationRatio": 0.1,
@@ -35,7 +35,7 @@
     "coldStartK": 1
   },
   "bootstrapSamples": 1000,
-  "seconds": 468.9,
+  "seconds": 408.2,
   "tuning": {
     "als": [
       {
@@ -1160,25 +1160,25 @@
     "testOrders": 638,
     "itemsWithRules": 14,
     "itemsWithCoBuyers": 111,
-    "withSuggestions": 0.608,
+    "withSuggestions": 0.5075,
     "rows": [
       {
         "model": "Mua kèm (đang dùng: cùng đơn + khách mua A cũng mua B + phụ kiện)",
         "hitRate": 0.0302,
         "precision": 0.0088,
-        "withSuggestions": 0.608
+        "withSuggestions": 0.5075
       },
       {
         "model": "Chỉ luật cùng đơn (cách cũ)",
         "hitRate": 0.0251,
         "precision": 0.0075,
-        "withSuggestions": 0.4523
+        "withSuggestions": 0.4221
       },
       {
         "model": "Chỉ khách mua A cũng mua B",
         "hitRate": 0.0302,
         "precision": 0.0088,
-        "withSuggestions": 0.5879
+        "withSuggestions": 0.4925
       },
       {
         "model": "Bán chạy nhất (baseline)",
@@ -1210,7 +1210,7 @@
   },
   "upsell": {
     "products": 4302,
-    "withSuggestions": 0.9812,
-    "meanPriceIncrease": 0.105
+    "withSuggestions": 0.9765,
+    "meanPriceIncrease": 0.1005
   }
 }
