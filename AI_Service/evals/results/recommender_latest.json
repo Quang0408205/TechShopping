@@ -1,5 +1,5 @@
 {
-  "evaluatedAt": "2026-11-26T12:35:40",
+  "evaluatedAt": "2026-11-27T01:24:02",
   "n": 10,
   "trainRatio": 0.7,
   "validationRatio": 0.1,
@@ -35,7 +35,7 @@
     "coldStartK": 1
   },
   "bootstrapSamples": 1000,
-  "seconds": 408.2,
+  "seconds": 397.1,
   "tuning": {
     "als": [
       {

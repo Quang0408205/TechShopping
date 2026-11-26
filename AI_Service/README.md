@@ -29,13 +29,19 @@ Phần AI gồm hai chức năng:
 
 ---
 
-## Chỉ số mới nhất (tóm tắt, đo lại 25/11 và 26/11/2026)
+## Chỉ số mới nhất (tóm tắt, chạy lại toàn bộ ngày 27/11/2026)
 
-Đo lại ngày 25/11/2026 trên database hiện tại (đã dựng lại, **khác dữ liệu ngày 09/11**, nên không so trực tiếp với các số
-trước đó). Chi tiết và cách đo xem mục 9; file gốc ở `evals/results/`. Ngày 26/11/2026 gộp 2 commit 11/11 của nhánh Yle
-(nâng cấp không kém thông số, phụ kiện cùng loại, mua kèm từ phụ kiện chỉ gợi ý máy dùng được; huấn luyện theo tuổi mô
-hình) rồi đo lại khuyến nghị và RAG: các chỉ số khuyến nghị cá nhân và RAG không đổi, chỉ đổi mua kèm / nâng cấp (dòng
-bên dưới).
+Ngày 27/11/2026 chạy lại **toàn bộ** phép đo trên code hiện tại (commit `977819e`) và database hiện tại (đã dựng lại,
+**khác dữ liệu ngày 09/11**, nên không so trực tiếp với các số trước đó). Chi tiết và cách đo xem mục 9; file gốc ở
+`evals/results/`.
+
+- Khuyến nghị, mua kèm, nâng cấp: ra **y hệt** lần 26/11 (cùng dữ liệu, cùng code, cùng hạt giống ngẫu nhiên).
+- **Kho tri thức RAG được dựng lại** (`scripts.build_index`). Lý do: bảng `kb_chunks` trong database là bản cũ, không khớp
+  project. Chunk "Phí giao hàng" vẫn ghi chính sách cũ "đơn từ 10.000.000đ miễn phí giao hàng" (trong khi
+  `knowledge/giao-hang.md` đã đổi từ 01/11), và còn 1 chunk của sản phẩm đã xoá ngày 08/11 (4.303 chunk sản phẩm thay
+  vì 4.302). Vì vậy câu `pol-shipping-fee` trượt ở các lần 25/11 và 27/11 (trước khi dựng lại): chatbot nêu đúng chunk
+  cũ, nhưng chunk đó sai so với chính sách hiện tại. Sau khi dựng lại, kho có 4.317 chunk (15 chính sách + 4.302 sản
+  phẩm). RAG và chatbot dưới đây là số **sau khi dựng lại**.
 
 | Phần | Chỉ số | Giá trị | Nguồn |
 |---|---|---|---|
@@ -48,22 +54,22 @@ bên dưới).
 | | Tham số chọn trên validation | ALS 32 chiều λ = 0,1 a = 5; α = 0,4; nửa đời 90 ngày; MMR λ = 0,8; k = 1 (cấu hình đang chạy vẫn là của 09/11: ALS 16, α = 0,6, MMR 0,7, k = 2) | như trên |
 | Khuyến nghị (Amazon Reviews 2023, 20.000 khách thật) | NDCG@10 Hybrid α = 0,2 | **0,0280** (0,0262–0,0297); hơn CBF, kNN, phổ biến có ý nghĩa, ngang ALS (0,0274) | `amazon_cell_latest.md` (**09/11**, không chạy lại: cần tải 4 GB dữ liệu và ~65 phút) |
 | | Mua kèm HitRate@4 | 2,16% (bán chạy nhất: 1,55%; hơn có ý nghĩa) | như trên |
-| Mua kèm (dữ liệu mô phỏng) | HitRate@4 | 3,02% so với bán chạy nhất 6,03% (chênh −3,02 điểm %, chưa đủ chắc chắn; đơn mẫu sinh ngẫu nhiên); 51% sản phẩm có danh sách mua kèm (25/11: 61%) | `recommender_latest.md` (26/11) |
-| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 97,7% / +10% (25/11: 98,1% / +10,5%) | `recommender_latest.md` (26/11) |
-| RAG (40 câu) | Hit@1 / Hit@3 / MRR của `vector` (đang dùng) | **0,850 / 0,925 / 0,900**; keyword 0,725 / 0,800 / 0,779 | `retrieval_latest.md` |
-| Chatbot (30 câu, Qwen3 8B + giám khảo) | Đạt | **27/30 (90%)**, 27,8 giây / câu, 2,0 lần gọi LLM / câu, chi phí 0đ (lần 09/11: 30/30, 12,9 giây) | `latest.md` = `20261125-2137.json` |
-| Test | pytest AI Service | **84 đạt** (chạy lại 26/11) | |
-| | JUnit Backend | 903 đạt (số ngày 09/11, **chưa chạy lại**) | |
+| Mua kèm (dữ liệu mô phỏng) | HitRate@4 | 3,02% so với bán chạy nhất 6,03% (chênh −3,02 điểm %, chưa đủ chắc chắn; đơn mẫu sinh ngẫu nhiên); 51% sản phẩm có danh sách mua kèm | `recommender_latest.md` |
+| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 97,7% / +10% | `recommender_latest.md` |
+| RAG (40 câu, kho đã dựng lại) | Hit@1 / Hit@3 / MRR của `vector` (đang dùng) | **0,850 / 0,925 / 0,899**; keyword 0,700 / 0,825 / 0,765 | `retrieval_latest.md` |
+| Chatbot (30 câu, Qwen3 8B + giám khảo) | Đạt | **28/30 (93%)**, 27,1 giây / câu, 2,0 lần gọi LLM / câu, chi phí 0đ (trước khi dựng lại kho: 27/30, 30,7 giây) | `latest.md` = `20261127-0205.json` |
+| Test | pytest AI Service | **84 đạt** | |
+| | JUnit Backend | **903 đạt** (133 lớp; database kiểm thử phải chạy migration `user_preferences.sql`, mục 9.3) | |
 
 Lưu ý khi trích dẫn:
 - Các con số khuyến nghị trên dữ liệu mô phỏng chỉ có ý nghĩa **so sánh tương đối** giữa các mô hình (mục 9.1).
 - Bộ lọc ốp lưng / kính theo đời máy chỉ bật khi hiển thị, không bật trong đánh giá offline (mục 4.4, 11).
-- Chatbot 27/30: 2 câu trượt (`acc-order-code`, `act-cancel`) do **dữ liệu**: database dựng lại không còn đơn DH00003119 và
+- Chatbot 28/30: 2 câu trượt (`acc-order-code`, `act-cancel`) do **dữ liệu**: database dựng lại không còn đơn DH00003119 và
   DH00000221 thuộc tài khoản kiểm thử, nên chatbot trả "không tồn tại hoặc không thuộc tài khoản của bạn" (đúng hành vi,
-  sai kỳ vọng của câu hỏi). Câu thứ ba (`pol-shipping-fee`) thiếu cụm "tỉnh / thành" trong câu trả lời. Mục 9.4 có chi tiết.
-- Amazon là số 09/11, chatbot là số 25/11; khuyến nghị, mua kèm, nâng cấp, RAG và pytest đo lại 26/11/2026 (khuyến nghị cá
-  nhân và RAG ra y hệt 25/11). Nếu đổi dữ liệu hoặc mô hình thì chạy lại theo mục 9 rồi
-  cập nhật bảng này.
+  sai kỳ vọng của câu hỏi). Mục 9.4 có chi tiết.
+- Amazon vẫn là số 09/11 (không chạy lại: cần tải 4 GB dữ liệu và ~65 phút). Mọi số còn lại đo ngày 27/11/2026. Nếu đổi
+  dữ liệu, chính sách hoặc mô hình thì chạy lại theo mục 9 (đổi chính sách / catalogue thì chạy `scripts.build_index`
+  trước) rồi cập nhật bảng này.
 
 ---
 
@@ -255,7 +261,7 @@ AI_Service/
 |---|---|---|
 | **CBF** (lọc theo nội dung) | Hồ sơ `p_u` = trung bình có trọng số r(u,i) của các v_i; `Score_CBF = cos(p_u, v_i)` | `engine.py` |
 | **CF / ALS** (lọc cộng tác) | Phân rã ma trận người dùng × sản phẩm theo phản hồi ngầm định: `c_ui = 1 + a·r(u,i)`, nghiệm đóng `x_u = (YᵀY + Yᵀ(C_u−I)Y + λI)⁻¹ YᵀC_u p_u`, luân phiên X và Y | `als.py` |
-| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0,6** (cấu hình đang chạy, chọn trên validation 09/11; lần đo 25/11 chọn α = 0,4, mục 9.1) | `engine.py` |
+| **Hybrid** | Min-Max trên tập ứng viên, `Score = α·S'_CBF + (1−α)·S'_CF`, **α = 0,6** (cấu hình đang chạy, chọn trên validation 09/11; các lần đo 25/11–27/11 chọn α = 0,4, mục 9.1) | `engine.py` |
 
 - **Fold-in:** khi có request, vector của khách được tính lại từ hành vi *hiện tại*, nên hành vi mới phát sinh sau lần huấn luyện gần nhất vẫn được tính.
 - **Huấn luyện:** khoảng 7 giây (25/11/2026: 2.491 người dùng × 4.491 sản phẩm; ALS 16 chiều, λ = 1, a = 5, nửa đời 90 ngày). Tự chạy lại khi mô hình đủ 24 giờ tuổi, tính từ lúc huấn luyện (khởi động lại dịch vụ với mô hình cũ hơn 24 giờ thì huấn luyện lại ngay; trước 11/11/2026 tính từ lúc khởi động, nên máy tắt / mở mỗi ngày thì mô hình không được cập nhật); mô hình lưu ở volume `ai_models`.
@@ -286,7 +292,7 @@ AI_Service/
 | Chưa có hành vi và chưa trả lời bảng hỏi | Web hiện lời mời trả lời thay cho danh sách; API vẫn trả ¾ phổ biến + ¼ mới (`basis = POPULAR`) |
 | Sản phẩm mới chưa ai tương tác | Chỉ có điểm CBF |
 
-Ngưỡng **k = 2** (`REC_COLD_START_K`) được chọn trên validation 09/11 (mục 9.1, bước 5; lần đo 25/11 ra k = 1): trước 08/11/2026 cố định k = 5 theo
+Ngưỡng **k = 2** (`REC_COLD_START_K`) được chọn trên validation 09/11 (mục 9.1, bước 5; các lần đo 25/11–27/11 ra k = 1): trước 08/11/2026 cố định k = 5 theo
 thiết kế, nhưng đo theo số lượt thì Hybrid đã tốt hơn chỉ CBF từ lượt thứ 2.
 
 ### 4.4b. Khách mới: bảng hỏi sở thích (từ 09/11/2026, theo góp ý của GVHD)
@@ -736,14 +742,15 @@ Cách đánh giá (khoảng 3 phút):
   luật kết hợp học trên đơn 80% đầu) và nâng cấp.
 - Khoảng tin cậy 95%: bootstrap 1.000 lần theo người dùng (cùng một mẫu cho mọi mô hình); so sánh hai mô hình bằng
   khoảng tin cậy của hiệu NDCG trên cùng người dùng (không chứa 0 = chênh lệch có ý nghĩa).
-- Dữ liệu mô phỏng hiện có trong database (đo lại 25/11/2026): 16.643 / 2.508 / 5.831 hành vi huấn luyện / validation /
-  kiểm thử; tinh chỉnh trên 354 người dùng, kiểm thử 548 người dùng có ≥ 2 lượt, N = 10. Khoảng 7 phút.
+- Dữ liệu mô phỏng hiện có trong database (đo 25/11/2026, chạy lại 26/11 và **27/11/2026 01:24** ra y hệt mọi con số
+  bên dưới): 16.643 / 2.508 / 5.831 hành vi huấn luyện / validation / kiểm thử; tinh chỉnh trên 354 người dùng, kiểm
+  thử 548 người dùng có ≥ 2 lượt, N = 10. Khoảng 7 phút (lần 27/11: 397 giây).
 
 > ⚠️ **Dữ liệu trong database đã khác lần đo 09/11/2026** (database được dựng lại: 2.491 người dùng, chỉ còn 2 lượt LIKE
 > trong phần học thay vì 709). Vì vậy số liệu 25/11 **không so trực tiếp** với các con số ghi trước ngày này (như
 > NDCG 0,0769 của lần 09/11). Báo cáo nên dùng bộ số 25/11 và ghi rõ ngày đo.
 
-**Tham số chọn trên validation, lần đo 25/11/2026** (354 người dùng):
+**Tham số chọn trên validation, lần đo 25/11/2026** (354 người dùng; chạy lại 27/11 chọn đúng các tham số này):
 
 | Tham số | Chọn lần 25/11 | Hệ thống đang chạy (cấu hình, chọn lần 09/11) | NDCG@10 validation (lần 25/11) |
 |---|---|---|---|
@@ -960,6 +967,10 @@ luôn nhận danh sách dự phòng thay vì gợi ý theo sở thích. Lỗi đ
 - Toàn bộ **903 test** backend (133 lớp) đều đạt (09/11/2026, sau khi thêm bảng hỏi sở thích: 8 test mới). Trước đó
   là 895 test, 132 lớp; con số "902 test, 133 lớp" ghi trước đây đếm nhầm báo cáo cũ của `HtmlSanitizerTest` (7 test,
   lớp đã xoá) còn sót trong `target/surefire-reports`. Số chuẩn là dòng `Tests run:` ở cuối `./mvnw test`.
+- **Chạy lại 27/11/2026: 903 / 903 đạt** (133 lớp, 0 lỗi). Lần chạy đầu ra 403 lỗi vì database `techshopping_test`
+  chưa có bảng `user_preferences` (Hibernate báo `Schema validation: missing table [user_preferences]` nên không khởi
+  động được Spring context). Chạy migration `database/migrations/user_preferences.sql` cho `techshopping_test` rồi chạy
+  lại thì đạt hết. Lỗi nằm ở database kiểm thử, không phải ở code.
 - Test tích hợp cần database `techshopping_test`. Nếu máy có Postgres khác chiếm `localhost:5432`, chạy:
   ```bash
   SPRING_DATASOURCE_URL=jdbc:postgresql://<IP-máy>:5432/techshopping_test SPRING_DATA_REDIS_HOST=<IP-máy> ./mvnw test
@@ -1040,7 +1051,7 @@ database khác, nên lần này so **trên cùng máy, cùng database**:
 - 09/11/2026, sau khi sửa lời nhắc gọi tool (trích câu hỏi mới nhất) và câu "đã thêm" khi còn chờ xác nhận: chạy
   lại cả bộ vẫn **30/30 (100%)**, 12,0 giây / câu (`evals/results/20261109-1304.json`).
 - 09/11/2026 16:09, sau khi nói rõ cách xử lý câu hỏi dữ liệu cá nhân khi khách chưa đăng nhập: **30/30 (100%)**,
-  12,9 giây / câu (`evals/results/20261109-1609.json`). Kết quả trên database cũ (09/11); số hiện tại ở dưới (25/11).
+  12,9 giây / câu (`evals/results/20261109-1609.json`). Kết quả trên database cũ (09/11); số hiện tại ở dưới (27/11).
   - **Sửa bộ câu hỏi (4 câu)**: `pol-shipping-fee` kiểm theo chính sách hiện tại (30.000đ, phí riêng theo tỉnh; không được
     nêu ngưỡng miễn phí cũ); `acc-order-code`, `act-cancel` dùng đơn của chính tài khoản kiểm thử (DH00003119,
     DH00000221); `act-add-cart` nêu rõ màu ("256GB màu Đen"), vì bản 256GB có 3 màu nên hỏi lại là đúng. Các mã đơn
@@ -1060,8 +1071,19 @@ database khác, nên lần này so **trên cùng máy, cùng database**:
     không còn hai đơn này thuộc tài khoản kiểm thử, nên chatbot đáp "không tồn tại hoặc không thuộc tài khoản của bạn" và
     không đề xuất huỷ. Đây là hành vi **đúng**; lỗi nằm ở bộ câu hỏi phụ thuộc dữ liệu mẫu (đã ghi chú ở dưới), cần đổi mã
     đơn theo đơn của `EVAL_LOGIN` rồi chạy lại. Chưa sửa bộ câu hỏi để không "chỉnh đề cho khớp kết quả".
-  - `pol-shipping-fee`: câu trả lời thiếu cụm "tỉnh / thành" (phí riêng theo tỉnh). Mô hình 8B trả lời khác nhau giữa các lần.
-  - Kết quả 30/30 ngày 09/11 là trên database cũ; số **27/30 này mới là số hiện tại**.
+  - `pol-shipping-fee`: câu trả lời thiếu cụm "tỉnh / thành" và nêu "đơn từ 10.000.000đ được miễn phí giao hàng". Kiểm tra
+    lại ngày 27/11 thấy nguyên nhân là **kho tri thức cũ**: chunk "Phí giao hàng" trong `kb_chunks` vẫn là chính sách cũ,
+    không khớp `knowledge/giao-hang.md`. Giám khảo LLM cho đạt vì câu trả lời khớp kết quả tool; bộ kiểm cụm từ mới bắt
+    được lỗi.
+- **27/11/2026 01:43**, cùng database và kho tri thức cũ: **27/30 (90%)**, 30,7 giây / câu, đúng 3 câu trượt như trên,
+  câu trả lời `pol-shipping-fee` giống hệt (`evals/results/20261127-0143.json`).
+- **27/11/2026 02:05, sau khi dựng lại kho tri thức** (`scripts.build_index`: 15 chunk chính sách + 4.302 chunk sản phẩm):
+  **28/30 (93%)**, 27,1 giây / câu, 2,0 lần gọi LLM / câu (`evals/results/20261127-0205.json`, đang là `latest.md`). Đạt
+  100%: chính sách (9/9), sản phẩm, khuyến nghị, cửa hàng, an toàn; dữ liệu cá nhân 5/6, thao tác có xác nhận 3/4.
+  - `pol-shipping-fee` nay đạt: "phí mặc định 30.000đ cho mỗi đơn, không phân biệt giá trị đơn. Một số tỉnh / thành có
+    phí riêng…".
+  - Còn 2 câu trượt `acc-order-code`, `act-cancel`, cùng lý do dữ liệu như trên (mã đơn không thuộc tài khoản kiểm thử).
+  - Kết quả 30/30 ngày 09/11 là trên database cũ; số **28/30 này mới là số hiện tại**.
 
 Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đạt theo nhóm, thời gian trả lời, chi phí, danh sách câu trượt kèm lý do). Bản chi tiết từng câu (câu trả lời, tool đã gọi, token) nằm ở `evals/results/<thời gian>.json`. Logic chấm điểm đã được kiểm tra bằng agent giả: bắt đúng thiếu tool, thiếu / thừa cụm từ, sai giá, đề xuất thao tác thừa.
 
@@ -1082,19 +1104,24 @@ Kết quả nằm ở `AI_Service/evals/results/latest.md` (bảng tỉ lệ đ�
 docker compose exec ai-service python -m scripts.eval_retrieval     # kết quả: evals/results/retrieval_latest.md
 ```
 
-Kết quả lần chạy **26/11/2026 12:29** (database hiện tại; lần 25/11 ra y hệt, chỉ khác thời gian / câu; lần 08/11 và 09/11 cho `vector` y hệt, `keyword` thấp hơn 0,075 Hit@1):
+Kết quả lần chạy **27/11/2026**, sau khi dựng lại kho tri thức cho khớp `knowledge/*.md` và catalogue hiện tại (4.317
+chunk; xem mục "Chỉ số mới nhất"):
 
-| Cách tìm | Hit@1 | Hit@3 | Hit@5 | Hit@8 | MRR | ms / câu |
-|---|---|---|---|---|---|---|
-| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,900** | 38 |
-| keyword | 0,725 | 0,800 | 0,875 | 0,925 | 0,779 | 11 |
-| hybrid (w = 1) | 0,750 | 0,900 | 0,950 | 0,950 | 0,832 | 275 |
-| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,857 | 42 |
-| hybrid (w = 0,25) | 0,825 | 0,900 | 0,950 | 0,950 | 0,874 | 39 |
+| Cách tìm | Hit@1 | Hit@3 | Hit@5 | Hit@8 | Recall@3 | MRR | ms / câu |
+|---|---|---|---|---|---|---|---|
+| **vector** | **0,850** | **0,925** | **0,950** | **1,000** | **0,848** | **0,899** | 35 |
+| keyword | 0,700 | 0,825 | 0,875 | 0,900 | 0,775 | 0,765 | 10 |
+| hybrid (w = 1) | 0,775 | 0,900 | 0,950 | 0,950 | 0,842 | 0,845 | 39 |
+| hybrid (w = 0,5) | 0,800 | 0,900 | 0,950 | 0,950 | 0,827 | 0,856 | 39 |
+| hybrid (w = 0,25) | 0,800 | 0,900 | 0,925 | 0,950 | 0,833 | 0,859 | 38 |
 
-- `vector` gần như không đổi so với lần chạy 03/11 (MRR 0,900): embedding vẫn tính trên văn bản cũ; chênh 0,001 là do
-  catalogue đổi (kho cũ đo lại ngày 08/11 cũng ra 0,896).
-- `keyword` giảm (Hit@1 0,725 → 0,650) vì cột `search_tsv` sinh từ `content` mới; chế độ này không dùng khi chạy thật.
+Theo nhóm, `vector` (Hit@1 / Hit@3 / MRR): chính sách 0,80 / 0,87 / 0,86; gõ đúng tên / mã máy 1,00 / 1,00 / 1,00; mô tả
+theo nhu cầu 0,62 / 0,88 / 0,77.
+
+- So với kho cũ (lần chạy 25/11, 26/11 và 27/11 01:17 ra y hệt nhau): `vector` giữ nguyên Hit@K, MRR 0,900 → 0,899;
+  `keyword` Hit@1 0,725 → 0,700, MRR 0,779 → 0,765; hybrid w = 1 tăng (MRR 0,832 → 0,845), w = 0,25 giảm (0,874 →
+  0,859). Thay đổi do nội dung chunk "Phí giao hàng" mới và bỏ chunk của sản phẩm đã xoá.
+- `keyword` không dùng khi chạy thật.
 
 **Kết luận:**
 - **Tìm kiếm lai không tốt hơn**: ở mọi trọng số đều kém `vector`; trọng số từ khoá càng nhỏ thì càng gần `vector`.

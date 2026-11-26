@@ -1,4 +1,4 @@
-# Đánh giá offline hệ thống khuyến nghị (2026-11-26 12:35:40)
+# Đánh giá offline hệ thống khuyến nghị (2026-11-27 01:24:02)
 
 - Chia theo thời gian từng người dùng: 70% hành vi đầu để huấn luyện, 10% tiếp theo để tinh chỉnh (validation), 20% cuối để kiểm thử (16643 / 2508 / 5831 lượt).
 - Tham số chọn trên validation (354 người dùng): ALS 32 chiều, λ = 0.1, a = 5.0; α = 0.4; nửa đời giảm trọng số 90 ngày; MMR λ = 0.8; ngưỡng cold-start k = 1.
