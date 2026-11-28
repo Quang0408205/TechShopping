@@ -218,23 +218,46 @@ def test_personal_basis_is_behaviour_then_answers_then_popular(toy_recommender):
         engine.BASIS_POPULAR
 
 
-def test_answer_score_counts_matched_questions_per_category(toy_recommender):
-    # tầm giá trong danh mục: điện thoại 1, 3 "Cao", 2 "Trung", 4 "Thấp"; laptop 6 "Cao", 5 "Trung", 7 "Thấp"
-    answers = engine.Preferences(category_ids=(PHONE, LAPTOP), brand_ids=(1,), price_levels=("HIGH",),
-                                 need_ids=(10, 20))     # Apple, cao cấp, chụp ảnh (điện thoại), học tập (laptop)
+def test_answer_brand_is_a_hard_filter_and_other_brands_only_fill_the_list(toy_recommender):
+    # chọn Apple + nhu cầu chụp ảnh (điện thoại) / học tập (laptop): chỉ sản phẩm Apple đứng đầu mỗi danh mục
+    answers = engine.Preferences(category_ids=(PHONE, LAPTOP), brand_ids=(1,), need_ids=(10, 20))
     recs = toy_recommender.from_preferences(answers, n=7)
     score = {r.product_id: r.score for r in recs}
 
     assert set(score) == {1, 2, 3, 4, 5, 6, 7}              # chỉ danh mục đã chọn, bỏ sản phẩm ngừng bán (9)
-    assert score[1] == pytest.approx(4 / 4)                 # danh mục + Apple + cao cấp + chụp ảnh
-    assert score[3] == pytest.approx(3 / 4)                 # Samsung: trượt câu hãng
-    assert score[2] == pytest.approx(2 / 4)
-    assert score[4] == pytest.approx(1 / 4)
-    assert score[7] == pytest.approx(3 / 4)                 # MacBook: Apple + học tập, giá thấp
-    assert score[5] == score[6] == pytest.approx(2 / 4)
+    assert score[1] == score[7] == pytest.approx(1.0)       # Apple + đáp ứng nhu cầu
+    assert score[2] == pytest.approx(0.5)                   # Apple nhưng không đáp ứng nhu cầu
+    # hãng khác chỉ bổ sung khi Apple không đủ n sản phẩm, điểm giảm một nửa nên luôn xếp sau Apple
+    assert score[3] == score[5] == pytest.approx(0.5) and score[4] == score[6] == pytest.approx(0.25)
     assert [r.product_id for r in recs[:2]] == [1, 7]       # vị trí đầu của mỗi danh mục, điểm cao trước
-    assert recs[0].reason == "Hợp với lựa chọn của bạn: Apple · cao cấp · chụp ảnh, quay phim"
+    assert recs[0].reason == "Hợp với lựa chọn của bạn: Apple · chụp ảnh, quay phim"
     assert all(r.cf_score is None and r.cbf_score is None for r in recs)
+
+    only_apple = toy_recommender.from_preferences(engine.Preferences(category_ids=(PHONE,), brand_ids=(1,)), n=2)
+    assert {r.product_id for r in only_apple} == {1, 2}
+
+
+def test_answer_price_level_outranks_need_and_is_split_inside_the_category(toy_recommender):
+    # laptop: 7 (27 triệu) "Thấp", 5 (38,39 triệu) "Trung", 6 (40,99 triệu) "Cao"; Học tập (20) có 5 và 7
+    recs = toy_recommender.from_preferences(
+        engine.Preferences(category_ids=(LAPTOP,), price_levels=("MID",), need_ids=(21,)), n=3)
+    by_id = {r.product_id: r for r in recs}
+
+    assert recs[0].product_id == 5                          # khớp tầm giá thắng sản phẩm chỉ khớp nhu cầu (Đồ hoạ: 6)
+    assert by_id[5].score == pytest.approx(3 / 4)
+    assert by_id[6].score == pytest.approx(2 / 4) and by_id[7].score == pytest.approx(1 / 4)
+    assert by_id[5].reason == "Hợp với lựa chọn của bạn: tầm trung"
+    assert by_id[6].reason == "Hợp với lựa chọn của bạn: đồ hoạ · giá cao hơn tầm bạn chọn"
+    assert by_id[7].reason == "Thuộc danh mục Laptop bạn quan tâm · giá thấp hơn tầm bạn chọn"
+
+
+def test_answer_price_tiers_are_computed_inside_the_brand_filtered_group(toy_recommender):
+    rows = np.array([toy_recommender.model.items.index.get_loc(pid) for pid in (1, 2, 3)])   # 28,49 / 16,99 / 20 triệu
+    entries = toy_recommender._rank_answers(rows, {1}, {"Thấp"}, set(), 3, (np.zeros(len(toy_recommender.model.items)),) * 2)
+    ids = [toy_recommender.model.items.index[row] for row, _, _ in entries]
+
+    assert ids[0] == 2                                      # rẻ nhất NHÓM này, dù có thể không rẻ trong cả danh mục
+    assert entries[0][2] == "Hợp với lựa chọn của bạn: Apple · phổ thông"
 
 
 def test_answers_ignore_other_customers_behaviour_when_scores_tie(toy_recommender):
@@ -248,11 +271,11 @@ def test_answers_ignore_other_customers_behaviour_when_scores_tie(toy_recommende
 
 
 def test_answers_skip_brand_question_for_a_category_without_the_chosen_brand(toy_recommender):
-    # chọn Samsung: Samsung không bán laptop nên laptop không bị trừ điểm vì câu "hãng"
+    # chọn Samsung: Samsung không bán laptop nên laptop không bị lọc hãng; điện thoại Samsung đứng trước iPhone
     recs = toy_recommender.from_preferences(engine.Preferences(category_ids=(PHONE, LAPTOP), brand_ids=(2,)), n=7)
     score = {r.product_id: r.score for r in recs}
 
-    assert score[3] == score[4] == 1.0 and score[1] == 0.5
+    assert score[3] == score[4] == 1.0 and score[1] == score[2] == 0.5
     assert score[5] == score[6] == score[7] == 1.0
 
 

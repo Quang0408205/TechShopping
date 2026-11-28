@@ -29,9 +29,9 @@ Phần AI gồm hai chức năng:
 
 ---
 
-## Chỉ số mới nhất (tóm tắt, chạy lại toàn bộ ngày 27/11/2026)
+## Chỉ số mới nhất (tóm tắt; khuyến nghị đo lại 28/11/2026, các phần còn lại 27/11/2026)
 
-Ngày 27/11/2026 chạy lại **toàn bộ** phép đo trên code hiện tại (commit `977819e`) và database hiện tại (đã dựng lại,
+Ngày 27/11/2026 chạy lại **toàn bộ** phép đo; ngày 28/11/2026 đo lại **khuyến nghị** sau khi sửa gợi ý theo bảng hỏi ưu tiên (mục 4.4b), trên code hiện tại và database hiện tại (đã dựng lại,
 **khác dữ liệu ngày 09/11**, nên không so trực tiếp với các số trước đó). Chi tiết và cách đo xem mục 9; file gốc ở
 `evals/results/`.
 
@@ -45,20 +45,20 @@ Ngày 27/11/2026 chạy lại **toàn bộ** phép đo trên code hiện tại (
 
 | Phần | Chỉ số | Giá trị | Nguồn |
 |---|---|---|---|
-| Khuyến nghị (dữ liệu mô phỏng, 548 khách, N = 10) | NDCG@10 **cấu hình đang chạy** (Hybrid α = 0,6 + MMR λ = 0,7) | **0,0801** (KTC 95%: 0,0656–0,0958) | `recommender_latest.md` |
-| | Precision / Recall / HitRate @10 | 0,0310 / 0,0965 / 0,2336 | như trên |
-| | Coverage / Diversity | 19,1% / 0,515 | như trên |
-| | Mô hình **chọn trên validation lần này** (Hybrid α = 0,4, không xếp lại) | NDCG@10 **0,0878** (0,0723–0,1030), P 0,0356, R 0,1110, HitRate 0,2500; thêm MMR λ = 0,8: 0,0817 | như trên |
-| | NDCG@10 các đối chứng: phổ biến / Item-kNN / CBF / ALS | 0,0231 / 0,0596 / 0,0656 / 0,0742 | như trên |
-| | Hybrid α = 0,4 hơn ALS, CBF, kNN, phổ biến | đều có ý nghĩa (+0,0135 / +0,0221 / +0,0281 / +0,0647) | như trên |
+| Khuyến nghị (dữ liệu mô phỏng, 548 khách, N = 10) | NDCG@10 **cấu hình đang chạy** (Hybrid α = 0,6 + MMR λ = 0,7) | **0,0802** (KTC 95%: 0,0656–0,0957) | `recommender_latest.md` |
+| | Precision / Recall / HitRate @10 | 0,0308 / 0,0978 / 0,2336 | như trên |
+| | Coverage / Diversity | 18,9% / 0,515 | như trên |
+| | Mô hình **chọn trên validation lần này** (Hybrid α = 0,4, không xếp lại) | NDCG@10 **0,0883** (0,0728–0,1036), P 0,0358, R 0,1128, HitRate 0,2536; thêm MMR λ = 0,8: 0,0823 | như trên |
+| | NDCG@10 các đối chứng: phổ biến / Item-kNN / CBF / ALS | 0,0232 / 0,0596 / 0,0656 / 0,0743 | như trên |
+| | Hybrid α = 0,4 hơn ALS, CBF, kNN, phổ biến | đều có ý nghĩa (+0,0141 / +0,0227 / +0,0287 / +0,0651) | như trên |
 | | Tham số chọn trên validation | ALS 32 chiều λ = 0,1 a = 5; α = 0,4; nửa đời 90 ngày; MMR λ = 0,8; k = 1 (cấu hình đang chạy vẫn là của 09/11: ALS 16, α = 0,6, MMR 0,7, k = 2) | như trên |
 | Khuyến nghị (Amazon Reviews 2023, 20.000 khách thật) | NDCG@10 Hybrid α = 0,2 | **0,0280** (0,0262–0,0297); hơn CBF, kNN, phổ biến có ý nghĩa, ngang ALS (0,0274) | `amazon_cell_latest.md` (**09/11**, không chạy lại: cần tải 4 GB dữ liệu và ~65 phút) |
 | | Mua kèm HitRate@4 | 2,16% (bán chạy nhất: 1,55%; hơn có ý nghĩa) | như trên |
 | Mua kèm (dữ liệu mô phỏng) | HitRate@4 | 3,02% so với bán chạy nhất 6,03% (chênh −3,02 điểm %, chưa đủ chắc chắn; đơn mẫu sinh ngẫu nhiên); 51% sản phẩm có danh sách mua kèm | `recommender_latest.md` |
-| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 97,7% / +10% | `recommender_latest.md` |
+| Nâng cấp | Sản phẩm có gợi ý / mức đắt hơn | 98% / +10% | `recommender_latest.md` |
 | RAG (40 câu, kho đã dựng lại) | Hit@1 / Hit@3 / MRR của `vector` (đang dùng) | **0,850 / 0,925 / 0,899**; keyword 0,700 / 0,825 / 0,765 | `retrieval_latest.md` |
 | Chatbot (30 câu, Qwen3 8B + giám khảo) | Đạt | **28/30 (93%)**, 27,1 giây / câu, 2,0 lần gọi LLM / câu, chi phí 0đ (trước khi dựng lại kho: 27/30, 30,7 giây) | `latest.md` = `20261127-0205.json` |
-| Test | pytest AI Service | **84 đạt** | |
+| Test | pytest AI Service | **86 đạt** | |
 | | JUnit Backend | **903 đạt** (133 lớp; database kiểm thử phải chạy migration `user_preferences.sql`, mục 9.3) | |
 
 Lưu ý khi trích dẫn:
@@ -316,19 +316,38 @@ danh sách khi chưa có cả hai. Khách chưa đăng nhập cũng trả lời 
 
 1. Ứng viên: sản phẩm đang bán thuộc danh mục đã chọn; bỏ ốp lưng, kính cường lực… theo đời máy (chưa biết khách dùng
    máy nào).
-2. `Score_Q(i) = (1 + Σ_q khớp_q(i)) / (1 + |Q_i|)`: số 1 là câu danh mục (ứng viên luôn khớp); `Q_i` là các câu khách
-   đã trả lời **và áp dụng được cho danh mục của i**: hãng (1 nếu đúng hãng đã chọn; chỉ tính khi khách chọn hãng có
-   bán ở danh mục này, nên chọn Samsung không trừ điểm laptop), tầm giá (1 nếu đúng phân khúc), nhu cầu (tỉ lệ nhu cầu
-   đã chọn của danh mục này mà sản phẩm đáp ứng).
+2. Thứ tự ưu tiên **danh mục > hãng > tầm giá > nhu cầu**; câu trên không bị câu dưới lấn át (bản cũ lấy trung bình
+   bốn câu bằng nhau nên khách chọn Apple + "phổ thông" nhận điện thoại phím bấm):
+   - **Hãng: bộ lọc cứng.** Chọn hãng có bán ở danh mục này thì chỉ xét sản phẩm của các hãng đó; hãng không bán ở
+     danh mục (chọn Samsung, danh mục laptop) thì bỏ qua câu này. Hãng không đủ `n` sản phẩm thì bổ sung sản phẩm
+     hãng khác, xếp sau (điểm giảm một nửa).
+   - **Tầm giá**: phân vị 1/3, 2/3 tính lại **trong nhóm đã lọc theo hãng** ("Apple + phổ thông" = iPhone rẻ nhất của
+     Apple). Nhóm dưới 3 sản phẩm thì bỏ qua câu này.
+   - **Nhu cầu**: tỉ lệ nhu cầu đã chọn của danh mục này mà sản phẩm đáp ứng. Không sản phẩm nào đáp ứng (ví dụ nhu
+     cầu "Phổ thông" của điện thoại chỉ gắn cho điện thoại phím bấm, không có iPhone) thì nhu cầu bị nới, thứ tự do
+     các câu trên quyết định.
+   - `Score = (1 + 2·khớp_giá + khớp_nhu_cầu) / (1 + 2·[có hỏi giá] + [có hỏi nhu cầu])`: tầm giá nặng gấp đôi nhu cầu
+     nên sản phẩm khớp giá luôn đứng trên sản phẩm không khớp.
 3. Mỗi danh mục xếp bằng MMR (λ = 0,7); bằng điểm thì ưu tiên **điểm đánh giá, rồi số lượt đánh giá của sản phẩm**
    (thuộc tính sản phẩm), không dùng độ phổ biến tính từ hành vi khách khác. Sau đó lấy lần lượt từng vị trí của các
    danh mục để danh mục nào đã chọn cũng có mặt.
-4. Lý do: *"Hợp với lựa chọn của bạn: Samsung · tầm trung · chụp ảnh, quay phim"*, hoặc *"Thuộc danh mục Laptop bạn
-   quan tâm"* khi chỉ khớp câu danh mục.
+4. Lý do: *"Hợp với lựa chọn của bạn: Samsung · tầm trung · chụp ảnh, quay phim"*; khi giá lệch tầm khách chọn thì
+   nói rõ (*"… · giá cao hơn tầm bạn chọn"*); *"Thuộc danh mục Laptop bạn quan tâm"* khi chỉ khớp câu danh mục.
 
 Từ lượt xem / thích / thêm giỏ / mua đầu tiên, gợi ý chuyển sang theo **hành vi thật** của khách (CBF, rồi Hybrid từ
 k = 2 lượt) như bảng trên. API trả thêm `basis`: `BEHAVIOR` / `PREFERENCES` / `POPULAR` để giao diện đổi tiêu đề.
-Đánh giá offline (mục 9.1) không đổi: khách mô phỏng không có câu trả lời bảng hỏi.
+Đánh giá offline (mục 9.1) không đổi: khách mô phỏng không có câu trả lời bảng hỏi. Bảng hỏi được đo riêng (28/11/2026,
+database thật, 1.078 tổ hợp hãng × tầm giá × nhu cầu trên mọi danh mục, top 8, chỉ tính sản phẩm đang bán; công thức cũ =
+commit trước đó; cùng một tập tổ hợp cho hai công thức):
+
+| Tiêu chí (tỉ lệ so với số sản phẩm tối đa có thể) | Cũ | Mới |
+|---|---|---|
+| Đúng hãng đã chọn | 0,657 | **1,000** |
+| Đúng tầm giá (không chọn hãng) | 0,851 | **0,998** |
+| Đúng nhu cầu (trong nhóm hãng đã chọn) | 0,843 | 0,839 |
+
+Nhu cầu gần như không đổi (giảm 0,004): tầm giá được ưu tiên trên nhu cầu nên khi khách chọn cả hai, sản phẩm khớp giá
+nhưng không khớp nhu cầu có thể đứng trên sản phẩm khớp nhu cầu nhưng lệch giá. Hãng và tầm giá nay gần như tuyệt đối.
 
 ### 4.5. Tương tự, Upsell, Cross-sell
 
@@ -742,59 +761,59 @@ Cách đánh giá (khoảng 3 phút):
   luật kết hợp học trên đơn 80% đầu) và nâng cấp.
 - Khoảng tin cậy 95%: bootstrap 1.000 lần theo người dùng (cùng một mẫu cho mọi mô hình); so sánh hai mô hình bằng
   khoảng tin cậy của hiệu NDCG trên cùng người dùng (không chứa 0 = chênh lệch có ý nghĩa).
-- Dữ liệu mô phỏng hiện có trong database (đo 25/11/2026, chạy lại 26/11 và **27/11/2026 01:24** ra y hệt mọi con số
-  bên dưới): 16.643 / 2.508 / 5.831 hành vi huấn luyện / validation / kiểm thử; tinh chỉnh trên 354 người dùng, kiểm
-  thử 548 người dùng có ≥ 2 lượt, N = 10. Khoảng 7 phút (lần 27/11: 397 giây).
+- Dữ liệu mô phỏng hiện có trong database (đo 25/11/2026, chạy lại 26/11 và 27/11 ra y hệt; **28/11/2026 18:51** thêm 1 hành vi huấn luyện nên mọi số lệch nhẹ
+  bên dưới): 16.644 / 2.508 / 5.831 hành vi huấn luyện / validation / kiểm thử; tinh chỉnh trên 354 người dùng, kiểm
+  thử 548 người dùng có ≥ 2 lượt, N = 10. Khoảng 7 phút (lần 28/11: 474 giây).
 
 > ⚠️ **Dữ liệu trong database đã khác lần đo 09/11/2026** (database được dựng lại: 2.491 người dùng, chỉ còn 2 lượt LIKE
 > trong phần học thay vì 709). Vì vậy số liệu 25/11 **không so trực tiếp** với các con số ghi trước ngày này (như
 > NDCG 0,0769 của lần 09/11). Báo cáo nên dùng bộ số 25/11 và ghi rõ ngày đo.
 
-**Tham số chọn trên validation, lần đo 25/11/2026** (354 người dùng; chạy lại 27/11 chọn đúng các tham số này):
+**Tham số chọn trên validation, lần đo 28/11/2026**  (354 người dùng; các lần 25/11–27/11 chọn đúng các tham số này):
 
-| Tham số | Chọn lần 25/11 | Hệ thống đang chạy (cấu hình, chọn lần 09/11) | NDCG@10 validation (lần 25/11) |
+| Tham số | Chọn lần 28/11 | Hệ thống đang chạy (cấu hình, chọn lần 09/11) | NDCG@10 validation (lần 28/11) |
 |---|---|---|---|
-| ALS | 32 chiều, λ = 0,1, a = 5 | 16 chiều, λ = 1, a = 5 | 0,1012 (32 chiều λ 1: 0,1000; 16 chiều λ 1: 0,0778) |
-| α | **0,4** | 0,6 | 0,1251 (α 0,6: 0,1149; ALS riêng 0,1012; CBF riêng 0,0842) |
-| Nửa đời | 90 ngày | 90 ngày | 0,1285 (30 ngày: 0,1267; không giảm: 0,1251) |
-| MMR λ | **0,8** | 0,7 | NDCG 0,1246 = 97% của λ = 1, Diversity 0,540 (λ = 1: 0,420; λ = 0,7: NDCG 0,1128, Diversity 0,632) |
-| Ngưỡng k | **1** lượt | 2 lượt | Hybrid ≥ CBF từ lượt đầu (0,1232 so với 0,1105) |
+| ALS | 32 chiều, λ = 0,1, a = 5 | 16 chiều, λ = 1, a = 5 | 0,1001 (32 chiều λ 1: 0,0995; 16 chiều λ 1: 0,0637) |
+| α | **0,4** | 0,6 | 0,1254 (α 0,6: 0,1152; ALS riêng 0,1001; CBF riêng 0,0842) |
+| Nửa đời | 90 ngày | 90 ngày | 0,1302 (30 ngày: 0,1262; không giảm: 0,1254) |
+| MMR λ | **0,8** | 0,7 | NDCG 0,1254 = 96% của λ = 1, Diversity 0,540 (λ = 1: 0,418; λ = 0,7: NDCG 0,1143, Diversity 0,631) |
+| Ngưỡng k | **1** lượt | 2 lượt | Hybrid ≥ CBF từ lượt đầu (0,1219 so với 0,1105) |
 
 Trên dữ liệu hiện tại, validation chọn tham số khác cấu hình đang chạy (cấu hình trong `config.py` vẫn là của lần 09/11:
 α = 0,6, ALS 16 chiều, MMR λ = 0,7, k = 2). Đổi sang bộ mới bằng biến môi trường `REC_ALPHA`, `REC_MMR_LAMBDA`,
 `REC_COLD_START_K` (và ALS bằng `ALS_FACTORS`, `ALS_REGULARIZATION`, `ALS_CONFIDENCE`) rồi huấn luyện lại; **chưa đổi** vì cần bạn quyết định
 (tham số tốt nhất thay đổi theo dữ liệu, xem mục 9.1c: trên Amazon α = 0,2).
 
-| λ của MMR (validation 25/11) | 1 (không xếp lại) | 0,9 | **0,8** | 0,7 | 0,6 | 0,5 |
+| λ của MMR (validation 28/11) | 1 (không xếp lại) | 0,9 | **0,8** | 0,7 | 0,6 | 0,5 |
 |---|---|---|---|---|---|---|
-| NDCG@10 | 0,1285 | 0,1272 | **0,1246** | 0,1128 | 0,1018 | 0,0885 |
-| Diversity | 0,420 | 0,470 | **0,540** | 0,632 | 0,735 | 0,797 |
+| NDCG@10 | 0,1302 | 0,1276 | **0,1254** | 0,1143 | 0,1021 | 0,0898 |
+| Diversity | 0,418 | 0,470 | **0,540** | 0,631 | 0,735 | 0,797 |
 
 Kết quả trên tập kiểm thử (đúng = mọi tương tác, 548 người dùng):
 
 | Mô hình | Precision@10 | Recall@10 | NDCG@10 (KTC 95%) | HitRate@10 | Coverage | Diversity |
 |---|---|---|---|---|---|---|
-| Phổ biến (đối chứng) | 0.0075 | 0.0436 | 0.0231 (0.0161–0.0308) | 0.0748 | 0.4% | 0.639 |
+| Phổ biến (đối chứng) | 0.0075 | 0.0436 | 0.0232 (0.0162–0.0311) | 0.0748 | 0.4% | 0.639 |
 | Item–item kNN (đối chứng) | 0.0254 | 0.0785 | 0.0596 (0.0474–0.0723) | 0.1898 | 24.9% | 0.624 |
 | CBF (α = 1) | 0.0259 | 0.0861 | 0.0656 (0.0540–0.0790) | 0.2117 | 24.3% | 0.172 |
-| CF / ALS (α = 0) | 0.0307 | 0.0945 | 0.0742 (0.0607–0.0881) | 0.2190 | 12.6% | 0.629 |
-| **Hybrid α = 0,4 (chọn trên validation, không xếp lại)** | **0.0356** | **0.1110** | **0.0878 (0.0723–0.1030)** | **0.2500** | 16.5% | 0.431 |
-| Hybrid α = 0,4 + MMR λ = 0,8 (chọn trên validation) | 0.0316 | 0.0995 | 0.0817 (0.0670–0.0969) | 0.2336 | 16.3% | 0.548 |
-| Hybrid α = 0,6 (không xếp lại) | 0.0305 | 0.0969 | 0.0808 (0.0657–0.0966) | 0.2281 | 23.3% | 0.313 |
-| **Hybrid α = 0,6 + MMR λ = 0,7 (cấu hình đang chạy)** | **0.0310** | **0.0965** | **0.0801 (0.0656–0.0958)** | **0.2336** | 19.1% | **0.515** |
+| CF / ALS (α = 0) | 0.0305 | 0.0940 | 0.0743 (0.0605–0.0880) | 0.2172 | 12.6% | 0.629 |
+| **Hybrid α = 0,4 (chọn trên validation, không xếp lại)** | **0.0358** | **0.1128** | **0.0883 (0.0728–0.1036)** | **0.2536** | 16.5% | 0.431 |
+| Hybrid α = 0,4 + MMR λ = 0,8 (chọn trên validation) | 0.0318 | 0.1013 | 0.0823 (0.0676–0.0975) | 0.2354 | 16.2% | 0.548 |
+| Hybrid α = 0,6 (không xếp lại) | 0.0307 | 0.0972 | 0.0809 (0.0656–0.0969) | 0.2281 | 23.2% | 0.313 |
+| **Hybrid α = 0,6 + MMR λ = 0,7 (cấu hình đang chạy)** | **0.0308** | **0.0978** | **0.0802 (0.0656–0.0957)** | **0.2336** | 18.9% | **0.515** |
 
-Chênh lệch NDCG@10 của Hybrid α = 0,4 trên cùng người dùng: hơn ALS +0,0135 (KTC 95%: +0,0065 đến +0,0199), hơn CBF
-+0,0221 (+0,0117 đến +0,0337), hơn kNN +0,0281 (+0,0186 đến +0,0390), hơn danh sách phổ biến +0,0647 (+0,0477 đến
-+0,0820): **cả bốn đều có ý nghĩa**. Khác lần 09/11 (khi Hybrid chỉ hơn CBF chưa đủ chắc chắn), lần này Hybrid hơn **cả hai
-thành phần** của nó; ALS (0,0742) cũng mạnh hơn CBF (0,0656). CBF vẫn làm
+Chênh lệch NDCG@10 của Hybrid α = 0,4 trên cùng người dùng: hơn ALS +0,0141 (KTC 95%: +0,0070 đến +0,0206), hơn CBF
++0,0227 (+0,0121 đến +0,0339), hơn kNN +0,0287 (+0,0189 đến +0,0392), hơn danh sách phổ biến +0,0651 (+0,0475 đến
++0,0821): **cả bốn đều có ý nghĩa**. Khác lần 09/11 (khi Hybrid chỉ hơn CBF chưa đủ chắc chắn), lần này Hybrid hơn **cả hai
+thành phần** của nó; ALS (0,0743) cũng mạnh hơn CBF (0,0656). CBF vẫn làm
 danh sách kém đa dạng (0,17).
 
 **MMR đánh đổi độ chính xác lấy độ đa dạng:** so với Hybrid α = 0,4 không xếp lại trên cùng người dùng, độ đa dạng tăng
-+0,118 (KTC 95%: +0,110 đến +0,125; 0,43 → 0,55), còn NDCG giảm 0,0061 (−0,0092 đến −0,0028, **có ý nghĩa**, khoảng 7%).
++0,118 (KTC 95%: +0,110 đến +0,125; 0,43 → 0,55), còn NDCG giảm 0,0060 (−0,0091 đến −0,0028, **có ý nghĩa**, khoảng 7%).
 
-Chỉ tính thêm giỏ / mua là đúng (400 người dùng): Hybrid α = 0,4 NDCG 0,0579 (0,0416–0,0764), có MMR 0,0541, CBF 0,0548,
-ALS 0,0502, kNN 0,0451, phổ biến 0,0243; Hybrid α = 0,6 + MMR λ = 0,7 (cấu hình đang chạy) 0,0513. Hybrid hơn kNN và
-phổ biến có ý nghĩa; hơn ALS (+0,0077, KTC 0,0000 đến +0,0165) và CBF (+0,0030) chưa đủ chắc chắn.
+Chỉ tính thêm giỏ / mua là đúng (399 người dùng): Hybrid α = 0,4 NDCG 0,0592 (0,0439–0,0779), có MMR 0,0550, CBF 0,0550,
+ALS 0,0492, kNN 0,0452, phổ biến 0,0233; Hybrid α = 0,6 + MMR λ = 0,7 (cấu hình đang chạy) 0,0522. Hybrid hơn ALS (+0,0100,
+KTC +0,0026 đến +0,0196), kNN và phổ biến có ý nghĩa; hơn CBF (+0,0042, KTC −0,0077 đến +0,0173) chưa đủ chắc chắn.
 
 **Cold-start: NDCG@10 theo số lượt của khách mới** (kiểm thử, cắt lịch sử của khoảng 90 khách còn m lượt đầu; bảng
 validation dùng để chọn k nằm trong `recommender_latest.md`):
@@ -803,12 +822,12 @@ validation dùng để chọn k nằm trong `recommender_latest.md`):
 |---|---|---|---|
 | 1 | 0,037 | 0,141 | 0,158 |
 | 2 | 0,036 | 0,160 | 0,182 |
-| 3 | 0,036 | 0,162 | 0,189 |
-| 5 | 0,034 | 0,164 | 0,212 |
-| 8 | 0,028 | 0,165 | 0,223 |
-| 12 | 0,028 | 0,164 | 0,210 |
+| 3 | 0,036 | 0,162 | 0,188 |
+| 5 | 0,034 | 0,164 | 0,211 |
+| 8 | 0,028 | 0,165 | 0,222 |
+| 12 | 0,028 | 0,164 | 0,209 |
 
-- Hybrid hơn chỉ CBF ở **mọi** số lượt kể cả lượt đầu, cả trên validation (m = 1: 0,1232 so với 0,1105) lẫn kiểm thử,
+- Hybrid hơn chỉ CBF ở **mọi** số lượt kể cả lượt đầu, cả trên validation (m = 1: 0,1219 so với 0,1105) lẫn kiểm thử,
   nên quy tắc "k = m nhỏ nhất mà từ đó Hybrid không kém CBF" cho **k = 1** (lần 09/11 cho k = 2). Cả CBF và Hybrid đều
   hơn hẳn danh sách phổ biến ngay từ lượt đầu, và càng nhiều lượt càng chính xác.
 - 171 khách **thật sự chỉ có 1 lượt** (khách mẫu chỉ có 1 đơn hàng): CBF 0,0174 so với phổ biến 0,0181, chênh −0,0006
@@ -817,7 +836,7 @@ validation dùng để chọn k nằm trong `recommender_latest.md`):
   hành vi thật. Khách như vậy đã có bảng hỏi sở thích (mục 4.4b) thay cho danh sách phổ biến.
 
 **Danh sách yêu thích (LIKE): có so với bỏ.** Database hiện chỉ có **2 lượt LIKE** trong phần học, nên phép so sánh không
-còn ý nghĩa (NDCG 0,0817 so với 0,0818, chênh −0,0001, KTC −0,0002 đến +0,0000). Lần 09/11 (709 lượt LIKE) cũng ra
+còn ý nghĩa (NDCG 0,0823 so với 0,0822, chênh +0,0001, KTC −0,0011 đến +0,0015). Lần 09/11 (709 lượt LIKE) cũng ra
 chênh lệch chưa đủ chắc chắn (+0,0027). Cơ chế LIKE vẫn được ghi và dùng đúng (r(u,i) có thêm trọng số 3); tác dụng thật
 chỉ đo được khi có khách thật dùng trái tim. Dữ liệu mô phỏng khi đó theo giả định "thích = dấu hiệu sẽ mua"
 (`seed_interactions.py`).
@@ -832,7 +851,7 @@ Phần chưa đánh giá được trên dữ liệu hiện có:
   kiện bảo đảm và có test riêng. Từ 11/11/2026, đang xem phụ kiện thì chỉ gợi ý máy dùng được phụ kiện đó
   (bỏ các cặp kiểu "camera IP mua kèm iPhone"): đo lại 26/11 HitRate không đổi, sản phẩm có danh sách mua kèm giảm từ
   61% xuống 51%.
-- **Nâng cấp:** 97,7% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%. Từ 11/11/2026 gợi ý
+- **Nâng cấp:** 98% sản phẩm đang bán có gợi ý nâng cấp, gợi ý đầu tiên đắt hơn trung bình 10%. Từ 11/11/2026 gợi ý
   không được kém hơn ở thông số nào và phụ kiện phải cùng loại (trước đó 16–21% gợi ý cho laptop, điện thoại, máy tính
   bảng kém hơn ở một thông số, và ốp lưng được "nâng cấp" lên camera IP, loa).
 
@@ -914,7 +933,7 @@ Kết quả (chạy lần đầu 08/11/2026, chạy lại 09/11/2026 14:18: số
 
 ### 9.2. Unit test các công thức khuyến nghị (`tests/`)
 
-84 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
+86 test pytest, không cần database (dữ liệu nhỏ dựng tay trong `tests/conftest.py`):
 
 - `test_features.py`: r(u,i) = Σ w·ln(1 + n) đúng trọng số từng hành vi (thêm giỏ + bấm = 4,159), giảm còn một nửa
   sau một nửa đời, Min-Max, vector đặc trưng (giá và phân khúc giá trong từng danh mục, RAM / bộ nhớ đọc từ phiên bản);

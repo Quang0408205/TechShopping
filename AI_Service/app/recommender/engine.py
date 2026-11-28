@@ -465,14 +465,19 @@ class Recommender:
                          exclude: list[int] | None = None) -> list[Recommendation]:
         """
         Gợi ý cho khách chưa có hành vi theo câu trả lời bảng hỏi; không dùng hành vi của khách khác.
+        Thứ tự ưu tiên: danh mục > hãng > tầm giá > nhu cầu; câu trên không bao giờ bị câu dưới lấn át.
           1. Ứng viên: sản phẩm đang bán thuộc danh mục khách chọn (bỏ ốp lưng, kính cường lực... theo đời máy, vì
              chưa biết khách dùng máy nào).
-          2. Score_Q(i) = (1 + Σ_q khớp_q(i)) / (1 + |Q_i|): số 1 là câu "danh mục" (ứng viên luôn khớp), Q_i là các
-             câu khách đã trả lời và áp dụng được cho danh mục của i:
-               hãng: 1 nếu hãng của i nằm trong các hãng khách chọn (chỉ tính khi khách chọn hãng có bán ở danh mục này);
-               tầm giá: 1 nếu phân khúc giá của i (phân vị 1/3, 2/3 trong danh mục) là tầm giá khách chọn;
-               nhu cầu: tỉ lệ nhu cầu khách chọn ở danh mục này mà i đáp ứng (product_needs).
-          3. Mỗi danh mục xếp bằng MMR (λ như danh sách cá nhân; bằng điểm thì ưu tiên điểm đánh giá, rồi số lượt đánh
+          2. Hãng: bộ lọc cứng. Khách chọn hãng có bán ở danh mục này thì chỉ xét sản phẩm của các hãng đó; hãng
+             không bán ở danh mục thì bỏ qua câu này. Chỉ khi hãng không đủ n sản phẩm mới bổ sung sản phẩm hãng khác
+             (xếp sau, điểm nhân đôi giảm) để danh sách không bị cụt.
+          3. Tầm giá: phân vị 1/3, 2/3 tính LẠI trong nhóm đã lọc theo hãng (Apple + "phổ thông" = iPhone rẻ nhất của
+             Apple, không phải điện thoại phím bấm của cả danh mục). Nhóm dưới 3 sản phẩm thì bỏ qua câu này.
+          4. Nhu cầu: tỉ lệ nhu cầu khách chọn ở danh mục này mà sản phẩm đáp ứng (product_needs). Không sản phẩm nào
+             đáp ứng thì thứ tự do các câu trên và điểm đánh giá quyết định (nới dần từ câu cuối).
+             Score = (1 + 2·khớp_giá + khớp_nhu_cầu) / (1 + 2·[có hỏi giá] + [có hỏi nhu cầu]); tầm giá nặng gấp đôi
+             nhu cầu nên khớp giá luôn đứng trên không khớp giá.
+          5. Mỗi danh mục xếp bằng MMR (λ như danh sách cá nhân; bằng điểm thì ưu tiên điểm đánh giá, rồi số lượt đánh
              giá của sản phẩm), sau đó lấy lần lượt từng vị trí của các danh mục để danh mục nào khách chọn cũng có mặt.
         """
         m = self.model
@@ -480,7 +485,6 @@ class Recommender:
         allowed = self._allowed(exclude) & self._own_model_mask(np.array([], dtype=int))
         category = items["category_id"].to_numpy()
         brand = items["brand_id"].to_numpy()
-        segment = items["price_segment"].to_numpy()
         prior = (items["rating"].to_numpy(float) if "rating" in items else np.zeros(len(items)),
                  items["review_count"].to_numpy(float) if "review_count" in items else np.zeros(len(items)))
         brands = set(preferences.brand_ids)
@@ -494,21 +498,12 @@ class Recommender:
                 continue
             brands_here = brands & set(brand[rows].tolist())
             needs_here = {need for need in needs if m.needs[need][0] == category_id}
-            matched = np.ones(rows.size)
-            asked = 1
-            if brands_here:
-                matched += np.isin(brand[rows], list(brands_here))
-                asked += 1
-            if levels:
-                matched += np.isin(segment[rows], list(levels))
-                asked += 1
-            if needs_here:
-                matched += [len(m.product_needs.get(row, frozenset()) & needs_here) / len(needs_here) for row in rows]
-                asked += 1
-            score = matched / asked
-            order = self._mmr(rows, score, n, config.MMR_LAMBDA, prior)
-            ranked.append([(rows[p], score[p], self._reason_preferences(rows[p], brands_here, levels, needs_here))
-                           for p in order])
+            in_brand = np.isin(brand[rows], list(brands_here)) if brands_here else np.ones(rows.size, bool)
+            entries = self._rank_answers(rows[in_brand], brands_here, levels, needs_here, n, prior)
+            if len(entries) < n and not in_brand.all():    # hãng chọn không đủ hàng: bổ sung hãng khác, xếp sau
+                filler = self._rank_answers(rows[~in_brand], set(), levels, needs_here, n - len(entries), prior)
+                entries += [(row, score / 2, reason) for row, score, reason in filler]
+            ranked.append(entries)
 
         result = []
         for position in range(n):
@@ -519,20 +514,54 @@ class Recommender:
                     result.append(Recommendation(items.index[row], score, reason))
         return result
 
-    def _reason_preferences(self, row: int, brands: set, levels: set, needs: set) -> str:
+    def _rank_answers(self, rows: np.ndarray, brands: set, levels: set, needs: set, n: int,
+                      prior: tuple) -> list[tuple[int, float, str]]:
+        """Chấm và xếp (MMR) các dòng `rows` của một danh mục: [(dòng, điểm, lý do)]; tầm giá chia trong chính `rows`."""
+        if rows.size == 0:
+            return []
+        items = self.model.items
+        segments = np.full(rows.size, "", dtype=object)
+        if levels and rows.size >= 3:                      # nhóm quá nhỏ thì chia 3 tầm giá không có nghĩa
+            price = items["price"].to_numpy(float)[rows]
+            low, high = np.quantile(price, 1 / 3), np.quantile(price, 2 / 3)
+            segments = np.where(price <= low, "Thấp", np.where(price <= high, "Trung", "Cao")).astype(object)
+        asked_price = bool(segments[0])
+        matched = np.ones(rows.size)
+        asked = 1.0
+        if asked_price:
+            matched += 2 * np.isin(segments, list(levels))
+            asked += 2
+        if needs:
+            matched += [len(self.model.product_needs.get(row, frozenset()) & needs) / len(needs) for row in rows]
+            asked += 1
+        score = matched / asked
+        order = self._mmr(rows, score, n, config.MMR_LAMBDA, prior)
+        return [(rows[p], score[p], self._reason_preferences(rows[p], brands, levels, needs, segments[p]))
+                for p in order]
+
+    def _reason_preferences(self, row: int, brands: set, levels: set, needs: set, segment: str = "") -> str:
+        """Lý do cho khách: những câu sản phẩm khớp, và nói rõ khi giá lệch tầm giá khách chọn."""
         m = self.model
         items = m.items
         matched = []
         if items["brand_id"].iloc[row] in brands:
             matched.append(str(items["brand"].iloc[row]))
-        segment = items["price_segment"].iloc[row]
         if segment in levels:
             matched.append(PRICE_LABELS[segment])
         for need in sorted(m.product_needs.get(row, frozenset()) & needs):
             matched.append(m.needs[need][1].lower())
         if matched:
-            return "Hợp với lựa chọn của bạn: " + " · ".join(matched)
-        return "Thuộc danh mục " + str(items["category"].iloc[row]) + " bạn quan tâm"
+            reason = "Hợp với lựa chọn của bạn: " + " · ".join(matched)
+        else:
+            reason = "Thuộc danh mục " + str(items["category"].iloc[row]) + " bạn quan tâm"
+        if segment and segment not in levels:
+            rank = {"Thấp": 0, "Trung": 1, "Cao": 2}
+            chosen = [rank[level] for level in levels]
+            if rank[segment] > max(chosen):
+                reason += " · giá cao hơn tầm bạn chọn"
+            elif rank[segment] < min(chosen):
+                reason += " · giá thấp hơn tầm bạn chọn"
+        return reason
 
     def popular(self, n: int, allowed: np.ndarray | None = None) -> list[Recommendation]:
         """người dùng mới / chưa đăng nhập → sản phẩm phổ biến (Σ r cao nhất) + sản phẩm mới."""
